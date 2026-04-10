@@ -1,45 +1,73 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/utils/cn";
 
-type Status = "success" | "warning" | "error";
+type BadgeVariant = "green" | "red" | "blue" | "amber";
 
 interface StatCardProps {
-  title: string;
-  value: string | number;
-  status?: Status;
-  extra?: string;
+  label: string;
+  value?: React.ReactNode;
+  badge?: { text: string; variant: BadgeVariant };
+  sub?: string;
+  className?: string;
 }
 
-const statusLabelMap: Record<Status, string> = {
-  success: "Good",
-  warning: "Attention",
-  error: "Critical",
+const badgeStyles: Record<BadgeVariant, string> = {
+  green: "bg-[#E6F4EF] text-[#00714D]",   // updated
+  red: "bg-[#FDECEC] text-[#BA1A1A]",   // updated
+  blue: "bg-[#EEF2FF] text-[#3525CD]",   // updated
+  amber: "bg-[#FAEEDA] text-[#854F0B]",   // unchanged
 };
 
-export const StatCard = ({ title, value, status, extra }: StatCardProps) => {
-  return (
-    <Card className="hover:shadow-md transition">
-      <CardContent className="flex flex-col gap-2">
-        
-        {/* Title */}
-        <p className="text-sm text-gray-500">{title}</p>
+const dotColors: Record<BadgeVariant, string> = {
+  green: "bg-[#00714D]",   // updated
+  red: "bg-[#BA1A1A]",   // updated
+  blue: "bg-[#3525CD]",   // updated
+  amber: "bg-[#BA7517]",   // unchanged
+};
 
-        {/* Value + Status */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">{value}</h2>
+export const StatCard = ({ label, value, badge, sub, className }: StatCardProps) => (
+ <div
+  className={cn(
+    "group bg-white border border-[#E8EBF2] rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-all duration-200",
+    " hover:border-[#3525CD] hover:shadow-md hover:-translate-y-1",
+    className
+  )}
+>
+<p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+      {label}
+    </p>
 
-          {status && (
-            <Badge variant={status}>
-              {statusLabelMap[status]}
-            </Badge>
+    {value && (
+     <p className="text-xl font-semibold leading-tight text-[#0B1C30]">
+        {value}
+      </p>
+    )}
+    {badge &&
+      (label === "Today's Attendance" ? (
+        // ✅ Keep badge only for Attendance
+        <span
+          className={cn(
+            "inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full w-fit",
+            badgeStyles[badge.variant]
           )}
-        </div>
+        >
+          <span
+            className={cn(
+              "w-1.5 h-1.5 rounded-full shrink-0",
+              dotColors[badge.variant]
+            )}
+          />
+          {badge.text}
+        </span>
+      ) : label === "Fee Status" && badge.text === "Pending" ? (
+        // ❌ Hide Pending completely
+        null
+      ) : (
+        // ✅ Show plain text for others
+        <span className="text-[11px] font-medium text-[#0B1C30]">
+          {badge.text}
+        </span>
+      ))}
 
-        {/* Extra Info */}
-        {extra && (
-          <p className="text-xs text-gray-400">{extra}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
+    {sub && <p className="text-xs text-gray-400">{sub}</p>}
+  </div>
+);

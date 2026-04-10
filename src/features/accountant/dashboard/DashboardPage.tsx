@@ -15,12 +15,12 @@ const DashboardPage = () => {
       <h1 className="text-2xl font-bold mb-6">Accountant Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard
-          title="Total Fees Collected"
+          label="Total Fees Collected"
           value={`$${data.totalFeesCollected.toLocaleString()}`}
         />
-        <StatCard title="Pending Fees" value={`$${data.pendingFees.toLocaleString()}`} />
-        <StatCard title="Defaulters" value={data.defaulters} />
-        <StatCard title="Transactions" value={data.transactions} />
+        <StatCard label="Pending Fees" value={`$${data.pendingFees.toLocaleString()}`} />
+        <StatCard label="Defaulters" value={data.defaulters} />
+        <StatCard label="Transactions" value={data.transactions} />
       </div>
     </div>
   );

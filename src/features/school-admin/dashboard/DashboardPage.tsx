@@ -1,4 +1,4 @@
-import { StatCard } from "@/components/common/StatCard";
+import { StatCard } from "../../../components/ui/statcard";
 import { AttendanceLineChart } from "@/components/charts/AttendanceLineChart";
 import { FeeBarChart } from "@/components/charts/FeeBarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
@@ -34,10 +34,10 @@ const DashboardPage = () => {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Total Students" value={data?.students ?? 0} />
-        <StatCard title="Attendance %" value={data?.attendance ?? 0} />
-        <StatCard title="Fees Collected" value={data?.fees ?? 0} />
-        <StatCard title="Defaulters" value={data?.defaulters ?? 0} />
+        <StatCard label="Total Students" value={data?.students ?? 0} />
+        <StatCard label="Attendance %" value={data?.attendance ?? 0} />
+        <StatCard label="Fees Collected" value={data?.fees ?? 0} />
+        <StatCard label="Defaulters" value={data?.defaulters ?? 0} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AttendanceLineChart data={data?.attendanceTrend ?? []} />

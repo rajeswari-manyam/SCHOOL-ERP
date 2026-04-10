@@ -1,4 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 
 export const UpcomingExamsTable = () => {
   const exams = [
@@ -26,11 +34,12 @@ export const UpcomingExamsTable = () => {
   ];
 
   return (
-    <Card className="rounded-xl border border-[#E8EBF2] shadow-none w-full">
+    <Card className="w-full rounded-xl border border-[#E8EBF2] shadow-none hover:border-[#3525CD] transition-colors">
 
-      {/* Header */}
-      <CardHeader className="pb-2 px-4 sm:px-6 pt-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* HEADER (REMOVE “LINE FEEL”) */}
+      <CardHeader className="px-4 sm:px-6 pt-5 pb-2 border-none">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+
           <CardTitle className="text-[15px] font-semibold text-[#0B1C30]">
             Upcoming Exams
           </CardTitle>
@@ -38,67 +47,69 @@ export const UpcomingExamsTable = () => {
           <button className="text-[12px] text-[#3525CD] border border-[#D0D8FF] px-3 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-[#EEF0FF] transition w-fit">
             📅 Add to Google Calendar
           </button>
+
         </div>
       </CardHeader>
 
       <CardContent className="px-4 sm:px-6 pb-5">
 
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full border-collapse min-w-[700px]">
-            <thead>
-              <tr className="border-b border-[#F0F2F7]">
+        {/* TABLE (REMOVE ALL GRID/BORDER LINES) */}
+        <div className="hidden md:block">
+          <Table className="min-w-[700px] border-separate border-spacing-y-2">
+
+            {/* HEADER (NO BORDER LINE) */}
+            <TableHeader>
+              <TableRow className="border-none bg-transparent">
                 {["Subject", "Date", "Day", "Time", "Venue"].map((h) => (
-                  <th
+                  <TableHead
                     key={h}
-                    className="text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wide py-3 px-2"
+                    className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wide px-2 py-2 border-none"
                   >
                     {h}
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
-            </thead>
+              </TableRow>
+            </TableHeader>
 
-            <tbody>
+            {/* BODY (NO ROW BORDERS) */}
+            <TableBody>
               {exams.map((e, i) => (
-                <tr
+                <TableRow
                   key={i}
-                  className="group border-b border-[#F0F2F7] last:border-none hover:bg-[#F4F6FF] transition-colors duration-150 cursor-pointer"
+                  className="border-none bg-white hover:bg-[#F4F6FF] transition"
                 >
-                  <td className="text-[13px] font-semibold text-[#0B1C30] py-3.5 px-2 group-hover:text-[#3525CD] transition-colors duration-150">
+                  <TableCell className="font-semibold">
                     {e.subject}
-                  </td>
-                  <td className="text-[13px] text-[#0B1C30] py-3.5 px-2">
-                    {e.date}
-                  </td>
-                  <td className="text-[13px] text-[#0B1C30] py-3.5 px-2">
-                    {e.day}
-                  </td>
-                  <td className="text-[13px] text-[#0B1C30] py-3.5 px-2">
-                    {e.time}
-                  </td>
-                  <td className="text-[13px] text-[#0B1C30] py-3.5 px-2">
-                    <span className="text-[11px] font-medium text-[#6B7280] bg-[#F4F6FA] border border-[#E8EBF2] px-2.5 py-1 rounded-md group-hover:bg-[#EEF0FF] group-hover:border-[#C7CEFF] group-hover:text-[#3525CD] transition-colors duration-150">
+                  </TableCell>
+
+                  <TableCell>{e.date}</TableCell>
+                  <TableCell>{e.day}</TableCell>
+                  <TableCell>{e.time}</TableCell>
+
+                  <TableCell>
+                    <span className="text-[11px] font-medium text-[#6B7280] bg-[#F4F6FA] border border-[#E8EBF2] px-2.5 py-1 rounded-md">
                       {e.venue}
                     </span>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+
+          </Table>
         </div>
 
-        {/* Mobile Cards */}
+        {/* MOBILE (UNCHANGED) */}
         <div className="md:hidden flex flex-col gap-3">
           {exams.map((e, i) => (
             <div
               key={i}
-              className="border border-[#E8EBF2] rounded-lg p-3 bg-white hover:bg-[#F4F6FF] hover:border-[#C7CEFF] transition-all duration-150 cursor-pointer"
+              className="border border-[#E8EBF2] rounded-lg p-3 bg-white hover:border-[#3525CD] hover:bg-[#F4F6FF] transition-all cursor-pointer"
             >
               <div className="flex justify-between items-start">
                 <p className="font-semibold text-[#0B1C30] text-sm">
                   {e.subject}
                 </p>
+
                 <span className="text-[11px] font-medium text-[#6B7280] bg-[#F4F6FA] border border-[#E8EBF2] px-2.5 py-1 rounded-md">
                   {e.venue}
                 </span>

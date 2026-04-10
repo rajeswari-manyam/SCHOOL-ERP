@@ -12,6 +12,7 @@ import StudentRouter from "./features/student/StudentRouter";
 import SchoolAdminRouter from "./features/school-admin/SchoolAdminRouter";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./features/auth/pages/LoginPage";
+import OtpPage from "./features/auth/pages/OtpPage";
 
 function App() {
   return (
@@ -22,25 +23,25 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
-
+            <Route path="/otp" element={<OtpPage />} />
             <Route path="/parent/*" element={
               <ProtectedRoute role="parent"><ParentRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/teacher/*" element={
               <ProtectedRoute role="teacher"><TeacherRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/superadmin/*" element={
               <ProtectedRoute role="superadmin"><SuperAdminRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/schooladmin/*" element={
               <ProtectedRoute role="schooladmin"><SchoolAdminRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/accountant/*" element={
               <ProtectedRoute role="accountant"><AccountantRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/student/*" element={
               <ProtectedRoute role="student"><StudentRouter /></ProtectedRoute>
-            }/>
+            } />
 
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>

@@ -14,10 +14,10 @@ const DashboardPage = () => {
     <div className="space-y-8 p-6">
       <h1 className="text-2xl font-bold mb-6">My Teachers</h1>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Active Teachers" value={data.activeTeachers} />
-        <StatCard title="Classes Taken" value={data.classesAttended} />
-        <StatCard title="Office Hours" value={data.officeHoursAvailable} />
-        <StatCard title="Messages" value={data.messagesPending} />
+        <StatCard label="Active Teachers" value={data.activeTeachers} />
+        <StatCard label="Classes Taken" value={data.classesAttended} />
+        <StatCard label="Office Hours" value={data.officeHoursAvailable} />
+        <StatCard label="Messages" value={data.messagesPending} />
       </div>
     </div>
   );
