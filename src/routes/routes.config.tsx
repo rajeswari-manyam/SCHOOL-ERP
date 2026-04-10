@@ -1,4 +1,5 @@
 import { lazy } from "react";
+import type { ReactNode } from "react";
 
 const TeacherMarks = lazy(() => import("@/features/teacher/marks/pages/MarksPage"));
 const TeacherLeave = lazy(() => import("@/features/teacher/leave/pages/LeavePage"));
@@ -16,7 +17,7 @@ const SchoolAdminSettings = lazy(() => import("@/features/school-admin/settings"
 const SchoolAdminReports = lazy(() => import("@/features/school-admin/reports").then(m => ({ default: m.ReportsPage })));
 const SchoolAdminTimetable = lazy(() => import("@/features/school-admin/timetable").then(m => ({ default: m.TimetablePage })));
 const SchoolAdminStaff = lazy(() => import("@/features/school-admin/staff").then(m => ({ default: m.StaffPage })));
-import React from "react";
+
 
 const SchoolAdminDashboard = lazy(() => import("@/features/school-admin/dashboard").then(m => ({ default: m.DashboardPage })));
 const SchoolAdminAttendance = lazy(() => import("@/features/school-admin/attendance").then(m => ({ default: m.AttendancePage })));
@@ -27,7 +28,7 @@ import type { Role } from "../types/api.types";
 
 export interface RouteConfig {
   path: string;
-  element: React.ReactNode;
+  element: ReactNode;
   roles?: Role[];
   children?: RouteConfig[];
 }

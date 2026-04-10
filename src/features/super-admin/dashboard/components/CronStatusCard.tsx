@@ -1,4 +1,4 @@
-import { CronJobStatus } from "../types/dashboard.types";
+import type{ CronJobStatus } from "../types/dashboard.types";
 
 interface CronStatusCardProps {
   jobs: CronJobStatus[];

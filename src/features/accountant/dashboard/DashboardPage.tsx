@@ -1,21 +1,26 @@
-import { useAccountantDashboardStats } from "./hooks/useDashboardStats";
-import { StatCard } from "./components/StatCard";
+import { StatCard } from "@/components/ui/statcard";
+
+const MOCK_ACCOUNTANT_STATS = {
+  totalFeesCollected: 1248000,
+  pendingFees:        342000,
+  defaulters:         47,
+  transactions:       312,
+};
 
 const DashboardPage = () => {
-  const { data, isLoading } = useAccountantDashboardStats();
-
-  if (isLoading) return <div>Loading...</div>;
+  const data = MOCK_ACCOUNTANT_STATS;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6">
+      <h1 className="text-2xl font-bold mb-6">Accountant Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard
           title="Total Fees Collected"
-          value={data?.totalFeesCollected ?? 0}
+          value={`$${data.totalFeesCollected.toLocaleString()}`}
         />
-        <StatCard title="Pending Fees" value={data?.pendingFees ?? 0} />
-        <StatCard title="Defaulters" value={data?.defaulters ?? 0} />
-        <StatCard title="Transactions" value={data?.transactions ?? 0} />
+        <StatCard title="Pending Fees" value={`$${data.pendingFees.toLocaleString()}`} />
+        <StatCard title="Defaulters" value={data.defaulters} />
+        <StatCard title="Transactions" value={data.transactions} />
       </div>
     </div>
   );

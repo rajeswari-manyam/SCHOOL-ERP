@@ -1,4 +1,4 @@
-import { RevenueData } from "../types/dashboard.types";
+import type{ RevenueData } from "../types/dashboard.types";
 
 interface RevenueWidgetProps {
   data: RevenueData[];

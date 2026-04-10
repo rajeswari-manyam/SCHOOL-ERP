@@ -1,6 +1,6 @@
-import { api } from "@/config/axios";
+// import { api } from "@/config/axios";
 
-export const getDashboardStats = async () => {
-  const { data } = await api.get("/school-admin/dashboard/stats");
-  return data;
-};
+// export const getDashboardStats = async () => {
+//   const { data } = await api.get("/school-admin/dashboard/stats");
+//   return data;
+// };

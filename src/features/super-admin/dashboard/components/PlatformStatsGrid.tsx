@@ -1,4 +1,4 @@
-import { PlatformStats } from "../types/dashboard.types";
+import type { PlatformStats } from "../types/dashboard.types";
 
 interface PlatformStatsGridProps {
   stats: PlatformStats;

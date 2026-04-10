@@ -1,14 +1,15 @@
-import { ReactNode } from "react";
+import { Outlet } from "react-router-dom";
+import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNavBar";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export const ParentLayout = ({ children }: LayoutProps) => (
-  <div className="min-h-screen flex flex-col bg-gray-100">
-    {/* Parent Sidebar/Nav here */}
-    <main className="flex-1 p-6">{children}</main>
-  </div>
-);
+const ParentLayout = () => {
+  return (
+    <div className="min-h-screen bg-[#F4F6FA]">
+      <ParentTopNavBar />
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  );
+};
 
 export default ParentLayout;

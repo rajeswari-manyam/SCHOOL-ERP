@@ -1,4 +1,4 @@
-import { SchoolHealth } from "../types/dashboard.types";
+import type{ SchoolHealth } from "../types/dashboard.types";
 
 interface SchoolHealthListProps {
   schools: SchoolHealth[];
