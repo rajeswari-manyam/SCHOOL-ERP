@@ -29,7 +29,7 @@ const Sidebar = ({ items }: SidebarProps) => {
               to={item.to}
               className={cn(
                 "flex items-center gap-3 px-6 py-3 rounded-lg font-medium transition",
-                pathname === item.to
+             pathname.startsWith(item.to)
                   ? "bg-[#6c63ff] text-white"
                   : "text-[#b0b8c1] hover:bg-[#2e3748] hover:text-white"
               )}

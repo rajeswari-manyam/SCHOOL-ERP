@@ -24,7 +24,7 @@ export default function AttendancePage() {
     // Single source of truth for current month — shared by header, calendar, absent list
     const [currentDate, setCurrentDate] = useState(new Date(2025, 3, 1)) // April 2025
     const [selectedDay, setSelectedDay] = useState<any>(null)
-const { activeChild } = useOutletContext<ParentLayoutContext>()
+const { activeChild } = useOutletContext<ParentLayoutContext>() || {};
     const isModalOpen = !!selectedDay
 
     function goToPrevMonth() {
@@ -58,7 +58,7 @@ const { activeChild } = useOutletContext<ParentLayoutContext>()
                 {/* Page Content */}
                 <main className="max-w-[1280px] mx-auto pt-8 pr-8 pb-12 pl-8 space-y-6">
  <p className={combineTypography(typography.body.xs, "text-gray-400")}>
-  {activeChild.name} › 
+  {activeChild?.name || "Student"} › 
   <span className="text-gray-600 font-medium"> Attendance</span>
 </p>
 

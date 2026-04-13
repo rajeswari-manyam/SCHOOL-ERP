@@ -27,7 +27,7 @@ const dotColors: Record<BadgeVariant, string> = {
 export const StatCard = ({ label, value, badge, sub, className }: StatCardProps) => (
  <div
   className={cn(
-    "group bg-white border border-[#E8EBF2] rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-all duration-200",
+"group bg-white border border-[#E8EBF2] rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-all duration-200 h-full",
     " hover:border-[#3525CD] hover:shadow-md hover:-translate-y-1",
     className
   )}

@@ -13,16 +13,19 @@ import {
     BookOpen,
     ClipboardList,
     User,
+    Settings,
+    MessageSquareWarning,
 } from "lucide-react";
 import typography from "@/styles/typography";
 
 const navLinks = [
-    { label: "Dashboard", path: "/parent/dashboard", icon: LayoutDashboard },
-    { label: "Attendance", path: "/parent/attendance", icon: CalendarCheck },
-    { label: "Fees", path: "/parent/fees", icon: Wallet },
-    { label: "Homework", path: "/parent/homework", icon: BookOpen },
-    { label: "Exams", path: "/parent/exams", icon: ClipboardList },
-    { label: "Profile", path: "/parent/profile", icon: User },
+    { label: "Dashboard",  path: "/parent/dashboard",   icon: LayoutDashboard },
+    { label: "Attendance", path: "/parent/attendance",  icon: CalendarCheck },
+    { label: "Fees",       path: "/parent/fees",        icon: Wallet },
+    { label: "Homework",   path: "/parent/homework",    icon: BookOpen },
+    { label: "Exams",      path: "/parent/exams",       icon: ClipboardList },
+    { label: "Profile",    path: "/parent/profile",     icon: User },
+
 ];
 
 interface ParentTopNavBarProps {
@@ -103,10 +106,10 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                     {/* RIGHT: switch child + bell + user */}
                     <div className="flex items-center gap-1 md:gap-2 shrink-0">
 
-                        {/* Switch Child — lg+ only — now connected */}
+                        {/* Switch Child */}
                         <button
                             onClick={onSwitchChild}
-                            className="hidden lg:flex items-center gap-1.5 text-[12px] text-[#6B7280] hover:text-[#3525CD] px-2.5 py-1.5 rounded-md hover:bg-[#F4F6FA] transition"
+                            className="hidden lg:flex items-center gap-1.5 text-[12px] text-[#3525CD] px-2.5 py-1.5 rounded-md hover:bg-[#F4F6FA] transition"
                         >
                             <RefreshCw size={12} />
                             Switch Child
@@ -128,9 +131,9 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                                         Notifications
                                     </p>
                                     {[
-                                        { title: "Fee reminder", desc: "Tuition fee due on 9 Apr", time: "2h ago", dot: "bg-red-500" },
-                                        { title: "Attendance alert", desc: "Anjali was absent today", time: "4h ago", dot: "bg-amber-400" },
-                                        { title: "New homework", desc: "Maths: Quadratic Equations", time: "1d ago", dot: "bg-indigo-500" },
+                                        { title: "Fee reminder",    desc: "Tuition fee due on 9 Apr",        time: "2h ago",  dot: "bg-red-500"    },
+                                        { title: "Attendance alert", desc: "Anjali was absent today",        time: "4h ago",  dot: "bg-amber-400"  },
+                                        { title: "New homework",    desc: "Maths: Quadratic Equations",      time: "1d ago",  dot: "bg-indigo-500" },
                                     ].map((n) => (
                                         <div key={n.title} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F4F6FA] cursor-pointer">
                                             <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.dot}`} />
@@ -176,9 +179,18 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                                     <Link
                                         to="/parent/settings"
                                         onClick={() => setProfileOpen(false)}
-                                        className="block px-4 py-2 text-[13px] text-[#0B1C30] hover:bg-[#F4F6FA]"
+                                        className="flex items-center gap-2 px-4 py-2 text-[13px] text-[#0B1C30] hover:bg-[#F4F6FA]"
                                     >
+                                        <Settings size={13} className="text-[#9CA3AF]" />
                                         Settings
+                                    </Link>
+                                    <Link
+                                        to="/parent/complaints"
+                                        onClick={() => setProfileOpen(false)}
+                                        className="flex items-center gap-2 px-4 py-2 text-[13px] text-[#0B1C30] hover:bg-[#F4F6FA]"
+                                    >
+                                        <MessageSquareWarning size={13} className="text-[#9CA3AF]" />
+                                        Raise a Complaint
                                     </Link>
                                     <div className="border-t border-[#E8EBF2] my-1" />
                                     <button
@@ -238,7 +250,6 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                                     <p className="text-[11px] text-[#9CA3AF]">{user.className}</p>
                                 </div>
                             </div>
-                            {/* Switch Child — mobile drawer — also connected */}
                             <button
                                 onClick={() => { setMobileOpen(false); onSwitchChild(); }}
                                 className="mt-3 w-full flex items-center justify-center gap-2 text-[12px] text-[#3525CD] border border-[#D0D8FF] py-2 rounded-lg hover:bg-[#EEF0FF] transition"

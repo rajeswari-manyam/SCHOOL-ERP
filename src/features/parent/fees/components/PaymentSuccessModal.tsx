@@ -1,3 +1,23 @@
+
+
+
+
+
+
+
+
+
+import { useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+
+import typography from "@/styles/typography";
+import { cn } from "@/utils/cn";
+
 interface PaymentSuccessModalProps {
   amount: number;
   feeHead: string;
@@ -16,14 +36,30 @@ export function PaymentSuccessModal({
   const receiptNo = "RCP-2025-0848";
   const date = "7 April 2025";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
 
-        {/* Success icon */}
-        <div className="flex flex-col items-center pt-8 pb-5 px-6">
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+
+      {/* BACKDROP */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onBack}
+      />
+
+      {/* CARD */}
+      <Card className="relative z-10 w-full max-w-[400px] overflow-hidden">
+
+        {/* SUCCESS HEADER */}
+        <CardContent className="flex flex-col items-center pt-8 pb-5 px-6">
+
           <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
               <path
                 d="M5 14l6 6L23 7"
                 stroke="#16A34A"
@@ -33,73 +69,108 @@ export function PaymentSuccessModal({
               />
             </svg>
           </div>
-          <p className="text-[18px] font-bold text-emerald-600">Payment Successful!</p>
-          <p className="text-[13px] text-gray-400 mt-1">
+
+          <p className={cn(typography.heading.h6, "text-emerald-600")}>
+            Payment Successful!
+          </p>
+
+          <p className={cn(typography.body.small, "text-gray-400 mt-1 text-center")}>
             Rs.{amount.toLocaleString("en-IN")} paid for Ravi Kumar
           </p>
-        </div>
+        </CardContent>
 
-        {/* Receipt details */}
-        <div className="mx-5 mb-5 rounded-xl border border-[#E8EBF2] bg-[#F8F9FF] overflow-hidden">
-          <div className="grid grid-cols-2 gap-0">
-            <div className="px-4 py-3 border-b border-[#E8EBF2]">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Receipt No</p>
-              <p className="text-[13px] font-semibold text-[#0B1C30] font-mono">{receiptNo}</p>
+        {/* DETAILS */}
+        <CardContent className="mx-5 mb-4 rounded-xl overflow-hidden text-[#0B1C30] p-0">
+
+          {/* Receipt + Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2">
+            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
+              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Receipt No</p>
+              <p className="text-sm font-bold font-mono group-hover:text-white">{receiptNo}</p>
             </div>
-            <div className="px-4 py-3 border-b border-l border-[#E8EBF2]">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Date</p>
-              <p className="text-[13px] font-semibold text-[#0B1C30]">{date}</p>
+
+            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
+              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Date</p>
+              <p className="text-sm font-bold group-hover:text-white">{date}</p>
             </div>
-            <div className="px-4 py-3 border-b border-[#E8EBF2]">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Student Details</p>
-              <p className="text-[13px] font-semibold text-[#0B1C30]">Ravi Kumar</p>
-              <p className="text-[11px] text-gray-400">Class: 10A</p>
+          </div>
+
+          {/* Student */}
+          <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
+            <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Student Details</p>
+            <p className="text-sm font-bold group-hover:text-white">
+              Ravi Kumar{" "}
+              <span className="text-gray-400 font-normal group-hover:text-white/70">Class: 10A</span>
+            </p>
+          </div>
+
+          {/* Fee Head */}
+          <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
+            <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Fee Head</p>
+            <p className="text-sm font-bold group-hover:text-white">{feeHead}</p>
+          </div>
+
+          {/* Mode + Amount */}
+          <div className="grid grid-cols-1 sm:grid-cols-2">
+            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
+              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Mode</p>
+              <p className="text-sm font-bold group-hover:text-white">{mode}</p>
             </div>
-            <div className="px-4 py-3 border-b border-l border-[#E8EBF2]">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Fee Head</p>
-              <p className="text-[13px] font-semibold text-[#0B1C30]">{feeHead}</p>
-            </div>
-            <div className="px-4 py-3">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Mode</p>
-              <p className="text-[13px] font-semibold text-[#0B1C30]">{mode}</p>
-            </div>
-            <div className="px-4 py-3 border-l border-[#E8EBF2]">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Amount</p>
-              <p className="text-[13px] font-semibold text-emerald-600">
+
+            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
+              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Amount</p>
+              <p className="text-sm font-bold text-emerald-600 group-hover:text-white">
                 Rs.{amount.toLocaleString("en-IN")}
               </p>
             </div>
           </div>
 
-          {/* WhatsApp note */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border-t border-[#E8EBF2]">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="7" cy="7" r="6.5" fill="#25D366" />
-              <path d="M9.5 8.5c-.3.5-1 1-1.5.9C6 9 5 8 4.6 6c-.1-.5.3-1.2.8-1.5.2-.1.5 0 .6.2l.5.9c.1.2 0 .4-.1.6l-.2.3c.2.5.7 1 1.2 1.2l.3-.2c.2-.1.4-.2.6-.1l.9.5c.2.1.3.4.3.6Z" fill="white" />
+          {/* WhatsApp */}
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="8" fill="#25D366" />
+              <path
+                d="M10.8 9.7c-.3.6-1.1 1.1-1.8 1C7 10.3 5.7 9 5.4 7c-.1-.7.4-1.5 1-1.8.3-.1.6 0 .7.2l.6 1.1c.1.2 0 .5-.2.7l-.3.3c.3.6.8 1.1 1.4 1.4l.3-.3c.2-.2.5-.3.7-.2l1.1.6c.3.1.3.4.1.7Z"
+                fill="white"
+              />
             </svg>
-            <p className="text-[12px] text-emerald-700">Receipt sent to +91 98765 43210 via WhatsApp</p>
-          </div>
-        </div>
 
-        {/* Actions */}
-        <div className="px-5 pb-6 flex flex-col gap-2">
-          <button
+            <p className="text-xs text-emerald-700">
+              Receipt sent to +91 98765 43210 via WhatsApp
+            </p>
+          </div>
+        </CardContent>
+
+        {/* ACTIONS */}
+        <CardContent className="px-5 pb-6 flex flex-col gap-2.5">
+
+          <Button
             onClick={onDownload}
-            className="w-full py-3 rounded-xl border border-[#E8EBF2] text-[13px] font-semibold text-[#3525CD] hover:bg-[#F5F4FF] transition-colors flex items-center justify-center gap-2"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 text-[#3525CD] border-[#E8EBF2] hover:bg-[#F5F4FF]"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1v8M4 6l3 3 3-3M1 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M7 1v8M4 6l3 3 3-3M1 12h12"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             Download Receipt PDF
-          </button>
-          <button
+          </Button>
+
+          <Button
             onClick={onBack}
-            className="w-full py-3 rounded-xl bg-[#3525CD] hover:bg-[#2a1db5] active:scale-[0.98] transition-all text-white text-[13px] font-bold"
+            className="w-full bg-[#3525CD] hover:bg-[#2a1db5] text-white"
           >
             Back to Fees
-          </button>
-        </div>
-      </div>
+          </Button>
+
+        </CardContent>
+
+      </Card>
     </div>
   );
 }

@@ -13,7 +13,7 @@ interface AttendanceStatsProps {
 
 export default function AttendanceStats({ onAbsentCardClick }: AttendanceStatsProps) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <StatCard label="THIS MONTH"       value="22 / 24"   unit="days" percent="91.7%" />
       <StatCard label="THIS YEAR"        value="182 / 198" unit="days" percent="91.9%" />
       <StatCard

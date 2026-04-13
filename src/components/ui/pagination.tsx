@@ -1,38 +1,63 @@
-import * as React from "react";
+
 import { cn } from "../../utils/cn";
+import { Button } from "./button";
 
-/* =========================
-   Menu Bar Root
-========================= */
-export const MenuBar = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-4 border-b bg-white px-4 py-2",
-        className,
-      )}
-      {...props}
-    />
-  );
-};
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+}
 
-/* =========================
-   Menu Item
-========================= */
-export const MenuItem = ({
+export const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
   className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+}: PaginationProps) => {
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
-    <button
-      className={cn(
-        "px-3 py-1.5 text-sm rounded-md hover:bg-gray-100 transition",
-        className,
-      )}
-      {...props}
-    />
+    <div className={cn("flex items-center justify-between px-4 py-3", className)}>
+      
+      <p className="text-sm text-gray-500">
+        Page <span className="font-semibold">{currentPage}</span> of{" "}
+        <span className="font-semibold">{totalPages}</span>
+      </p>
+
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          Prev
+        </Button>
+
+        {pages.map((page) => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`px-3 py-1 text-sm rounded-md border transition ${
+              page === currentPage
+                ? "bg-[#3525CD] text-white border-[#3525CD]"
+                : "bg-white hover:bg-gray-100 border-gray-200"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
   );
 };

@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 import { useOutletContext } from "react-router-dom";
 import { StatCard } from "../../../../components/ui/statcard";
 import { AttendanceWidget } from "../components/AttendanceWidge";
@@ -18,59 +20,65 @@ type ParentLayoutContext = {
 
 const DashboardPage = () => {
   const { activeChild } = useOutletContext<ParentLayoutContext>();
-
+  const navigate = useNavigate();
   const isPaid = activeChild.id === 2;
 
   const stats = isPaid
     ? [
-        {
-          label: "Today's Attendance",
-          badge: { text: "Present", variant: "green" as const },
-          sub: "7 April 2025",
-        },
-        {
-          label: "Fee Status",
-          badge: { text: "All Paid", variant: "green" as const },
-          sub: "April fees paid",
-        },
-        {
-          label: "Homework Due",
-          value: "2 assignments",
-          badge: { text: "Due today", variant: "amber" as const },
-        },
-        {
-          label: "Next Exam",
+      {
+        label: "Today's Attendance",
+        badge: { text: "Present", variant: "green" as const },
+        sub: "7 April 2025",
+        path: "/parent/attendance", // ✅ ADD
+      },
+      {
+        label: "Fee Status",
+        badge: { text: "All Paid", variant: "green" as const },
+        sub: "April fees paid",
+        path: "/parent/fees",
+      },
+      {
+        label: "Homework Due",
+        value: "2 assignments",
+        badge: { text: "Due today", variant: "amber" as const },
+        path: "/parent/homework",
+      },
+      {
+        label: "Next Exam",
         value: <span className="text-[#3525CD]">9 days</span>,
-          badge: { text: "Mathematics", variant: "blue" as const },
-          sub: "Unit Test",
-        },
-      ]
+        badge: { text: "Mathematics", variant: "blue" as const },
+        sub: "Unit Test",
+        path: "/parent/exams",
+      },
+    ]
     : [
-        {
-          label: "Today's Attendance",
-          badge: { text: "Present", variant: "green" as const },
-          sub: "7 April 2025",
-        },
-        {
-      
-          label: "Fee Status",
-          value: <span className="text-[#BA1A1A]">Rs.8,500 Pending</span>,
-          badge: { text: "Pending", variant: "red" as const },
-          sub: <span className="text-[#BA1A1A]">Tuition-Due 9 Apr</span>, // ✅ updated
-        },
-        {
-          label: "Homework Due",
-          value: "2 assignments",
-          badge: { text: "Pending submission", variant: "amber" as const },
-        },
-        {
-          label: "Next Exam",
-          value: "9 days",
-          badge: { text: "Mathematics", variant: "blue" as const },
-          sub: "Unit Test",
-        },
-      ];
-
+      {
+        label: "Today's Attendance",
+        badge: { text: "Present", variant: "green" as const },
+        sub: "7 April 2025",
+        path: "/parent/attendance",
+      },
+      {
+        label: "Fee Status",
+        value: <span className="text-[#BA1A1A]">Rs.8,500 Pending</span>,
+        badge: { text: "Pending", variant: "red" as const },
+        sub: <span className="text-[#BA1A1A]">Tuition-Due 9 Apr</span>,
+        path: "/parent/fees",
+      },
+      {
+        label: "Homework Due",
+        value: <span className="text-[#3525CD]">2 assignments</span>,
+        badge: { text: "Pending submission", variant: "amber" as const },
+        path: "/parent/homework",
+      },
+      {
+        label: "Next Exam",
+        value: <span className="text-[#3525CD]">9 days</span>,
+        badge: { text: "Mathematics", variant: "blue" as const },
+        sub: "Unit Test",
+        path: "/parent/exams",
+      },
+    ];
   return (
     <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
@@ -89,7 +97,13 @@ const DashboardPage = () => {
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((item, i) => (
-          <StatCard key={i} {...item} />
+          <div
+            key={i}
+            onClick={() => navigate(item.path)}
+            className="cursor-pointer hover:scale-[1.02] transition"
+          >
+            <StatCard {...item} />
+          </div>
         ))}
       </div>
 

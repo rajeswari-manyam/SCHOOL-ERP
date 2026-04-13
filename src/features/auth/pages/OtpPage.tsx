@@ -12,11 +12,7 @@ export default function OtpPage() {
 
     const phone: string = location.state?.phone ?? "";
 
-    if (!phone) {
-        navigate("/login");
-        return null;
-    }
-
+ 
     const handleVerified = () => {
         setAuth(
             { id: "phone-user", name: "Phone User", email: "", role: "parent" },
