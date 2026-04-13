@@ -1,2 +1,1 @@
-export * from "./useAttendance";
-export * from "./useRealtimeAttendance";
+export { useAttendance } from "./useAttendance";

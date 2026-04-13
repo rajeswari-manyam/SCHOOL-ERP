@@ -1,36 +1,41 @@
+export type Plan = "STARTER" | "GROWTH" | "PRO";
+export type SchoolStatus = "ACTIVE" | "TRIAL" | "SUSPENDED" | "EXPIRED";
+
 export interface School {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  address: string;
   city: string;
-  state: string;
-  country: string;
-  status: "active" | "suspended" | "pending";
-  subscriptionPlan: "basic" | "premium" | "enterprise";
-  subscriptionExpiry: string;
-  createdAt: string;
-  studentCount: number;
-  teacherCount: number;
-}
-
-export interface CreateSchoolInput {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  subscriptionPlan: "basic" | "premium" | "enterprise";
-}
-
-export interface UpdateSchoolInput extends Partial<CreateSchoolInput> {
-  status?: "active" | "suspended" | "pending";
+  plan: Plan;
+  status: SchoolStatus;
+  students: number;
+  subscriptionEnd: string; // ISO date string
+  lastActive: string;      // relative string e.g. "2 hours ago"
+  initials: string;
+  avatarColor: string;
 }
 
 export interface SchoolFilters {
-  status?: "active" | "suspended" | "pending";
-  search?: string;
+  search: string;
+  plan: Plan | "ALL";
+  status: SchoolStatus | "ALL";
+  city: string;
+  page: number;
+  pageSize: number;
+}
+
+export interface SchoolsResponse {
+  data: School[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface SchoolFormValues {
+  name: string;
+  city: string;
+  plan: Plan;
+  adminName: string;
+  adminEmail: string;
+  adminPhone: string;
+  subscriptionEnd: string;
 }

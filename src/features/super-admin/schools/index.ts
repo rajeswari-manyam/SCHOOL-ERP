@@ -1,5 +1,10 @@
 export { default as SchoolsPage } from "./SchoolsPage";
-export { default as SchoolDetailPage } from "./SchoolDetailPage";
-export * from "./types/school.types";
-export * from "./hooks/useSchools";
-export * from "./components";
+export { default as SchoolTable } from "./components/SchoolTable";
+export { default as SchoolFilterBar } from "./components/SchoolFilterBar";
+export { default as SchoolActionsMenu } from "./components/SchoolActionsMenu";
+export { default as SchoolAvatar } from "./components/SchoolAvatar";
+export { PlanBadge, StatusBadge } from "./components/SchoolBadges";
+export { default as SubscriptionEndCell } from "./components/SubscriptionEndCell";
+export { default as Pagination } from "./components/Pagination";
+export { useSchools, useSchoolMutations } from "./hooks/useSchools";
+export type { School, SchoolFilters, SchoolsResponse, SchoolFormValues } from "./types/school.types";
