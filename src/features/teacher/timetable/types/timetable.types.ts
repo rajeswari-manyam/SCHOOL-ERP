@@ -1,20 +1,36 @@
-export interface TimetableEntry {
+export type ClassColorKey = "indigo" | "violet" | "sky" | "emerald" | "amber" | "rose" | "slate";
+
+export interface TimetableCell {
+  subject: string;
+  class: string;
+  room: string;
+  colorKey: ClassColorKey;
+  isFree?: boolean;
+}
+
+export interface TimetablePeriod {
   id: string;
-  day: string; // e.g., Monday
-  period: string; // e.g., 1st, 2nd
-  subject: string;
-  className: string;
-  startTime: string;
-  endTime: string;
+  label: string;   // "P1"
+  time: string;    // "8:00 – 8:45"
 }
 
-export interface CreateTimetableEntryInput {
-  day: string;
-  period: string;
-  subject: string;
-  className: string;
-  startTime: string;
-  endTime: string;
+// [periodId][dayName] → cell or null
+export type WeeklyGrid = Record<string, Record<string, TimetableCell | null>>;
+
+export interface TimetableSummary {
+  totalPeriods: number;
+  teachingHours: number;
+  freePeriods: number;
+  classesTaught: number;
 }
 
-export interface UpdateTimetableEntryInput extends Partial<CreateTimetableEntryInput> {}
+export interface UpcomingExam {
+  id: string;
+  exam: string;
+  subject: string;
+  class: string;
+  date: string;       // ISO "YYYY-MM-DD"
+  time: string;
+  venue: string;
+  hallTicketUrl?: string;
+}

@@ -1,21 +1,46 @@
-import { api } from "../../../../config/axios";
-import type { AttendanceRecord, MarkAttendanceInput, UpdateAttendanceInput } from "../types/attendance.types";
+// teacher/attendance/api/attendance.api.ts
+import axios from "@/config/axios";
+import type {
+  TodayAttendance,
+  AttendanceHistoryEntry,
+  MarkAttendancePayload,
+  CorrectionRequestPayload,
+  CorrectionRequest,
+} from "../types/attendance.types";
 
-export const fetchAttendanceRecords = async (): Promise<AttendanceRecord[]> => {
-  const { data } = await api.get("/teacher/attendance");
-  return data;
-};
+export const attendanceApi = {
+  // ── Today ─────────────────────────────────────────────────────────────────
+  getToday: async (): Promise<TodayAttendance> => {
+    const { data } = await axios.get("/teacher/attendance/today");
+    return data;
+  },
 
-export const markAttendance = async (input: MarkAttendanceInput): Promise<AttendanceRecord> => {
-  const { data } = await api.post("/teacher/attendance", input);
-  return data;
-};
+  getStudents: async (): Promise<{ id: string; name: string; rollNo: string; waNumber: string }[]> => {
+    const { data } = await axios.get("/teacher/attendance/students");
+    return data;
+  },
 
-export const updateAttendance = async (id: string, input: UpdateAttendanceInput): Promise<AttendanceRecord> => {
-  const { data } = await api.put(`/teacher/attendance/${id}`, input);
-  return data;
-};
+  markViaWeb: async (payload: MarkAttendancePayload): Promise<void> => {
+    await axios.post("/teacher/attendance/mark", payload);
+  },
 
-export const deleteAttendance = async (id: string): Promise<void> => {
-  await api.delete(`/teacher/attendance/${id}`);
+  retryWaAlert: async (studentId: string): Promise<void> => {
+    await axios.post(`/teacher/attendance/alert/retry`, { studentId });
+  },
+
+  // ── History ────────────────────────────────────────────────────────────────
+  getMyHistory: async (): Promise<AttendanceHistoryEntry[]> => {
+    const { data } = await axios.get("/teacher/attendance/my-history");
+    return data;
+  },
+
+  // ── Correction ─────────────────────────────────────────────────────────────
+  submitCorrection: async (payload: CorrectionRequestPayload): Promise<void> => {
+    await axios.post("/teacher/attendance/correction", payload);
+  },
+
+  getMyCorrectionRequests: async (): Promise<CorrectionRequest[]> => {
+    const { data } = await axios.get("/teacher/attendance/corrections");
+    return data;
+  },
 };

@@ -23,11 +23,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
-<<<<<<< HEAD
              
-=======
             <Route path="/otp" element={<OtpPage />} />
->>>>>>> 6adc41d284a3b2813b4093f22412c5bb728c19f7
             <Route path="/parent/*" element={
               <ProtectedRoute role="parent"><ParentRouter /></ProtectedRoute>
             } />

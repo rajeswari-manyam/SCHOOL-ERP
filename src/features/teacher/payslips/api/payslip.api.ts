@@ -1,26 +1,44 @@
-import axios from "axios";
-import type { Payslip, CreatePayslipInput, UpdatePayslipInput } from "../types/payslip.types";
+import type { Payslip, AnnualSummary } from "../types/payslip.types";
 
-export const fetchPayslips = async (): Promise<Payslip[]> => {
-  const { data } = await axios.get("/teacher/payslips");
-  return data;
-};
+// In a real app these would be axios/fetch calls to your backend
+export const payslipApi = {
+  /** Fetch all payslips for the logged-in teacher */
+  getPayslips: async (): Promise<Payslip[]> => {
+    // const res = await axios.get("/api/teacher/payslips");
+    // return res.data;
+    return Promise.resolve([]);
+  },
 
-export const fetchPayslip = async (id: string): Promise<Payslip> => {
-  const { data } = await axios.get(`/teacher/payslips/${id}`);
-  return data;
-};
+  /** Fetch single payslip by id */
+  getPayslip: async (id: string): Promise<Payslip | null> => {
+    // const res = await axios.get(`/api/teacher/payslips/${id}`);
+    // return res.data;
+    void id;
+    return Promise.resolve(null);
+  },
 
-export const createPayslip = async (input: CreatePayslipInput): Promise<Payslip> => {
-  const { data } = await axios.post("/teacher/payslips", input);
-  return data;
-};
+  /** Download payslip PDF for a given month */
+  downloadPdf: async (payslipId: string): Promise<void> => {
+    // const res = await axios.get(`/api/teacher/payslips/${payslipId}/pdf`, { responseType: "blob" });
+    // triggerDownload(res.data, `payslip-${payslipId}.pdf`);
+    void payslipId;
+  },
 
-export const updatePayslip = async ({ id, input }: { id: string; input: UpdatePayslipInput }): Promise<Payslip> => {
-  const { data } = await axios.put(`/teacher/payslips/${id}`, input);
-  return data;
-};
+  /** Send payslip to teacher's WhatsApp */
+  sendToWhatsApp: async (payslipId: string): Promise<void> => {
+    // await axios.post(`/api/teacher/payslips/${payslipId}/whatsapp`);
+    void payslipId;
+  },
 
-export const deletePayslip = async (id: string): Promise<void> => {
-  await axios.delete(`/teacher/payslips/${id}`);
+  /** Download annual salary statement */
+  downloadAnnualStatement: async (year: number): Promise<void> => {
+    // const res = await axios.get(`/api/teacher/payslips/annual/${year}`, { responseType: "blob" });
+    void year;
+  },
+
+  /** Fetch annual summary */
+  getAnnualSummary: async (year: number): Promise<AnnualSummary | null> => {
+    void year;
+    return Promise.resolve(null);
+  },
 };

@@ -1,21 +1,21 @@
-// import { api } from "@/config/axios";
-// import type { TimetableEntry, CreateTimetableEntryInput, UpdateTimetableEntryInput } from "../types/timetable.types";
+import type { WeeklyGrid, UpcomingExam, TimetablePeriod } from "../types/timetable.types";
 
-// export const fetchTimetable = async (): Promise<TimetableEntry[]> => {
-//   const { data } = await api.get("/teacher/timetable");
-//   return data;
-// };
+// In a real app these would be axios/fetch calls to your backend.
+export const timetableApi = {
+  /** Fetch the teacher's weekly timetable grid */
+  getWeeklyGrid: async (_weekOffset: number): Promise<WeeklyGrid> => {
+    // const res = await axios.get(`/api/teacher/timetable?weekOffset=${weekOffset}`);
+    // return res.data;
+    return Promise.resolve({});
+  },
 
-// export const createTimetableEntry = async (input: CreateTimetableEntryInput): Promise<TimetableEntry> => {
-//   const { data } = await api.post("/teacher/timetable", input);
-//   return data;
-// };
+  /** Fetch period definitions for the school */
+  getPeriods: async (): Promise<TimetablePeriod[]> => {
+    return Promise.resolve([]);
+  },
 
-// export const updateTimetableEntry = async (id: string, input: UpdateTimetableEntryInput): Promise<TimetableEntry> => {
-//   const { data } = await api.put(`/teacher/timetable/${id}` , input);
-//   return data;
-// };
-
-// export const deleteTimetableEntry = async (id: string): Promise<void> => {
-//   await api.delete(`/teacher/timetable/${id}`);
-// };
+  /** Fetch upcoming examinations for teacher's classes */
+  getUpcomingExams: async (): Promise<UpcomingExam[]> => {
+    return Promise.resolve([]);
+  },
+};

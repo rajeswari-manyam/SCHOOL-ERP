@@ -1,4 +1,4 @@
-export { default } from "./pages/PayslipsPage";
+export { default } from "./PayslipPage";
 export * from "./types/payslip.types";
-export * from "./hooks/usePayslips";
-export * from "./components/PayslipTable";
+export * from "./hooks/usePayslip";
+export * from "./api/payslip.api";

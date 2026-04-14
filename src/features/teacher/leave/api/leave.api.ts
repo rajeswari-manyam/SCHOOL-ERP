@@ -1,21 +1,33 @@
-import { axios } from "@/config/axios";
-import { LeaveRequest, CreateLeaveRequestInput, UpdateLeaveRequestInput } from "../types/leave.types";
+import type { LeaveApplication, ApplyLeaveFormData, LeaveBalance } from "../types/leave.types";
 
-export const fetchLeaveRequests = async (): Promise<LeaveRequest[]> => {
-  const { data } = await axios.get("/teacher/leave");
-  return data;
-};
+export const leaveApi = {
+  /** Fetch teacher's leave balances */
+  getLeaveBalances: async (): Promise<LeaveBalance[]> => {
+    // const res = await axios.get("/api/teacher/leave/balances");
+    // return res.data;
+    return Promise.resolve([]);
+  },
 
-export const createLeaveRequest = async (input: CreateLeaveRequestInput): Promise<LeaveRequest> => {
-  const { data } = await axios.post("/teacher/leave", input);
-  return data;
-};
+  /** Fetch all leave applications for the teacher */
+  getLeaveHistory: async (): Promise<LeaveApplication[]> => {
+    // const res = await axios.get("/api/teacher/leave/applications");
+    // return res.data;
+    return Promise.resolve([]);
+  },
 
-export const updateLeaveRequest = async (id: string, input: UpdateLeaveRequestInput): Promise<LeaveRequest> => {
-  const { data } = await axios.put(`/teacher/leave/${id}` , input);
-  return data;
-};
+  /** Submit a new leave application */
+  applyLeave: async (form: ApplyLeaveFormData): Promise<LeaveApplication> => {
+    // const payload = new FormData();
+    // Object.entries(form).forEach(([k, v]) => v && payload.append(k, v));
+    // const res = await axios.post("/api/teacher/leave/apply", payload);
+    // return res.data;
+    void form;
+    return Promise.reject(new Error("Not implemented"));
+  },
 
-export const deleteLeaveRequest = async (id: string): Promise<void> => {
-  await axios.delete(`/teacher/leave/${id}`);
+  /** Cancel a pending leave application */
+  cancelLeave: async (id: string): Promise<void> => {
+    // await axios.patch(`/api/teacher/leave/${id}/cancel`);
+    void id;
+  },
 };

@@ -1,6 +1,8 @@
 import { format, parseISO } from "date-fns";
 import type { AuditLog } from "../types/audit-logs.types";
 import ActionBadge from "./ActionBadge";
+import { Table } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AuditLogsTableProps {
   logs: AuditLog[];
@@ -44,6 +46,7 @@ const AuditLogsTable = ({ logs, isLoading, onView }: AuditLogsTableProps) => {
 
   return (
     <div className="overflow-x-auto">
+     
       <table className="w-full min-w-[720px]">
         <thead>
           <tr className="border-b border-gray-100">
@@ -92,12 +95,12 @@ const AuditLogsTable = ({ logs, isLoading, onView }: AuditLogsTableProps) => {
 
               {/* View */}
               <td className="px-4 py-4">
-                <button
+                <Button
                   onClick={() => onView(log)}
                   className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
                 >
                   View
-                </button>
+                </Button>
               </td>
             </tr>
           ))}

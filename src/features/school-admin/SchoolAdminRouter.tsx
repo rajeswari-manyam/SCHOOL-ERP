@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 // import DashboardPage from "./dashboard/DashboardPage";
 import SchoolAdminLayout from "../../layouts/SchoolAdminLayout";
-import DashboardPage from "./dashboard/DashboardPage";
+import DashboardPage from "./dashboard/SchoolAdminDashboardPage";
 import AttendancePage from "./attendance/AttendancePage";
 export default function SchoolAdminRouter() {
   return (

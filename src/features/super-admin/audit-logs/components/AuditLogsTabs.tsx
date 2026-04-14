@@ -1,5 +1,6 @@
 import { cn } from "@/utils/cn";
 import type { AuditTab } from "../types/audit-logs.types";
+import { Button } from "@/components/ui/button";
 
 interface AuditLogsTabsProps {
   activeTab: AuditTab;
@@ -17,7 +18,7 @@ const AuditLogsTabs = ({ activeTab, onChange }: AuditLogsTabsProps) => (
     <span className="text-sm font-semibold text-gray-700 mr-2">Audit Logs</span>
     <span className="text-gray-300 mr-2">/</span>
     {TABS.map((tab) => (
-      <button
+      <Button
         key={tab.value}
         onClick={() => onChange(tab.value)}
         className={cn(
@@ -28,7 +29,7 @@ const AuditLogsTabs = ({ activeTab, onChange }: AuditLogsTabsProps) => (
         )}
       >
         {tab.label}
-      </button>
+      </Button>
     ))}
   </div>
 );

@@ -1,3 +1,3 @@
-export * from "./components/HomeworkTable";
-export * from "./components/HomeworkForm";
+export { default } from "./HomeworkPage";
+export * from "./types/homework.types";
 export * from "./hooks/useHomework";
