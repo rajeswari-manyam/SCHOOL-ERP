@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import type{ ReactNode } from "react";
+>>>>>>> 6adc41d284a3b2813b4093f22412c5bb728c19f7
 
 
 import { Outlet } from "react-router-dom";

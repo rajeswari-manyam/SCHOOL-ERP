@@ -78,6 +78,7 @@ const Sidebar = ({ items, className }: SidebarProps) => {
               {/* <div className="text-xs text-[#b0b8c1]">ACADEMIC MANAGEMENT</div> */}
             </div>
           </div>
+<<<<<<< HEAD
           <button
             type="button"
             className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
@@ -93,6 +94,21 @@ const Sidebar = ({ items, className }: SidebarProps) => {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+=======
+        </div>
+        {/* Navigation */}
+        <nav className="mt-6 flex flex-col gap-1">
+          {items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex items-center gap-3 px-6 py-3 rounded-lg font-medium transition",
+             pathname.startsWith(item.to)
+                  ? "bg-[#6c63ff] text-white"
+                  : "text-[#b0b8c1] hover:bg-[#2e3748] hover:text-white"
+              )}
+>>>>>>> 6adc41d284a3b2813b4093f22412c5bb728c19f7
             >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />

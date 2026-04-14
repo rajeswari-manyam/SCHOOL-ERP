@@ -1,17 +1,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FeeCreateInput } from "../types/fees.types";
 import { z } from "zod";
 
 const feeSchema = z.object({
   student: z.string().min(1),
-  amount: z.number().min(1),
+  amount: z.coerce.number().min(1),
   dueDate: z.string().min(1),
 });
-
+type FeeFormSchema = z.infer<typeof feeSchema>;
 type FeeFormProps = {
-  defaultValues?: Partial<FeeCreateInput>;
-  onSubmit: (values: FeeCreateInput) => void;
+ defaultValues?: Partial<FeeFormSchema>;
+  onSubmit: any;
   loading?: boolean;
 };
 
@@ -24,8 +23,8 @@ export const FeeForm = ({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FeeCreateInput>({
-    resolver: zodResolver(feeSchema),
+  } = useForm<FeeFormSchema>({
+  resolver: zodResolver(feeSchema) as any,
     defaultValues,
   });
 
@@ -43,7 +42,7 @@ export const FeeForm = ({
         <input
           type="number"
           step="0.01"
-          {...register("amount", { valueAsNumber: true })}
+        {...register("amount")}
           className="input"
         />
         {errors.amount && (

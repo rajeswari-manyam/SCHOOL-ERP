@@ -7,9 +7,9 @@ import {
 import { useState } from "react";
 import { FeeTable } from "./components/FeeTable";
 import { FeeForm } from "./components/FeeForm";
-
+import toast from "react-hot-toast";
 const FeesPage = () => {
-  const { data, isLoading } = useFees();
+  const { data } = useFees();
   const createFee = useCreateFee();
   const updateFee = useUpdateFee();
   const deleteFee = useDeleteFee();
@@ -21,21 +21,26 @@ const FeesPage = () => {
     setFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Delete this fee record?")) {
-      deleteFee.mutate(id);
-    }
-  };
-
-  const handleFormSubmit = (values: any) => {
-    if (editingId) {
-      updateFee.mutate({ id: editingId, input: values });
-    } else {
-      createFee.mutate(values);
-    }
-    setFormOpen(false);
-    setEditingId(null);
-  };
+const handleDelete = (id: string) => {
+  if (window.confirm("Delete this fee record?")) {
+    deleteFee.mutate(id, {
+      onSuccess: () => toast.success("Fee deleted"),
+    });
+  }
+};
+const handleFormSubmit = (values: any) => {
+  if (editingId) {
+    updateFee.mutate({ id: editingId, input: values }, {
+      onSuccess: () => toast.success("Fee updated"),
+    });
+  } else {
+    createFee.mutate(values, {
+      onSuccess: () => toast.success("Fee created"),
+    });
+  }
+  setFormOpen(false);
+  setEditingId(null);
+};
 
   return (
     <div className="space-y-8">
@@ -52,7 +57,7 @@ const FeesPage = () => {
         </button>
       </div>
       <FeeTable
-        fees={data?.records ?? []}
+    fees={data ?? []}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
@@ -65,11 +70,11 @@ const FeesPage = () => {
             <FeeForm
               defaultValues={
                 editingId
-                  ? data?.records.find((f: any) => f.id === editingId)
+                  ? data?.find((f: any) => f.id === editingId)
                   : {}
               }
               onSubmit={handleFormSubmit}
-              loading={createFee.isLoading || updateFee.isLoading}
+             loading={createFee.isPending || updateFee.isPending}
             />
             <button
               className="mt-4 px-3 py-1"

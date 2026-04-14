@@ -1,81 +1,37 @@
-import * as React from "react";
 import { cn } from "../../utils/cn";
 
-/* =========================
-   Types
-========================= */
-type ToastType = "default" | "success" | "error";
-
-interface ToastItem {
-  id: number;
-  title?: string;
-  description?: string;
-  type?: ToastType;
+export interface TabItem {
+  label: string;
+  value: string;
 }
 
-/* =========================
-   Context
-========================= */
-const ToastContext = React.createContext<{
-  toasts: ToastItem[];
-  addToast: (toast: Omit<ToastItem, "id">) => void;
-} | null>(null);
+export interface TabsProps {
+  items: TabItem[];
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}
 
-/* =========================
-   Provider
-========================= */
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  const [toasts, setToasts] = React.useState<ToastItem[]>([]);
-
-  const addToast = (toast: Omit<ToastItem, "id">) => {
-    const id = Date.now();
-
-    setToasts((prev) => [...prev, { ...toast, id }]);
-
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000); // auto remove
-  };
-
+export function Tabs({ items, value, onChange, className }: TabsProps) {
   return (
-    <ToastContext.Provider value={{ toasts, addToast }}>
-      {children}
-
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
-};
-
-/* =========================
-   Hook
-========================= */
-export const useToast = () => {
-  const ctx = React.useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used inside ToastProvider");
-  return ctx;
-};
-
-/* =========================
-   Toast UI
-========================= */
-const Toast = ({ title, description, type = "default" }: ToastItem) => {
-  const base = "w-72 rounded-md border p-4 shadow-md bg-white";
-
-  const variants = {
-    default: "border-gray-300",
-    success: "border-green-500",
-    error: "border-red-500",
-  };
-
-  return (
-    <div className={cn(base, variants[type])}>
-      {title && <p className="font-medium">{title}</p>}
-      {description && <p className="text-sm text-gray-600">{description}</p>}
+    <div className={cn("flex space-x-2 border-b border-gray-200", className)}>
+      {items.map((item) => {
+        const isActive = value === item.value;
+        return (
+          <button
+            key={item.value}
+            onClick={() => onChange(item.value)}
+            className={cn(
+              "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[1px]",
+              isActive
+                ? "border-[#3525CD] text-[#3525CD]"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            )}
+          >
+            {item.label}
+          </button>
+        );
+      })}
     </div>
   );
-};
+}

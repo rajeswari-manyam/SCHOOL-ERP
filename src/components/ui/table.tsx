@@ -7,24 +7,34 @@ import { cn } from "../../utils/cn";
 export const Table = ({
   className,
   ...props
-}: React.TableHTMLAttributes<HTMLTableElement>) => (
-  <div className="w-full overflow-auto">
-    <table
-      className={cn("w-full border-collapse text-sm", className)}
-      {...props}
-    />
-  </div>
-);
+}: React.TableHTMLAttributes<HTMLTableElement>) => {
+  return (
+    <div className="w-full overflow-x-auto">
+      <table
+        className={cn("w-full border-collapse text-sm", className)}
+        {...props}
+      />
+    </div>
+  );
+};
 
 /* =========================
-   Table Head
+   Table Header
 ========================= */
 export const TableHeader = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLTableSectionElement>) => (
-  <thead className={cn("bg-gray-100 text-gray-700", className)} {...props} />
-);
+}: React.HTMLAttributes<HTMLTableSectionElement>) => {
+  return (
+    <thead
+      className={cn(
+        "bg-[#F9FAFB] text-[#6B7280] border-b border-[#E5E7EB]",
+        className
+      )}
+      {...props}
+    />
+  );
+};
 
 /* =========================
    Table Body
@@ -32,39 +42,60 @@ export const TableHeader = ({
 export const TableBody = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLTableSectionElement>) => (
-  <tbody className={cn("", className)} {...props} />
-);
+}: React.HTMLAttributes<HTMLTableSectionElement>) => {
+  return <tbody className={cn("", className)} {...props} />;
+};
 
 /* =========================
-   Row
+   Table Row
 ========================= */
 export const TableRow = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLTableRowElement>) => (
-  <tr
-    className={cn("border-b hover:bg-gray-50 transition", className)}
-    {...props}
-  />
-);
+}: React.HTMLAttributes<HTMLTableRowElement>) => {
+  return (
+    <tr
+      className={cn(
+        "border-b border-[#F0F2F7] hover:bg-[#F9FAFF] transition-colors",
+        className
+      )}
+      {...props}
+    />
+  );
+};
 
 /* =========================
-   Head Cell
+   Table Head Cell
 ========================= */
 export const TableHead = ({
   className,
   ...props
-}: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-  <th className={cn("px-4 py-2 text-left font-medium", className)} {...props} />
-);
+}: React.ThHTMLAttributes<HTMLTableCellElement>) => {
+  return (
+    <th
+      className={cn(
+        "text-left align-top text-[11px] font-semibold uppercase tracking-wide px-4 py-3",
+        className
+      )}
+      {...props}
+    />
+  );
+};
 
 /* =========================
-   Cell
+   Table Cell
 ========================= */
 export const TableCell = ({
   className,
   ...props
-}: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-  <td className={cn("px-4 py-2", className)} {...props} />
-);
+}: React.TdHTMLAttributes<HTMLTableCellElement>) => {
+  return (
+    <td
+      className={cn(
+        "text-left align-top px-4 py-3 text-[#0B1C30]",
+        className
+      )}
+      {...props}
+    />
+  );
+};

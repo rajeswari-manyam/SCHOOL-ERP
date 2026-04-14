@@ -1,5 +1,5 @@
-import { Fee } from "../types/fees.types";
-
+import type { Fee } from "../types/fees.types";
+import { format } from "date-fns";
 interface FeeTableProps {
   fees: Fee[];
   onEdit: (id: string) => void;
@@ -23,9 +23,9 @@ export const FeeTable = ({ fees, onEdit, onDelete }: FeeTableProps) => (
         <tr key={fee.id}>
           <td>{fee.student}</td>
           <td>{fee.amount}</td>
-          <td>{fee.dueDate}</td>
+       <td>{format(new Date(fee.dueDate), "dd MMM yyyy")}</td>
           <td>{fee.status}</td>
-          <td>{fee.paidAt || "-"}</td>
+      <td>{fee.paidAt ? format(new Date(fee.paidAt), "dd MMM yyyy") : "-"}</td>
           <td>
             <button
               className="text-blue-600 mr-2"

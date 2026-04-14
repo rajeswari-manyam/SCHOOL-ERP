@@ -1,82 +1,143 @@
-import { StatCard } from "@/components/ui/statcard";
+import { useNavigate } from "react-router-dom";
+
+import { useOutletContext } from "react-router-dom";
+import { StatCard } from "../../../../components/ui/statcard";
 import { AttendanceWidget } from "../components/AttendanceWidge";
-import { AssignmentsList } from "../components/AssignmentsList";
+import { HomeworkCard } from "../components/HomeWorkCard";
 import { FeeStatusCard } from "../components/FeeStatusCard";
+import { AnnouncementCard } from "../components/AnnouncamentsCard";
 import { UpcomingExamsTable } from "../components/UpCommingExampleTimeTable";
-import { useDashboard } from "../hooks/usedashboard";
-import typography from "@/styles/typography";
+
+type ParentLayoutContext = {
+  activeChild: {
+    id: number
+    name: string
+    class: string
+    school: string
+    avatar: string
+  }
+}
 
 const DashboardPage = () => {
-  const { stats } = useDashboard();
+  const { activeChild } = useOutletContext<ParentLayoutContext>();
+  const navigate = useNavigate();
+  const isPaid = activeChild.id === 2;
 
+  const stats = isPaid
+    ? [
+      {
+        label: "Today's Attendance",
+        badge: { text: "Present", variant: "green" as const },
+        sub: "7 April 2025",
+        path: "/parent/attendance", // ✅ ADD
+      },
+      {
+        label: "Fee Status",
+        badge: { text: "All Paid", variant: "green" as const },
+        sub: "April fees paid",
+        path: "/parent/fees",
+      },
+      {
+        label: "Homework Due",
+        value: "2 assignments",
+        badge: { text: "Due today", variant: "amber" as const },
+        path: "/parent/homework",
+      },
+      {
+        label: "Next Exam",
+        value: <span className="text-[#3525CD]">9 days</span>,
+        badge: { text: "Mathematics", variant: "blue" as const },
+        sub: "Unit Test",
+        path: "/parent/exams",
+      },
+    ]
+    : [
+      {
+        label: "Today's Attendance",
+        badge: { text: "Present", variant: "green" as const },
+        sub: "7 April 2025",
+        path: "/parent/attendance",
+      },
+      {
+        label: "Fee Status",
+        value: <span className="text-[#BA1A1A]">Rs.8,500 Pending</span>,
+        badge: { text: "Pending", variant: "red" as const },
+        sub: <span className="text-[#BA1A1A]">Tuition-Due 9 Apr</span>,
+        path: "/parent/fees",
+      },
+      {
+        label: "Homework Due",
+        value: <span className="text-[#3525CD]">2 assignments</span>,
+        badge: { text: "Pending submission", variant: "amber" as const },
+        path: "/parent/homework",
+      },
+      {
+        label: "Next Exam",
+        value: <span className="text-[#3525CD]">9 days</span>,
+        badge: { text: "Mathematics", variant: "blue" as const },
+        sub: "Unit Test",
+        path: "/parent/exams",
+      },
+    ];
   return (
-    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex flex-col gap-6 sm:gap-8">
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
-      {/* 🔹 Welcome Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* ── Welcome Banner — shown for BOTH children ── */}
+      <div className="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className={`${typography.heading.h5} text-[#0B1C30]`}>
+          <h1 className="text-[20px] font-bold text-white leading-tight">
             Welcome, Suresh Kumar
           </h1>
-          <p className={`${typography.body.xs} text-gray-400`}>
-            Ravi Kumar · Class 10A · Hanamkonda Public School
+          <p className="text-white/75 text-[13px] mt-1">
+            {activeChild.name} · Class {activeChild.class} · {activeChild.school}
           </p>
         </div>
-
-        <button
-          className={`${typography.form.helper} text-[#3525CD] border border-[#3525CD] px-3 py-1.5 rounded-md w-fit`}
-        >
-          ⇄ Switch Child
-        </button>
       </div>
 
-      {/* 🔹 Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hover:cursor-pointer">
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((item, i) => (
-          <StatCard key={i} {...item} />
+          <div
+            key={i}
+            onClick={() => navigate(item.path)}
+            className="cursor-pointer hover:scale-[1.02] transition"
+          >
+            <StatCard {...item} />
+          </div>
         ))}
       </div>
 
-      {/* 🔹 Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 hover:shadow-lg hover:scale-[1.02]">
+      {/* ── Main Content ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* LEFT */}
+        {/* Left: Attendance + Homework */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <AttendanceWidget />
-          <AssignmentsList />
+          <HomeworkCard variant={isPaid ? "simple" : "card"} />
         </div>
 
-        {/* RIGHT */}
+        {/* Right: Fee Status + Announcement */}
         <div className="flex flex-col gap-4">
-          <FeeStatusCard />
-
-          {/* Announcement */}
-          <div className="bg-white border border-[#E8EBF2] rounded-xl p-4">
-            <span className={`${typography.body.xs} bg-[#EEF0FF] text-[#3525CD] font-semibold px-2 py-1 rounded inline-block mb-2`}>
-              ⭐ Latest Announcement
-            </span>
-
-            <p className={`${typography.form.label} text-[#0B1C30] mb-1`}>
-              School Sports Day 2025
-            </p>
-
-            <p className={`${typography.form.helper} text-gray-500 leading-relaxed`}>
-              The Annual School Sports Day is scheduled for the last Saturday of April.
-              Students interested in track and field events are requested to submit
-              their names by April 14.
-            </p>
-
-            <span className={`${typography.form.helper} text-[#3525CD] mt-2 block cursor-pointer`}>
-              View All Announcements →
-            </span>
-          </div>
+          <FeeStatusCard isPaid={isPaid} />
+          <AnnouncementCard
+            variant={isPaid ? "announcements" : "latest"}
+            title={isPaid ? "Summer Vacation Schedule" : "School Sports Day 2025"}
+            description={
+              isPaid
+                ? "The school will remain closed for summer break from May 15th to June 20th. Assignments are available in the Academic section."
+                : "The Annual School Sports Day is scheduled for the last Saturday of April. Students interested in track and field events are requested to submit their names by April 14."
+            }
+            tag={isPaid ? "Administrative" : "Latest Announcement"}
+            postedAt={isPaid ? "Posted 2 hours ago" : undefined}
+          />
         </div>
       </div>
 
-      {/* 🔹 Upcoming Exams */}
+      {/* ── Upcoming Exams ── */}
       <div className="w-full overflow-x-auto">
         <UpcomingExamsTable />
       </div>
+
     </div>
   );
 };

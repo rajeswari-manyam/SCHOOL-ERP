@@ -12,35 +12,40 @@ import StudentRouter from "./features/student/StudentRouter";
 import SchoolAdminRouter from "./features/school-admin/SchoolAdminRouter";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./features/auth/pages/LoginPage";
+import OtpPage from "./features/auth/pages/OtpPage";
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Toaster />
+      <Toaster position="top-right" />
         <Suspense fallback={<div>Loading...</div>}>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
+<<<<<<< HEAD
              
+=======
+            <Route path="/otp" element={<OtpPage />} />
+>>>>>>> 6adc41d284a3b2813b4093f22412c5bb728c19f7
             <Route path="/parent/*" element={
               <ProtectedRoute role="parent"><ParentRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/teacher/*" element={
               <ProtectedRoute role="teacher"><TeacherRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/superadmin/*" element={
               <ProtectedRoute role="superadmin"><SuperAdminRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/schooladmin/*" element={
               <ProtectedRoute role="schooladmin"><SchoolAdminRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/accountant/*" element={
               <ProtectedRoute role="accountant"><AccountantRouter /></ProtectedRoute>
-            }/>
+            } />
             <Route path="/student/*" element={
               <ProtectedRoute role="student"><StudentRouter /></ProtectedRoute>
-            }/>
+            } />
 
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
