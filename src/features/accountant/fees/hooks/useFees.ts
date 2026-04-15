@@ -1,38 +1,35 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchFees, createFee, updateFee, deleteFee } from "../api/fees.api";
-import { FeeCreateInput, FeeUpdateInput } from "../types/fees.types";
+import { useState } from "react";
+import type { FeeRow, Transaction } from "../types/fees.types";
 
-export const useFees = () => {
-  return useQuery({
-    queryKey: ["accountant-fees"],
-    queryFn: fetchFees,
-  });
-};
+export const useFeeData = () => {
+  const [fees] = useState<FeeRow[]>([
+    {
+      id: "1",
+      student: "Rahul",
+      className: "10A",
+      amount: 2000,
+      dueDate: "2026-04-10",
+      status: "Overdue",
+    },
+    {
+      id: "2",
+      student: "Anjali",
+      className: "9B",
+      amount: 1500,
+      dueDate: "2026-04-20",
+      status: "Pending",
+    },
+  ]);
 
-export const useCreateFee = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createFee,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-fees"] }),
-  });
-};
+  const [transactions] = useState<Transaction[]>([
+    {
+      id: "1",
+      date: "2026-04-12",
+      student: "Rahul",
+      amount: 2000,
+      mode: "UPI",
+    },
+  ]);
 
-export const useUpdateFee = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: FeeUpdateInput }) =>
-      updateFee(id, input),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-fees"] }),
-  });
-};
-
-export const useDeleteFee = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteFee,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-fees"] }),
-  });
+  return { fees, transactions };
 };

@@ -1,43 +1,27 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  fetchReports,
-  createReport,
-  updateReport,
-  deleteReport,
-} from "../api/reports.api";
-import { ReportCreateInput, ReportUpdateInput } from "../types/reports.types";
+import { useState } from "react";
+import type{ Report } from "../types/reports.types";
 
 export const useReports = () => {
-  return useQuery({
-    queryKey: ["accountant-reports"],
-    queryFn: fetchReports,
-  });
-};
+  const [reports, setReports] = useState<Report[]>([
+    {
+      id: "1",
+      name: "Monthly Fee Collection",
+      type: "monthly",
+      generatedAt: "2026-04-14",
+      format: "PDF",
+    },
+  ]);
 
-export const useCreateReport = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createReport,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-reports"] }),
-  });
-};
+  const generateReport = (name: string) => {
+    const newReport: Report = {
+      id: Date.now().toString(),
+      name,
+      type: "monthly",
+      generatedAt: new Date().toISOString(),
+      format: "PDF",
+    };
+    setReports((prev) => [newReport, ...prev]);
+  };
 
-export const useUpdateReport = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: ReportUpdateInput }) =>
-      updateReport(id, input),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-reports"] }),
-  });
-};
-
-export const useDeleteReport = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteReport,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-reports"] }),
-  });
+  return { reports, generateReport };
 };

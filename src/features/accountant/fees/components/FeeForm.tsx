@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
 
 const feeSchema = z.object({
   student: z.string().min(1),
@@ -56,9 +57,9 @@ export const FeeForm = ({
           <span className="text-red-600">{errors.dueDate.message}</span>
         )}
       </div>
-      <button type="submit" className="btn btn-primary" disabled={loading}>
+      <Button type="submit" className="btn btn-primary" disabled={loading}>
         Submit
-      </button>
+      </Button>
     </form>
   );
 };

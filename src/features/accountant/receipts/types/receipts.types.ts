@@ -1,19 +1,13 @@
-export interface Receipt {
+export type PaymentMode = "UPI" | "Cash" | "Cheque";
+
+export type Receipt = {
   id: string;
-  studentId: string;
-  studentName: string;
-  amount: number;
+  receiptNo: string;
   date: string;
-  paymentMethod: string;
-  description?: string;
-}
-
-export interface CreateReceiptInput {
-  studentId: string;
+  student: string;
+  className: string;
+  feeHead: string;
   amount: number;
-  date: string;
-  paymentMethod: string;
-  description?: string;
-}
-
-export interface UpdateReceiptInput extends Partial<CreateReceiptInput> {}
+  mode: PaymentMode;
+  sentToParent: boolean;
+};

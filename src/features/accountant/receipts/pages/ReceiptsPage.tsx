@@ -1,75 +1,91 @@
 import { useState } from "react";
 import {
-  useReceipts,
-  useCreateReceipt,
-  useUpdateReceipt,
-  useDeleteReceipt,
-} from "../hooks/useReceipts";
-import { ReceiptTable } from "../components/ReceiptTable";
-import { ReceiptForm } from "../components/ReceiptForm";
-import { CreateReceiptInput } from "../types/receipts.types";
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+
+import { ReceiptFilters } from "../components/ReceptFilter";
+import { ReceiptDetailModal } from "../components/ReceiptDetailModal";
+import { useReceipts } from "../hooks/useReceipts";
+import { formatCurrency } from "../utils/recept.utils";
 
 export default function ReceiptsPage() {
-  const { data: receipts = [], isLoading } = useReceipts();
-  const createReceipt = useCreateReceipt();
-  const updateReceipt = useUpdateReceipt();
-  const deleteReceipt = useDeleteReceipt();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
-
-  const handleEdit = (id: string) => {
-    setEditingId(id);
-    setFormOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm("Delete this receipt?")) {
-      deleteReceipt.mutate(id);
-    }
-  };
-
-  const handleFormSubmit = (values: CreateReceiptInput) => {
-    if (editingId) {
-      updateReceipt.mutate({ id: editingId, input: values });
-    } else {
-      createReceipt.mutate(values);
-    }
-    setFormOpen(false);
-    setEditingId(null);
-  };
-
-  const editingReceipt = receipts.find((r) => r.id === editingId);
+  const { data } = useReceipts();
+  const [selected, setSelected] = useState<any>(null);
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Receipts</h1>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setFormOpen(true);
-            setEditingId(null);
-          }}
-        >
-          New Receipt
-        </button>
-      </div>
-      {formOpen && (
-        <div className="mb-6">
-          <ReceiptForm
-            defaultValues={editingReceipt}
-            onSubmit={handleFormSubmit}
-            loading={createReceipt.isLoading || updateReceipt.isLoading}
-          />
-        </div>
-      )}
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <ReceiptTable
-          receipts={receipts}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+    <div className="space-y-6">
+
+      {/* Filters */}
+      <ReceiptFilters />
+
+      {/* Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Receipts</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Receipt No</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Student</TableHead>
+                <TableHead>Class</TableHead>
+                <TableHead>Fee Head</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Mode</TableHead>
+                <TableHead>Sent</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {data.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{r.receiptNo}</TableCell>
+                  <TableCell>{r.date}</TableCell>
+                  <TableCell>{r.student}</TableCell>
+                  <TableCell>{r.className}</TableCell>
+                  <TableCell>{r.feeHead}</TableCell>
+                  <TableCell>{formatCurrency(r.amount)}</TableCell>
+                  <TableCell>{r.mode}</TableCell>
+                  <TableCell>
+                    {r.sentToParent ? "Yes" : "No"}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      onClick={() => setSelected(r)}
+                    >
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Modal */}
+      {selected && (
+        <ReceiptDetailModal
+          receipt={selected}
+          onClose={() => setSelected(null)}
         />
       )}
     </div>

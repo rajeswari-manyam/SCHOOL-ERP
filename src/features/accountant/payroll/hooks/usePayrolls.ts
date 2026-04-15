@@ -1,43 +1,26 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  fetchPayrolls,
-  createPayroll,
-  updatePayroll,
-  deletePayroll,
-} from "../api/payroll.api";
-import { CreatePayrollInput, UpdatePayrollInput } from "../types/payroll.types";
+import { useState } from "react";
+import type { StaffPayroll } from "../types/payroll.types";
 
-export const usePayrolls = () => {
-  return useQuery({
-    queryKey: ["accountant-payrolls"],
-    queryFn: fetchPayrolls,
-  });
-};
+export const usePayroll = () => {
+  const [data, setData] = useState<StaffPayroll[]>([
+    {
+      id: "1",
+      name: "Ramesh",
+      role: "Teacher",
+      present: 24,
+      absent: 2,
+      gross: 30000,
+      deductions: 2000,
+      net: 28000,
+      status: "Pending",
+    },
+  ]);
 
-export const useCreatePayroll = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createPayroll,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-payrolls"] }),
-  });
-};
+  const processPayroll = () => {
+    setData((prev) =>
+      prev.map((s) => ({ ...s, status: "Processed" }))
+    );
+  };
 
-export const useUpdatePayroll = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpdatePayrollInput }) =>
-      updatePayroll(id, input),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-payrolls"] }),
-  });
-};
-
-export const useDeletePayroll = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deletePayroll,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["accountant-payrolls"] }),
-  });
+  return { data, processPayroll };
 };

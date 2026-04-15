@@ -1,26 +1,63 @@
 // src/features/auth/pages/OtpPage.tsx
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { Shield } from "lucide-react";
 import { OtpInput } from "../components/OtpInput";
 import { RoleBrandingPanel } from "../components/RoleBrandingPanel";
 import { useAuthStore } from "../../../store/authStore";
-
+const PHONE_ROLE_MAP: Record<string, string> = {
+  "9000000001": "superadmin",
+  "9000000002": "schooladmin",
+  "9000000003": "teacher",
+  "9000000004": "accountant",
+  "9000000005": "parent",
+  "9000000006": "student",
+};
 export default function OtpPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const setAuth = useAuthStore((s) => s.setAuth);
 
     const phone: string = location.state?.phone ?? "";
-
+const roleRedirect = (role?: string): string => {
+  switch (role) {
+    case "superadmin": return "/superadmin/dashboard";
+    case "schooladmin": return "/schooladmin/dashboard";
+    case "accountant": return "/accountant/dashboard";
+    case "teacher": return "/teacher/dashboard";
+    case "student": return "/student/dashboard";
+    case "parent": return "/parent/dashboard";
+    default: return "/login";
+  }
+};
  
-    const handleVerified = () => {
-        setAuth(
-            { id: "phone-user", name: "Phone User", email: "", role: "parent" },
-            "dummy-token"
-        );
-        navigate("/parent/dashboard");
-    };
+const handleVerified = () => {
+  const cleanedPhone = phone.replace(/\D/g, "").slice(-10);
 
+  console.log("Cleaned:", cleanedPhone);
+
+  const role = PHONE_ROLE_MAP[cleanedPhone];
+
+  console.log("Role:", role);
+
+  if (!role) {
+    console.log("No role found for phone:", cleanedPhone);
+    navigate("/login");
+    return;
+  }
+
+  setAuth(
+    {
+      id: "phone-user",
+      name: "Phone User",
+      phone: cleanedPhone,
+      role: role,
+    },
+    "dummy-token"
+  );
+
+  navigate(roleRedirect(role), { replace: true });
+};
     return (
         <div className="min-h-screen flex flex-col lg:flex-row bg-white">
 

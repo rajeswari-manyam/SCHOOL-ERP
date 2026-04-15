@@ -52,7 +52,9 @@ export function ComplaintSubmittedCard({ complaint, onClose }: Props) {
           Expected response within 48 hours
         </p>
       </div>
-
+<p className="text-[12px] text-gray-400">
+  Submitted on {submittedDate}
+</p>
       {/* REFERENCE */}
       <div className="bg-[#EEF2FF] rounded-xl px-6 py-3">
         <p className="text-[14px] font-bold text-[#3525CD]">

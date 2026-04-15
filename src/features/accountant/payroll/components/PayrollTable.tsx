@@ -1,49 +1,67 @@
-import { Payroll } from "../types/payroll.types";
-
-interface PayrollTableProps {
-  payrolls: Payroll[];
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-}
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import type{ StaffPayroll } from "../types/payroll.types";
 
 export const PayrollTable = ({
-  payrolls,
-  onEdit,
-  onDelete,
-}: PayrollTableProps) => (
-  <table className="min-w-full bg-white">
-    <thead>
-      <tr>
-        <th>Month</th>
-        <th>Staff</th>
-        <th>Base Salary</th>
-        <th>Allowances</th>
-        <th>Deductions</th>
-        <th>Net Pay</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {payrolls.map((p) => (
-        <tr key={p.id}>
-          <td>{p.month}</td>
-          <td>{p.staffName}</td>
-          <td>{p.baseSalary}</td>
-          <td>{p.allowances}</td>
-          <td>{p.deductions}</td>
-          <td>{p.netPay}</td>
-          <td>{p.status}</td>
-          <td>
-            <button className="text-blue-600 mr-2" onClick={() => onEdit(p.id)}>
-              Edit
-            </button>
-            <button className="text-red-600" onClick={() => onDelete(p.id)}>
-              Delete
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-);
+  data,
+  onProcess,
+}: {
+  data: StaffPayroll[];
+  onProcess: () => void;
+}) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Present</TableHead>
+          <TableHead>Absent</TableHead>
+          <TableHead>Gross</TableHead>
+          <TableHead>Deductions</TableHead>
+          <TableHead>Net</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Actions</TableHead> {/* ✅ add column */}
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        {data.map((row) => (
+          <TableRow key={row.id}>
+            <TableCell>{row.name}</TableCell>
+            <TableCell>{row.role}</TableCell>
+            <TableCell>{row.present}</TableCell>
+            <TableCell>{row.absent}</TableCell>
+            <TableCell>{row.gross}</TableCell>
+            <TableCell>{row.deductions}</TableCell>
+            <TableCell>{row.net}</TableCell>
+            <TableCell>
+              {row.status === "Processed" ? (
+                <span className="text-green-600">Processed</span>
+              ) : (
+                <span className="text-amber-600">Pending</span>
+              )}
+            </TableCell>
+
+            {/* ✅ Action button */}
+            <TableCell>
+              {row.status === "Pending" && (
+                <Button size="sm" onClick={onProcess}>
+                  Process
+                </Button>
+              )}
+            </TableCell>
+
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};

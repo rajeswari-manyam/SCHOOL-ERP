@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import SchoolAdminLayout from "../../layouts/SchoolAdminLayout";
 import DashboardPage from "./dashboard/SchoolAdminDashboardPage";
 import AttendancePage from "./attendance/AttendancePage";
+import TimetablePage from "./timetable/TimetablePage";
+
 export default function SchoolAdminRouter() {
   return (
      <Routes>
@@ -42,7 +44,7 @@ export default function SchoolAdminRouter() {
          <Route
           path="timetable"
           element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
+           <TimetablePage/>
           }
         />
          <Route

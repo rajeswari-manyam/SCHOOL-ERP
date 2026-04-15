@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { AuditLogsFilters, AuditAction } from "../types/audit-logs.types";
 import { ACTION_OPTIONS } from "./ActionBadge";
 import { Input } from "@/components/ui/input";

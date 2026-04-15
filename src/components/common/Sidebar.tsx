@@ -1,9 +1,11 @@
-﻿import { useEffect } from "react";
+﻿import { useState,useEffect,useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/utils/cn";
 import { useUIStore } from "@/store/uiStore";
 import type { NavItem } from "@/types/NavItem.types";
 
+import { useNavigate } from "react-router-dom";
+import { FaSignOutAlt, FaCog } from "react-icons/fa";
 interface SidebarProps {
   items: NavItem[];
   className?: string;
@@ -13,7 +15,20 @@ const Sidebar = ({ items, className }: SidebarProps) => {
   const { pathname } = useLocation();
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
+const [openMenu, setOpenMenu] = useState(false);
+const menuRef = useRef<HTMLDivElement | null>(null);
+const navigate = useNavigate();
 
+useEffect(() => {
+  const handleClick = (e: MouseEvent) => {
+    if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      setOpenMenu(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClick);
+  return () => document.removeEventListener("mousedown", handleClick);
+}, []);
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
     const handleResize = (event: MediaQueryListEvent) => {
@@ -29,7 +44,10 @@ const Sidebar = ({ items, className }: SidebarProps) => {
     media.addEventListener("change", handleResize);
     return () => media.removeEventListener("change", handleResize);
   }, [sidebarOpen, setSidebarOpen]);
-
+const handleLogout = () => {
+  localStorage.clear();
+  navigate("/login", { replace: true });
+};
   return (
     <>
       <button
@@ -99,6 +117,7 @@ const Sidebar = ({ items, className }: SidebarProps) => {
             </svg>
           </button>
         </div>
+       
 
         <nav className=" flex flex-col  px-0">
           {items.map((item) => {
@@ -123,22 +142,49 @@ const Sidebar = ({ items, className }: SidebarProps) => {
           })}
         </nav>
 
-        <div className="mt-auto px-6 pb-6">
-          {/* <button className="w-full bg-[#25d366] text-white py-3 rounded-xl font-semibold mb-6 flex items-center justify-center gap-2">
-            <span className="text-xl">💬</span> WhatsApp Support
-          </button> */}
-          <div className="flex items-center gap-3">
-            <img
-              src="/path/to/profile.jpg"
-              alt="Profile"
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div>
-              <div className="font-semibold">Ramesh Kumar</div>
-              <div className="text-xs text-[#b0b8c1]">Administrator</div>
-            </div>
-          </div>
-        </div>
+        <div ref={menuRef} className="mt-auto px-6 pb-6 relative">
+
+  {/* Profile */}
+  <div
+    onClick={() => setOpenMenu(!openMenu)}
+    className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-[#2e3748]"
+  >
+    <img
+      src="/path/to/profile.jpg"
+      alt="Profile"
+      className="w-10 h-10 rounded-full object-cover"
+    />
+    <div>
+      <div className="font-semibold">Ramesh Kumar</div>
+      <div className="text-xs text-[#b0b8c1]">Administrator</div>
+    </div>
+  </div>
+
+  {/* Dropdown */}
+  {openMenu && (
+    <div className="absolute bottom-16 left-6 right-6 bg-white text-black rounded-xl shadow-lg overflow-hidden z-50">
+
+      {/* Settings */}
+      <button
+        onClick={() => navigate("/accountant/settings")}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100"
+      >
+        <FaCog />
+        Settings
+      </button>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 text-red-600"
+      >
+        <FaSignOutAlt />
+        Logout
+      </button>
+
+    </div>
+  )}
+</div>
       </aside>
     </>
   );

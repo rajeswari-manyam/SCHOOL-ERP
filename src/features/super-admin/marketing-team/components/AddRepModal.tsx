@@ -9,8 +9,8 @@ const schema = z.object({
   territory: z.string().min(2, "Territory required"),
   phone: z.string().min(10, "Valid phone required"),
   email: z.string().email("Valid email required"),
-  perClosingRate: z.coerce.number().min(0),
-  monthTarget: z.coerce.number().min(1),
+perClosingRate: z.number().min(0),
+monthTarget: z.number().min(1),
 });
 
 type FormValues = z.infer<typeof schema>;

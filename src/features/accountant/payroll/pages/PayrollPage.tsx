@@ -1,75 +1,71 @@
 import { useState } from "react";
-import {
-  usePayrolls,
-  useCreatePayroll,
-  useUpdatePayroll,
-  useDeletePayroll,
-} from "../hooks/usePayrolls";
+import { Tabs } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+import { usePayroll } from "../hooks/usePayrolls";
 import { PayrollTable } from "../components/PayrollTable";
-import { PayrollForm } from "../components/PayrollForm";
-import { CreatePayrollInput } from "../types/payroll.types";
+import { ProcessPayrollModal } from "../components/PayrollModal";
 
 export default function PayrollPage() {
-  const { data: payrolls = [], isLoading } = usePayrolls();
-  const createPayroll = useCreatePayroll();
-  const updatePayroll = useUpdatePayroll();
-  const deletePayroll = useDeletePayroll();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
+  const [tab, setTab] = useState("monthly");
+  const [open, setOpen] = useState(false);
 
-  const handleEdit = (id: string) => {
-    setEditingId(id);
-    setFormOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm("Delete this payroll record?")) {
-      deletePayroll.mutate(id);
-    }
-  };
-
-  const handleFormSubmit = (values: CreatePayrollInput) => {
-    if (editingId) {
-      updatePayroll.mutate({ id: editingId, input: values });
-    } else {
-      createPayroll.mutate(values);
-    }
-    setFormOpen(false);
-    setEditingId(null);
-  };
-
-  const editingPayroll = payrolls.find((p) => p.id === editingId);
+  const { data, processPayroll } = usePayroll();
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Payroll</h1>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setFormOpen(true);
-            setEditingId(null);
-          }}
-        >
-          New Payroll
-        </button>
-      </div>
-      {formOpen && (
-        <div className="mb-6">
-          <PayrollForm
-            defaultValues={editingPayroll}
-            onSubmit={handleFormSubmit}
-            loading={createPayroll.isLoading || updatePayroll.isLoading}
-          />
-        </div>
+    <div className="space-y-6">
+
+      {/* Tabs */}
+      <Tabs
+        items={[
+          { label: "Monthly Payroll", value: "monthly" },
+          { label: "Salary Config", value: "config" },
+          { label: "Payroll History", value: "history" },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+
+      {/* Monthly Payroll */}
+      {tab === "monthly" && (
+        <>
+          {/* Banner */}
+          <div className="p-3 rounded bg-amber-100 text-amber-700">
+            Payroll not processed
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <Button onClick={() => setOpen(true)}>
+              Process Payroll
+            </Button>
+          </div>
+
+          {/* Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Staff Payroll</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PayrollTable data={data} onProcess={() => setOpen(true)} />
+            </CardContent>
+          </Card>
+        </>
       )}
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <PayrollTable
-          payrolls={payrolls}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+
+      {/* Other Tabs */}
+      {tab === "config" && <div>Salary Config Form</div>}
+      {tab === "history" && <div>Payroll History Table</div>}
+
+      {/* Modal */}
+      {open && (
+        <ProcessPayrollModal
+          onClose={() => setOpen(false)}
+          onSubmit={() => {
+            processPayroll();
+            setOpen(false);
+          }}
         />
       )}
     </div>

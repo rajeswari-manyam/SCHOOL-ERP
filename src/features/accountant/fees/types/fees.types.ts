@@ -1,16 +1,18 @@
-export interface Fee {
+export type FeeStatus = "Paid" | "Pending" | "Overdue";
+
+export type FeeRow = {
   id: string;
   student: string;
+  className: string;
   amount: number;
   dueDate: string;
-  status: "pending" | "paid";
-  paidAt?: string;
-}
+  status: FeeStatus;
+};
 
-export interface FeeCreateInput {
+export type Transaction = {
+  id: string;
+  date: string;
   student: string;
   amount: number;
-  dueDate: string;
-}
-
-export interface FeeUpdateInput extends Partial<FeeCreateInput> {}
+  mode: "UPI" | "Cash" | "Cheque";
+};

@@ -1,16 +1,15 @@
-export interface Report {
+export type ReportType =
+  | "monthly"
+  | "defaulters"
+  | "reconciliation"
+  | "annual"
+  | "payroll"
+  | "ledger";
+
+export type Report = {
   id: string;
-  title: string;
-  type: string; // e.g., fees, transactions
-  createdAt: string;
-  createdBy: string;
-  data: any;
-}
-
-export interface ReportCreateInput {
-  title: string;
-  type: string;
-  data: any;
-}
-
-export interface ReportUpdateInput extends Partial<ReportCreateInput> {}
+  name: string;
+  type: ReportType;
+  generatedAt: string;
+  format: "PDF" | "Excel";
+};

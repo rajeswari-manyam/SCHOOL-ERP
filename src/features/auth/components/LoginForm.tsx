@@ -9,7 +9,10 @@
 // import { Button } from "../../../components/ui/button";
 // import { Label } from "../../../components/ui/label";
 // import typography, { combineTypography } from "@/styles/typography";
+<<<<<<< HEAD
 // import { useAuthStore } from "../../../store/authStore"
+=======
+>>>>>>> fad7c8e (update)
 // /* ─── schemas ───────────────────────── */
 // const emailSchema = z.object({
 //   identifier: z.string().min(3, "Enter a valid email or phone"),
@@ -36,11 +39,19 @@
 // /* ─── role → route map ────────────────────────── */
 // const roleRedirect = (role?: string): string => {
 //   switch (role) {
+<<<<<<< HEAD
 //     case "superadmin": return "/superadmin/dashboard";
 //     case "schooladmin": return "/schooladmin/dashboard";
 //     case "accountant": return "/accountant/dashboard";
 //     case "teacher": return "/teacher/dashboard";
 //     case "student": return "/student/dashboard";
+=======
+//     case "superadmin": return "/superadmin";
+//     case "schooladmin": return "/schooladmin";
+//     case "accountant": return "/accountant";
+//     case "teacher": return "/teacher";
+//     case "student": return "/student";
+>>>>>>> fad7c8e (update)
 //     case "parent": return "/parent/dashboard";
 //     default: return "/login";
 //   }
@@ -59,8 +70,13 @@
 //   const [tab, setTab] = useState<"email" | "phone">("email");
 //   const [showPw, setShowPw] = useState(false);
 //   const [error, setError] = useState<string | null>(null);
+<<<<<<< HEAD
 // const navigate = useNavigate();
 // const setAuth = useAuthStore((s) => s.setAuth);
+=======
+
+//   const navigate = useNavigate();
+>>>>>>> fad7c8e (update)
 
 //   /* ── Email form ── */
 //   const emailForm = useForm<EmailFormData>({ resolver: zodResolver(emailSchema) });
@@ -68,6 +84,7 @@
 //   /* ── Phone form ── */
 //   const phoneForm = useForm<PhoneFormData>({ resolver: zodResolver(phoneSchema) });
 
+<<<<<<< HEAD
 // const onEmailSubmit = (data: EmailFormData) => {
 //   setError(null);
 
@@ -92,6 +109,18 @@
 
 //   navigate(roleRedirect(user.role));
 // };
+=======
+//   /* ── Handlers ── */
+//   const onEmailSubmit = (data: EmailFormData) => {
+//     setError(null);
+//     const user = DUMMY_USERS.find(u => u.email === data.identifier && u.password === data.password);
+//     if (!user) {
+//       setError("Invalid email or password. Use the test credentials below.");
+//       return;
+//     }
+//     navigate(roleRedirect(user.role));
+//   };
+>>>>>>> fad7c8e (update)
 
 //   const onPhoneSubmit = (data: PhoneFormData) => {
 //     onPhoneSend?.(data.phone);
@@ -242,8 +271,9 @@ const isEmailVal = (val: string) => val.includes("@");
 /* ─── schema ────────────────────────────────────── */
 const loginSchema = z.object({
   identifier: z.string().min(3, "Enter a valid email or phone"),
-  password: z.string().optional(),
+  password: z.string().optional(), // ✅ FIX
 });
+
 type LoginFormData = z.infer<typeof loginSchema>;
 
 /* ─── dummy credentials ─────────────────────────── */
@@ -340,7 +370,7 @@ export const LoginForm = () => {
   /* ── Login form ── */
   return (
     <div className="w-full max-w-md mx-auto p-4 sm:p-6 space-y-5">
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-4">
 
         {/* Identifier */}
         <div className="space-y-1">

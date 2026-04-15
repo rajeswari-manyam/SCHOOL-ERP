@@ -1,22 +1,13 @@
-export interface Payroll {
+export type PayrollStatus = "Pending" | "Processed";
+
+export type StaffPayroll = {
   id: string;
-  staffId: string;
-  staffName: string;
-  month: string; // e.g., '2026-04'
-  baseSalary: number;
-  allowances: number;
+  name: string;
+  role: string;
+  present: number;
+  absent: number;
+  gross: number;
   deductions: number;
-  netPay: number;
-  status: "pending" | "paid";
-  paidAt?: string;
-}
-
-export interface CreatePayrollInput {
-  staffId: string;
-  month: string;
-  baseSalary: number;
-  allowances: number;
-  deductions: number;
-}
-
-export interface UpdatePayrollInput extends Partial<CreatePayrollInput> {}
+  net: number;
+  status: PayrollStatus;
+};
