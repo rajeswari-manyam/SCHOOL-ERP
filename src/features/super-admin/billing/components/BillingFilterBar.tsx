@@ -1,7 +1,8 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import type { InstitutionFilters, PlanType, PaymentStatus } from '../types/billing.types';
-
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 interface BillingFilterBarProps {
   filters: InstitutionFilters;
   onChange: (next: InstitutionFilters) => void;
@@ -49,6 +50,7 @@ export const BillingFilterBar: React.FC<BillingFilterBarProps> = ({ filters, onC
       </select>
 
       {/* Status filter */}
+      
       <select
         value={filters.status ?? ''}
         onChange={(e) => set('status', (e.target.value as PaymentStatus) || '')}
@@ -81,13 +83,13 @@ export const BillingFilterBar: React.FC<BillingFilterBarProps> = ({ filters, onC
 
       {/* Clear */}
       {hasFilters && (
-        <button
+        <Button
           onClick={clear}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10"
         >
           <X size={13} />
           Clear
-        </button>
+        </Button>
       )}
     </div>
   );

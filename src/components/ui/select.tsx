@@ -4,61 +4,57 @@ import { cn } from "../../utils/cn";
 export interface SelectOption {
   label: string;
   value: string;
+  disabled?: boolean;
 }
 
-export interface SelectProps {
+export interface SelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: SelectOption[];
-  value?: string;
-  onValueChange?: (value: string) => void;
   placeholder?: string;
+  onValueChange?: (value: string) => void;
   className?: string;
 }
 
-export const Select: React.FC<SelectProps> = ({
-  options,
-  value,
-  onValueChange,
-  placeholder = "Select an option",
-  className,
-}) => {
-  const [open, setOpen] = React.useState(false);
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+  (
+    {
+      options,
+      placeholder = "Select an option",
+      className,
+      onValueChange,
+      onChange,
+      ...props
+    },
+    ref,
+  ) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      onValueChange?.(event.target.value);
+      onChange?.(event);
+    };
 
-  const selected = options.find((o) => o.value === value);
-
-  return (
-    <div className="relative">
-      {/* Trigger */}
-      <button
-        onClick={() => setOpen(!open)}
+    return (
+      <select
+        ref={ref}
         className={cn(
-          "w-full border rounded-md px-3 py-2 text-left bg-white",
-          "flex items-center justify-between",
+          "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100",
           className,
         )}
+        onChange={handleChange}
+        {...props}
       >
-        <span className={selected ? "" : "text-gray-400"}>
-          {selected?.label || placeholder}
-        </span>
-        <span className="text-xs">▼</span>
-      </button>
+        {placeholder && (
+          <option value="" disabled hidden>
+            {placeholder}
+          </option>
+        )}
+        {options.map((option) => (
+          <option key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  },
+);
 
-      {/* Dropdown */}
-      {open && (
-        <div className="absolute mt-1 w-full rounded-md border bg-white shadow-md z-50">
-          {options.map((option) => (
-            <div
-              key={option.value}
-              onClick={() => {
-                onValueChange?.(option.value);
-                setOpen(false);
-              }}
-              className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-            >
-              {option.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+Select.displayName = "Select";

@@ -6,6 +6,7 @@ import { InstitutionActionsMenu } from './InstitutionActionsMenu';
 import { Pagination } from './Pagination';
 import { useInstitutions, useBillingMutations } from '../hooks/useBilling';
 import type { InstitutionFilters, Institution } from '../types/billing.types';
+import { Button } from '@/components/ui/button';
 
 const COLS = ['', 'Institution', 'City', 'Plan', 'MRR', 'Status', 'Renewal', 'Outstanding', ''];
 
@@ -73,14 +74,14 @@ export const InstitutionsTable: React.FC<InstitutionsTableProps> = ({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BillingFilterBar filters={filters} onChange={setFilters} />
-        <button
+        <Button
           onClick={handleExport}
           disabled={exportCsv.isPending}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
         >
           <Download size={14} />
           Export CSV
-        </button>
+        </Button>
       </div>
 
       {/* Bulk bar */}
@@ -89,9 +90,9 @@ export const InstitutionsTable: React.FC<InstitutionsTableProps> = ({
           <span className="text-[13px] font-medium text-indigo-700 dark:text-indigo-300">
             {selected.size} selected
           </span>
-          <button className="rounded-lg bg-red-100 px-3 py-1 text-[12px] font-semibold text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400">
+          <Button className="rounded-lg bg-red-100 px-3 py-1 text-[12px] font-semibold text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400">
             Delete selected
-          </button>
+          </Button>
         </div>
       )}
 

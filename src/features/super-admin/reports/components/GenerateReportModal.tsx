@@ -1,4 +1,4 @@
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMemo } from "react";
@@ -8,6 +8,11 @@ import { REPORT_CARDS } from "../utils/report-config";
 import { useGenerateReport } from "../hooks/useReports";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 // ── Schema ──────────────────────────────────────────────────
 const schema = z.object({
   type: z.enum(["REVENUE", "SCHOOLS", "MARKETING", "WHATSAPP", "FEE", "AUDIT"]),
@@ -93,14 +98,12 @@ interface GenerateReportModalProps {
 }
 
 const labelClass = "block text-[11px] font-bold tracking-widest uppercase text-gray-500 mb-2";
-const inputClass =
-  "w-full h-11 px-4 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition appearance-none";
 
 const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportModalProps) => {
   const { mutate, isPending } = useGenerateReport();
 
-  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       type: preselectedType ?? "REVENUE",
       format: "PDF",
@@ -110,12 +113,12 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
     },
   });
 
-  const type        = watch("type");
-  const format_     = watch("format");
-  const periodType  = watch("periodType");
-  const startDate   = watch("startDate");
-  const endDate     = watch("endDate");
-  const schoolFilter = watch("schoolFilter");
+  const type = useWatch({ control, name: "type" }) as FormValues["type"];
+  const format_ = useWatch({ control, name: "format" }) as FormValues["format"];
+  const periodType = useWatch({ control, name: "periodType" }) as FormValues["periodType"];
+  const startDate = useWatch({ control, name: "startDate" }) as string | undefined;
+  const endDate = useWatch({ control, name: "endDate" }) as string | undefined;
+  const schoolFilter = useWatch({ control, name: "schoolFilter" }) as string;
 
   // Auto-fill dates from period
   const dateRange = useMemo(() => getDateRange(periodType, startDate, endDate), [periodType, startDate, endDate]);
@@ -140,10 +143,7 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div
-          className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl my-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <Card className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl my-auto" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="flex items-start justify-between px-7 pt-6 pb-5">
             <div>
@@ -151,8 +151,12 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
               <p className="text-sm text-gray-400 mt-0.5">Configure and download a platform report</p>
             </div>
             <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors mt-0.5"
+              className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors mt-0.5"
+              aria-label="Close modal"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -165,45 +169,36 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
 
               {/* Report Type — dropdown */}
               <div>
-                <label className={labelClass}>
-                  Report Type <span className="text-red-400">*</span>
-                </label>
-                <div className="relative">
-                  <select {...register("type")} className={inputClass + " pr-10 cursor-pointer"}>
-                    {REPORT_TYPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                
-                  
-                  {/* <svg className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-indigo-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg> */}
-                </div>
+                <Label className={labelClass} required>
+                  Report Type
+                </Label>
+                <Select
+                  {...register("type")}
+                  options={REPORT_TYPE_OPTIONS}
+                  className="pr-10 cursor-pointer"
+                />
                 {errors.type && <p className="text-xs text-red-500 mt-1">{errors.type.message}</p>}
               </div>
 
               {/* Period — pill buttons */}
               <div>
-                <label className={labelClass}>
-                  Period <span className="text-red-400">*</span>
-                </label>
+                <Label className={labelClass} required>
+                  Period
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   {PERIOD_PILLS.map((p) => {
                     const active = periodType === p.value;
                     return (
-                      <button
+                      <Button
                         key={p.value}
                         type="button"
+                        variant={active ? "default" : "outline"}
+                        size="sm"
                         onClick={() => setValue("periodType", p.value)}
-                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                          active
-                            ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
+                        className={active ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200" : "text-gray-600 hover:bg-gray-100"}
                       >
                         {p.label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -212,10 +207,10 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
               {/* From / To — read-only display or date inputs if custom */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>From</label>
+                  <Label className={labelClass}>From</Label>
                   {periodType === "CUSTOM" ? (
                     <>
-                      <input type="date" {...register("startDate")} className={inputClass} />
+                      <Input type="date" {...register("startDate")} />
                       {errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate.message}</p>}
                     </>
                   ) : (
@@ -225,9 +220,9 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                   )}
                 </div>
                 <div>
-                  <label className={labelClass}>To</label>
+                  <Label className={labelClass}>To</Label>
                   {periodType === "CUSTOM" ? (
-                    <input type="date" {...register("endDate")} className={inputClass} />
+                    <Input type="date" {...register("endDate")} />
                   ) : (
                     <div className="h-11 px-4 flex items-center rounded-xl border border-gray-200 text-sm text-gray-800 bg-white">
                       {displayTo}
@@ -238,40 +233,33 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
 
               {/* School Filter */}
               <div>
-                <label className={labelClass}>School Filter</label>
-                <div className="relative">
-                  <select {...register("schoolFilter")} className={inputClass + " pr-10 cursor-pointer"}>
-                    {SCHOOL_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                  <svg className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-indigo-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
+                <Label className={labelClass}>School Filter</Label>
+                <Select
+                  {...register("schoolFilter")}
+                  options={SCHOOL_OPTIONS}
+                  className="pr-10 cursor-pointer"
+                />
               </div>
 
               {/* Format — segmented button */}
               <div>
-                <label className={labelClass}>
-                  Format <span className="text-red-400">*</span>
-                </label>
+                <Label className={labelClass} required>
+                  Format
+                </Label>
                 <div className="grid grid-cols-3 gap-0 rounded-xl border border-gray-200 overflow-hidden">
                   {FORMAT_OPTIONS.map((f, i) => {
                     const active = format_ === f.value;
                     return (
-                      <button
+                      <Button
                         key={f.value}
                         type="button"
+                        variant={active ? "default" : "ghost"}
+                        size="sm"
                         onClick={() => setValue("format", f.value)}
-                        className={`h-11 text-sm font-bold transition-all ${
-                          active
-                            ? "bg-indigo-600 text-white"
-                            : "bg-white text-gray-500 hover:bg-gray-50"
-                        } ${i !== FORMAT_OPTIONS.length - 1 ? "border-r border-gray-200" : ""}`}
+                        className={`h-11 rounded-none ${active ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"} ${i !== FORMAT_OPTIONS.length - 1 ? "border-r border-gray-200" : ""}`}
                       >
                         {f.label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -283,12 +271,10 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                   name="emailWhenReady"
                   control={control}
                   render={({ field }) => (
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       id="emailWhenReady"
                       checked={field.value}
                       onChange={field.onChange}
-                      className="w-4 h-4 rounded border-gray-300 accent-indigo-600 cursor-pointer"
                     />
                   )}
                 />
@@ -320,14 +306,10 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
 
             {/* Footer */}
             <div className="flex items-center justify-between px-7 py-5 mt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors px-2"
-              >
+              <Button type="button" variant="outline" onClick={onClose} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors px-2">
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={isPending}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm shadow-indigo-200"
@@ -349,10 +331,10 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                     Generate &amp; Download
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       </div>
     </>
   );

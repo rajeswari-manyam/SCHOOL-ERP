@@ -1,5 +1,5 @@
 import type { SchoolFilters, Plan, SchoolStatus } from "../types/school.types";
-
+import { Select } from "@/components/ui/select";
 interface SchoolFilterBarProps {
   filters: SchoolFilters;
   cities: string[];
@@ -9,6 +9,7 @@ interface SchoolFilterBarProps {
 
 const PLANS = ["ALL", "STARTER", "GROWTH", "PRO"];
 const STATUSES = ["ALL", "ACTIVE", "TRIAL", "SUSPENDED", "EXPIRED"];
+ // This will come from API in real implementation
 
 const selectClass =
   "h-10 px-3 pr-8 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 font-medium appearance-none cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition";
@@ -35,7 +36,14 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
 
       {/* Plan */}
       <div className="relative">
-        <select
+<Select
+    options={PLANS.map((p) => ({ label: p === "ALL" ? "All Plans" : p, value: p }))}
+    value={filters.plan}
+    onValueChange={(value) => onChange({ plan: value as Plan | "ALL", page: 1 })}
+    placeholder="Choose an option"
+    className={selectClass}
+  />
+        {/* <select
           value={filters.plan}
           onChange={(e) => onChange({ plan: e.target.value as Plan | "ALL", page: 1 })}
           className={selectClass}
@@ -43,13 +51,20 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
           {PLANS.map((p) => (
             <option key={p} value={p}>{p === "ALL" ? "All Plans" : p}</option>
           ))}
-        </select>
+        </select> */}
         <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
 
       {/* Status */}
       <div className="relative">
-        <select
+        <Select
+          options={STATUSES.map((s) => ({ label: s === "ALL" ? "All Statuses" : s, value: s }))}
+          value={filters.status}
+          onValueChange={(value) => onChange({ status: value as SchoolStatus | "ALL", page: 1 })}
+          placeholder="Choose an option"
+          className={selectClass}
+        />
+        {/* <select
           value={filters.status}
           onChange={(e) => onChange({ status: e.target.value as SchoolStatus | "ALL", page: 1 })}
           className={selectClass}
@@ -57,20 +72,27 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
           {STATUSES.map((s) => (
             <option key={s} value={s}>{s === "ALL" ? "All Status" : s}</option>
           ))}
-        </select>
+        </select> */}
         <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
 
       {/* City */}
       <div className="relative">
-        <select
+        <Select
+          options={[{ label: "All Cities", value: "" }, ...cities.map((c) => ({ label: c, value: c }))]}
+          value={filters.city}    
+          onValueChange={(value) => onChange({ city: value, page: 1 })}
+          placeholder="All Cities"
+          className={selectClass}
+        />
+        {/* <select
           value={filters.city}
           onChange={(e) => onChange({ city: e.target.value, page: 1 })}
           className={selectClass}
         >
           <option value="">All Cities</option>
           {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        </select> */}
         <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
 

@@ -1,5 +1,5 @@
 import type { TemplateFilters, TemplateCategory, TemplateLanguage, MetaStatus } from "../types/templates.types";
-
+import { Select } from "@/components/ui/select";
 interface TemplateFilterBarProps {
   filters: TemplateFilters;
   onChange: (patch: Partial<TemplateFilters>) => void;
@@ -30,43 +30,39 @@ const TemplateFilterBar = ({ filters, onChange }: TemplateFilterBarProps) => (
 
     {/* Category */}
     <div className="relative">
-      <select
+      <Select
+        options={CATEGORIES.map((c) => ({ label: c === "ALL" ? "All Categories" : c, value: c }))}
         value={filters.category}
-        onChange={(e) => onChange({ category: e.target.value as TemplateCategory | "ALL", page: 1 })}
+        onValueChange={(value) => onChange({ category: value as TemplateCategory | "ALL", page: 1 })}
+        placeholder="Choose an option"
         className={selectClass}
-      >
-        {CATEGORIES.map((c) => (
-          <option key={c} value={c}>{c === "ALL" ? "All Categories" : c}</option>
-        ))}
-      </select>
+      />
       <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
 
     {/* Language */}
     <div className="relative">
-      <select
-        value={filters.language}
-        onChange={(e) => onChange({ language: e.target.value as TemplateLanguage | "ALL", page: 1 })}
+      <Select
+        options={LANGUAGES.map((l) => ({ label: l === "ALL" ? "All Languages" : l, value: l }))}
+        value={filters.language}  
+        onValueChange={(value) => onChange({ language: value as TemplateLanguage | "ALL", page: 1 })}
+        placeholder="Choose an option"
         className={selectClass}
-      >
-        {LANGUAGES.map((l) => (
-          <option key={l} value={l}>{l === "ALL" ? "All Languages" : l}</option>
-        ))}
-      </select>
+      />
+      
       <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
 
     {/* Status */}
     <div className="relative">
-      <select
+      <Select
+        options={STATUSES.map((s) => ({ label: s === "ALL" ? "All Statuses" : s, value: s }))}
         value={filters.status}
-        onChange={(e) => onChange({ status: e.target.value as MetaStatus | "ALL", page: 1 })}
+        onValueChange={(value) => onChange({ status: value as MetaStatus | "ALL", page: 1 })}
+        placeholder="Choose an option"
         className={selectClass}
-      >
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>{s === "ALL" ? "All Status" : s}</option>
-        ))}
-      </select>
+      />
+     
       <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
   </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { TicketFilters, TicketPriority, TicketStatus } from "../types/support.types";
 import { Button } from "@/components/ui/button";
-
+import { Select } from "@/components/ui/select";
 
 interface TicketFilterBarProps {
   filters: TicketFilters;
@@ -34,42 +34,40 @@ const TicketFilterBar = ({ filters, schools, onChange, onApply }: TicketFilterBa
 
     {/* Priority */}
     <div className="relative">
-      <select
+      <Select
+        options={PRIORITIES.map((p) => ({ label: p === "ALL" ? "All Priorities" : p, value: p }))}
         value={filters.priority}
-        onChange={(e) => onChange({ priority: e.target.value as TicketPriority | "ALL" })}
+        onValueChange={(value) => onChange({ priority: value as TicketPriority | "ALL" })}
+        placeholder="Choose an option"
         className={selectClass}
-      >
-        {PRIORITIES.map((p) => (
-          <option key={p} value={p}>{p === "ALL" ? "All Priority" : p}</option>
-        ))}
-      </select>
+      />
+     
       <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
 
     {/* Status */}
     <div className="relative">
-      <select
+      <Select
+        options={STATUSES.map((s) => ({ label: s === "ALL" ? "All Statuses" : s.replace("_", " "), value: s }))}
         value={filters.status}
-        onChange={(e) => onChange({ status: e.target.value as TicketStatus | "ALL" })}
+        onValueChange={(value) => onChange({ status: value as TicketStatus | "ALL" })}
+        placeholder="Choose an option"
         className={selectClass}
-      >
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>{s === "ALL" ? "All Status" : s.replace("_", " ")}</option>
-        ))}
-      </select>
+      />
+     
       <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
 
     {/* School */}
     <div className="relative">
-      <select
+      <Select
+        options={[{ label: "All Schools", value: "" }, ...schools.map((s) => ({ label: s, value: s }))]}
         value={filters.school}
-        onChange={(e) => onChange({ school: e.target.value })}
+        onValueChange={(value) => onChange({ school: value })}
+        placeholder="All Schools"
         className={`${selectClass} min-w-[140px]`}
-      >
-        <option value="">All Schools</option>
-        {schools.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
+      />
+    
       <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import PlatformStatCards from "./components/PlatformStatCards";
@@ -7,6 +8,7 @@ import RevenueChart from "./components/RevenueChart";
 import RecentSchoolsCard from "./components/RecentSchoolsCard";
 import CriticalTicketsTable from "./components/CriticalTicketsTable";
 import { useDashboard, useExportDashboard } from "./hooks/useDashboard";
+import AddNewSchoolModal from "../schools/components/SchoolModal";
 import { Button } from "@/components/ui/button";
 // ── Mock data for skeleton fallback ─────────────────────────
 const MOCK_STATS = {
@@ -18,6 +20,7 @@ const MOCK_STATS = {
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const { data, isLoading } = useDashboard();
   const { handleExport } = useExportDashboard();
 
@@ -44,14 +47,15 @@ const DashboardPage = () => {
         <div className="flex items-center gap-3 flex-shrink-0">
           <Button
              onClick={handleExport}
+           
              className="px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
           
           >
             Export Report
           </Button>
           <Button
-            onClick={() => navigate("/super-admin/schools/new")}
-             className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+            onClick={() => setIsSchoolModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
           >
             Add School
           </Button>
@@ -88,14 +92,19 @@ const DashboardPage = () => {
       />
 
       {/* FABs */}
-      <button className="fixed bottom-16 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-lg hover:bg-indigo-700 transition-colors">
+      <AddNewSchoolModal
+        open={isSchoolModalOpen}
+        onClose={() => setIsSchoolModalOpen(false)}
+        onSuccess={() => setIsSchoolModalOpen(false)}
+      />
+      <Button className="fixed bottom-16 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-lg hover:bg-indigo-700 transition-colors">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Quick Support
-      </button>
-      <button className="fixed bottom-4 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg hover:bg-emerald-600 transition-colors">
+      </Button>
+      <Button className="fixed bottom-4 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg hover:bg-emerald-600 transition-colors">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Helpdesk WhatsApp
-      </button>
+      </Button>
     </div>
   );
 };

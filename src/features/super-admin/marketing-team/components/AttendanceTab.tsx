@@ -3,7 +3,7 @@ import { format, getDaysInMonth, getDay } from "date-fns";
 import type { AttendanceRecord, AttendanceMark, MarketingRep } from "../types/marketing.types";
 import { RepAvatar } from "./RepBadges";
 import { useAttendance, useMarketingMutations } from "../hooks/useMarketing";
-
+interface AttendanceTabProps {reps: MarketingRep[];}
 
 const dotColors: Record<AttendanceMark, string> = {
   P: "bg-emerald-500", A: "bg-red-500", H: "bg-amber-400", "-": "bg-transparent",
@@ -12,7 +12,7 @@ const dotTitles: Record<AttendanceMark, string> = {
   P: "Present", A: "Absent", H: "Half Day", "-": "Weekend/Holiday",
 };
 
-const AttendanceTab = () => {
+const AttendanceTab = ({ reps }: AttendanceTabProps) => {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -28,6 +28,7 @@ const AttendanceTab = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Month nav + legend + mark button */}
+  
       <div className="flex items-center justify-between bg-gray-100 rounded-2xl px-5 py-3">
         <div className="flex items-center gap-3">
           <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">

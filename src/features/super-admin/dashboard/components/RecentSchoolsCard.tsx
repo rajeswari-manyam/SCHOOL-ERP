@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { RecentSchool, SchoolPlan } from "../types/dashboard.types";
+import { Button } from "@/components/ui/button";
 
 const planStyles: Record<SchoolPlan, string> = {
   PRO:     "bg-gray-900 text-white",
@@ -34,14 +35,14 @@ const RecentSchoolsCard = ({ schools }: RecentSchoolsCardProps) => {
               {s.plan}
             </span>
             <span className="text-xs text-gray-400 flex-shrink-0 min-w-[60px] text-right">{s.joinedAgo}</span>
-            <button
+            <Button
               onClick={() => navigate(`/super-admin/schools/${s.id}`)}
               className="text-gray-400 hover:text-indigo-600 transition-colors flex-shrink-0"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
               </svg>
-            </button>
+            </Button>
           </div>
         ))}
       </div>

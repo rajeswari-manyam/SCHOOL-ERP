@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { cn } from "@/utils/cn";
+import { Button } from "@/components/ui/button";
+import { Card, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SchoolInfoData {
@@ -111,16 +116,15 @@ function PhoneInput({
         <div className="flex items-center px-3 bg-slate-50 border border-r-0 border-slate-200 rounded-l-[10px] text-sm font-medium text-slate-500 whitespace-nowrap">
           +91
         </div>
-        <input
+        <Input
           id={id}
           type="tel"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            "flex-1 border border-slate-200 rounded-r-[10px] px-3 py-2.5 text-sm outline-none transition-all",
-            "focus:border-[#5b52f5] focus:ring-2 focus:ring-[#5b52f5]/10",
-            error && "border-red-400 focus:border-red-400 focus:ring-red-100"
+            "rounded-r-[10px] rounded-l-none border-l-0",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-200"
           )}
         />
       </div>
@@ -135,25 +139,15 @@ function Field({ label, required, children, hint, error }: {
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-bold uppercase tracking-[0.07em] text-slate-500">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
+      <Label className="text-[11px] font-bold uppercase tracking-[0.07em] text-slate-500" required={required}>
+        {label}
+      </Label>
       {children}
       {hint && <p className="text-xs text-slate-400">{hint}</p>}
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }
-
-// Shared input styles
-const inputCls = (error?: string) => cn(
-  "w-full border border-slate-200 rounded-[10px] px-3 py-2.5 text-sm outline-none transition-all",
-  "placeholder:text-slate-300 focus:border-[#5b52f5] focus:ring-2 focus:ring-[#5b52f5]/10",
-  error && "border-red-400 focus:border-red-400 focus:ring-red-100"
-);
-const selectCls = (error?: string) => cn(inputCls(error), "bg-white cursor-pointer appearance-none pr-9",
-  "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")] bg-no-repeat bg-[right_12px_center]"
-);
 
 // ─── Step 1: School Info ──────────────────────────────────────────────────────
 function StepSchoolInfo({ data, errors, onChange }: {
@@ -164,54 +158,89 @@ function StepSchoolInfo({ data, errors, onChange }: {
   return (
     <div className="grid grid-cols-2 gap-x-5 gap-y-4">
       <Field label="School Name" required error={errors.schoolName}>
-        <input className={inputCls(errors.schoolName)} value={data.schoolName}
-          onChange={(e) => onChange("schoolName", e.target.value)} placeholder="St. Mary's CBSE School" />
+        <Input
+          value={data.schoolName}
+          onChange={(e) => onChange("schoolName", e.target.value)}
+          placeholder="St. Mary's CBSE School"
+          variant={errors.schoolName ? "error" : "default"}
+        />
       </Field>
       <Field label="Phone Number" required error={errors.phone}>
-        <PhoneInput id="phone" value={data.phone} onChange={(v) => onChange("phone", v)}
-          placeholder="98765 43210" error={undefined} />
+        <PhoneInput id="phone" value={data.phone} onChange={(v) => onChange("phone", v)} placeholder="98765 43210" error={errors.phone} />
       </Field>
       <Field label="City" required error={errors.city}>
-        <input className={inputCls(errors.city)} value={data.city}
-          onChange={(e) => onChange("city", e.target.value)} placeholder="Hanamkonda" />
+        <Input
+          value={data.city}
+          onChange={(e) => onChange("city", e.target.value)}
+          placeholder="Hanamkonda"
+          variant={errors.city ? "error" : "default"}
+        />
       </Field>
       <Field label="Email" error={errors.email}>
-        <input type="email" className={inputCls(errors.email)} value={data.email}
-          onChange={(e) => onChange("email", e.target.value)} placeholder="principal@school.com" />
+        <Input
+          type="email"
+          value={data.email}
+          onChange={(e) => onChange("email", e.target.value)}
+          placeholder="principal@school.com"
+          variant={errors.email ? "error" : "default"}
+        />
       </Field>
       <Field label="State" required error={errors.state}>
-        <select className={selectCls(errors.state)} value={data.state}
-          onChange={(e) => onChange("state", e.target.value)}>
-          <option value="">Select state</option>
-          {STATES.map((s) => <option key={s}>{s}</option>)}
-        </select>
+        <Select
+          value={data.state}
+          onChange={(e) => onChange("state", e.target.value)}
+          placeholder="Select state"
+          options={STATES.map((s) => ({ value: s, label: s }))}
+          className={errors.state ? "border-red-500" : undefined}
+        />
       </Field>
       <Field label="Board" required error={errors.board}>
-        <select className={selectCls(errors.board)} value={data.board}
-          onChange={(e) => onChange("board", e.target.value)}>
-          <option value="">Select board</option>
-          {BOARDS.map((b) => <option key={b}>{b}</option>)}
-        </select>
+        <Select
+          value={data.board}
+          onChange={(e) => onChange("board", e.target.value)}
+          placeholder="Select board"
+          options={BOARDS.map((b) => ({ value: b, label: b }))}
+          className={errors.board ? "border-red-500" : undefined}
+        />
       </Field>
       <Field label="Pincode">
-        <input className={inputCls()} value={data.pincode} maxLength={6}
-          onChange={(e) => onChange("pincode", e.target.value)} placeholder="506001" />
+        <Input
+          value={data.pincode}
+          maxLength={6}
+          onChange={(e) => onChange("pincode", e.target.value)}
+          placeholder="506001"
+        />
       </Field>
       <Field label="Established Year">
-        <input type="number" className={inputCls()} value={data.estYear} min={1800} max={2024}
-          onChange={(e) => onChange("estYear", e.target.value)} placeholder="2005" />
+        <Input
+          type="number"
+          value={data.estYear}
+          min={1800}
+          max={2024}
+          onChange={(e) => onChange("estYear", e.target.value)}
+          placeholder="2005"
+        />
       </Field>
       <div className="col-span-2">
         <Field label="Address">
-          <textarea className={cn(inputCls(), "resize-none h-20")} value={data.address}
-            onChange={(e) => onChange("address", e.target.value)} placeholder="Enter full school address..." />
+          <textarea
+            className="w-full rounded-[10px] border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none h-20"
+            value={data.address}
+            onChange={(e) => onChange("address", e.target.value)}
+            placeholder="Enter full school address..."
+          />
         </Field>
       </div>
       <div className="col-span-2">
         <Field label="WhatsApp Business Number" required error={errors.waNumber}
           hint="This number will send all automated WhatsApp messages to parents">
-          <PhoneInput id="waNumber" value={data.waNumber} onChange={(v) => onChange("waNumber", v)}
-            placeholder="90000 12345" error={undefined} />
+          <PhoneInput
+            id="waNumber"
+            value={data.waNumber}
+            onChange={(v) => onChange("waNumber", v)}
+            placeholder="90000 12345"
+            error={errors.waNumber}
+          />
         </Field>
       </div>
     </div>
@@ -254,25 +283,34 @@ function StepPlanBilling({ data, onChange }: {
 
       <div className="grid grid-cols-2 gap-x-5 gap-y-4 mb-5">
         <Field label="Billing Cycle" required>
-          <select className={selectCls()} value={data.billingCycle}
-            onChange={(e) => onChange("billingCycle", e.target.value)}>
-            <option>Monthly</option>
-            <option>Quarterly</option>
-            <option>Annually (save 20%)</option>
-          </select>
+          <Select
+            value={data.billingCycle}
+            onChange={(e) => onChange("billingCycle", e.target.value)}
+            options={[
+              { value: "Monthly", label: "Monthly" },
+              { value: "Quarterly", label: "Quarterly" },
+              { value: "Annually (save 20%)", label: "Annually (save 20%)" },
+            ]}
+          />
         </Field>
         <Field label="Payment Method" required>
-          <select className={selectCls()} value={data.paymentMethod}
-            onChange={(e) => onChange("paymentMethod", e.target.value)}>
-            <option>UPI</option>
-            <option>Bank Transfer</option>
-            <option>Credit Card</option>
-          </select>
+          <Select
+            value={data.paymentMethod}
+            onChange={(e) => onChange("paymentMethod", e.target.value)}
+            options={[
+              { value: "UPI", label: "UPI" },
+              { value: "Bank Transfer", label: "Bank Transfer" },
+              { value: "Credit Card", label: "Credit Card" },
+            ]}
+          />
         </Field>
         <div className="col-span-2">
           <Field label="GST Number" hint="Optional — enter to receive GST invoices">
-            <input className={inputCls()} value={data.gst}
-              onChange={(e) => onChange("gst", e.target.value)} placeholder="22AAAAA0000A1Z5" />
+            <Input
+              value={data.gst}
+              onChange={(e) => onChange("gst", e.target.value)}
+              placeholder="22AAAAA0000A1Z5"
+            />
           </Field>
         </div>
       </div>
@@ -302,37 +340,64 @@ function StepAdminSetup({ data, errors, onChange }: {
   return (
     <div className="grid grid-cols-2 gap-x-5 gap-y-4">
       <Field label="Admin Name" required error={errors.adminName}>
-        <input className={inputCls(errors.adminName)} value={data.adminName}
-          onChange={(e) => onChange("adminName", e.target.value)} placeholder="Ramesh Kumar" />
+        <Input
+          value={data.adminName}
+          onChange={(e) => onChange("adminName", e.target.value)}
+          placeholder="Ramesh Kumar"
+          variant={errors.adminName ? "error" : "default"}
+        />
       </Field>
       <Field label="Admin Email" required error={errors.adminEmail}>
-        <input type="email" className={inputCls(errors.adminEmail)} value={data.adminEmail}
-          onChange={(e) => onChange("adminEmail", e.target.value)} placeholder="admin@school.com" />
+        <Input
+          type="email"
+          value={data.adminEmail}
+          onChange={(e) => onChange("adminEmail", e.target.value)}
+          placeholder="admin@school.com"
+          variant={errors.adminEmail ? "error" : "default"}
+        />
       </Field>
       <Field label="Admin Phone" required error={errors.adminPhone}>
-        <PhoneInput id="adminPhone" value={data.adminPhone} onChange={(v) => onChange("adminPhone", v)}
-          placeholder="98765 43210" error={undefined} />
+        <PhoneInput
+          id="adminPhone"
+          value={data.adminPhone}
+          onChange={(v) => onChange("adminPhone", v)}
+          placeholder="98765 43210"
+          error={errors.adminPhone}
+        />
       </Field>
       <Field label="Designation">
-        <select className={selectCls()} value={data.designation}
-          onChange={(e) => onChange("designation", e.target.value)}>
-          <option>Principal</option>
-          <option>Vice Principal</option>
-          <option>Administrator</option>
-          <option>IT Manager</option>
-        </select>
+        <Select
+          value={data.designation}
+          onChange={(e) => onChange("designation", e.target.value)}
+          options={[
+            { value: "Principal", label: "Principal" },
+            { value: "Vice Principal", label: "Vice Principal" },
+            { value: "Administrator", label: "Administrator" },
+            { value: "IT Manager", label: "IT Manager" },
+          ]}
+        />
       </Field>
       <div className="col-span-2">
         <Field label="Temporary Password" required error={errors.tempPass}
           hint="Admin will be prompted to change this on first login">
-          <input type="password" className={inputCls(errors.tempPass)} value={data.tempPass}
-            onChange={(e) => onChange("tempPass", e.target.value)} placeholder="Min 8 characters" />
+          <Input
+            type="password"
+            value={data.tempPass}
+            onChange={(e) => onChange("tempPass", e.target.value)}
+            placeholder="Min 8 characters"
+            variant={errors.tempPass ? "error" : "default"}
+          />
         </Field>
       </div>
       <div className="col-span-2">
         <Field label="Confirm Password" required error={errors.confirmPass}>
-          <input type="password" className={inputCls(errors.confirmPass)} value={data.confirmPass}
-            onChange={(e) => onChange("confirmPass", e.target.value)} placeholder="Re-enter password" />
+          <Input
+            type="password"
+            value={data.confirmPass}
+            onChange={(e) => onChange("confirmPass", e.target.value)}
+            placeholder="Re-enter password"
+            variant={errors.confirmPass ? "error" : "default"}
+          />
         </Field>
       </div>
     </div>
@@ -354,15 +419,13 @@ function SuccessScreen({ schoolName, onAddAnother, onClose }: {
       <p className="text-sm text-slate-500 mb-1">{schoolName} has been added to the platform.</p>
       <p className="text-sm text-slate-500 mb-8">Login credentials sent to the admin's email.</p>
       <div className="flex gap-3 justify-center">
-        <button onClick={onClose}
-          className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
+        <Button type="button" variant="outline" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
           Close
-        </button>
-        <button onClick={onAddAnother}
-          className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#5b52f5] text-white hover:bg-[#4740e8] transition-colors flex items-center gap-2">
+        </Button>
+        <Button type="button" variant="default" onClick={onAddAnother} className="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Another School
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -438,15 +501,11 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm "
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
+      <Card
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="bg-white rounded-[20px] w-full max-w-2xl
-          flex flex-col
-          h-[90vh] max-h-[700px]
-          overflow-hidden
-          border border-slate-100"
+        className="w-full max-w-2xl flex flex-col h-[90vh] max-h-[700px] overflow-hidden border border-slate-100"
         style={{ maxHeight: "90vh" }}
       >
         {/* Header */}
@@ -459,10 +518,16 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
               {done ? "Everything is set up and ready." : "Set up a new school on the platform"}
             </p>
           </div>
-          <button onClick={onClose} aria-label="Close"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label="Close"
+            className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          </Button>
         </div>
  <div className="flex-shrink-0 px-7 pb-5">
         {!done && <Stepper current={step} />}
@@ -485,25 +550,31 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
 
         {/* Footer */}
         {!done && (
-          <div className="flex-shrink-0 justify-between items-center px-7 py-5 border-t border-slate-100 mt-2">
-            <button
+          <CardFooter className="justify-between px-7 py-5 border-t border-slate-100 mt-2">
+            <Button
+              type="button"
+              variant="ghost"
               onClick={() => step === 1 ? onClose() : setStep((s) => s - 1)}
-              className="px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-50 transition-all">
+              className="px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-50 transition-all"
+            >
               {step === 1 ? "Cancel" : "Back"}
-            </button>
-            <button onClick={handleNext}
-              className="bg-[#5b52f5] hover:bg-[#4740e8] active:scale-[0.98] text-white font-bold text-sm px-6 py-3 rounded-xl flex items-center gap-2 transition-all">
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleNext}
+              className="px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2"
+            >
               {step === 1 && "Next: Plan & Billing"}
               {step === 2 && "Next: Admin Setup"}
               {step === 3 && "Add School & Go Live"}
-             
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
               </svg>
-            </button>
-          </div>
+            </Button>
+          </CardFooter>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

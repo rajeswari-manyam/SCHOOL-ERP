@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { SchoolActivityRow, SchoolPlan, AttendanceStatus } from "../types/dashboard.types";
 
 const planStyles: Record<SchoolPlan, string> = {

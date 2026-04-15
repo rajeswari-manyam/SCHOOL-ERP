@@ -3,7 +3,7 @@ import type { AuditLogsFilters, AuditAction } from "../types/audit-logs.types";
 import { ACTION_OPTIONS } from "./ActionBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
+import { Select } from "@/components/ui/select";
 interface AuditLogsFilterBarProps {
   filters: AuditLogsFilters;
   onChange: (patch: Partial<AuditLogsFilters>) => void;
@@ -36,30 +36,31 @@ const AuditLogsFilterBar = ({ filters, onChange, onClear }: AuditLogsFilterBarPr
 
       {/* Action filter */}
       <div className="relative">
-        <select
+        <Select
+          options={ACTION_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
           value={filters.action}
-          onChange={(e) => onChange({ action: e.target.value as AuditAction | "ALL", page: 1 })}
+          onValueChange={(value) => onChange({ action: value as AuditAction | "ALL", page: 1 })}
+          placeholder="All Actions"
           className={selectClass}
-        >
-          {ACTION_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        />
+        
         <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
 
       {/* Actor filter */}
       <div className="relative">
-        <select
+        <Select
+          options={[
+            { label: "All Actors", value: "" },
+            { label: "Ravi Kumar", value: "Ravi Kumar" },
+            { label: "System", value: "System" },
+            { label: "Marketing Bot", value: "Marketing Bot" }
+          ]}
           value={filters.actor}
-          onChange={(e) => onChange({ actor: e.target.value, page: 1 })}
+          onValueChange={(value) => onChange({ actor: value as string | "", page: 1 })}
           className={selectClass}
-        >
-          <option value="">All Actors</option>
-          <option value="Ravi Kumar">Ravi Kumar</option>
-          <option value="System">System</option>
-          <option value="Marketing Bot">Marketing Bot</option>
-        </select>
+          placeholder="All Actors"
+        />
         <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
 
