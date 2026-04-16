@@ -1,3 +1,6 @@
+
+
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfigTabs from "./components/ConfigTabs";
@@ -10,6 +13,7 @@ import N8nWorkflowsTab from "./components/N8nWorkflowsTab";
 import { useConfig, useConfigMutations } from "./hooks/useConfig";
 import type { ConfigTab } from "./types/config.types";
 import { Button } from "@/components/ui/button";
+
 const PlatformConfigPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ConfigTab>("integrations");
@@ -22,30 +26,44 @@ const PlatformConfigPage = () => {
 
   return (
     <div className="flex flex-col gap-6 min-h-full">
-     
-
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Platform Config</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage integrations, templates, and system settings</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Platform Config
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage integrations, templates, and system settings
+          </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <Button
-            onClick={() => confirm("Reset all settings to defaults?") && resetConfig.mutate()}
+            variant="outline"
+            onClick={() =>
+              confirm("Reset all settings to defaults?") &&
+              resetConfig.mutate()
+            }
             disabled={resetConfig.isPending}
-            className="px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60"
           >
             Reset
           </Button>
           <Button
             onClick={handleSaveAll}
             disabled={saveAll.isPending}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60"
+            className="flex items-center gap-2"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
             </svg>
             {saveAll.isPending ? "Saving…" : "Save Settings"}
           </Button>
@@ -63,7 +81,6 @@ const PlatformConfigPage = () => {
           <EmailSmsConfigCard config={config?.emailSms} />
         </div>
       )}
-
       {activeTab === "wa-templates" && <WATemplatesTab />}
       {activeTab === "feature-flags" && <FeatureFlagsTab />}
       {activeTab === "n8n-workflows" && <N8nWorkflowsTab />}

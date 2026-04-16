@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import {
   useTodayAttendance,
   useMyAttendanceHistory,
-  MOCK_TODAY,
   MOCK_TODAY_MARKED,
   MOCK_HISTORY,
 } from "./hooks/useAttendance";
@@ -66,8 +65,12 @@ const MyAttendancePage = () => {
   const { data: todayData }   = useTodayAttendance();
   const { data: historyData } = useMyAttendanceHistory();
 
-  const today   = todayData   ?? MOCK_TODAY_MARKED; // swap to MOCK_TODAY for not-marked state
-  const history = historyData ?? MOCK_HISTORY;
+  const today = todayData ?? MOCK_TODAY_MARKED; // swap to MOCK_TODAY for not-marked state
+  const history = Array.isArray(historyData)
+    ? historyData
+    : typeof historyData === "object" && historyData !== null && Array.isArray((historyData as any).data)
+    ? (historyData as any).data
+    : MOCK_HISTORY;
 
   const [activeTab, setActiveTab] = useState<TabKey>("today");
 
@@ -79,16 +82,12 @@ const MyAttendancePage = () => {
   const [correctionOpen,    setCorrectionOpen]    = useState(false);
   const [correctionPrefill, setCorrectionPrefill] = useState<CorrectionPrefill | undefined>(undefined);
 
-  // History correction (from table row)
-  const [historyCorrection, setHistoryCorrection] = useState<AttendanceHistoryEntry | null>(null);
-
   const openCorrectionFromToday = (prefill?: CorrectionPrefill) => {
     setCorrectionPrefill(prefill);
     setCorrectionOpen(true);
   };
 
-  const openCorrectionFromHistory = (entry: AttendanceHistoryEntry) => {
-    setHistoryCorrection(entry);
+  const openCorrectionFromHistory = (_entry: AttendanceHistoryEntry) => {
     setCorrectionOpen(true);
     setCorrectionPrefill(undefined);
   };
@@ -163,7 +162,7 @@ const MyAttendancePage = () => {
       {/* Correction modal */}
       <CorrectionRequestModal
         open={correctionOpen}
-        onClose={() => { setCorrectionOpen(false); setCorrectionPrefill(undefined); setHistoryCorrection(null); }}
+        onClose={() => { setCorrectionOpen(false); setCorrectionPrefill(undefined); }}
         prefill={correctionPrefill}
       />
     </div>

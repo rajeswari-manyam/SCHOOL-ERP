@@ -5,7 +5,7 @@ const TeacherMarks = lazy(() => import("@/features/teacher/marks/pages/MarksPage
 const TeacherLeave = lazy(() => import("@/features/teacher/leave/pages/LeavePage"));
 const TeacherHomework = lazy(() => import("@/features/teacher/homework/pages/HomeworkPage"));
 const TeacherTimetable = lazy(() => import("@/features/teacher/timetable/pages/TimetablePage"));
-const TeacherAttendance = lazy(() => import("@/features/teacher/attendance/pages/AttendancePage"));
+const TeacherAttendance = lazy(() => import("@/features/teacher/attendance/Myattendancepage"));
 const TeacherDashboard = lazy(() => import("@/features/teacher/dashboard/pages/DashboardPage"));
 const AccountantFees = lazy(() => import("@/features/accountant/fees").then(m => ({ default: m.FeesPage })));
 const AccountantDashboard = lazy(() => import("@/features/accountant/dashboard").then(m => ({ default: m.DashboardPage })));

@@ -1,35 +1,64 @@
-import type{ AttendanceRecord } from "../types/attendance.types";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+
+interface AttendanceTableRecord {
+  id: string;
+  date: string;
+  studentName: string;
+  status: string;
+  remarks?: string | null;
+}
 
 interface AttendanceTableProps {
-  records: AttendanceRecord[];
+  records: AttendanceTableRecord[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
 export const AttendanceTable = ({ records, onEdit, onDelete }: AttendanceTableProps) => (
-  <table className="min-w-full bg-white">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Student</th>
-        <th>Status</th>
-        <th>Remarks</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {records.map((r) => (
-        <tr key={r.id}>
-          <td>{new Date(r.date).toLocaleDateString()}</td>
-          <td>{r.studentName}</td>
-          <td>{r.status}</td>
-          <td>{r.remarks || "-"}</td>
-          <td>
-            <button className="text-blue-600 mr-2" onClick={() => onEdit(r.id)}>Edit</button>
-            <button className="text-red-600" onClick={() => onDelete(r.id)}>Delete</button>
-          </td>
-        </tr>
+  <Table className="bg-white shadow-sm rounded-2xl">
+    <TableHeader>
+      <TableRow>
+        <TableHead>Date</TableHead>
+        <TableHead>Student</TableHead>
+        <TableHead>Status</TableHead>
+        <TableHead>Remarks</TableHead>
+        <TableHead>Actions</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {records.map((record) => (
+        <TableRow key={record.id}>
+          <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+          <TableCell>{record.studentName}</TableCell>
+          <TableCell>{record.status}</TableCell>
+          <TableCell>{record.remarks || "-"}</TableCell>
+          <TableCell className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+              onClick={() => onEdit(record.id)}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete(record.id)}
+            >
+              Delete
+            </Button>
+          </TableCell>
+        </TableRow>
       ))}
-    </tbody>
-  </table>
+    </TableBody>
+  </Table>
 );

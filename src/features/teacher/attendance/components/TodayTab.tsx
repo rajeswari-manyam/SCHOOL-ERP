@@ -1,6 +1,7 @@
 // teacher/attendance/components/TodayTab.tsx
 import { useState } from "react";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 import {
   useAttendanceStudents,
   useMarkAttendanceViaWeb,
@@ -17,11 +18,8 @@ interface TodayTabProps {
   onOpenCorrectionModal: (prefill?: { date: string; studentId: string; studentName: string; rollNo: string; currentMark: "P" | "A" | "H" }) => void;
 }
 
-const statusBtn = (active: boolean, color: string) =>
-  `px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${active ? `${color} text-white shadow-sm` : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`;
-
 // ── Not Marked State ─────────────────────────────────────────────────────────
-const NotMarkedState = ({ today, onOpenWebForm }: { today: TodayAttendance; onOpenWebForm: () => void }) => {
+const NotMarkedState = ({ onOpenWebForm }: { onOpenWebForm: () => void }) => {
   const hour = new Date().getHours();
   const minuteOfDay = new Date().getHours() * 60 + new Date().getMinutes();
   const deadlineMinute = 10 * 60; // 10:00 AM
@@ -163,24 +161,28 @@ const MarkedState = ({ today, onOpenCorrectionModal }: { today: TodayAttendance;
                     WA Sent {alertSentAt && <span className="text-gray-400 font-normal">{alertSentAt}</span>}
                   </div>
                 ) : (
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => retryAlert(student.id)}
                     disabled={retrying}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50 flex-shrink-0"
+                    className="flex items-center gap-1.5 rounded-lg bg-amber-50 border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50 flex-shrink-0"
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                       <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                     </svg>
                     Retry
-                  </button>
+                  </Button>
                 )}
 
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onOpenCorrectionModal({ date: today.date, studentId: student.id, studentName: student.name, rollNo: student.rollNo, currentMark: "A" })}
                   className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors flex-shrink-0 ml-1"
                 >
                   Edit
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -241,12 +243,14 @@ const WebForm = ({
             <p className="text-sm font-bold text-gray-800">Web Attendance Form</p>
             <p className="text-xs text-gray-400 mt-0.5">{classLabel} · {format(new Date(date), "dd MMM yyyy")}</p>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setRecords(Object.fromEntries(students.map((s) => [s.id, "PRESENT"])))}
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
           >
             Mark All Present
-          </button>
+          </Button>
         </div>
 
         {/* Student checklist */}
@@ -271,12 +275,12 @@ const WebForm = ({
           <span className="text-xs font-semibold text-emerald-600">✓ {presentCount}P</span>
           <span className="text-xs font-semibold text-red-500">✗ {absentCount}A</span>
           <span className="text-xs font-semibold text-amber-500">~ {halfCount}H</span>
-          <button
+          <Button
             onClick={() => setConfirmOpen(true)}
             className="ml-auto flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
           >
             Review & Submit
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -303,7 +307,7 @@ const TodayTab = ({ today, onOpenCorrectionModal }: TodayTabProps) => {
       {today.isMarked ? (
         <MarkedState today={today} onOpenCorrectionModal={onOpenCorrectionModal} />
       ) : (
-        <NotMarkedState today={today} onOpenWebForm={() => setShowWebForm((v) => !v)} />
+        <NotMarkedState onOpenWebForm={() => setShowWebForm((v) => !v)} />
       )}
 
       {/* Collapsible web form */}

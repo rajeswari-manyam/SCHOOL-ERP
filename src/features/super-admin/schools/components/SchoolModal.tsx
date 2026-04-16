@@ -1,6 +1,9 @@
 
 
 import { useState, useEffect, useCallback, Fragment } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
@@ -45,6 +48,47 @@ interface AddNewSchoolModalProps {
   onClose: () => void;
   onSuccess?: (data: { school: SchoolInfoData; billing: BillingData; admin: AdminData }) => void;
 }
+
+const schoolInfoSchema = z.object({
+  schoolName: z.string().min(1, "School name is required"),
+  phone: z.string().regex(/^[0-9]{10}$/, "Valid 10-digit phone required"),
+  city: z.string().min(1, "City is required"),
+  email: z.union([z.literal(""), z.string().email("Valid email required")]),
+  state: z.string().min(1, "State is required"),
+  board: z.string().min(1, "Board is required"),
+  pincode: z.string(),
+  estYear: z.union([z.literal(""), z.string().regex(/^(?:18|19|20)\d{2}$/, "Enter valid year")]),
+  address: z.string(),
+  waNumber: z.string().regex(/^[0-9]{10}$/, "Valid 10-digit WhatsApp number required"),
+});
+
+const billingSchema = z.object({
+  plan: z.enum(["basic", "pro", "enterprise"]),
+  billingCycle: z.string().min(1, "Billing cycle is required"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  gst: z.string(),
+});
+
+const adminSchema = z.object({
+  adminName: z.string().min(1, "Admin name is required"),
+  adminEmail: z.string().email("Valid email required"),
+  adminPhone: z.string().regex(/^[0-9]{10}$/, "Valid 10-digit phone required"),
+  designation: z.string().min(1, "Designation is required"),
+  tempPass: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPass: z.string().min(8, "Confirm password is required"),
+}).superRefine((data, ctx) => {
+  if (data.confirmPass !== data.tempPass) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPass"], message: "Passwords do not match" });
+  }
+});
+
+const schoolModalSchema = z.object({
+  schoolInfo: schoolInfoSchema,
+  billing: billingSchema,
+  admin: adminSchema,
+});
+
+type SchoolModalFormValues = z.infer<typeof schoolModalSchema>;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = [
@@ -439,11 +483,48 @@ const INITIAL_ADMIN: AdminData = { adminName:"", adminEmail:"", adminPhone:"", d
 export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSchoolModalProps) {
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
-  const [school, setSchool] = useState<SchoolInfoData>(INITIAL_SCHOOL);
-  const [billing, setBilling] = useState<BillingData>(INITIAL_BILLING);
-  const [admin, setAdmin] = useState<AdminData>(INITIAL_ADMIN);
-  const [schoolErr, setSchoolErr] = useState<FormErrors<SchoolInfoData>>({});
-  const [adminErr, setAdminErr] = useState<FormErrors<AdminData>>({});
+
+  const {
+    control,
+    setValue,
+    trigger,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm<SchoolModalFormValues>({
+    resolver: zodResolver(schoolModalSchema),
+    mode: "onChange",
+    defaultValues: {
+      schoolInfo: INITIAL_SCHOOL,
+      billing: INITIAL_BILLING,
+      admin: INITIAL_ADMIN,
+    },
+  });
+
+  const school = useWatch({ control, name: "schoolInfo" }) ?? INITIAL_SCHOOL;
+  const billing = useWatch({ control, name: "billing" }) ?? INITIAL_BILLING;
+  const admin = useWatch({ control, name: "admin" }) ?? INITIAL_ADMIN;
+
+  const schoolErrors = (Object.keys(errors.schoolInfo ?? {}) as Array<keyof SchoolInfoData>).reduce(
+    (acc, key) => {
+      const fieldError = errors.schoolInfo?.[key];
+      if (fieldError && typeof fieldError !== "string" && "message" in fieldError) {
+        acc[key] = fieldError.message ?? "";
+      }
+      return acc;
+    },
+    {} as FormErrors<SchoolInfoData>
+  );
+
+  const adminErrors = (Object.keys(errors.admin ?? {}) as Array<keyof AdminData>).reduce(
+    (acc, key) => {
+      const fieldError = errors.admin?.[key];
+      if (fieldError && typeof fieldError !== "string" && "message" in fieldError) {
+        acc[key] = fieldError.message ?? "";
+      }
+      return acc;
+    },
+    {} as FormErrors<AdminData>
+  );
 
   // Close on Escape
   const handleKey = useCallback((e: KeyboardEvent) => {
@@ -456,42 +537,31 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
 
   const reset = () => {
     setStep(1); setDone(false);
-    setSchool(INITIAL_SCHOOL); setBilling(INITIAL_BILLING); setAdmin(INITIAL_ADMIN);
-    setSchoolErr({}); setAdminErr({});
+    resetForm({ schoolInfo: INITIAL_SCHOOL, billing: INITIAL_BILLING, admin: INITIAL_ADMIN });
   };
 
-  const validateSchool = (): boolean => {
-    const errs: FormErrors<SchoolInfoData> = {};
-    if (!school.schoolName.trim()) errs.schoolName = "School name is required";
-    if (!school.phone.trim()) errs.phone = "Phone number is required";
-    if (!school.city.trim()) errs.city = "City is required";
-    if (!school.state) errs.state = "State is required";
-    if (!school.board) errs.board = "Board is required";
-    if (!school.waNumber.trim()) errs.waNumber = "WhatsApp number is required";
-    setSchoolErr(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const handleNext = async () => {
+    if (step === 1) {
+      const valid = await trigger("schoolInfo");
+      if (!valid) return;
+      setStep(2);
+      return;
+    }
 
-  const validateAdmin = (): boolean => {
-    const errs: FormErrors<AdminData> = {};
-    if (!admin.adminName.trim()) errs.adminName = "Admin name is required";
-    if (!admin.adminEmail.trim() || !/\S+@\S+\.\S+/.test(admin.adminEmail)) errs.adminEmail = "Valid email required";
-    if (!admin.adminPhone.trim()) errs.adminPhone = "Phone is required";
-    if (!admin.tempPass || admin.tempPass.length < 8) errs.tempPass = "Password must be at least 8 characters";
-    if (admin.confirmPass !== admin.tempPass) errs.confirmPass = "Passwords do not match";
-    setAdminErr(errs);
-    return Object.keys(errs).length === 0;
-  };
+    if (step === 2) {
+      const valid = await trigger("billing");
+      if (!valid) return;
+      setStep(3);
+      return;
+    }
 
-  const handleNext = () => {
-    if (step === 1 && !validateSchool()) return;
     if (step === 3) {
-      if (!validateAdmin()) return;
+      const valid = await trigger("admin");
+      if (!valid) return;
       setDone(true);
       onSuccess?.({ school, billing, admin });
       return;
     }
-    setStep((s) => s + 1);
   };
 
   if (!open) return null;
@@ -538,12 +608,12 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
             <SuccessScreen schoolName={school.schoolName || "The school"} onAddAnother={() => { reset(); }} onClose={onClose} />
           ) : (
             <>
-              {step === 1 && <StepSchoolInfo data={school} errors={schoolErr}
-                onChange={(k, v) => { setSchool((p) => ({ ...p, [k]: v })); setSchoolErr((p) => ({ ...p, [k]: undefined })); }} />}
+              {step === 1 && <StepSchoolInfo data={school} errors={schoolErrors}
+                onChange={(k, v) => setValue(`schoolInfo.${k}`, v, { shouldValidate: true })} />}
               {step === 2 && <StepPlanBilling data={billing}
-                onChange={(k, v) => setBilling((p) => ({ ...p, [k]: v }))} />}
-              {step === 3 && <StepAdminSetup data={admin} errors={adminErr}
-                onChange={(k, v) => { setAdmin((p) => ({ ...p, [k]: v })); setAdminErr((p) => ({ ...p, [k]: undefined })); }} />}
+                onChange={(k, v) => setValue(`billing.${k}`, v, { shouldValidate: true })} />}
+              {step === 3 && <StepAdminSetup data={admin} errors={adminErrors}
+                onChange={(k, v) => setValue(`admin.${k}`, v, { shouldValidate: true })} />}
             </>
           )}
         </div>

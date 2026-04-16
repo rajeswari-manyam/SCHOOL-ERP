@@ -1,11 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useBillingMutations } from '../hooks/useBilling';
 import type { Institution } from '../types/billing.types';
 
-type PaymentMode = 'Razorpay' | 'Bank Transfer' | 'Cash' | 'Cheque';
+const PAYMENT_MODES = ['Razorpay', 'Bank Transfer', 'Cash', 'Cheque'] as const;
 
-const PAYMENT_MODES: PaymentMode[] = ['Razorpay', 'Bank Transfer', 'Cash', 'Cheque'];
+const schema = z.object({
+  institutionId: z.string().min(1, 'Select a school'),
+  amount: z
+    .string()
+    .min(1, 'Amount is required')
+    .refine((value) => !Number.isNaN(Number(value)) && Number(value) > 0, 'Amount must be a positive number'),
+  paymentDate: z.string().min(1, 'Payment date is required'),
+  paymentMode: z.enum(PAYMENT_MODES),
+  orderId: z.string().optional(),
+  description: z.string().optional(),
+  markRenewed: z.boolean(),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 interface RecordPaymentModalProps {
   open: boolean;
@@ -22,43 +38,54 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 }) => {
   const { recordPayment } = useBillingMutations();
 
-  const [form, setForm] = useState({
-    institutionId: preselectedInstitution?.id ?? '',
-    amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
-    paymentDate: new Date().toISOString().slice(0, 10),
-    paymentMode: 'Razorpay' as PaymentMode,
-    orderId: '',
-    description: '',
-    markRenewed: false,
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: 'onTouched',
+    defaultValues: {
+      institutionId: preselectedInstitution?.id ?? '',
+      amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
+      paymentDate: new Date().toISOString().slice(0, 10),
+      paymentMode: 'Razorpay',
+      orderId: '',
+      description: '',
+      markRenewed: false,
+    },
   });
 
   useEffect(() => {
-    if (preselectedInstitution) {
-      setForm((f) => ({
-        ...f,
-        institutionId: preselectedInstitution.id,
-        amount: preselectedInstitution.outstandingAmount?.toString() ?? f.amount,
-      }));
-    }
-  }, [preselectedInstitution?.id]);
+    reset({
+      institutionId: preselectedInstitution?.id ?? '',
+      amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
+      paymentDate: new Date().toISOString().slice(0, 10),
+      paymentMode: 'Razorpay',
+      orderId: '',
+      description: '',
+      markRenewed: false,
+    });
+  }, [preselectedInstitution, reset, open]);
 
-  const set = <K extends keyof typeof form>(key: K, val: (typeof form)[K]) =>
-    setForm((f) => ({ ...f, [key]: val }));
+  const institutionId = useWatch({ control, name: 'institutionId' });
+  const paymentMode = useWatch({ control, name: 'paymentMode' });
+  const showOrderId = paymentMode === 'Razorpay';
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (values: FormValues) => {
     recordPayment.mutate(
       {
-        institutionId: form.institutionId,
-        amount: Number(form.amount),
-        paymentDate: form.paymentDate,
-        notes: form.description,
+        institutionId: values.institutionId,
+        amount: Number(values.amount),
+        paymentDate: values.paymentDate,
+        notes: values.description,
       },
       { onSuccess: onClose }
     );
   };
-
-  const showOrderId = form.paymentMode === 'Razorpay';
 
   if (!open) return null;
 
@@ -87,7 +114,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-5 px-6 pb-4">
 
             {/* School selector */}
@@ -97,9 +124,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               </label>
               <div className="relative">
                 <select
-                  value={form.institutionId}
-                  onChange={(e) => set('institutionId', e.target.value)}
-                  required
+                  {...register('institutionId')}
                   className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-sm text-gray-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
                 >
                   <option value="" disabled>Select school...</option>
@@ -114,6 +139,9 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                       <option key={i.id} value={i.id}>{i.name}</option>
                     ))}
                 </select>
+                {errors.institutionId && (
+                  <p className="mt-1 text-xs text-red-500">{errors.institutionId.message}</p>
+                )}
                 <ChevronDown
                   size={15}
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -133,13 +161,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                   </span>
                   <input
                     type="number"
-                    value={form.amount}
-                    onChange={(e) => set('amount', e.target.value)}
+                    {...register('amount')}
                     placeholder="15,000"
-                    required
                     min="1"
                     className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-7 pr-3 text-sm text-gray-900 placeholder:text-gray-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
                   />
+                  {errors.amount && (
+                    <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>
+                  )}
                 </div>
               </div>
               <div>
@@ -148,11 +177,12 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 </label>
                 <input
                   type="date"
-                  value={form.paymentDate}
-                  onChange={(e) => set('paymentDate', e.target.value)}
-                  required
+                  {...register('paymentDate')}
                   className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-900 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
                 />
+                {errors.paymentDate && (
+                  <p className="mt-1 text-xs text-red-500">{errors.paymentDate.message}</p>
+                )}
               </div>
             </div>
 
@@ -162,13 +192,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 Payment Mode <span className="text-red-500">*</span>
               </label>
               <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-white/10 dark:bg-white/5">
+                <input type="hidden" {...register('paymentMode')} />
                 {PAYMENT_MODES.map((mode) => (
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => set('paymentMode', mode)}
+                    onClick={() => setValue('paymentMode', mode, { shouldValidate: true })}
                     className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-all ${
-                      form.paymentMode === mode
+                      paymentMode === mode
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                     }`}
@@ -177,6 +208,9 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                   </button>
                 ))}
               </div>
+              {errors.paymentMode && (
+                <p className="mt-1 text-xs text-red-500">{errors.paymentMode.message}</p>
+              )}
             </div>
 
             {/* Razorpay Order ID — shown only when Razorpay selected */}
@@ -187,11 +221,13 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={form.orderId}
-                  onChange={(e) => set('orderId', e.target.value)}
+                  {...register('orderId')}
                   placeholder="order_XXXXXXXXXXXXX"
                   className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-600"
                 />
+                {errors.orderId && (
+                  <p className="mt-1 text-xs text-red-500">{errors.orderId.message}</p>
+                )}
                 <p className="mt-1.5 text-[11px] text-gray-400">
                   Leave blank if payment was cash or bank transfer
                 </p>
@@ -204,8 +240,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 Description
               </label>
               <textarea
-                value={form.description}
-                onChange={(e) => set('description', e.target.value)}
+                {...register('description')}
                 rows={3}
                 placeholder="e.g. Annual renewal payment for Growth plan"
                 className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-300 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-600"
@@ -216,8 +251,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
-                checked={form.markRenewed}
-                onChange={(e) => set('markRenewed', e.target.checked)}
+                {...register('markRenewed')}
                 className="h-4 w-4 rounded border-gray-300 accent-indigo-600"
               />
               <span className="text-[13px] text-gray-600 dark:text-gray-300">
@@ -237,7 +271,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={recordPayment.isPending || !form.institutionId}
+              disabled={recordPayment.isPending || !institutionId}
               className="rounded-xl bg-indigo-600 px-6 py-2.5 text-[13px] font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {recordPayment.isPending ? 'Saving…' : 'Record Payment'}

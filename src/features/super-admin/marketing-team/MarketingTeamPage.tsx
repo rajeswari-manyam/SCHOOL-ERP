@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import MarketingStatCards from "./components/MarketingStatCards";
 import MarketingTabs from "./components/MarketingTabs";
 import TeamOverviewTab from "./components/TeamOverviewTab";
@@ -11,11 +10,9 @@ import { useReps, useMarketingStats, useMarketingMutations } from "./hooks/useMa
 import type { MarketingTab, RepFilters } from "./types/marketing.types";
 import { Button } from "@/components/ui/button";
 const MOCK_STATS = { totalReps: 8, presentToday: 6, presentPct: 75, demosThisMonth: 34, demosTarget: 48, schoolsClosed: 12, schoolsClosedDelta: 2 };
-
 const DEFAULT_FILTERS: RepFilters = { search: "", territory: "", status: "ALL", page: 1, pageSize: 6 };
 
 const MarketingTeamPage = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<MarketingTab>("team-overview");
   const [filters, setFilters]     = useState<RepFilters>(DEFAULT_FILTERS);
   const [addOpen, setAddOpen]     = useState(false);
@@ -81,7 +78,7 @@ const MarketingTeamPage = () => {
           </div>
         )}
 
-        {activeTab === "attendance" && <AttendanceTab reps={data?.data ?? []} />}
+        {activeTab === "attendance" && <AttendanceTab />}
 
         {activeTab === "targets" && (
           <TargetsTab reps={data?.data ?? []} stats={displayStats} />

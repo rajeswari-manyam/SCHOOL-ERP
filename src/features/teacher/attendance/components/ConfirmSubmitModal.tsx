@@ -1,5 +1,6 @@
 // teacher/attendance/components/ConfirmSubmitModal.tsx
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 type AttStatus = "PRESENT" | "ABSENT" | "HALF_DAY";
 
@@ -119,25 +120,12 @@ const ConfirmSubmitModal = ({
 
           {/* Footer */}
           <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-t border-gray-100 gap-2">
-            <button
-              onClick={onClose}
-              className="text-sm font-semibold text-gray-500 hover:text-gray-800 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
-            >
+            <Button variant="ghost" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={isPending}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm"
-            >
-              {isPending && (
-                <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-              )}
+            </Button>
+            <Button onClick={onConfirm} disabled={isPending}>
               {isPending ? "Submitting…" : "Confirm & Submit"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

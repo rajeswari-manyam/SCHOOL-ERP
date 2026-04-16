@@ -1,84 +1,51 @@
 import * as React from "react";
 import { cn } from "../../utils/cn";
 
-export interface ToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  variant?: "default" | "outline" | "ghost" | "error";
   size?: "sm" | "md" | "lg";
 }
 
-export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
     {
       className,
-      checked,
-      defaultChecked = false,
-      onCheckedChange,
+      variant = "default",
       size = "md",
-      disabled,
       ...props
     },
     ref,
   ) => {
-    const [internalChecked, setInternalChecked] =
-      React.useState(defaultChecked);
+    const baseStyles =
+      "block w-full rounded-xl border bg-white text-sm text-slate-900 transition duration-150 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
-    const isControlled = checked !== undefined;
-    const value = isControlled ? checked : internalChecked;
-
-    const toggle = () => {
-      if (disabled) return;
-
-      const newValue = !value;
-      if (!isControlled) setInternalChecked(newValue);
-      onCheckedChange?.(newValue);
+    const variantStyles = {
+      default: "border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20",
+      outline: "border-gray-300 focus:border-slate-500 focus:ring-2 focus:ring-slate-200",
+      ghost: "border-transparent bg-slate-100 focus:border-slate-300 focus:ring-2 focus:ring-slate-200",
+      error: "border-red-500 text-red-900 focus:border-red-500 focus:ring-2 focus:ring-red-200",
     };
 
-    const sizes = {
-      sm: "h-5 w-9",
-      md: "h-6 w-11",
-      lg: "h-7 w-14",
-    };
-
-    const thumbSizes = {
-      sm: "h-3 w-3",
-      md: "h-4 w-4",
-      lg: "h-5 w-5",
-    };
-
-    const translate = {
-      sm: value ? "translate-x-5" : "translate-x-1",
-      md: value ? "translate-x-6" : "translate-x-1",
-      lg: value ? "translate-x-8" : "translate-x-1",
+    const sizeStyles = {
+      sm: "min-h-[88px] px-3 py-2",
+      md: "min-h-[112px] px-4 py-3",
+      lg: "min-h-[136px] px-5 py-4 text-base",
     };
 
     return (
-      <button
+      <textarea
         ref={ref}
-        role="switch"
-        aria-checked={value}
-        onClick={toggle}
-        disabled={disabled}
         className={cn(
-          "relative inline-flex items-center rounded-full transition",
-          sizes[size],
-          value ? "bg-primary" : "bg-gray-300",
-          disabled && "opacity-50 cursor-not-allowed",
+          baseStyles,
+          variantStyles[variant],
+          sizeStyles[size],
           className,
         )}
         {...props}
-      >
-        <span
-          className={cn(
-            "inline-block rounded-full bg-white transform transition",
-            thumbSizes[size],
-            translate[size],
-          )}
-        />
-      </button>
+      />
     );
   },
 );
 
-Toggle.displayName = "Toggle";
+Textarea.displayName = "Textarea";

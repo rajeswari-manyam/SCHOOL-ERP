@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { format, getDaysInMonth, getDay } from "date-fns";
-import type { AttendanceRecord, AttendanceMark, MarketingRep } from "../types/marketing.types";
+import { format, getDaysInMonth } from "date-fns";
+import type { AttendanceRecord, AttendanceMark } from "../types/marketing.types";
 import { RepAvatar } from "./RepBadges";
-import { useAttendance, useMarketingMutations } from "../hooks/useMarketing";
-interface AttendanceTabProps {reps: MarketingRep[];}
+import { useAttendance } from "../hooks/useMarketing";
+import AttendanceModal from "./AttendanceModal";
 
 const dotColors: Record<AttendanceMark, string> = {
   P: "bg-emerald-500", A: "bg-red-500", H: "bg-amber-400", "-": "bg-transparent",
@@ -12,12 +12,18 @@ const dotTitles: Record<AttendanceMark, string> = {
   P: "Present", A: "Absent", H: "Half Day", "-": "Weekend/Holiday",
 };
 
-const AttendanceTab = ({ reps }: AttendanceTabProps) => {
+const AttendanceTab = () => {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
-  const { data: records, isLoading } = useAttendance(month, year);
-  const { markAttendance } = useMarketingMutations();
+  const [modalOpen, setModalOpen] = useState(false);
+  const { data: recordsData, isLoading } = useAttendance(month, year);
+
+  const rawRecords = recordsData as unknown;
+  const records: AttendanceRecord[] = Array.isArray(rawRecords)
+    ? rawRecords
+    : (rawRecords as { data?: AttendanceRecord[]; records?: AttendanceRecord[] })?.data ??
+      (rawRecords as { data?: AttendanceRecord[]; records?: AttendanceRecord[] })?.records ?? [];
 
   const daysCount = getDaysInMonth(new Date(year, month - 1));
   const days = Array.from({ length: daysCount }, (_, i) => i + 1);
@@ -51,7 +57,7 @@ const AttendanceTab = ({ reps }: AttendanceTabProps) => {
           </div>
         </div>
 
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+        <button onClick={() => setModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -112,6 +118,8 @@ const AttendanceTab = ({ reps }: AttendanceTabProps) => {
           Manual overrides require Super Admin approval.
         </p>
       </div>
+
+      <AttendanceModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 };

@@ -22,7 +22,10 @@ export const marketingApi = {
 
   getAttendance: async (month: number, year: number): Promise<AttendanceRecord[]> => {
     const { data } = await axios.get("/super-admin/marketing-team/attendance", { params: { month, year } });
-    return data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.records)) return data.records;
+    return [];
   },
 
   markAttendance: async (repId: string, date: string, status: string): Promise<void> => {

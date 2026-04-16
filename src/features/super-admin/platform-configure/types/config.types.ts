@@ -31,6 +31,22 @@ export interface PlatformConfigData {
   emailSms: EmailSmsConfig;
 }
 
+export type TemplateCategory = "Utility" | "Marketing" | "Authentication";
+export type TemplateLanguage = "Telugu" | "English" | "Telugu+English" | "Hindi";
+
+export interface ConfigTemplateFormValues {
+  name: string;
+  category: TemplateCategory;
+  language: TemplateLanguage;
+  body: string;
+  variables?: string[];
+}
+
+export interface ConfigTemplateAssignPayload {
+  assignTo: "ALL" | "SPECIFIC";
+  schoolIds?: string[];
+}
+
 export interface FeatureFlag {
   id: string;
   name: string;

@@ -4,7 +4,7 @@ import { format, getDaysInMonth, getDay, startOfMonth } from "date-fns";
 import type { AttendanceHistoryEntry } from "../types/attendance.types";
 
 interface MyHistoryTabProps {
-  history: AttendanceHistoryEntry[];
+  history?: AttendanceHistoryEntry[];
   onRequestCorrection: (entry: AttendanceHistoryEntry) => void;
 }
 
@@ -27,7 +27,7 @@ const STATUS_PILL: Record<string, string> = {
   missed:  "bg-red-50 text-red-600 border border-red-200",
 };
 
-const MyHistoryTab = ({ history, onRequestCorrection }: MyHistoryTabProps) => {
+const MyHistoryTab = ({ history = [], onRequestCorrection }: MyHistoryTabProps) => {
   // Show current month calendar
   const now    = new Date();
   const year   = now.getFullYear();
@@ -37,12 +37,14 @@ const MyHistoryTab = ({ history, onRequestCorrection }: MyHistoryTabProps) => {
   const firstDayOfWeek = getDay(startOfMonth(new Date(year, month))); // 0=Sun
   const days           = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
+  const safeHistory = Array.isArray(history) ? history : [];
+
   // Build lookup date→entry
   const byDate = useMemo(() => {
     const map: Record<string, AttendanceHistoryEntry> = {};
-    history.forEach((e) => { map[e.date] = e; });
+    safeHistory.forEach((e) => { map[e.date] = e; });
     return map;
-  }, [history]);
+  }, [safeHistory]);
 
   const getEntry = (d: number) => {
     const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -114,9 +116,9 @@ const MyHistoryTab = ({ history, onRequestCorrection }: MyHistoryTabProps) => {
       {/* Summary row */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "On Time",  count: history.filter((h) => h.status === "on_time").length,  cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
-          { label: "Late",     count: history.filter((h) => h.status === "late").length,     cls: "bg-amber-50 border-amber-100 text-amber-700" },
-          { label: "Missed",   count: history.filter((h) => h.status === "missed").length,   cls: "bg-red-50 border-red-100 text-red-600" },
+          { label: "On Time",  count: safeHistory.filter((h) => h.status === "on_time").length,  cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+          { label: "Late",     count: safeHistory.filter((h) => h.status === "late").length,     cls: "bg-amber-50 border-amber-100 text-amber-700" },
+          { label: "Missed",   count: safeHistory.filter((h) => h.status === "missed").length,   cls: "bg-red-50 border-red-100 text-red-600" },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl border px-4 py-3 text-center ${s.cls}`}>
             <p className="text-2xl font-extrabold">{s.count}</p>
@@ -143,12 +145,12 @@ const MyHistoryTab = ({ history, onRequestCorrection }: MyHistoryTabProps) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {history.length === 0 ? (
+              {safeHistory.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-sm text-gray-400">No history found.</td>
                 </tr>
               ) : (
-                history.map((entry) => (
+                safeHistory.map((entry) => (
                   <tr key={entry.id} className="hover:bg-gray-50/40 transition-colors">
                     <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                       {format(new Date(entry.date), "dd MMM yyyy")}

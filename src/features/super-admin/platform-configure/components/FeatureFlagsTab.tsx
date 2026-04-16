@@ -1,8 +1,10 @@
 import { useFeatureFlags, useConfigMutations } from "../hooks/useConfig";
 
 const FeatureFlagsTab = () => {
-  const { data: flags, isLoading } = useFeatureFlags();
+  const { data: flagsData, isLoading } = useFeatureFlags();
   const { toggleFlag } = useConfigMutations();
+
+  const flags = Array.isArray(flagsData) ? flagsData : flagsData?.data ?? [];
 
   if (isLoading) return <div className="text-sm text-gray-400 animate-pulse">Loading flags…</div>;
 

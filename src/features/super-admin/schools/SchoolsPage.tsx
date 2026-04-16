@@ -84,6 +84,7 @@ const [openModal, setOpenModal] = useState(false);
             </svg>
             Add School
           </Button>
+         
         </div>
       </div>
 

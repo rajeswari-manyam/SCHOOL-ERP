@@ -1,8 +1,11 @@
 // teacher/attendance/components/CorrectionRequestModal.tsx
 import { useState } from "react";
-import { format } from "date-fns";
 import { useSubmitCorrectionRequest } from "../hooks/useAttendance";
 import type { AttendanceMark } from "../types/attendance.types";
+import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CorrectionRequestModalProps {
   open: boolean;
@@ -36,14 +39,19 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
 
   if (!open) return null;
 
-  const inputClass = "w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 transition";
   const labelClass = "block text-[11px] font-bold tracking-widest uppercase text-gray-500 mb-1.5";
 
   const handleSubmit = () => {
-    if (!reason.trim() || reason.trim().length < 5) {
-      setError("Please provide a reason (min 5 characters).");
+    if (!prefill && !studentId.trim()) {
+      setError("Student ID is required.");
       return;
     }
+
+    if (!reason.trim() || reason.trim().length < 5) {
+      setError("Please provide a reason (min 5 characters).\n");
+      return;
+    }
+
     setError("");
     mutate(
       { date, classId: "class-1", studentId, currentMark, requestedMark, reason },
@@ -65,41 +73,43 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
               <h2 className="text-lg font-extrabold text-gray-900">Correction Request</h2>
               <p className="text-sm text-gray-400 mt-0.5">Requires Super Admin approval</p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
-            >
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg text-gray-400 hover:text-gray-600" onClick={onClose}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
-            </button>
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto min-h-0 px-6 py-5 space-y-4">
-            {/* Date */}
-            <div>
-              <label className={labelClass}>Date *</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={inputClass}
-                max={new Date().toISOString().slice(0, 10)}
-              />
-            </div>
+            <FormField label="Date *">
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              max={new Date().toISOString().slice(0, 10)}
+            />
+          </FormField>
 
             {/* Student name (manual entry if not prefilled) */}
             {!prefill ? (
-              <div>
-                <label className={labelClass}>Student Name *</label>
-                <input
-                  type="text"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="e.g. Anjali Reddy"
-                  className={inputClass}
-                />
-              </div>
+              <>
+                <FormField label="Student ID *">
+                  <Input
+                    type="text"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    placeholder="Enter student ID"
+                  />
+                </FormField>
+                <FormField label="Student Name *">
+                  <Input
+                    type="text"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    placeholder="e.g. Anjali Reddy"
+                  />
+                </FormField>
+              </>
             ) : (
               <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
@@ -169,18 +179,14 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
               </span>
             </div>
 
-            {/* Reason */}
-            <div>
-              <label className={labelClass}>Reason for Correction *</label>
-              <textarea
+            <FormField label="Reason for Correction *" error={error || undefined}>
+              <Textarea
                 value={reason}
                 onChange={(e) => { setReason(e.target.value); setError(""); }}
                 rows={3}
                 placeholder="Briefly explain why the attendance needs to be corrected…"
-                className={`${inputClass} h-auto py-2.5 resize-none`}
               />
-              {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-            </div>
+            </FormField>
 
             {/* Note */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
@@ -192,25 +198,12 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
 
           {/* Footer */}
           <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <button
-              onClick={onClose}
-              className="text-sm font-semibold text-gray-500 hover:text-gray-800"
-            >
+            <Button variant="ghost" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isPending || requestedMark === currentMark}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm"
-            >
-              {isPending && (
-                <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25"/>
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-              )}
+            </Button>
+            <Button onClick={handleSubmit} disabled={isPending || requestedMark === currentMark}>
               {isPending ? "Submitting…" : "Submit Request"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

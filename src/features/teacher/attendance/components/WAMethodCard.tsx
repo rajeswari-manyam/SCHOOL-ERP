@@ -1,5 +1,6 @@
 // teacher/attendance/components/WAMethodCard.tsx
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const WA_NUMBER = "91-80000-12345";
 const WA_FORMAT = "ATT 10A 14-04-2025\n1P 2A 3P 4P 5H 6P...";
@@ -43,14 +44,14 @@ const WAMethodCard = ({ onMarkViaWA, isPending }: WAMethodCardProps) => {
             <p className="text-xs text-gray-500">Fastest method — send a message to mark attendance</p>
           </div>
         </div>
-        <button
+        <Button
           onClick={onMarkViaWA}
           disabled={isPending}
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25d366] text-white text-sm font-bold hover:bg-[#1ebe5a] disabled:opacity-60 transition-colors shadow-sm"
         >
           <WAIcon />
           {isPending ? "Sending…" : "Open WhatsApp"}
-        </button>
+        </Button>
       </div>
 
       <div className="px-5 py-5 space-y-5 bg-white">
@@ -79,9 +80,11 @@ const WAMethodCard = ({ onMarkViaWA, isPending }: WAMethodCardProps) => {
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">WhatsApp Number</p>
             <p className="text-sm font-bold text-gray-900 font-mono">{WA_NUMBER}</p>
           </div>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => copy(WA_NUMBER, "number")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
           >
             {copied === "number" ? (
               <>
@@ -94,14 +97,16 @@ const WAMethodCard = ({ onMarkViaWA, isPending }: WAMethodCardProps) => {
                 Copy Number
               </>
             )}
-          </button>
+          </Button>
         </div>
 
         {/* Example message box */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Message Format</p>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => copy(WA_FORMAT, "format")}
               className="flex items-center gap-1.5 text-xs font-semibold text-[#25d366] hover:text-[#16a34a] transition-colors"
             >
@@ -116,7 +121,7 @@ const WAMethodCard = ({ onMarkViaWA, isPending }: WAMethodCardProps) => {
                   Copy Format
                 </>
               )}
-            </button>
+            </Button>
           </div>
 
           {/* WA bubble */}

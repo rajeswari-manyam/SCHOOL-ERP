@@ -7,7 +7,11 @@ const statusStyles = {
 };
 
 const N8nWorkflowsTab = () => {
-  const { data: workflows, isLoading } = useWorkflows();
+  const { data: workflowsData, isLoading } = useWorkflows();
+
+  const workflows = Array.isArray(workflowsData)
+    ? workflowsData
+    : workflowsData?.data ?? [];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

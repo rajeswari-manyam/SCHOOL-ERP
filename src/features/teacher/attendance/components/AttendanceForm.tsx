@@ -1,7 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type{ MarkAttendanceInput } from "../types/attendance.types";
+import { Button } from "@/components/ui/button";
+import { Form, FormField } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const schema = z.object({
   studentId: z.string().min(1),
@@ -10,45 +14,63 @@ const schema = z.object({
   remarks: z.string().optional(),
 });
 
+type AttendanceFormValues = z.infer<typeof schema>;
+
 type AttendanceFormProps = {
-  defaultValues?: Partial<MarkAttendanceInput>;
-  onSubmit: (values: MarkAttendanceInput) => void;
+  defaultValues?: Partial<AttendanceFormValues>;
+  onSubmit: (values: AttendanceFormValues) => void;
   loading?: boolean;
 };
 
 export const AttendanceForm = ({ defaultValues = {}, onSubmit, loading }: AttendanceFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<MarkAttendanceInput>({
+  const { register, handleSubmit, formState: { errors } } = useForm<AttendanceFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label>Student ID</label>
-        <input {...register("studentId")} className="input" />
-        {errors.studentId && <span className="text-red-600">{errors.studentId.message}</span>}
+    <Form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <FormField
+        label="Student ID"
+        error={errors.studentId?.message}
+      >
+        <Input {...register("studentId")} placeholder="Enter student ID" />
+      </FormField>
+
+      <FormField
+        label="Date"
+        error={errors.date?.message}
+      >
+        <Input type="date" {...register("date")} />
+      </FormField>
+
+      <FormField
+        label="Status"
+        error={errors.status?.message}
+      >
+        <Select
+          {...register("status")}
+          options={[
+            { label: "Present", value: "present" },
+            { label: "Absent", value: "absent" },
+            { label: "Late", value: "late" },
+          ]}
+          placeholder="Select status"
+        />
+      </FormField>
+
+      <FormField
+        label="Remarks"
+        error={errors.remarks?.message as string | undefined}
+      >
+        <Textarea {...register("remarks")} rows={4} placeholder="Optional remarks" />
+      </FormField>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={loading}>
+          Submit
+        </Button>
       </div>
-      <div>
-        <label>Date</label>
-        <input type="date" {...register("date")} className="input" />
-        {errors.date && <span className="text-red-600">{errors.date.message}</span>}
-      </div>
-      <div>
-        <label>Status</label>
-        <select {...register("status")} className="input">
-          <option value="present">Present</option>
-          <option value="absent">Absent</option>
-          <option value="late">Late</option>
-        </select>
-        {errors.status && <span className="text-red-600">{errors.status.message}</span>}
-      </div>
-      <div>
-        <label>Remarks</label>
-        <textarea {...register("remarks")} className="input" rows={2} />
-        {errors.remarks && <span className="text-red-600">{errors.remarks.message as string}</span>}
-      </div>
-      <button type="submit" className="btn btn-primary" disabled={loading}>Submit</button>
-    </form>
+    </Form>
   );
 };
