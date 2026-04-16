@@ -1,51 +1,114 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getApplications,
-  getApplication,
-  createApplication,
-  updateApplicationStatus,
-} from "../api/admissions.api";
+import { useState, useEffect, useMemo } from "react";
+import { admissionsApi } from "../api/admissions.api";
+import type {
+  Admission,
+  AdmissionStage,
+  AdmissionStats,
+  AddEnquiryFormData,
+  ConfirmAdmissionFormData,
+} from "../types/admissions.types";
 
-export const useApplications = () => {
-  return useQuery({
-    queryKey: ["admissions"],
-    queryFn: getApplications,
-    staleTime: 5 * 60 * 1000,
-  });
-};
+// ─── useAdmissions ────────────────────────────────────────────────────────────
 
-export const useApplication = (id: string) => {
-  return useQuery({
-    queryKey: ["admission", id],
-    queryFn: () => getApplication(id),
-    enabled: !!id,
-  });
-};
+export const useAdmissions = () => {
+  const [admissions, setAdmissions] = useState<Admission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-export const useCreateApplication = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createApplication,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["admissions"]);
-    },
-  });
-};
+  useEffect(() => {
+    admissionsApi.getAll().then(data => {
+      setAdmissions(data);
+      setLoading(false);
+    });
+  }, []);
 
-export const useUpdateApplicationStatus = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      status,
-      remarks,
-    }: {
-      id: string;
-      status: "approved" | "rejected";
-      remarks?: string;
-    }) => updateApplicationStatus(id, status, remarks),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["admissions"]);
-    },
-  });
+  // Computed pipeline columns
+  const byStage = useMemo(() => {
+    const map: Record<AdmissionStage, Admission[]> = {
+      ENQUIRY: [],
+      INTERVIEW: [],
+      DOCS_VERIFIED: [],
+      CONFIRMED: [],
+      DECLINED: [],
+    };
+    admissions.forEach(a => map[a.stage].push(a));
+    return map;
+  }, [admissions]);
+
+  // Stats
+  const stats: AdmissionStats = useMemo(() => {
+    const total = admissions.length;
+    const confirmed = byStage.CONFIRMED.length;
+    return {
+      enquiries: total,
+      interviews: byStage.INTERVIEW.length,
+      docsVerified: byStage.DOCS_VERIFIED.length,
+      confirmed,
+      declined: byStage.DECLINED.length,
+      conversionRate: total > 0 ? Math.round((confirmed / total) * 100) : 0,
+    };
+  }, [admissions, byStage]);
+
+  // Selected admission
+  const selected = useMemo(
+    () => admissions.find(a => a.id === selectedId) ?? null,
+    [admissions, selectedId]
+  );
+
+  // ─── Actions ───────────────────────────────────────────────────────────────
+
+  const addEnquiry = async (data: AddEnquiryFormData) => {
+    const created = await admissionsApi.create(data);
+    setAdmissions(prev => [created, ...prev]);
+    return created;
+  };
+
+  const moveToInterview = async (id: string, date?: string, time?: string) => {
+    const updated = await admissionsApi.moveToInterview(id, date, time);
+    setAdmissions(prev => prev.map(a => a.id === id ? updated : a));
+  };
+
+  const moveToDocs = async (id: string) => {
+    const updated = await admissionsApi.moveToDocs(id);
+    setAdmissions(prev => prev.map(a => a.id === id ? updated : a));
+  };
+
+  const confirmAdmission = async (id: string, data: ConfirmAdmissionFormData) => {
+    const updated = await admissionsApi.confirmAdmission(id, data);
+    setAdmissions(prev => prev.map(a => a.id === id ? updated : a));
+    return updated;
+  };
+
+  const declineAdmission = async (id: string, reason: string) => {
+    const updated = await admissionsApi.declineAdmission(id, reason);
+    setAdmissions(prev => prev.map(a => a.id === id ? updated : a));
+  };
+
+  const toggleDocVerified = async (admissionId: string, docId: string) => {
+    const updated = await admissionsApi.toggleDocVerified(admissionId, docId);
+    setAdmissions(prev => prev.map(a => a.id === admissionId ? updated : a));
+  };
+
+  const sendWhatsApp = async (id: string, type: "enquiry" | "welcome") => {
+    const updated = await admissionsApi.markWhatsappSent(id, type);
+    setAdmissions(prev => prev.map(a => a.id === id ? updated : a));
+  };
+
+  return {
+    admissions,
+    byStage,
+    stats,
+    loading,
+    selected,
+    selectedId,
+    setSelectedId,
+    // actions
+    addEnquiry,
+    moveToInterview,
+    moveToDocs,
+    confirmAdmission,
+    declineAdmission,
+    toggleDocVerified,
+    sendWhatsApp,
+  };
 };

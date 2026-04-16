@@ -1,2 +1,2 @@
-export * from "./ReportTable";
-export * from "./ReportForm";
+export { default as ReportsPage } from "../ReportsPage";
+export * from "../types/reports.types";

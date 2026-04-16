@@ -1,0 +1,155 @@
+import React from "react";
+import type { WAConnection, WATemplate, NotificationSettings } from "../types/settings.types";
+
+interface Props {
+  connection: WAConnection;
+  templates: WATemplate[];
+  notifications: NotificationSettings;
+  onToggleNotification: (key: keyof NotificationSettings, value: boolean) => void;
+}
+
+const TemplateStatusBadge: React.FC<{ status: WATemplate["status"] }> = ({ status }) => {
+  const styles: Record<string, string> = {
+    APPROVED: "bg-green-100 text-green-700",
+    PENDING: "bg-orange-100 text-orange-700",
+    REJECTED: "bg-red-100 text-red-700",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${status === "APPROVED" ? "bg-green-500" : status === "PENDING" ? "bg-orange-500" : "bg-red-500"}`} />
+      {status}
+    </span>
+  );
+};
+
+const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
+  <button
+    onClick={() => onChange(!checked)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-indigo-600" : "bg-gray-300"}`}
+  >
+    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-6" : "translate-x-1"}`} />
+  </button>
+);
+
+const NOTIFICATION_ITEMS: { key: keyof NotificationSettings; label: string; description: string }[] = [
+  { key: "attendanceAlerts", label: "Attendance Alerts", description: "Send instant WhatsApp messages when a student is absent." },
+  { key: "feeReminders", label: "Fee Reminders", description: "Automatic reminders based on payment schedules." },
+  { key: "attendanceReminderToTeachers", label: "Attendance Reminder to Teachers", description: "Notify faculty to complete attendance logs by 10:00 AM." },
+  { key: "monthlyReportToPrincipal", label: "Monthly Report to Principal", description: "Aggregate performance and financial reports on 1st of month." },
+  { key: "broadcastMessaging", label: "Broadcast Messaging", description: "Enable manual mass messaging for urgent circulars." },
+  { key: "newEnquiryNotification", label: "New Enquiry Notification", description: "Alert admission head when a new website form is submitted." },
+];
+
+export const WhatsAppTab: React.FC<Props> = ({
+  connection, templates, notifications, onToggleNotification,
+}) => {
+  const usagePercent = Math.round((connection.monthlyUsed / connection.monthlyLimit) * 100);
+
+  return (
+    <div className="space-y-6">
+      {/* Connection Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">WhatsApp Connection</h2>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`w-2 h-2 rounded-full ${connection.connected ? "bg-green-500" : "bg-red-500"}`} />
+              <span className={`text-sm font-medium ${connection.connected ? "text-green-600" : "text-red-600"}`}>
+                {connection.connected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
+          </div>
+          <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Manage Account
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">WhatsApp Number</p>
+            <p className="text-sm font-medium text-gray-900">{connection.whatsappNumber}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Account Name</p>
+            <p className="text-sm font-medium text-gray-900">{connection.accountName}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">360Dialog ID</p>
+            <p className="text-sm font-medium text-gray-900">{connection.dialogId}</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-700">Monthly Message Limit</p>
+            <p className="text-sm font-semibold text-gray-900">
+              {connection.monthlyUsed.toLocaleString()} / {connection.monthlyLimit.toLocaleString()}
+            </p>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+            <div
+              className="bg-indigo-500 h-2 rounded-full"
+              style={{ width: `${usagePercent}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500">Usage resetting in {connection.resetInDays} days</p>
+        </div>
+      </div>
+
+      {/* Active Templates Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-gray-900">Active Templates</h2>
+            <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
+              {templates.length} TEMPLATES
+            </span>
+          </div>
+          <button className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+            <span className="text-lg leading-none">⊕</span> New Template
+          </button>
+        </div>
+
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-100">
+              <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Template Name</th>
+              <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Category</th>
+              <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+              <th className="text-right py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Last Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            {templates.map(t => (
+              <tr key={t.id} className="border-b border-gray-50 last:border-0">
+                <td className="py-3 text-sm font-medium text-gray-900">{t.name}</td>
+                <td className="py-3 text-sm text-gray-600">{t.category}</td>
+                <td className="py-3"><TemplateStatusBadge status={t.status} /></td>
+                <td className="py-3 text-right text-sm text-gray-500">{t.lastUsed ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Notification Settings Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h2>
+        <div className="space-y-4">
+          {NOTIFICATION_ITEMS.map(item => (
+            <div key={item.key} className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+              </div>
+              <Toggle
+                checked={notifications[item.key]}
+                onChange={v => onToggleNotification(item.key, v)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

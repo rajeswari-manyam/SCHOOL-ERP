@@ -1,3 +1,4 @@
+
 interface Props {
   whatsappNumber: string;
   onDismiss: () => void;
@@ -12,14 +13,15 @@ export function WhatsAppBanner({ whatsappNumber, onDismiss }: Props) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-indigo-800">
           Teachers mark attendance by sending WhatsApp to{" "}
-          <span className="text-indigo-600">{whatsappNumber}</span>
+          <span className="text-indigo-600 font-bold">{whatsappNumber}</span>
         </p>
         <p className="text-xs text-indigo-500 mt-0.5">
-          Format: 7A Absent: Student Name1, Student Name2
+          Format: <span className="font-mono">7A Absent: Student Name1, Student Name2</span>
         </p>
       </div>
       <button
         onClick={onDismiss}
+        aria-label="Dismiss banner"
         className="text-indigo-300 hover:text-indigo-500 text-xl leading-none shrink-0 transition-colors"
       >
         ×

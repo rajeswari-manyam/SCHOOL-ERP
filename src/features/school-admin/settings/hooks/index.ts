@@ -1,1 +1,1 @@
-export * from "./useSchoolSettings";
+export * from "./useSettings";

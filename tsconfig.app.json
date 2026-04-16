@@ -21,10 +21,16 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
 
+    /* Required for paths */
     "baseUrl": ".",
+
+    /* Path alias */
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+
+    /* Optional (remove warning) */
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src"]
 }

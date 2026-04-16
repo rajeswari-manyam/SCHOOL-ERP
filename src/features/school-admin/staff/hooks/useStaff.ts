@@ -1,40 +1,45 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  fetchStaff,
-  createStaff,
-  updateStaff,
-  deleteStaff,
-} from "../api/staff.api";
-import { StaffCreateInput, StaffUpdateInput } from "../types/staff.types";
+import { useMemo } from "react";
+import type{ StaffMember, TabKey } from "../types/staff.types";
 
-export const useStaff = () => {
-  return useQuery({
-    queryKey: ["staff"],
-    queryFn: fetchStaff,
-  });
-};
+interface Props {
+  staff: StaffMember[];
+  activeTab: TabKey;
+  search: string;
+  roleFilter: string;
+  statusFilter: string;
+}
 
-export const useCreateStaff = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createStaff,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["staff"] }),
-  });
-};
+export const useStaffFilter = ({
+  staff,
+  activeTab,
+  search,
+  roleFilter,
+  statusFilter,
+}: Props) => {
+  return useMemo(() => {
+    let base =
+      activeTab === "teachers"
+        ? staff.filter((s) => s.isTeaching)
+        : activeTab === "non-teaching"
+        ? staff.filter((s) => !s.isTeaching)
+        : staff;
 
-export const useUpdateStaff = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: StaffUpdateInput }) =>
-      updateStaff(id, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["staff"] }),
-  });
-};
+    if (search) {
+      base = base.filter(
+        (s) =>
+          s.name.toLowerCase().includes(search.toLowerCase()) ||
+          s.phone.includes(search)
+      );
+    }
 
-export const useDeleteStaff = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteStaff,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["staff"] }),
-  });
+    if (roleFilter !== "All Roles") {
+      base = base.filter((s) => s.role === roleFilter);
+    }
+
+    if (statusFilter !== "All Status") {
+      base = base.filter((s) => s.status === statusFilter);
+    }
+
+    return base;
+  }, [staff, activeTab, search, roleFilter, statusFilter]);
 };

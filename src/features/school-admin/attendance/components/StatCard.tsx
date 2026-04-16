@@ -1,14 +1,16 @@
+
+import type { ReactNode } from "react";
+
 interface StatCardProps {
   label: string;
-  value: React.ReactNode;
-  delta?: React.ReactNode;
-  suffix?: React.ReactNode;
-  borderColor?: string;
+  value: ReactNode;
+  delta?: ReactNode;
+  suffix?: ReactNode;
 }
 
-export function StatCard({ label, value, delta, suffix, borderColor = "border-gray-200" }: StatCardProps) {
+export function StatCard({ label, value, delta, suffix }: StatCardProps) {
   return (
-    <div className={`flex-1 min-w-0 px-6 py-4 border-r ${borderColor} last:border-r-0`}>
+    <div className="flex-1 min-w-0 px-6 py-4 border-r border-gray-200 last:border-r-0">
       <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase mb-2">
         {label}
       </p>

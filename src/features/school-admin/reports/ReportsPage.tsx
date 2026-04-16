@@ -1,87 +1,195 @@
-import {
-  useReports,
-  useCreateReport,
-  useUpdateReport,
-  useDeleteReport,
-} from "./hooks/useReports";
 import { useState } from "react";
-import { ReportTable } from "./components/ReportTable";
-import { ReportForm } from "./components/ReportForm";
+import { useReports, useGenerateReport } from "./hooks/useReports";
+
+// Components
+import ReportStatCards from "./components/Reportstatcards";
+import { FormatBadge, ReportTypeBadge } from "./components/Reportbadges";
+// (Assuming you have these or will create)
+import GenerateReportModal from "./components/Generatereportmodal";
+
+// Types
+import type { ReportType } from "./types/reports.types";
+
+const REPORT_CARDS: {
+  id: ReportType;
+  title: string;
+  description: string;
+}[] = [
+  { id: "ATTENDANCE", title: "Attendance Report", description: "Daily & monthly attendance insights" },
+  { id: "FEE_COLLECTION", title: "Fee Collection", description: "Payment summaries & dues" },
+  { id: "STUDENT", title: "Student Report", description: "Student records & analytics" },
+  { id: "WHATSAPP_ACTIVITY", title: "WhatsApp Activity", description: "Communication logs" },
+  { id: "ADMISSIONS", title: "Admissions", description: "Admission funnel reports" },
+  { id: "STAFF", title: "Staff Report", description: "Staff activity & attendance" },
+];
 
 const ReportsPage = () => {
-  const { data, isLoading } = useReports();
-  const createReport = useCreateReport();
-  const updateReport = useUpdateReport();
-  const deleteReport = useDeleteReport();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
+  const {
+    paginatedReports,
+    stats,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    downloadReport,
+  } = useReports();
 
-  const handleEdit = (id: string) => {
-    setEditingId(id);
-    setFormOpen(true);
-  };
+  const [selectedType, setSelectedType] = useState<ReportType | null>(null);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Delete this report?")) {
-      deleteReport.mutate(id);
-    }
-  };
+  const {
+    form,
+    generating,
+    success,
+    estimatedSize,
+    openForType,
+    setField,
+    toggleSection,
+    generate,
+  } = useGenerateReport(() => {
+    setSelectedType(null);
+  });
 
-  const handleFormSubmit = (values: any) => {
-    if (editingId) {
-      updateReport.mutate({ id: editingId, input: values });
-    } else {
-      createReport.mutate(values);
-    }
-    setFormOpen(false);
-    setEditingId(null);
-  };
+  if (loading || !stats) {
+    return <div className="p-6 text-sm text-gray-500">Loading reports...</div>;
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Reports</h1>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-          onClick={() => {
-            setFormOpen(true);
-            setEditingId(null);
-          }}
-        >
-          Add Report
-        </button>
+    <div className="p-6 space-y-6">
+      {/* ─── Header ───────────────────────── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-extrabold text-gray-900">Reports</h1>
+          <p className="text-xs text-gray-400 mt-1">
+            Generate and manage school reports
+          </p>
+        </div>
       </div>
-      <ReportTable
-        reports={data?.records ?? []}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-      {formOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-          <div className="bg-white rounded shadow p-6 w-96">
-            <h2 className="font-semibold mb-4">
-              {editingId ? "Edit Report" : "Add Report"}
-            </h2>
-            <ReportForm
-              defaultValues={
-                editingId
-                  ? data?.records.find((r: any) => r.id === editingId)
-                  : {}
-              }
-              onSubmit={handleFormSubmit}
-              loading={createReport.isLoading || updateReport.isLoading}
-            />
+
+      {/* ─── Stats ───────────────────────── */}
+      <ReportStatCards stats={stats} />
+
+      {/* ─── Report Cards (Generate) ───────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {REPORT_CARDS.map((card) => (
+          <div
+            key={card.id}
+            className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md cursor-pointer transition"
+            onClick={() => {
+              setSelectedType(card.id);
+              openForType(card.id);
+            }}
+          >
+            <h3 className="text-sm font-bold text-gray-800">
+              {card.title}
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              {card.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ─── Search ───────────────────────── */}
+      <div className="flex items-center justify-between">
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search reports..."
+          className="px-4 py-2 border border-gray-200 rounded-lg text-sm w-64"
+        />
+      </div>
+
+      {/* ─── Reports Table ───────────────────────── */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-gray-500 text-xs">
+            <tr>
+              <th className="p-3 text-left">Report</th>
+              <th className="p-3 text-left">Generated On</th>
+              <th className="p-3 text-left">Period</th>
+              <th className="p-3 text-left">Format</th>
+              <th className="p-3 text-left">Generated By</th>
+              <th className="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {paginatedReports.map((r) => (
+              <tr key={r.id} className="border-t">
+                <td className="p-3 font-medium text-gray-800">
+                  {r.reportName}
+                </td>
+
+                <td className="p-3 text-gray-500">
+                  {r.generatedOn}
+                </td>
+
+                <td className="p-3 text-gray-500">
+                  {r.period}
+                </td>
+
+                <td className="p-3 space-y-1">
+                  <FormatBadge format={r.format} />
+                  <ReportTypeBadge type={r.type} />
+                </td>
+
+                <td className="p-3 text-gray-500">
+                  {r.generatedBy.name}
+                </td>
+
+                <td className="p-3 text-right">
+                  <button
+                    onClick={() => downloadReport(r.id)}
+                    className="text-indigo-600 hover:underline text-xs font-semibold"
+                  >
+                    Download
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* ─── Pagination ───────────────────────── */}
+        <div className="flex justify-between items-center p-3 text-xs text-gray-500">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <div className="flex gap-2">
             <button
-              className="mt-4 px-3 py-1"
-              onClick={() => {
-                setFormOpen(false);
-                setEditingId(null);
-              }}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-2 py-1 border rounded disabled:opacity-50"
             >
-              Cancel
+              Prev
+            </button>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-2 py-1 border rounded disabled:opacity-50"
+            >
+              Next
             </button>
           </div>
         </div>
+      </div>
+
+      {/* ─── Generate Modal ───────────────────────── */}
+      {selectedType && (
+        <GenerateReportModal
+          form={form}
+          generating={generating}
+          success={success}
+          estimatedSize={estimatedSize}
+          onClose={() => setSelectedType(null)}
+          onSetField={setField}
+          onToggleSection={toggleSection}
+          onGenerate={generate}
+        />
       )}
     </div>
   );

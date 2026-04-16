@@ -1,0 +1,1 @@
+export { default as ExamPage } from "./ExamPage";

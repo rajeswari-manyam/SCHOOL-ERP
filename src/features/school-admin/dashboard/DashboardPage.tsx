@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-=======
-import { StatCard } from "../../../components/ui/statcard";
-import { AttendanceLineChart } from "@/components/charts/AttendanceLineChart";
-import { FeeBarChart } from "@/components/charts/FeeBarChart";
-import { DonutChart } from "@/components/charts/DonutChart";
->>>>>>> 6adc41d284a3b2813b4093f22412c5bb728c19f7
 import { useRealtimeDashboard } from "./hooks/useRealtimeDashboard";
 import { joinClassNames } from "./utils/formatters.ts";
 
@@ -50,7 +43,6 @@ export default function DashboardPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-<<<<<<< HEAD
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800 p-4">
 
       {/* ── Alert Banner ────────────────────────────────────────────────────── */}
@@ -98,14 +90,6 @@ export default function DashboardPage() {
             <span>📣</span> Send Broadcast
           </button>
         </div>
-=======
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard label="Total Students" value={data?.students ?? 0} />
-        <StatCard label="Attendance %" value={data?.attendance ?? 0} />
-        <StatCard label="Fees Collected" value={data?.fees ?? 0} />
-        <StatCard label="Defaulters" value={data?.defaulters ?? 0} />
->>>>>>> 6adc41d284a3b2813b4093f22412c5bb728c19f7
       </div>
 
       {/* ── Top Stat Cards ───────────────────────────────────────────────────── */}

@@ -1,8 +1,15 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 // import DashboardPage from "./dashboard/DashboardPage";
 import SchoolAdminLayout from "../../layouts/SchoolAdminLayout";
-import DashboardPage from "./dashboard/DashboardPage";
-import AttendancePage from "./attendance/AttendancePage";
+import DashboardPage from "../school-admin/dashboard/DashboardPage";
+import AttendancePage from "../school-admin/attendance/pages/AttendancePage";
+import StaffManagementPage from "../school-admin/staff/pages/StaffPage";
+import StudentsPage from "../school-admin/students/StudentsPage";
+import AdmissionsPage from "../school-admin/admissions/AdmissionsPage";
+import { FeesPage as FeeCollectionPage } from "../school-admin/fees";
+import { ReportsPage } from "../school-admin/reports";
+import { SettingsPage } from "./settings";
+
 export default function SchoolAdminRouter() {
   return (
      <Routes>
@@ -10,23 +17,16 @@ export default function SchoolAdminRouter() {
       <Route element={<SchoolAdminLayout />}>
         {/* Default redirect */}
         <Route index element={<Navigate to="dashboard" replace />} />
-
+ 
         {/* Pages */}
         <Route path="dashboard" element={<DashboardPage />} />
-        
-
+       
+      
         <Route
           path="admissions"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
+          element={<AdmissionsPage />}
         />
-         <Route
-          path="staff"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
-        />
+      <Route path="staff" element={<StaffManagementPage />} />
          <Route
           path="attendance"
           element={
@@ -35,10 +35,11 @@ export default function SchoolAdminRouter() {
         />
          <Route
           path="students"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
-        />
+          element={ <StudentsPage/> }/>
+         
+       
+          
+        
          <Route
           path="timetable"
           element={
@@ -47,21 +48,15 @@ export default function SchoolAdminRouter() {
         />
          <Route
           path="fees"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
+          element={<FeeCollectionPage />}
         />
          <Route
           path="reports"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
+          element={<ReportsPage />}
         />
          <Route
           path="settings"
-          element={
-           <div className="p-4 bg-white rounded shadow">settings</div>
-          }
+          element={<SettingsPage />}
         />
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
@@ -69,17 +64,18 @@ export default function SchoolAdminRouter() {
     </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
      
+ 
  

@@ -1,3 +1,4 @@
+
 import { AVATAR_COLORS } from "../utils/constants";
 
 interface TeacherAvatarProps {

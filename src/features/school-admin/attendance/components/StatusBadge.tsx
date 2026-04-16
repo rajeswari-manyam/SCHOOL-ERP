@@ -1,3 +1,4 @@
+
 import type { AttendanceMethod, AttendanceStatus } from "../types/attendance.types";
 
 export function StatusBadge({ status }: { status: AttendanceStatus }) {
@@ -11,7 +12,7 @@ export function StatusBadge({ status }: { status: AttendanceStatus }) {
   }
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500">
-      <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+      <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block animate-pulse" />
       Not Marked
     </span>
   );
@@ -19,7 +20,6 @@ export function StatusBadge({ status }: { status: AttendanceStatus }) {
 
 export function MethodBadge({ method }: { method: AttendanceMethod }) {
   if (!method) return <span className="text-gray-300 text-sm">—</span>;
-
   const isWhatsApp = method === "WhatsApp";
   return (
     <span
