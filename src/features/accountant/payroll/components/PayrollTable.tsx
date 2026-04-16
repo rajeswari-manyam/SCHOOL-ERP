@@ -6,8 +6,10 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+
 import { Button } from "@/components/ui/button";
-import type{ StaffPayroll } from "../types/payroll.types";
+import type { StaffPayroll } from "../types/payroll.types";
+import { formatCurrency } from "../utils/payroll.utils";
 
 export const PayrollTable = ({
   data,
@@ -28,7 +30,7 @@ export const PayrollTable = ({
           <TableHead>Deductions</TableHead>
           <TableHead>Net</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead> {/* ✅ add column */}
+          <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
 
@@ -39,9 +41,10 @@ export const PayrollTable = ({
             <TableCell>{row.role}</TableCell>
             <TableCell>{row.present}</TableCell>
             <TableCell>{row.absent}</TableCell>
-            <TableCell>{row.gross}</TableCell>
-            <TableCell>{row.deductions}</TableCell>
-            <TableCell>{row.net}</TableCell>
+            <TableCell>{formatCurrency(row.gross)}</TableCell>
+            <TableCell>{formatCurrency(row.deductions)}</TableCell>
+            <TableCell>{formatCurrency(row.net)}</TableCell>
+
             <TableCell>
               {row.status === "Processed" ? (
                 <span className="text-green-600">Processed</span>
@@ -50,7 +53,6 @@ export const PayrollTable = ({
               )}
             </TableCell>
 
-            {/* ✅ Action button */}
             <TableCell>
               {row.status === "Pending" && (
                 <Button size="sm" onClick={onProcess}>
@@ -58,7 +60,6 @@ export const PayrollTable = ({
                 </Button>
               )}
             </TableCell>
-
           </TableRow>
         ))}
       </TableBody>

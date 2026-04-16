@@ -1,64 +1,55 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-export const ProcessPayrollModal = ({
-  onClose,
-  onSubmit,
-}: {
+interface Props {
   onClose: () => void;
   onSubmit: () => void;
-}) => {
+}
+
+export const ProcessPayrollModal = ({ onClose, onSubmit }: Props) => {
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-      
-      <Card className="w-[640px]">
-        
-        <CardHeader>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+
+      <Card className="relative w-full max-w-[640px] mx-4">
+        <CardHeader className="flex justify-between">
           <CardTitle>Process Payroll</CardTitle>
+          <button onClick={onClose}>
+            <X />
+          </button>
         </CardHeader>
 
         <CardContent className="space-y-4">
-
-          {/* Summary */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>Total Staff: 10</div>
-            <div>Total Gross: ₹3,00,000</div>
-            <div>Total Net: ₹2,80,000</div>
+          <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div>Total Staff: 28</div>
+            <div>Total Gross: ₹3,64,280</div>
+            <div>Total Net: ₹3,47,280</div>
           </div>
 
-          {/* Payment Mode */}
           <div className="flex gap-3">
-            <Button variant="outline">Bank</Button>
+            <Button>Bank Transfer</Button>
             <Button variant="outline">Cash</Button>
+            <Button variant="outline">Cheque</Button>
           </div>
 
-          {/* Date */}
-          <Input type="date" />
+          <input type="date" className="w-full border p-2 rounded" />
+          <input placeholder="Approval note..." className="w-full border p-2 rounded" />
 
-          {/* Notes */}
-          <Input placeholder="Approval note..." />
-
-          {/* Confirmations */}
           <div className="space-y-2">
-            <label>
-              <input type="checkbox" /> I confirm payroll accuracy
-            </label>
-            <label>
-              <input type="checkbox" /> I approve payment
-            </label>
+            <label><input type="checkbox" /> Confirm payroll accuracy</label>
+            <label><input type="checkbox" /> Approve payment</label>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3">
-            <Button onClick={onSubmit}>
-              Process Payroll ₹2,80,000
+            <Button onClick={onSubmit} className="flex-1">
+              Process Payroll ₹3,47,280
             </Button>
+
             <Button variant="ghost" onClick={onClose}>
               Cancel
             </Button>
           </div>
-
         </CardContent>
       </Card>
     </div>

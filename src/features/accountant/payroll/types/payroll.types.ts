@@ -11,3 +11,11 @@ export type StaffPayroll = {
   net: number;
   status: PayrollStatus;
 };
+
+export type CreatePayrollInput = {
+  staffId: string;
+  month: string;
+  baseSalary: number;
+  allowances: number;
+  deductions: number;
+};

@@ -11,7 +11,7 @@ export type Transaction = {
   student: string;
   className: string;
   feeHead: string;
-  amount: number;
+  amount: string;
   mode: PaymentMode;
 };
 
