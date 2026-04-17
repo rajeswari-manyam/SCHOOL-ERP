@@ -1,4 +1,5 @@
 import type { MarketingRep } from "../types/marketing.types";
+import { ShieldCheck } from "lucide-react";
 import { RepAvatar, PayoutBadge } from "./RepBadges";
 import { useMarketingMutations } from "../hooks/useMarketing";
 
@@ -35,9 +36,7 @@ const PayoutsTab = ({ reps }: PayoutsTabProps) => {
           disabled={approveAll.isPending || pendingAmount === 0}
           className="ml-auto flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
+          <ShieldCheck size={15} />
           Approve All
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { Search, ChevronDown } from "lucide-react";
 import type { SchoolFilters, Plan, SchoolStatus } from "../types/school.types";
 import { Select } from "@/components/ui/select";
 interface SchoolFilterBarProps {
@@ -22,9 +23,7 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
       {/* Search */}
       <div className="relative flex-1 min-w-[200px]">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
         <input
           type="text"
           value={filters.search}
@@ -52,7 +51,7 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
             <option key={p} value={p}>{p === "ALL" ? "All Plans" : p}</option>
           ))}
         </select> */}
-        <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
       </div>
 
       {/* Status */}
@@ -73,7 +72,7 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
             <option key={s} value={s}>{s === "ALL" ? "All Status" : s}</option>
           ))}
         </select> */}
-        <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
       </div>
 
       {/* City */}
@@ -93,7 +92,7 @@ const SchoolFilterBar = ({ filters, cities, onChange, onClear }: SchoolFilterBar
           <option value="">All Cities</option>
           {cities.map((c) => <option key={c} value={c}>{c}</option>)}
         </select> */}
-        <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
       </div>
 
       {/* Clear */}

@@ -1,11 +1,5 @@
-
-
-
-
-
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { Button } from "./button";
 
 interface PaginationProps {
   page: number;
@@ -50,13 +44,13 @@ const Pagination = ({
       </p>
 
       <div className="flex items-center gap-1">
-        <Button
+        <button
           onClick={() => onChange(Math.max(page - 1, 1))}
           disabled={page === 1 || totalPages <= 1}
           className={cn(btn, "border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed")}
         >
           <ChevronLeft className="w-4 h-4" />
-        </Button>
+        </button>
 
         {showPageNumbers && totalPages > 1 && (
           <>
@@ -64,7 +58,7 @@ const Pagination = ({
               p === "..." ? (
                 <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-gray-400 text-sm">…</span>
               ) : (
-                <Button
+                <button
                   key={p}
                   onClick={() => onChange(p as number)}
                   className={cn(
@@ -75,23 +69,22 @@ const Pagination = ({
                   )}
                 >
                   {p}
-                </Button>
+                </button>
               )
             )}
           </>
         )}
 
-        <Button
+        <button
           onClick={() => onChange(Math.min(page + 1, totalPages))}
           disabled={page === totalPages || totalPages <= 1}
           className={cn(btn, "border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed")}
         >
           <ChevronRight className="w-4 h-4" />
-        </Button>
+        </button>
       </div>
     </div>
   );
 };
 
 export default Pagination;
-

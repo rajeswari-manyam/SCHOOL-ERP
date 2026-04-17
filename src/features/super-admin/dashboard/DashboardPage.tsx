@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { MessageSquare,MessageSquareText } from "lucide-react";
 import PlatformStatCards from "./components/PlatformStatCards";
 import SchoolActivityTable from "./components/SchoolActivityTable";
 import PlatformHealthCard from "./components/PlatformHealthCard";
@@ -98,11 +99,11 @@ const DashboardPage = () => {
         onSuccess={() => setIsSchoolModalOpen(false)}
       />
       <Button className="fixed bottom-16 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-lg hover:bg-indigo-700 transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <MessageSquareText size={14} />
         Quick Support
       </Button>
       <Button className="fixed bottom-4 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg hover:bg-emerald-600 transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <MessageSquare size={14} />
         Helpdesk WhatsApp
       </Button>
     </div>

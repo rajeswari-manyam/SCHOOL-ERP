@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Send, Plus } from "lucide-react";
 import TemplateStatCards from "./components/TemplateStatCards";
 import TemplateTabs from "./components/TemplateTabs";
 import TemplateFilterBar from "./components/TemplateFilterBar";
 import TemplatesTable from "./components/TemplatesTable";
 import AddEditTemplateModal from "./components/AddEditTemplateModal";
-import Pagination from "./components/Pagination";
+import Pagination from "../components/Pagination";
 import { useTemplates, useTemplateStats, useTemplateMutations } from "./hooks/useTemplates";
 import type { TemplateFilters, TemplateTab, WhatsAppTemplate } from "./types/templates.types";
 import { Button } from "@/components/ui/button";
@@ -62,18 +63,14 @@ const WhatsAppTemplatesPage = () => {
               disabled={submitToMeta.isPending}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
+              <Send className="w-4 h-4" />
               Submit to Meta
             </Button>
             <Button
               onClick={() => { setEditTemplate(null); setModalOpen(true); }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
+              <Plus className="w-4 h-4" />
               Add Template
             </Button>
           </div>
@@ -100,6 +97,7 @@ const WhatsAppTemplatesPage = () => {
             total={data?.total ?? 0}
             pageSize={filters.pageSize}
             onChange={(p) => patchFilters({ page: p })}
+            itemLabel="templates"
           />
         </div>
       </div>

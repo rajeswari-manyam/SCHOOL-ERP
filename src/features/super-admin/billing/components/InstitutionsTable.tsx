@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { PlanBadge, StatusBadge } from './BillingBadges';
 import { BillingFilterBar } from './BillingFilterBar';
 import { InstitutionActionsMenu } from './InstitutionActionsMenu';
@@ -79,7 +79,7 @@ export const InstitutionsTable: React.FC<InstitutionsTableProps> = ({
           disabled={exportCsv.isPending}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
         >
-          <Download size={14} />
+          <Upload size={14} />
           Export CSV
         </Button>
       </div>

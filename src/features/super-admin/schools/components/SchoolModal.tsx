@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Fragment } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Check, ArrowRight, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
@@ -125,9 +126,7 @@ function Stepper({ current }: { current: number }) {
                 !done && !active && "bg-white border-slate-200 text-slate-400"
               )}>
                 {done ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <Check className="w-4 h-4" />
                 ) : idx}
               </div>
               <span className={cn(
@@ -365,7 +364,7 @@ function StepPlanBilling({ data, onChange }: {
         {["Student & Teacher Management","Attendance & Timetable","Fee Management & Receipts","WhatsApp Parent Notifications"].map((m) => (
           <div key={m} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-none">
             <div className="w-5 h-5 rounded-[5px] bg-[#5b52f5] flex items-center justify-center flex-shrink-0">
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <Check className="w-2.5 h-2.5 text-white" />
             </div>
             <span className="text-xs text-slate-500">{m}</span>
           </div>
@@ -455,9 +454,7 @@ function SuccessScreen({ schoolName, onAddAnother, onClose }: {
   return (
     <div className="text-center py-10 px-6">
       <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+        <Check className="w-8 h-8 text-emerald-600" />
       </div>
       <h3 className="text-lg font-bold text-slate-800 mb-2">School Created Successfully!</h3>
       <p className="text-sm text-slate-500 mb-1">{schoolName} has been added to the platform.</p>
@@ -596,7 +593,7 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
             aria-label="Close"
             className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <X className="w-4 h-4" />
           </Button>
         </div>
  <div className="flex-shrink-0 px-7 pb-5">
@@ -638,9 +635,7 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
               {step === 1 && "Next: Plan & Billing"}
               {step === 2 && "Next: Admin Setup"}
               {step === 3 && "Add School & Go Live"}
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-              </svg>
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </CardFooter>
         )}

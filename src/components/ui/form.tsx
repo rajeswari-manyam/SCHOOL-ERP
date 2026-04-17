@@ -21,21 +21,24 @@ export const Form = ({
 ========================= */
 interface FormFieldProps {
   label?: string;
+  description?: string;
   error?: string;
   children: React.ReactNode;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
   label,
+  description,
   error,
   children,
 }) => {
   return (
     <div className="space-y-1">
-      {label && <label className="text-sm font-medium">{label}</label>}
+      {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
 
       {children}
 
+      {description && <p className="text-xs text-gray-500">{description}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );

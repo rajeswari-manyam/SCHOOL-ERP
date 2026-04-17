@@ -1,8 +1,9 @@
 import { format, parseISO } from "date-fns";
+import { Download } from "lucide-react";
 import type { ReportRecord } from "../types/reports.types";
 import { ReportIcons } from "../utils/report-config";
 import { FormatBadge, StatusBadge } from "./ReportBadges";
-import Pagination from "./Pagination";
+import Pagination from "../../components/Pagination";
 import { useDownloadReport } from "../hooks/useReports";
 
 interface RecentReportsTableProps {
@@ -22,12 +23,7 @@ const RecentReportsTable = ({
 }: RecentReportsTableProps) => {
   const { download, loadingId } = useDownloadReport();
 
-  const DownloadIcon = () => (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-  );
+  const DownloadIcon = () => <Download className="w-4 h-4" />;
 
   if (isLoading) {
     return (
@@ -135,6 +131,8 @@ const RecentReportsTable = ({
           total={total}
           pageSize={pageSize}
           onChange={onPageChange}
+          itemLabel="reports"
+          showPageNumbers
         />
       </div>
     </div>

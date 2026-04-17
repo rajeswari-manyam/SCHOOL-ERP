@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Upload, UserPlus, MessageSquare } from "lucide-react";
 import MarketingStatCards from "./components/MarketingStatCards";
 import MarketingTabs from "./components/MarketingTabs";
 import TeamOverviewTab from "./components/TeamOverviewTab";
@@ -44,14 +45,14 @@ const MarketingTeamPage = () => {
               disabled={exportReport.isPending}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <Upload size={14} />
               Export Report
             </Button>
             <Button
               onClick={() => setAddOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <UserPlus size={14} />
               Add Rep
             </Button>
           </div>
@@ -89,7 +90,7 @@ const MarketingTeamPage = () => {
 
       {/* Quick Message FAB */}
       <button className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg hover:bg-emerald-600 transition-colors">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <MessageSquare size={16} />
         Quick Message
       </button>
 

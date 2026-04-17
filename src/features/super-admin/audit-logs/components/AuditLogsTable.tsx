@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import type { AuditLog } from "../types/audit-logs.types";
 import ActionBadge from "./ActionBadge";
-import { Table } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AuditLogsTableProps {
@@ -34,9 +34,7 @@ const AuditLogsTable = ({ logs, isLoading, onView }: AuditLogsTableProps) => {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          </svg>
+          <FileText className="text-gray-400" size={22} />
         </div>
         <p className="text-sm font-semibold text-gray-500">No logs found</p>
         <p className="text-xs text-gray-400 mt-1">Try adjusting your filters</p>

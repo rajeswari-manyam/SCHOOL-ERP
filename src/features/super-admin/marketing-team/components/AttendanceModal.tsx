@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { X } from "lucide-react";
 import { useReps, useMarketingMutations } from "../hooks/useMarketing";
 import type { MarketingRep } from "../types/marketing.types";
 import { Button } from "@/components/ui/button";
@@ -91,10 +92,7 @@ const AttendanceModal = ({ open, onClose, defaultRepId }: AttendanceModalProps) 
               onClick={onClose}
               aria-label="Close modal"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <X size={18} />
             </Button>
           </div>
 

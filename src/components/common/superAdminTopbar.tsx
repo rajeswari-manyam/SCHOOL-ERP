@@ -287,9 +287,9 @@ export default function TopBar({
           const isLast = i === breadcrumbs.length - 1;
           return (
             <span key={crumb.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {i > 0 && (
+              {/* {i > 0 && (
                 <span style={{ color: "#CBD5E1", fontSize: 16, fontWeight: 300, lineHeight: 1 }}>›</span>
-              )}
+              )} */}
               {isLast ? (
                 <span style={{ fontSize: 15, fontWeight: 700, color: "#0F172A" }}>
                   {crumb.label}
@@ -305,7 +305,7 @@ export default function TopBar({
                   onMouseEnter={(e) => e.currentTarget.style.color = "#1E293B"}
                   onMouseLeave={(e) => e.currentTarget.style.color = "#94A3B8"}
                 >
-                  {crumb.label}
+                  {/* {crumb.label} */}
                 </button>
               )}
             </span>

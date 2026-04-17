@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { CreditCard } from "lucide-react";
 import { ConfigCard, FieldLabel, SecretInput, ActiveBadge, ModeToggle } from "./ConfigFields";
 import { useConfigMutations } from "../hooks/useConfig";
 import type { RazorpayConfig } from "../types/config.types";
 
 const RazorpayIcon = () => (
   <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round">
-      <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-    </svg>
+    <CreditCard className="w-5 h-5 text-blue-600" />
   </div>
 );
 

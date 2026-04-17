@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { School } from "../types/school.types";
 import SchoolAvatar from "./Schoolavatar";
 import { PlanBadge, StatusBadge } from "./Schoolbadges";

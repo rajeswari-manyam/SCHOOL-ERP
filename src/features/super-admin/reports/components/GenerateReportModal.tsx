@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { FileText, Loader2, X } from "lucide-react";
 import type { ReportType,  GenerateReportPayload } from "../types/reports.types";
 import { REPORT_CARDS } from "../utils/report-config";
 import { useGenerateReport } from "../hooks/useReports";
@@ -158,9 +159,7 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
               className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors mt-0.5"
               aria-label="Close modal"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+              <X className="w-4 h-4" />
             </Button>
           </div>
 
@@ -295,10 +294,7 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                   {format_} format
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-400">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
+                  <FileText className="w-3.5 h-3.5" />
                   Estimated size: <span className="font-medium text-gray-500">{estSize}</span>
                 </div>
               </div>
@@ -316,18 +312,12 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
               >
                 {isPending ? (
                   <>
-                    <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                    </svg>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Generating…
                   </>
                 ) : (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7 10 12 15 17 10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
+                    <FileText className="w-4 h-4" />
                     Generate &amp; Download
                   </>
                 )}

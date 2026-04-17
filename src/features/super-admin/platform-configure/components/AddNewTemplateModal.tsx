@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { X } from "lucide-react";
 import { useConfigMutations } from "../hooks/useConfig";
 import type { ConfigTemplateFormValues } from "../types/config.types";
 import { Button } from "@/components/ui/button";
@@ -79,10 +80,7 @@ const AddNewTemplateModal = ({ open, onClose }: AddNewTemplateModalProps) => {
               className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
               aria-label="Close modal"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <X size={18} />
             </Button>
           </div>
 

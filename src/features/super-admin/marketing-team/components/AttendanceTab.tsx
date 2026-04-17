@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format, getDaysInMonth } from "date-fns";
+import { ChevronLeft, ChevronRight, SquarePen } from "lucide-react";
 import type { AttendanceRecord, AttendanceMark } from "../types/marketing.types";
 import { RepAvatar } from "./RepBadges";
 import { useAttendance } from "../hooks/useMarketing";
@@ -38,13 +39,13 @@ const AttendanceTab = () => {
       <div className="flex items-center justify-between bg-gray-100 rounded-2xl px-5 py-3">
         <div className="flex items-center gap-3">
           <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <ChevronLeft size={13} />
           </button>
           <span className="font-bold text-gray-900 text-base min-w-[110px] text-center">
             {format(new Date(year, month - 1), "MMMM yyyy")}
           </span>
           <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <ChevronRight size={13} />
           </button>
 
           <div className="flex items-center gap-4 ml-4">
@@ -58,10 +59,7 @@ const AttendanceTab = () => {
         </div>
 
         <button onClick={() => setModalOpen(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
+          <SquarePen size={14} />
           Mark Today's Attendance
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SchoolActivityRow, SchoolPlan, AttendanceStatus } from "../types/dashboard.types";
 
@@ -12,16 +13,8 @@ const PlanBadge = ({ plan }: { plan: SchoolPlan }) => (
 );
 
 const AttendanceDot = ({ status }: { status: AttendanceStatus }) => {
-  if (status === "OK") return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round">
-      <polyline points="20 6 9 17 4 12"/><circle cx="12" cy="12" r="10"/>
-    </svg>
-  );
-  if (status === "PENDING") return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round">
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-  );
+  if (status === "OK") return <CheckCircle size={20} className="text-emerald-500" />;
+  if (status === "PENDING") return <Clock size={20} className="text-gray-400" />;
   return <span className="text-gray-300 text-xs">—</span>;
 };
 

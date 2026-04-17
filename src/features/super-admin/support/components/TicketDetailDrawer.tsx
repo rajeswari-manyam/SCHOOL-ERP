@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import type { SupportTicket } from "../types/support.types";
 import { PriorityBadge, StatusBadge } from "./TicketBadges";
 import { useTicketMutations } from "../hooks/useSupport";
@@ -32,9 +33,7 @@ const TicketDetailDrawer = ({ ticket, onClose }: TicketDetailDrawerProps) => {
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
 

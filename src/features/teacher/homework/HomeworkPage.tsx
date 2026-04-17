@@ -3,6 +3,7 @@ import HomeworkCard from "./components/HomeworkCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
 import { ConfirmAssignModal, DeleteConfirmModal } from "./components/ConfirmModals";
 import { StudyMaterialCard, UploadMaterialModal } from "./components/StudyMaterials";
+import { Button } from "@/components/ui/button";
 import type { AssignHomeworkFormValues } from "./types/homework.types";
 
 const HomeworkPage = () => {
@@ -39,15 +40,12 @@ const HomeworkPage = () => {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Homework</h1>
           <p className="text-sm text-gray-400 mt-0.5">Class 8-A · Manage assignments and study materials</p>
         </div>
-        <button
-          onClick={() => setModal({ type: "assign" })}
-          className="flex items-center gap-2 h-10 px-5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
-        >
+        <Button onClick={() => setModal({ type: "assign" })} className="flex items-center gap-2 h-10 px-5 rounded-xl shadow-sm">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Assign Homework
-        </button>
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -115,16 +113,13 @@ const HomeworkPage = () => {
       {tab === "materials" && (
         <div className="flex flex-col gap-4">
           <div className="flex justify-end">
-            <button
-              onClick={() => setModal({ type: "uploadMaterial" })}
-              className="flex items-center gap-2 h-10 px-5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
-            >
+            <Button onClick={() => setModal({ type: "uploadMaterial" })} className="flex items-center gap-2 h-10 px-5 rounded-xl shadow-sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
               Upload Study Material
-            </button>
+            </Button>
           </div>
           {materials.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">

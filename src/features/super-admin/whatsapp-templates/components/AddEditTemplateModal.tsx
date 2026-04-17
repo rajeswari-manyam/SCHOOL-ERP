@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { X } from "lucide-react";
 import type { WhatsAppTemplate, TemplateFormValues } from "../types/templates.types";
 import { useTemplateMutations } from "../hooks/useTemplates";
 import { Button } from "@/components/ui/button";
@@ -85,9 +86,7 @@ const AddEditTemplateModal = ({ open, template, onClose }: AddEditTemplateModalP
               className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
               aria-label="Close modal"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <X className="w-4 h-4" />
             </Button>
           </div>
 

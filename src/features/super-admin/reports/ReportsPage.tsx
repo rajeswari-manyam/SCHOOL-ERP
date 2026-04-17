@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PlusCircle } from "lucide-react";
 import ReportCardGrid from "./components/ReportCardGrid";
 import RecentReportsTable from "./components/RecentReportsTable";
 import GenerateReportModal from "./components/GenerateReportModal";
@@ -43,11 +44,7 @@ const ReportsPage = () => {
           onClick={handleGenerateClick}
           className="flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0 self-start sm:self-auto"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="16"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-          </svg>
+          <PlusCircle className="w-4 h-4" />
           Generate Report
         </Button>
       </div>

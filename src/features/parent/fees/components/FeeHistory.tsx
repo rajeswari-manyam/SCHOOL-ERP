@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { PaymentHistory } from "../types/fee.types";
-import { Pagination } from "../../../../components/ui/pagination";
+// import { Pagination } from "../../../../components/ui/pagination";
 import {
   Table,
   TableHeader,

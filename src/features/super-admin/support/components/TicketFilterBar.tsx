@@ -1,3 +1,4 @@
+import { Search, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { TicketFilters, TicketPriority, TicketStatus } from "../types/support.types";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,7 @@ const TicketFilterBar = ({ filters, schools, onChange, onApply }: TicketFilterBa
   <div className="flex flex-wrap items-center gap-3">
     {/* Search */}
     <div className="relative flex-1 min-w-[200px]">
-      <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
       <input
         type="text"
         value={filters.search}
@@ -42,7 +41,7 @@ const TicketFilterBar = ({ filters, schools, onChange, onApply }: TicketFilterBa
         className={selectClass}
       />
      
-      <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
     </div>
 
     {/* Status */}
@@ -55,7 +54,7 @@ const TicketFilterBar = ({ filters, schools, onChange, onApply }: TicketFilterBa
         className={selectClass}
       />
      
-      <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
     </div>
 
     {/* School */}
@@ -68,7 +67,7 @@ const TicketFilterBar = ({ filters, schools, onChange, onApply }: TicketFilterBa
         className={`${selectClass} min-w-[140px]`}
       />
     
-      <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
     </div>
 
     {/* Apply */}

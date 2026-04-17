@@ -1,14 +1,12 @@
 import { useForm } from "react-hook-form";
+import { Mail, ChevronDown } from "lucide-react";
 import { ConfigCard, FieldLabel, TextInput } from "./ConfigFields";
 import { useConfigMutations } from "../hooks/useConfig";
 import type { EmailSmsConfig, SmsProvider } from "../types/config.types";
 
 const EmailIcon = () => (
   <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-      <polyline points="22,6 12,13 2,6"/>
-    </svg>
+    <Mail size={18} className="text-indigo-500" />
   </div>
 );
 
@@ -55,7 +53,7 @@ const EmailSmsConfigCard = ({ config }: EmailSmsConfigCardProps) => {
                 className="w-full h-11 px-4 pr-10 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-800 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-300 transition cursor-pointer">
                 {SMS_PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
-              <svg className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             </div>
           </div>
         </div>

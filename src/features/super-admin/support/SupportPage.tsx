@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import TicketFilterBar from "./components/TicketFilterBar";
 import TicketsTable from "./components/TicketsTable";
 import TicketDetailDrawer from "./components/TicketDetailDrawer";
-import Pagination from "./components/Pagination";
+import Pagination from "../components/Pagination";
 import { StatPill } from "./components/TicketBadges";
 import { useTickets, useTicketStats } from "./hooks/useSupport";
 import type { TicketFilters, SupportTicket } from "./types/support.types";
@@ -80,6 +80,7 @@ const SupportPage = () => {
             total={data?.total ?? 0}
             pageSize={filters.pageSize}
             onChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+            itemLabel="tickets"
           />
         </div>
       </div>

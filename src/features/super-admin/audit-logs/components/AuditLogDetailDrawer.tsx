@@ -2,7 +2,7 @@ import { format, parseISO } from "date-fns";
 import ActionBadge from "./ActionBadge";
 import type { AuditLog } from "../types/audit-logs.types";
 import { Button } from "@/components/ui/button";
-
+import { X } from "lucide-react";
 interface AuditLogDetailDrawerProps {
   log: AuditLog | null;
   onClose: () => void;
@@ -29,9 +29,7 @@ const AuditLogDetailDrawer = ({ log, onClose }: AuditLogDetailDrawerProps) => {
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+            <X className="w-5 h-5" />
           </Button>
         </div>
 

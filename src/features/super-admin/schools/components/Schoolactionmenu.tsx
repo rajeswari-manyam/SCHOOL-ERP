@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { CheckCircle, Edit3, Eye, MoreVertical, PauseCircle, Trash2 } from "lucide-react";
 import type { School } from "../types/school.types";
 import { useSchoolMutations } from "../hooks/useSchools";
 
@@ -24,17 +25,17 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
   const actions = [
     {
       label: "View Details",
-      icon: "👁",
+      icon: <Eye className="w-4 h-4" />,
       onClick: () => navigate(`/super-admin/schools/${school.id}`),
     },
     {
       label: "Edit School",
-      icon: "✏️",
+      icon: <Edit3 className="w-4 h-4" />,
       onClick: () => navigate(`/super-admin/schools/${school.id}/edit`),
     },
     {
       label: school.status === "SUSPENDED" ? "Reactivate" : "Suspend",
-      icon: school.status === "SUSPENDED" ? "✅" : "⏸",
+      icon: school.status === "SUSPENDED" ? <CheckCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />,
       className: "text-amber-600",
       onClick: () => {
         school.status === "SUSPENDED"
@@ -45,7 +46,7 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
     },
     {
       label: "Delete",
-      icon: "🗑",
+      icon: <Trash2 className="w-4 h-4" />,
       className: "text-red-600",
       onClick: () => {
         if (confirm(`Delete ${school.name}? This cannot be undone.`)) {
@@ -62,9 +63,7 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
         onClick={() => setOpen((p) => !p)}
         className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
-        </svg>
+        <MoreVertical className="w-5 h-5" />
       </button>
 
       {open && (

@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Upload } from "lucide-react";
 import AuditLogsTabs from "./components/AuditLogsTabs";
 import AuditLogsFilterBar from "./components/AuditLogsFilterBar";
 import AuditLogsTable from "./components/AuditLogsTable";
 import AuditLogDetailDrawer from "./components/AuditLogDetailDrawer";
-import Pagination from "./components/Pagination";
+import Pagination from "../components/Pagination";
 import { useAuditLogs, useExportLogs } from "./hooks/useAuditLogs";
 import type { AuditLogsFilters, AuditLog, AuditTab } from "./types/audit-logs.types";
 import { Button } from "@/components/ui/button";
@@ -44,10 +45,7 @@ const AuditLogsPage = () => {
             onClick={() => handleExport(filters)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm self-start sm:self-auto flex-shrink-0"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
+            <Upload size={15} />
             Export Logs
           </Button>
         </div>
