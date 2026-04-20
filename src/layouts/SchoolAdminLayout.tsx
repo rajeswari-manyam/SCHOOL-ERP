@@ -1,4 +1,4 @@
-
+ 
 import { Outlet } from "react-router-dom";
 import { FaThLarge, FaUserFriends, FaUserCheck, FaUserTie, FaCalendarAlt, FaMoneyBill, FaBullhorn, FaCog } from "react-icons/fa";
 import Sidebar from "../components/common/Sidebar";
@@ -25,16 +25,18 @@ const SchoolAdminLayout = () => (
       </main>
     </div>
   </div>
-
-
-
-
+ 
+ 
+ 
+ 
 );
-
+ 
 export default SchoolAdminLayout;
-
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

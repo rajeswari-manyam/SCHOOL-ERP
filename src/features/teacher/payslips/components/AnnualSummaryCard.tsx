@@ -1,3 +1,5 @@
+import { FileText, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { MOCK_ANNUAL_SUMMARY } from "../hooks/usePayslip";
 
 const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
@@ -18,13 +20,7 @@ const AnnualSummaryCard = ({ onDownload }: Props) => {
           <p className="text-base font-extrabold text-gray-900">FY {s.year}–{String(s.year + 1).slice(-2)}</p>
         </div>
         <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
-          </svg>
+          <FileText size={16} className="text-indigo-600" strokeWidth={2} />
         </div>
       </div>
 
@@ -45,16 +41,15 @@ const AnnualSummaryCard = ({ onDownload }: Props) => {
       </div>
 
       {/* Download Annual Statement */}
-      <button
+      <Button
         onClick={onDownload}
-        className="flex items-center gap-2 w-full justify-center h-10 rounded-xl border-2 border-indigo-600 text-indigo-600 text-sm font-semibold hover:bg-indigo-600 hover:text-white transition-colors"
+        variant="outline"
+        className="gap-2 w-full justify-center border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white"
+        style={{ height: 40 }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
+        <Download size={14} className="text-current" strokeWidth={2} />
         Download Annual Statement
-      </button>
+      </Button>
     </div>
   );
 };

@@ -1,4 +1,6 @@
-import { format, parseISO, isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
+import { format, parseISO, isToday, isTomorrow, differenceInDays } from "date-fns";
+import { Edit3, Trash2, Link as LinkIcon, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { HomeworkItem } from "../types/homework.types";
 
 // ── Due date badge ────────────────────────────────────────────────────────
@@ -99,27 +101,26 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
           {/* Menu */}
           {!isHwPast && (
             <div className="flex items-center gap-1 ml-1">
-              <button
+              <Button
+                type="button"
                 onClick={onEdit}
                 title="Edit"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                variant="ghost"
+                size="sm"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button
+                <Edit3 size={13} className="text-current" />
+              </Button>
+              <Button
+                type="button"
                 onClick={onDelete}
                 title="Delete"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                variant="ghost"
+                size="sm"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  <path d="M10 11v6"/><path d="M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </button>
+                <Trash2 size={13} className="text-current" />
+              </Button>
             </div>
           )}
         </div>
@@ -136,9 +137,7 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
           rel="noreferrer"
           className="flex items-center gap-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors w-fit"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-          </svg>
+          <LinkIcon size={13} className="text-current" />
           {hw.attachmentName}
         </a>
       )}
@@ -148,24 +147,30 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
 
       {/* Footer actions */}
       <div className="flex items-center gap-2 pt-1">
-        <button className="flex-1 h-9 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="flex-1 h-9 rounded-xl text-xs font-semibold"
+        >
           View Submissions
-        </button>
+        </Button>
         {!isHwPast && pendingCount > 0 && (
-          <button
+          <Button
+            type="button"
             onClick={onSendReminder}
             disabled={reminderSent}
+            variant={reminderSent ? "outline" : "default"}
+            size="sm"
             className={`flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold transition-all ${
               reminderSent
                 ? "bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-default"
                 : "bg-amber-500 text-white hover:bg-amber-600 shadow-sm"
             }`}
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
+            <MessageCircle size={11} className="text-current" strokeWidth={2.5} />
             {reminderSent ? "Reminded!" : `Remind (${pendingCount})`}
-          </button>
+          </Button>
         )}
       </div>
     </div>

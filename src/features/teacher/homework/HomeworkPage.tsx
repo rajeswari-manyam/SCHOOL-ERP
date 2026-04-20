@@ -1,4 +1,5 @@
 import { useHomework } from "./hooks/useHomework";
+import { Plus, Upload } from "lucide-react";
 import HomeworkCard from "./components/HomeworkCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
 import { ConfirmAssignModal, DeleteConfirmModal } from "./components/ConfirmModals";
@@ -41,9 +42,7 @@ const HomeworkPage = () => {
           <p className="text-sm text-gray-400 mt-0.5">Class 8-A · Manage assignments and study materials</p>
         </div>
         <Button onClick={() => setModal({ type: "assign" })} className="flex items-center gap-2 h-10 px-5 rounded-xl shadow-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+          <Plus size={14} className="text-current" strokeWidth={2.5} />
           Assign Homework
         </Button>
       </div>
@@ -114,10 +113,7 @@ const HomeworkPage = () => {
         <div className="flex flex-col gap-4">
           <div className="flex justify-end">
             <Button onClick={() => setModal({ type: "uploadMaterial" })} className="flex items-center gap-2 h-10 px-5 rounded-xl shadow-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
+              <Upload size={14} className="text-current" strokeWidth={2.5} />
               Upload Study Material
             </Button>
           </div>

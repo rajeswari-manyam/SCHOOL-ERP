@@ -54,13 +54,13 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-10 w-full rounded-3xl bg-white shadow-2xl overflow-hidden",
+          "relative z-10 w-full rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[80vh]",
           sizes[size],
           className,
         )}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="space-y-3 px-6 py-5 border-b border-gray-100">
+        <div className="space-y-3 px-6 py-5 border-b border-gray-100 flex-shrink-0">
           {title ? (
             <div className="space-y-1">
               <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
@@ -69,10 +69,10 @@ export const Modal: React.FC<ModalProps> = ({
           ) : null}
         </div>
 
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-6 py-5 overflow-y-auto flex-1">{children}</div>
 
         {footer ? (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">{footer}</div>
+          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">{footer}</div>
         ) : null}
       </div>
     </div>

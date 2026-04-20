@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePayslip } from "./hooks/usePayslip";
 import CurrentSalaryCard from "./components/CurrentSalaryCard";
 import PayslipPdfPreview from "./components/PayslipPdfPreview";
@@ -46,33 +47,25 @@ const PayslipPage = () => {
         <div className="flex flex-col gap-2">
           {dlMsg && (
             <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               PDF download started!
             </div>
           )}
           {waMsg && (
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               Sent to WhatsApp!
             </div>
           )}
           {annualDlMsg && (
             <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               Annual statement downloading!
             </div>
           )}
           {historyDlMsg && (
             <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               Payslip PDF downloading!
             </div>
           )}
@@ -90,9 +83,7 @@ const PayslipPage = () => {
               : "text-gray-300 cursor-not-allowed"
           }`}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
+          <ChevronLeft size={16} className="text-current" strokeWidth={2.5} />
           Prev
         </button>
 
@@ -111,9 +102,7 @@ const PayslipPage = () => {
           }`}
         >
           Next
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+          <ChevronRight size={16} className="text-current" strokeWidth={2.5} />
         </button>
       </div>
 

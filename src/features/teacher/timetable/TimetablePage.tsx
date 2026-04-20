@@ -1,14 +1,12 @@
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useTimetable } from "./hooks/useTimetable";
 import TimetableGrid from "./components/TimetableGrid";
 import TimetableSummaryCards from "./components/TimetableSummaryCards";
 import UpcomingExamsTable from "./components/UpcomingExamsTable";
 
 const PrintIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 6 2 18 2 18 9"/>
-    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-    <rect x="6" y="14" width="12" height="8"/>
-  </svg>
+  <Printer size={15} className="text-current" strokeWidth={2} />
 );
 
 const TimetablePage = () => {
@@ -29,13 +27,13 @@ const TimetablePage = () => {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Timetable</h1>
           <p className="text-sm text-gray-400 mt-0.5">Weekly schedule · AY 2025–26</p>
         </div>
-        <button
+        <Button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold transition-colors shadow-sm self-start sm:self-auto"
+          className="gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold shadow-sm self-start sm:self-auto"
         >
           <PrintIcon />
           Print Timetable
-        </button>
+        </Button>
       </div>
 
       {/* Weekly grid */}

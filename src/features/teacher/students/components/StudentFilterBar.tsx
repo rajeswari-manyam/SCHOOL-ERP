@@ -1,5 +1,6 @@
+import { Search, Download } from "lucide-react";
 import type { MyStudentsFilters, FeeStatus } from "../types/my-students.types";
-
+import { Button } from "@/components/ui/button";
 interface Props {
   filters: MyStudentsFilters;
   onChange: (f: MyStudentsFilters) => void;
@@ -15,13 +16,11 @@ const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExpo
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
       {/* Search */}
       <div className="relative flex-1 min-w-0">
-        <svg
+        <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
-          width="15" height="15" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-        >
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
+          size={15}
+          strokeWidth={2}
+        />
         <input
           type="text"
           value={filters.search}
@@ -66,16 +65,13 @@ const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExpo
       )}
 
       {/* Export */}
-      <button
+      <Button
         onClick={onExport}
-        className="flex items-center gap-2 h-10 px-4 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors flex-shrink-0"
+        className="gap-2 h-10 px-4 bg-indigo-600 text-white hover:bg-indigo-700 flex-shrink-0"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
+        <Download size={14} className="text-current" strokeWidth={2} />
         Export
-      </button>
+      </Button>
     </div>
   );
 };

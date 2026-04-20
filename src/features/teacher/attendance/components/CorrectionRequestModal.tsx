@@ -1,5 +1,6 @@
 // teacher/attendance/components/CorrectionRequestModal.tsx
 import { useState } from "react";
+import { ArrowRight, X } from "lucide-react";
 import { useSubmitCorrectionRequest } from "../hooks/useAttendance";
 import type { AttendanceMark } from "../types/attendance.types";
 import { Button } from "@/components/ui/button";
@@ -74,9 +75,7 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
               <p className="text-sm text-gray-400 mt-0.5">Requires Super Admin approval</p>
             </div>
             <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg text-gray-400 hover:text-gray-600" onClick={onClose}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+              <X size={18} className="text-current" />
             </Button>
           </div>
 
@@ -171,9 +170,7 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
               <span className={`text-xs font-bold px-3 py-1 rounded-full border ${MARK_COLORS[currentMark]}`}>
                 {MARK_LABELS[currentMark]}
               </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round">
-                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-              </svg>
+              <ArrowRight size={16} className="text-[#9ca3af]" />
               <span className={`text-xs font-bold px-3 py-1 rounded-full border ${MARK_COLORS[requestedMark]}`}>
                 {MARK_LABELS[requestedMark]}
               </span>

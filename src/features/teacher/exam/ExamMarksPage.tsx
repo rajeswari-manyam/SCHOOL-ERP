@@ -1,3 +1,5 @@
+import { Check, ChevronRight, Save, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useExamMarks } from "./hooks/useExamMarks";
 import ExamSelectorForm from "./components/ExamSelectorForm";
 import MarksEntryTable from "./components/MarksEntryTable";
@@ -42,25 +44,19 @@ const ExamMarksPage = () => {
         <div className="flex flex-col gap-2">
           {draftMsg && (
             <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               Draft saved!
             </div>
           )}
           {submitMsg && (
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               Marks submitted for review!
             </div>
           )}
           {dlMsg && (
             <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <Check size={14} className="text-current" strokeWidth={2.5} />
               Report downloading!
             </div>
           )}
@@ -70,14 +66,13 @@ const ExamMarksPage = () => {
       {/* 3-Tab navigation */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 w-fit">
         {TABS.map((t) => (
-          <button
+          <Button
             key={t.key}
+            type="button"
             onClick={() => setActiveTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === t.key
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            variant={activeTab === t.key ? "default" : "outline"}
+            size="sm"
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
           >
             {t.label}
             {t.key === "submitted" && submittedExams.length > 0 && (
@@ -85,7 +80,7 @@ const ExamMarksPage = () => {
                 {submittedExams.length}
               </span>
             )}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -109,37 +104,38 @@ const ExamMarksPage = () => {
           {/* Action bar */}
           {studentsLoaded && entries.length > 0 && (
             <div className="flex gap-3">
-              <button
+              <Button
+                type="button"
                 onClick={handleSaveDraft}
-                className="flex items-center gap-2 h-10 px-5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                variant="outline"
+                size="md"
+                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/>
-                  <polyline points="7 3 7 8 15 8"/>
-                </svg>
+                <Save size={14} className="text-current" />
                 Save Draft
-              </button>
+              </Button>
 
-              <button
+              <Button
+                type="button"
                 onClick={handleOpenSubmit}
-                className="flex items-center gap-2 h-10 px-5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                variant="default"
+                size="md"
+                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
+                <Send size={14} className="text-current" />
                 Submit for Review
-              </button>
+              </Button>
 
-              <button
+              <Button
+                type="button"
                 onClick={() => setActiveTab("submitted")}
-                className="flex items-center gap-2 h-10 px-5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors ml-auto"
+                variant="outline"
+                size="md"
+                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold ml-auto"
               >
                 View Results
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </button>
+                <ChevronRight size={14} className="text-current" />
+              </Button>
             </div>
           )}
         </div>

@@ -1,1 +1,1 @@
-export * from "./useFees";
+export * from "./Usefeecollection";

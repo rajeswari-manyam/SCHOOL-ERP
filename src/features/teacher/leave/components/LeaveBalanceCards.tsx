@@ -1,3 +1,4 @@
+import { Calendar, Activity, User, AlertTriangle } from "lucide-react";
 import type { LeaveBalance, LeaveType } from "../types/leave.types";
 
 // Per-type accent classes
@@ -10,29 +11,16 @@ const ACCENT: Record<string, { icon: string; ring: string; bar: string; value: s
 
 const TYPE_ICONS: Record<LeaveType, React.ReactNode> = {
   CASUAL: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/>
-      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
+    <Calendar size={18} className="text-current" strokeWidth={2} />
   ),
   SICK: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-    </svg>
+    <Activity size={18} className="text-current" strokeWidth={2} />
   ),
   PERSONAL: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
-    </svg>
+    <User size={18} className="text-current" strokeWidth={2} />
   ),
   EMERGENCY: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/>
-      <line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
+    <AlertTriangle size={18} className="text-current" strokeWidth={2} />
   ),
 };
 

@@ -1,4 +1,9 @@
 import { useRef } from "react";
+import { Upload, Check, Clock, Loader2 } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { ApplyLeaveFormData, LeaveType } from "../types/leave.types";
 import { LEAVE_TYPE_META } from "../hooks/useLeave";
 import LeaveCalendarPreview from "./LeaveCalendarPreview";
@@ -22,17 +27,11 @@ interface Props {
 }
 
 const UploadIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-    <polyline points="17 8 12 3 7 8"/>
-    <line x1="12" y1="3" x2="12" y2="15"/>
-  </svg>
+  <Upload size={16} className="text-current" />
 );
 
 const CheckIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
+  <Check size={40} className="text-emerald-500" strokeWidth={2.5} />
 );
 
 const ApplyLeaveModal = ({
@@ -47,44 +46,17 @@ const ApplyLeaveModal = ({
 
   if (!open) return null;
 
-  const inputBase = "w-full h-10 rounded-xl border border-gray-200 text-sm text-gray-800 px-3 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition";
-  const labelBase = "text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block";
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden w-full"
-          style={{ maxWidth: 480, maxHeight: "90vh" }}
-          onClick={e => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
-            <div>
-              <h2 className="text-base font-extrabold text-gray-900">Apply for Leave</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Fill in the details below to submit your application</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto px-6 py-5">
-
-            {submitSuccess ? (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Apply for Leave"
+      description="Fill in the details below to submit your application"
+      size="sm"
+      footer={null}
+    >
+      <div className="flex-1 overflow-y-auto">
+        {submitSuccess ? (
               /* ── Success state ── */
               <div className="flex flex-col items-center justify-center py-10 gap-4">
                 <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
@@ -107,30 +79,26 @@ const ApplyLeaveModal = ({
 
                 {/* Leave Type pills */}
                 <div>
-                  <label className={labelBase}>Leave Type</label>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block">Leave Type</label>
                   <div className="grid grid-cols-2 gap-2">
                     {LEAVE_TYPES.map(type => {
                       const m = LEAVE_TYPE_META[type];
                       const selected = form.type === type;
                       return (
-                        <button
+                        <Button
                           key={type}
                           type="button"
                           onClick={() => patchForm({ type })}
-                          className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all text-left ${
-                            selected
-                              ? `${m.bg} ${m.border} ${m.color} shadow-sm`
-                              : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
+                          variant={selected ? "default" : "outline"}
+                          size="sm"
+                          className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-left ${selected ? `${m.bg} ${m.border} ${m.color} shadow-sm` : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"}`}
                         >
                           <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${selected ? m.dot : "bg-gray-300"}`} />
                           {m.label}
                           {selected && (
-                            <svg className="ml-auto" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
+                            <Check size={14} className="ml-auto text-current" strokeWidth={3} />
                           )}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -139,23 +107,23 @@ const ApplyLeaveModal = ({
                 {/* Date pickers */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={labelBase}>From Date</label>
-                    <input
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block">From Date</label>
+                    <Input
                       type="date"
                       value={form.fromDate}
                       min={new Date().toISOString().slice(0, 10)}
                       onChange={e => patchForm({ fromDate: e.target.value })}
-                      className={inputBase}
+                      inputSize="md"
                     />
                   </div>
                   <div>
-                    <label className={labelBase}>To Date</label>
-                    <input
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block">To Date</label>
+                    <Input
                       type="date"
                       value={form.toDate}
                       min={form.fromDate || new Date().toISOString().slice(0, 10)}
                       onChange={e => patchForm({ toDate: e.target.value })}
-                      className={inputBase}
+                      inputSize="md"
                     />
                   </div>
                 </div>
@@ -163,11 +131,7 @@ const ApplyLeaveModal = ({
                 {/* Total days auto-calc */}
                 {form.fromDate && form.toDate && totalDays > 0 && (
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
+                    <Clock size={14} className="text-indigo-600" strokeWidth={2} />
                     <p className="text-xs font-semibold text-indigo-700">
                       Total: <span className="font-extrabold">{totalDays} working {totalDays === 1 ? "day" : "days"}</span>
                       <span className="text-indigo-400 ml-1">(Sundays excluded)</span>
@@ -178,20 +142,20 @@ const ApplyLeaveModal = ({
                 {/* Leave calendar preview */}
                 {previewDays.length > 0 && (
                   <div>
-                    <label className={labelBase}>Leave Preview</label>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block">Leave Preview</label>
                     <LeaveCalendarPreview days={previewDays} monthLabel={previewMonthLabel} />
                   </div>
                 )}
 
                 {/* Reason */}
                 <div>
-                  <label className={labelBase}>Reason <span className="text-red-400">*</span></label>
-                  <textarea
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block">Reason <span className="text-red-400">*</span></label>
+                  <Textarea
                     rows={3}
                     value={form.reason}
                     onChange={e => patchForm({ reason: e.target.value })}
                     placeholder="Briefly describe the reason for your leave…"
-                    className="w-full rounded-xl border border-gray-200 text-sm text-gray-800 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition resize-none placeholder-gray-300"
+                    size="md"
                   />
                   <p className="text-[10px] text-gray-300 mt-1 text-right">{form.reason.length} chars (min 10)</p>
                 </div>
@@ -199,21 +163,23 @@ const ApplyLeaveModal = ({
                 {/* Medical certificate upload — conditional */}
                 {needsMedicalCert && (
                   <div className="flex flex-col gap-2">
-                    <label className={`${labelBase} flex items-center gap-1.5`}>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block flex items-center gap-1.5">
                       Medical Certificate
                       <span className="text-red-400">*</span>
                       <span className="text-gray-300 font-normal normal-case tracking-normal ml-1">(required for Sick leave ≥ 3 days)</span>
                     </label>
-                    <input
+                    <Input
                       ref={fileRef}
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="hidden"
                       onChange={e => patchForm({ medicalCertFile: e.target.files?.[0] ?? null })}
                     />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => fileRef.current?.click()}
+                      variant={form.medicalCertFile ? "default" : "outline"}
+                      size="sm"
                       className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-sm font-semibold transition-all ${
                         form.medicalCertFile
                           ? "border-emerald-300 bg-emerald-50 text-emerald-700"
@@ -224,19 +190,19 @@ const ApplyLeaveModal = ({
                       {form.medicalCertFile
                         ? `✓ ${form.medicalCertFile.name}`
                         : "Click to upload PDF / JPG / PNG"}
-                    </button>
+                    </Button>
                   </div>
                 )}
 
                 {/* Substitute arrangement */}
                 <div>
-                  <label className={labelBase}>Substitute Arrangement</label>
-                  <textarea
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 block">Substitute Arrangement</label>
+                  <Textarea
                     rows={2}
                     value={form.substituteArrangement}
                     onChange={e => patchForm({ substituteArrangement: e.target.value })}
                     placeholder="e.g. Mr. Praveen Kumar will cover my periods…"
-                    className="w-full rounded-xl border border-gray-200 text-sm text-gray-800 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition resize-none placeholder-gray-300"
+                    size="md"
                   />
                 </div>
               </div>
@@ -246,32 +212,33 @@ const ApplyLeaveModal = ({
           {/* Footer */}
           {!submitSuccess && (
             <div className="flex-shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50/50">
-              <button
+              <Button
+                type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                variant="outline"
+                size="md"
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
                 onClick={onSubmit}
                 disabled={!formValid || submitting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-semibold transition-colors shadow-sm disabled:cursor-not-allowed"
+                variant="default"
+                size="md"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
               >
                 {submitting ? (
                   <>
-                    <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10" strokeOpacity=".3"/>
-                      <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/>
-                    </svg>
+                    <Loader2 size={14} className="text-current animate-spin" strokeWidth={2.5} />
                     Submitting…
                   </>
                 ) : "Submit Application"}
-              </button>
+              </Button>
             </div>
           )}
-        </div>
-      </div>
-    </>
+      </Modal>
   );
 };
 

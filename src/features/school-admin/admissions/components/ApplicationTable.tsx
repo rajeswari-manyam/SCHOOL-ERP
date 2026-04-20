@@ -1,4 +1,4 @@
-import type { AdmissionApplication } from "../types/admissions.types";
+import type { AdmissionApplication } from "../types/Admissions.types";
 
 interface ApplicationTableProps {
   applications: AdmissionApplication[];

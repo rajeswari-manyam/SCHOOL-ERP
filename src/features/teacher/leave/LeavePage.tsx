@@ -1,16 +1,14 @@
 import { useLeave } from "./hooks/useLeave";
+import { Plus } from "lucide-react";
 import LeaveBalanceCards from "./components/LeaveBalanceCards";
 import LeaveCalendar from "./components/LeaveCalendar";
 import LeaveHistoryTable from "./components/LeaveHistoryTable";
 import ApplyLeaveModal from "./components/ApplyLeaveModal";
 import CancelLeaveModal from "./components/CancelLeaveModal";
 
-const PlusIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <line x1="12" y1="5" x2="12" y2="19"/>
-    <line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-);
+
+
+
 
 const LeavePage = () => {
   const {
@@ -46,7 +44,7 @@ const LeavePage = () => {
           onClick={openApplyModal}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold transition-colors shadow-sm self-start sm:self-auto"
         >
-          <PlusIcon />
+        <Plus size={15} className="text-current" strokeWidth={2.5} />
           Apply for Leave
         </button>
       </div>

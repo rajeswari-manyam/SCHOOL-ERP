@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Trash2, Upload } from "lucide-react";
 import type { StudyMaterial, UploadMaterialFormValues } from "../types/homework.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,10 +41,7 @@ export const StudyMaterialCard = ({ material, onDelete }: CardProps) => {
             <p className="text-[11px] text-gray-400 mt-0.5">{material.subject} · {material.className}</p>
           </div>
           <Button variant="ghost" size="sm" className="p-2 text-gray-400 hover:text-red-500" onClick={onDelete}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-            </svg>
+            <Trash2 size={13} className="text-current" />
           </Button>
         </div>
 
@@ -198,11 +196,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
               dragOver ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"
             }`}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={dragOver ? "#4f46e5" : "#d1d5db"} strokeWidth="1.5" strokeLinecap="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+            <Upload size={22} className={dragOver ? "text-indigo-600" : "text-gray-300"} strokeWidth={1.5} />
             {fileName ? (
               <p className="text-xs font-semibold text-indigo-600">{fileName}</p>
             ) : (

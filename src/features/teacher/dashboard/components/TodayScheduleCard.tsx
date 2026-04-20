@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import type { Period, PeriodStatus } from "../types/teacher-dashboard.types";
 
 const statusStyles: Record<PeriodStatus, string> = {
@@ -24,9 +25,7 @@ const TodayScheduleCard = ({ periods }: { periods: Period[] }) => (
             <span className="flex-shrink-0 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">NOW</span>
           )}
           {p.status === "COMPLETED" && (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+            <Check size={14} className="flex-shrink-0 text-gray-400" strokeWidth={2.5} />
           )}
         </div>
       ))}

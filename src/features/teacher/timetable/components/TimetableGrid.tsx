@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon } from "lucide-react";
 import type { WeeklyGrid, TimetablePeriod, TimetableCell, ClassColorKey } from "../types/timetable.types";
 import type { DayName } from "../hooks/useTimetable";
 import { DAYS } from "../hooks/useTimetable";
@@ -116,14 +117,10 @@ const GridCell = ({ cell, period, day, isCurrent, isToday }: CellProps) => {
 // ── Week nav icons ────────────────────────────────────────────────────────
 
 const ChevronLeft = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <polyline points="15 18 9 12 15 6"/>
-  </svg>
+  <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
 );
 const ChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <polyline points="9 18 15 12 9 6"/>
-  </svg>
+  <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
 );
 
 // ── Colour legend ─────────────────────────────────────────────────────────

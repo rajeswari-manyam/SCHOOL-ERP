@@ -1,3 +1,4 @@
+import { AlertTriangle } from "lucide-react";
 import type { Student } from "../types/my-students.types";
 
 interface Props {
@@ -12,10 +13,7 @@ const ChronicAbsenteesAlert = ({ students, onView }: Props) => {
     <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-5">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
+          <AlertTriangle size={12} className="text-white" strokeWidth={2.5} />
         </div>
         <div>
           <p className="text-sm font-extrabold text-red-700">

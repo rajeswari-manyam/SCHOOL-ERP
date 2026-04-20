@@ -12,23 +12,16 @@ export default function SchoolAdminRouter() {
       <Route element={<SchoolAdminLayout />}>
         {/* Default redirect */}
         <Route index element={<Navigate to="dashboard" replace />} />
-
+ 
         {/* Pages */}
         <Route path="dashboard" element={<DashboardPage />} />
-        
-
+       
+      
         <Route
           path="admissions"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
+          element={<AdmissionsPage />}
         />
-         <Route
-          path="staff"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
-        />
+      <Route path="staff" element={<StaffManagementPage />} />
          <Route
           path="attendance"
           element={
@@ -37,10 +30,11 @@ export default function SchoolAdminRouter() {
         />
          <Route
           path="students"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
-        />
+          element={ <StudentsPage/> }/>
+         
+       
+          
+        
          <Route
           path="timetable"
           element={
@@ -49,21 +43,15 @@ export default function SchoolAdminRouter() {
         />
          <Route
           path="fees"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
+          element={<FeeCollectionPage />}
         />
          <Route
           path="reports"
-          element={
-           <div className="p-4 bg-white rounded shadow">mc mc m</div>
-          }
+          element={<ReportsPage />}
         />
          <Route
           path="settings"
-          element={
-           <div className="p-4 bg-white rounded shadow">settings</div>
-          }
+          element={<SettingsPage />}
         />
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
@@ -71,17 +59,18 @@ export default function SchoolAdminRouter() {
     </Routes>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
      
+ 
  

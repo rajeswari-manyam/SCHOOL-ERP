@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import type { PublishedResult } from "../types/exam-marks.types";
 import { GRADE_CONFIG } from "../hooks/useExamMarks";
 import type { Grade } from "../types/exam-marks.types";
@@ -108,10 +109,7 @@ const ResultsPublishedTab = ({ results, onDownload }: Props) => {
             onClick={onDownload}
             className="flex items-center gap-2 w-full justify-center h-11 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
+            <Download size={14} className="text-current" />
             Download Report
           </button>
         </div>

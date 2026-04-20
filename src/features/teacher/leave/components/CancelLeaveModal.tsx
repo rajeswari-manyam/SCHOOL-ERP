@@ -1,3 +1,5 @@
+import { AlertTriangle } from "lucide-react";
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -25,11 +27,7 @@ const CancelLeaveModal = ({ open, onClose, onConfirm }: Props) => {
           {/* Icon */}
           <div className="flex flex-col items-center px-6 pt-8 pb-5 text-center">
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
+              <AlertTriangle size={24} className="text-red-500" strokeWidth={2} />
             </div>
             <h3 className="text-base font-extrabold text-gray-900">Cancel Leave Application?</h3>
             <p className="text-sm text-gray-500 mt-2 leading-relaxed">

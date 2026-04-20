@@ -1,17 +1,14 @@
 import type { LeaveCalendarDay } from "../types/leave.types";
+import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { LEAVE_TYPE_META } from "../hooks/useLeave";
 
 const DAY_HEADERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 const ChevronLeft = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <polyline points="15 18 9 12 15 6"/>
-  </svg>
+  <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
 );
 const ChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <polyline points="9 18 15 12 9 6"/>
-  </svg>
+  <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
 );
 
 interface Props {

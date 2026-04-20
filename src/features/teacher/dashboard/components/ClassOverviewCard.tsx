@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AlertTriangle } from "lucide-react";
 import type { ClassOverview } from "../types/teacher-dashboard.types";
 
 const ClassOverviewCard = ({ overview }: { overview: ClassOverview }) => (
@@ -54,10 +55,7 @@ const ClassOverviewCard = ({ overview }: { overview: ClassOverview }) => (
     {overview.chronicAbsentees.length > 0 && (
       <div>
         <p className="text-[11px] font-bold uppercase tracking-widest text-red-400 mb-2 flex items-center gap-1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
+          <AlertTriangle size={11} className="text-red-400" strokeWidth={2} />
           Chronic Absentees
         </p>
         <div className="flex flex-col gap-2">

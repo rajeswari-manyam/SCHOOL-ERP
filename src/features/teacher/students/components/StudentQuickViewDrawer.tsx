@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Phone, Info, Check, AlertCircle, X } from "lucide-react";
 import type { Student, AttendanceDay, StudentHomework } from "../types/my-students.types";
 
 // ── Avatar colours (match table) ─────────────────────────────────────────
@@ -43,9 +44,7 @@ const OverviewTab = ({ student }: { student: Student }) => {
                 href={`tel:${phone}`}
                 className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3-8.63A2 2 0 0 1 3.71 1.18l3-.05a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1.14-1.14a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
+                <Phone size={12} className="text-current" strokeWidth={2} />
                 {phone}
               </a>
             </div>
@@ -160,9 +159,7 @@ const AttendanceTab = ({ student }: { student: Student }) => {
 
       {/* Read-only note */}
       <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0 mt-0.5">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
+        <Info size={14} className="text-amber-500 flex-shrink-0 mt-0.5" strokeWidth={2} />
         <p className="text-[11px] text-amber-700">Attendance is read-only here. To mark or edit attendance, go to the <strong>Attendance</strong> section.</p>
       </div>
     </div>
@@ -185,18 +182,14 @@ const HomeworkTab = ({ student }: { student: Student }) => {
       {/* Summary */}
       <div className="flex gap-3">
         <div className="flex-1 flex items-center gap-2 p-3 bg-emerald-50 rounded-xl">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
+          <Check size={14} className="text-emerald-600" strokeWidth={2.5} />
           <div>
             <p className="text-sm font-extrabold text-emerald-700">{submitted}</p>
             <p className="text-[10px] text-emerald-500">Submitted</p>
           </div>
         </div>
         <div className="flex-1 flex items-center gap-2 p-3 bg-amber-50 rounded-xl">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
+          <AlertCircle size={14} className="text-amber-500" strokeWidth={2.5} />
           <div>
             <p className="text-sm font-extrabold text-amber-600">{pending}</p>
             <p className="text-[10px] text-amber-500">Pending</p>
@@ -295,9 +288,7 @@ const StudentQuickViewDrawer = ({ student, open, onClose, studentIndex = 0 }: Pr
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+              <X size={16} className="text-current" strokeWidth={2.5} />
             </button>
           </div>
 

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // attendance/index.ts
 export { default as AttendancePage }         from "./AttendancePage";
 export { default as TodayTab }               from "./components/TodayTab";
@@ -27,3 +28,6 @@ export type {
   AttendanceTrendPoint, ChronicAbsentee,
   Holiday, WebFormStudent,
 } from "./types/attendance.types";
+=======
+export { default as AttendancePage } from "./AttendancePage";
+>>>>>>> 7c18aaca4dacf17d5e1f32afac3cde3f6ac84ddd

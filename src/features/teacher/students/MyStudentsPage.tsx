@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { useMyStudents, MOCK_STUDENTS } from "./hooks/useMyStudents";
 import ChronicAbsenteesAlert from "./components/ChronicAbsenteesAlert";
 import StudentFilterBar from "./components/StudentFilterBar";
@@ -37,9 +38,7 @@ const MyStudentsPage = () => {
         {/* Export success toast */}
         {exportMsg && (
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+            <Check size={14} className="text-current" strokeWidth={2.5} />
             Class list exported!
           </div>
         )}
