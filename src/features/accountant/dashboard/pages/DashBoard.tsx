@@ -15,27 +15,27 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+<div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
         <div>
           <h1 className="text-lg font-semibold text-slate-800">Finance Dashboard</h1>
           <p className="text-xs text-slate-400 mt-0.5">
             Monday, 7 April 2025 · April 2025 Session
           </p>
         </div>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <Button
             variant="outline"
             className="text-sm h-8 px-4 border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
           >
             Generate Report
           </Button>
-          <Button className="text-sm h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Button className="text-sm h-8 px-4 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">
             Record Payment
           </Button>
         </div>
       </div>
 
-      <div className="p-6 space-y-5">
+     <div className="p-4 md:p-6 space-y-5">
         {/* KPI Stats */}
         <StatCardsSection data={stats} />
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
         <MonthlyCollectionTrend />
 
         {/* Bottom Row: Top Paying Classes + Payment Mode Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TopPayingClasses />
           <PaymentModeBreakdown />
         </div>

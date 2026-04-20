@@ -1,4 +1,15 @@
-export type PaymentMode = "UPI" | "CASH" | "CARD";
+export type PaymentMode = "UPI" | "CASH" | "CHEQUE" | "ONLINE";
+
+export type Transaction = {
+  id: string;
+  date: string;
+  student: string;
+    className: string;   // ✅ consistent
+  amount: number;
+  mode: PaymentMode;
+  feeHead?: string;
+  receiptNo?: string;
+};
 
 /* =========================
    STATUS TYPE (define first)
@@ -36,15 +47,6 @@ export type FeeRow = {
   status: FeeStatus;
 };
 
-export type Transaction = {
-  id: string;
-  date: string;
-  student: string;
-  amount: number;
-  mode: PaymentMode;
-  feeHead?: string;
-  receiptNo?: string;
-};
 
 export type Student = {
   id: string;
@@ -59,4 +61,55 @@ export type FeeOption = {
   id: string;
   label: string;
   amount: number;
+};
+/* =========================
+   FEE STRUCTURE TYPES
+========================= */
+
+export type FeeHeadStatus = "ACTIVE" | "INACTIVE";
+
+export type FeeHead = {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  mandatory: boolean;
+  taxable: boolean;
+  gst: string;
+  status: FeeHeadStatus;
+};
+
+export type BillingCycle = "Monthly" | "Quarterly" | "Annual" | "One-Time";
+
+export type SectionType = "Section A" | "Section B" | "Both Same";
+
+export type ClassType =
+  | "Class 6" | "Class 7" | "Class 8" | "Class 9" | "Class 10";
+
+export type ClassFee = {
+  id: string;
+  feeHead: string;
+  icon: string;
+  billingCycle: BillingCycle;
+  amount: number | null;
+  dueDate: string;
+  annualTotal: number | null;
+};
+export type TransportSlab = {
+  id: string;
+  name: string;
+  from: number;
+  to: number | null;
+  monthly: number;
+  students: number;
+};
+
+export type TransportStudent = {
+  id: string;
+  name: string;
+  cls: string;
+  slabId: string;
+  distance: number;
+  routeId?: string;
+  pickupPoint?: string;
 };

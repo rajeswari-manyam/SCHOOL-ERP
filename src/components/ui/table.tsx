@@ -28,7 +28,7 @@ export const TableHeader = ({
   return (
     <thead
       className={cn(
-        "bg-[#F9FAFB] text-[#6B7280] border-b border-[#E5E7EB]",
+        "bg-[#EFF4FF] text-slate-500 border-b border-[#E5E7EB]",
         className
       )}
       {...props}
@@ -65,7 +65,7 @@ export const TableRow = ({
 };
 
 /* =========================
-   Table Head Cell
+   Table Head Cell (TH)
 ========================= */
 export const TableHead = ({
   className,
@@ -74,7 +74,7 @@ export const TableHead = ({
   return (
     <th
       className={cn(
-        "text-left align-top text-[11px] font-semibold uppercase tracking-wide px-4 py-3",
+        "text-left align-top text-xs font-semibold uppercase tracking-wide px-4 py-3 text-slate-500",
         className
       )}
       {...props}
@@ -83,7 +83,7 @@ export const TableHead = ({
 };
 
 /* =========================
-   Table Cell
+   Table Cell (TD)
 ========================= */
 export const TableCell = ({
   className,
@@ -92,7 +92,7 @@ export const TableCell = ({
   return (
     <td
       className={cn(
-        "text-left align-top px-4 py-3 text-[#0B1C30]",
+        "text-left align-top px-4 py-3 text-sm text-slate-800",
         className
       )}
       {...props}

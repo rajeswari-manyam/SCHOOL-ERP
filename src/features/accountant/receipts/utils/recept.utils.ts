@@ -1,2 +1,3 @@
-export const formatCurrency = (amt: number) =>
-  `₹${amt.toLocaleString("en-IN")}`;
+export const formatCurrency = (amount: number): string => {
+  return `Rs.${amount.toLocaleString("en-IN")}`;
+};

@@ -4,10 +4,12 @@ export type Receipt = {
   id: string;
   receiptNo: string;
   date: string;
+  time: string;
   student: string;
   className: string;
   feeHead: string;
   amount: number;
   mode: PaymentMode;
-  sentToParent: boolean;
+  status: "Sent" | "Not Sent";
+  waStatus: "Sent" | "Not Sent";
 };

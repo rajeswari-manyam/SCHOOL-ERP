@@ -19,10 +19,10 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
   }));
 
   return (
-<div className="flex items-center gap-4 w-full overflow-hidden border border-transparent hover:border-[#3525CD] transition-colors rounded-xl p-2">
-      
+    <div className="flex flex-col md:flex-row items-center md:items-center gap-4 w-full overflow-hidden border border-transparent hover:border-[#3525CD] transition-colors rounded-xl p-3">
+
       {/* Donut Chart */}
-      <div className="relative w-[140px] h-[140px] flex-shrink-0">
+      <div className="relative w-[120px] h-[120px] md:w-[140px] md:h-[140px] flex-shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -31,28 +31,31 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
               nameKey="name"
               cx="50%"
               cy="50%"
-              innerRadius={45}
-              outerRadius={65}
+              innerRadius={40}
+              outerRadius={55}
               paddingAngle={3}
             >
               {chartData.map((entry, idx) => (
                 <Cell
                   key={`cell-${idx}`}
-                  fill={
-                    modeColors[entry.name]?.stroke || "#94a3b8"
-                  }
+                  fill={modeColors[entry.name]?.stroke || "#94a3b8"}
                 />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => `₹${value.toLocaleString("en-IN")}`} />
+
+            <Tooltip
+              formatter={(value: number) =>
+                `₹${value.toLocaleString("en-IN")}`
+              }
+            />
           </PieChart>
         </ResponsiveContainer>
 
         {/* Center Label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-     <span className={`${typography.body.xs} text-slate-400`}>
-  TOTAL
-</span>
+          <span className={`${typography.body.xs} text-slate-400`}>
+            TOTAL
+          </span>
           <span className="text-sm font-bold text-slate-900">
             ₹{total.toLocaleString("en-IN")}
           </span>
@@ -60,24 +63,21 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-col justify-center gap-3 flex-1 min-w-0">
+      <div className="flex flex-col gap-3 w-full md:flex-1">
         {data.map((item) => {
           const pct = total ? ((item.amount / total) * 100).toFixed(1) : "0";
           const colors = modeColors[item.mode] ?? { dot: "bg-slate-400" };
 
           return (
             <div key={item.mode} className="flex items-center gap-2 min-w-0">
-              
-              {/* Dot */}
+
               <span className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
 
-              {/* Label */}
               <p className="text-xs text-slate-600 flex-1 truncate">
                 {item.mode}
                 <span className="text-slate-400 ml-1">({pct}%)</span>
               </p>
 
-              {/* Amount */}
               <span className="text-xs font-bold text-slate-900 tabular-nums">
                 ₹{item.amount.toLocaleString("en-IN")}
               </span>

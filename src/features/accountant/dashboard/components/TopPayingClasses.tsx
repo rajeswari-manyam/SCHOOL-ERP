@@ -10,35 +10,48 @@ const data = [
 
 export const TopPayingClasses = () => {
   return (
-    <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] hover:border-1">
-      <CardHeader className="px-5 py-4 border-b border-slate-100">
-       <CardTitle className={typography.body.small}>
-          Top Paying Classes — April
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-5 py-4 space-y-4">
-        {data.map((item) => (
-          <div key={item.className}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className={typography.body.small}>{item.className}</span>
-              <span className="text-sm font-semibold text-slate-800">
-                {formatCurrency(item.amount)}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-500 rounded-full"
-                  style={{ width: `${item.pct}%` }}
-                />
-              </div>
-              <span className="text-xs text-slate-400 w-8 text-right">
-                {item.pct}%
-              </span>
-            </div>
+   <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] transition-colors">
+  
+  <CardHeader className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100">
+    <CardTitle className={`${typography.body.small} text-sm sm:text-base`}>
+      Top Paying Classes — April
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent className="px-4 sm:px-5 py-3 sm:py-4 space-y-4">
+    {data.map((item) => (
+      <div key={item.className} className="space-y-1.5">
+
+        {/* Top row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+          <span className={`${typography.body.small} text-sm`}>
+            {item.className}
+          </span>
+
+          <span className="text-sm font-semibold text-slate-800">
+            {formatCurrency(item.amount)}
+          </span>
+        </div>
+
+        {/* Progress row */}
+        <div className="flex items-center gap-2 sm:gap-3">
+
+          <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+              style={{ width: `${item.pct}%` }}
+            />
           </div>
-        ))}
-      </CardContent>
-    </Card>
+
+          <span className="text-xs text-slate-400 w-10 text-right tabular-nums">
+            {item.pct}%
+          </span>
+        </div>
+
+      </div>
+    ))}
+  </CardContent>
+
+</Card>
   );
 };

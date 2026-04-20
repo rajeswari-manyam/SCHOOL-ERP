@@ -3,11 +3,13 @@ import { cn } from "@/utils/cn";
 type BadgeVariant = "green" | "red" | "blue" | "amber";
 
 interface StatCardProps {
-  label: string;
+  label: React.ReactNode;
   value?: React.ReactNode;
   badge?: { text: string; variant: BadgeVariant };
-  sub?: string;
+  sub?: React.ReactNode;   // ✅ FIX HERE
+  icon?: React.ReactNode;
   className?: string;
+  suffixLabel?: string;
 }
 
 const badgeStyles: Record<BadgeVariant, string> = {
@@ -24,7 +26,7 @@ const dotColors: Record<BadgeVariant, string> = {
   amber: "bg-[#BA7517]",   // unchanged
 };
 
-export const StatCard = ({ label, value, badge, sub, className }: StatCardProps) => (
+export const StatCard = ({ label, value, badge, sub, icon, className, suffixLabel }: StatCardProps) => (
   <div
     className={cn(
       "group bg-white border border-[#E8EBF2] rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-all duration-200 h-full",
@@ -32,14 +34,25 @@ export const StatCard = ({ label, value, badge, sub, className }: StatCardProps)
       className
     )}
   >
-    <p className="text-[11px] font-bold uppercase tracking-wide text-gray-600">
-      {label}
-    </p>
-    {value && (
-      <p className="text-xl font-semibold leading-tight text-[#0B1C30]">
-        {value}
+    <div className="flex justify-between items-start">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-gray-600">
+        {label}
       </p>
+      {icon && <div className="shrink-0">{icon}</div>}
+    </div>
+   {value && (
+  <div className="flex items-baseline gap-1">
+    <p className="text-xl font-semibold leading-tight text-[#0B1C30]">
+      {value}
+    </p>
+    {suffixLabel && (
+      <span className="text-xs text-gray-500">
+        {suffixLabel}
+      </span>
     )}
+  </div>
+)}
+   
     {badge &&
       (label === "Today's Attendance" ? (
         // ✅ Keep badge only for Attendance
