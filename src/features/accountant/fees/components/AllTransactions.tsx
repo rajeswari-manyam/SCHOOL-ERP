@@ -114,7 +114,7 @@ export const AllTransactionsTable = ({ data }: Props) => {
 
   // Column widths matching Figma layout
 const COLS =
-  "grid grid-cols-[36px_110px_minmax(90px,1.2fr)_minmax(90px,1.2fr)_70px_minmax(90px,1fr)_90px_80px_120px_140px] w-full";
+  "grid grid-cols-[36px_120px_180px_180px_90px_140px_110px_90px_140px_160px] min-w-[1200px]";
 
   return (
 <div className="px-5 pb-5 font-sans w-full">
