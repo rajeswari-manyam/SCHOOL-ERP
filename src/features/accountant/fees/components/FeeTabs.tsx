@@ -1,3 +1,5 @@
+import typography from "@/styles/typography";
+
 const tabs = [
   "Pending Fees",
   "All Transactions",
@@ -19,7 +21,7 @@ export const FeeTabs = ({
         <button
           key={tab}
           onClick={() => setActive(tab)}
-          className={`pb-2 text-sm whitespace-nowrap transition-all flex-shrink-0 ${
+          className={`pb-2 ${typography.body.small} whitespace-nowrap transition-all flex-shrink-0 ${
             active === tab
               ? "border-b-2 border-blue-600 text-blue-600 font-medium"
               : "border-b-2 border-transparent text-gray-500 hover:text-gray-800"

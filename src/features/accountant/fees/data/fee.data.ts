@@ -1,6 +1,18 @@
-import type { FeeRow, Transaction, Student, FeeOption, ClassType, ClassFee,  TransportSlab, TransportStudent } from "../types/fees.types";
+import type {
+  FeeRow,
+  Transaction,
+  Student,
+  FeeOption,
+  ClassType,
+  ClassFee,
+  TransportSlab,
+  TransportStudent,
+  FeeHead,
+} from "../types/fees.types";
 
-/* ── Fee Structure Rows ── */
+/* ─────────────────────────────
+   FEES (Pending / Overdue)
+───────────────────────────── */
 export const mockFees: FeeRow[] = [
   {
     id: "1",
@@ -40,7 +52,9 @@ export const mockFees: FeeRow[] = [
   },
 ];
 
-/* ── Transactions ── */
+/* ─────────────────────────────
+   TRANSACTIONS
+───────────────────────────── */
 export const mockTransactions: Transaction[] = [
   {
     id: "1",
@@ -64,7 +78,9 @@ export const mockTransactions: Transaction[] = [
   },
 ];
 
-/* ── Students ── */
+/* ─────────────────────────────
+   STUDENTS
+───────────────────────────── */
 export const mockStudents: Student[] = [
   {
     id: "s1",
@@ -84,7 +100,9 @@ export const mockStudents: Student[] = [
   },
 ];
 
-/* ── Fee Options ── */
+/* ─────────────────────────────
+   FEE OPTIONS
+───────────────────────────── */
 export const feeOptions: FeeOption[] = [
   { id: "tuition-t1", label: "Term I Tuition", amount: 12000 },
   { id: "tuition-t2", label: "Term II Tuition", amount: 12500 },
@@ -94,22 +112,56 @@ export const feeOptions: FeeOption[] = [
   { id: "exam", label: "Examination Fee", amount: 1500 },
 ];
 
-/* =========================
-   FEE STRUCTURE MOCK DATA
-========================= */
-export const feeHeads = [
-  { id: 1, name: "Tuition Fee",     code: "TUI-01", description: "Monthly academic tuition cost", mandatory: true,  taxable: false, gst: "0%" },
-  { id: 2, name: "Examination Fee", code: "EXM-02", description: "Term-wise examination charges",  mandatory: true,  taxable: false, gst: "0%" },
-  { id: 3, name: "Transport Fee",   code: "TRN-03", description: "School bus facility charges",    mandatory: false, taxable: false, gst: "5%" },
-  { id: 4, name: "Activity Fee",    code: "ACT-04", description: "Extra-curricular & sports",      mandatory: false, taxable: false, gst: "0%" },
-  { id: 5, name: "Library Fee",     code: "LIB-05", description: "Digital and physical library",   mandatory: false, taxable: false, gst: "0%" },
-  { id: 6, name: "Lab Fee",         code: "LAB-06", description: "Science & computer labs access", mandatory: false, taxable: false, gst: "0%" },
+/* ─────────────────────────────
+   FEE HEADS (Master Data)
+───────────────────────────── */
+export const feeHeads: FeeHead[] = [
+  {
+    id: "1",
+    name: "Tuition Fee",
+    code: "TUI-01",
+    description: "Monthly academic tuition cost",
+    mandatory: true,
+    taxable: false,
+    gst: "0%",
+    status: "ACTIVE",
+  },
+  {
+    id: "2",
+    name: "Examination Fee",
+    code: "EXM-02",
+    description: "Term-wise examination charges",
+    mandatory: true,
+    taxable: false,
+    gst: "0%",
+    status: "ACTIVE",
+  },
+  {
+    id: "3",
+    name: "Transport Fee",
+    code: "TRN-03",
+    description: "School bus facility charges",
+    mandatory: false,
+    taxable: false,
+    gst: "5%",
+    status: "ACTIVE",
+  },
 ];
 
+/* ─────────────────────────────
+   CLASSES
+───────────────────────────── */
 export const classes: ClassType[] = [
-  "Class 6", "Class 7", "Class 8", "Class 9", "Class 10",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
 ];
 
+/* ─────────────────────────────
+   CLASS WISE FEES
+───────────────────────────── */
 export const classWiseFees: ClassFee[] = [
   {
     id: "cf1",
@@ -129,55 +181,79 @@ export const classWiseFees: ClassFee[] = [
     dueDate: "1st Mar / Sep",
     annualTotal: 6000,
   },
-  {
-    id: "cf3",
-    feeHead: "Transport Fee",
-    icon: "T",
-    billingCycle: "Monthly",
-    amount: 2500,
-    dueDate: "5th of every month",
-    annualTotal: 30000,
-  },
-  {
-    id: "cf4",
-    feeHead: "Activity Fee",
-    icon: "A",
-    billingCycle: "Annual",
-    amount: 3000,
-    dueDate: "1st Apr",
-    annualTotal: 3000,
-  },
-  {
-    id: "cf5",
-    feeHead: "Library Fee",
-    icon: "L",
-    billingCycle: "Annual",
-    amount: 1200,
-    dueDate: "1st Apr",
-    annualTotal: 1200,
-  },
-  {
-    id: "cf6",
-    feeHead: "Lab Fee",
-    icon: "L",
-    billingCycle: "Annual",
-    amount: null,
-    dueDate: "1st Apr",
-    annualTotal: null,
-  },
 ];
+
+/* ─────────────────────────────
+   TRANSPORT
+───────────────────────────── */
 export const initialSlabs: TransportSlab[] = [
   { id: "1", name: "Slab 1", from: 0, to: 3, monthly: 800, students: 45 },
   { id: "2", name: "Slab 2", from: 3, to: 6, monthly: 1200, students: 67 },
   { id: "3", name: "Slab 3", from: 6, to: 10, monthly: 1600, students: 38 },
-  { id: "4", name: "Slab 4", from: 10, to: null, monthly: 2200, students: 22 },
 ];
 
 export const initialStudents: TransportStudent[] = [
-  { id: "AD4588", name: "Arun Sharma", cls: "Class 10-A", slabId: "2", distance: 4.2 },
-  { id: "AD4581", name: "Meera Kapoor", cls: "Class 9-B", slabId: "1", distance: 2.1 },
-  { id: "AD4592", name: "Rahul Verma", cls: "Class 10-A", slabId: "3", distance: 7.5 },
-  { id: "AD4601", name: "Priya Singh", cls: "Class 8-C", slabId: "1", distance: 1.8 },
-  { id: "AD4612", name: "David Thomas", cls: "Class 10-B", slabId: "4", distance: 12.3 },
-  { id: "AD4620", name: "Sneha Rao", cls: "Class 7-A", slabId: "2", distance: 5.1 },
+  {
+    id: "AD4588",
+    name: "Arun Sharma",
+    cls: "Class 10-A",
+    slabId: "2",
+    distance: 4.2,
+  },
+  {
+    id: "AD4601",
+    name: "Priya Singh",
+    cls: "Class 8-C",
+    slabId: "1",
+    distance: 1.8,
+  },
+];
+
+/* ─────────────────────────────
+   CONCESSIONS
+───────────────────────────── */
+export interface Concession {
+  id: string;
+  studentName: string;
+  studentInitials: string;
+  studentId: string;
+  class: string;
+  type: string;
+  typeColor: string;
+  amount: string;
+  amountUnit?: string;
+  reason: string;
+  approvedBy: string;
+  status: "ACTIVE" | "PENDING";
+}
+
+export const concessionsData: Concession[] = [
+  {
+    id: "1",
+    studentName: "Ravi Kumar",
+    studentInitials: "RK",
+    studentId: "2024098",
+    class: "10A",
+    type: "Sibling Discount",
+    typeColor: "bg-purple-100 text-purple-700",
+    amount: "Rs. 1,000",
+    amountUnit: "/mo",
+    reason: "2nd child in school",
+    approvedBy: "Principal",
+    status: "ACTIVE",
+  },
+  {
+    id: "2",
+    studentName: "Priya Devi",
+    studentInitials: "PD",
+    studentId: "2024056",
+    class: "9B",
+    type: "Merit Scholarship",
+    typeColor: "bg-amber-100 text-amber-700",
+    amount: "50%",
+    amountUnit: " tuition",
+    reason: "Rank 1 in class",
+    approvedBy: "Principal",
+    status: "ACTIVE",
+  },
 ];

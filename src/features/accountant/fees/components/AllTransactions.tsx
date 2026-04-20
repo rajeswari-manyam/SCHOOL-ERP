@@ -1,239 +1,278 @@
-import { useState } from "react";
-import type { Transaction } from "../types/fees.types";
-import { formatCurrency, modeStyle } from "../utils/fee.utils";
+import { useMemo, useState } from "react";
+import { Virtuoso } from "react-virtuoso";
 import {
-    Table,
-    TableHeader,
-    TableBody,
-    TableRow,
-    TableHead,
-    TableCell,
-} from "@/components/ui/table"; // adjust path
-import { Checkbox } from "@/components/ui/checkbox";
-import typography from "@/styles/typography";
+  useReactTable,
+  getCoreRowModel,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import type { Transaction } from "../types/fees.types";
+import { formatCurrency } from "../utils/fee.utils";
+import { Eye, Download, Send, CheckCircle } from "lucide-react";
+
 type Props = { data: Transaction[] };
 
+// ---------- helpers ----------
+const modeBadge = (mode: string) => {
+  switch (mode?.toUpperCase()) {
+    case "UPI":
+      return "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide bg-blue-50 text-blue-800";
+    case "CASH":
+      return "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide bg-green-50 text-green-800";
+    case "CHEQUE":
+      return "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide bg-amber-50 text-amber-800";
+    default:
+      return "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide bg-slate-100 text-slate-500";
+  }
+};
+
+const WASentBadge = ({ sent }: { sent?: boolean }) =>
+  sent ? (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-800 text-[12px] font-medium">
+      <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+      WA Sent
+    </span>
+  ) : (
+    <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 text-slate-500 hover:border-green-500 hover:text-green-700 text-[12px] transition-colors">
+      <Send className="w-3 h-3 flex-shrink-0" />
+      Send
+    </button>
+  );
+
 export const AllTransactionsTable = ({ data }: Props) => {
-    const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
 
-    const allSelected = data.length > 0 && selected.length === data.length;
-    const toggleAll = () => setSelected(allSelected ? [] : data.map((t) => t.id));
-    const toggleOne = (id: string) =>
-        setSelected((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-        );
-
-    const cash = data.filter((t) => t.mode === "CASH").reduce((s, t) => s + t.amount, 0);
-    const upi = data.filter((t) => t.mode === "UPI").reduce((s, t) => s + t.amount, 0);
-    const cheque = data.filter((t) => t.mode === "CHEQUE").reduce((s, t) => s + t.amount, 0);
-    const total = data.reduce((s, t) => s + t.amount, 0);
-
-    return (
-        <div className="px-5 pb-5">
-            {/* ── Summary strip ── */}
-            {/* ── Summary strip ── */}
-            <div className="flex items-center justify-between mb-3">
-                {/* Left: payments + collected */}
-                <div className="flex items-center gap-1.5 text-xs">
-                    <span className="w-2 h-2 rounded-full bg-[#3525CD] inline-block" />
-                    <span className="font-semibold text-slate-700">{data.length} payments</span>
-                    <span className="text-slate-400">·</span>
-                    <span className="font-bold text-[#3525CD]">{formatCurrency(total)} collected</span>
-                </div>
-
-                {/* Right: Cash / UPI / Cheque */}
-                <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span>Cash: <span className="font-semibold text-slate-700">{formatCurrency(cash)}</span></span>
-                    <span>UPI: <span className="font-semibold text-slate-700">{formatCurrency(upi)}</span></span>
-                    <span>Cheque: <span className="font-semibold text-slate-700">{formatCurrency(cheque)}</span></span>
-                </div>
-            </div>
-            {/* ── Table ── */}
-            {/* ── Mobile View (Cards) ── */}
-            <div className="sm:hidden space-y-3">
-                {data.map((t) => {
-                    const sentToParent = (t as any).sentToParent ?? "WA Sent";
-
-                    return (
-                        <div
-                            key={t.id}
-                            className="border border-slate-200 rounded-xl p-3 shadow-sm bg-white"
-                        >
-                            {/* Top Row */}
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="font-mono text-xs font-semibold text-[#3525CD]">
-                                    {t.receiptNo ?? t.id}
-                                </span>
-                                <span className="font-bold">
-                                    {formatCurrency(t.amount)}
-                                </span>
-                            </div>
-
-                            <div className="font-semibold text-sm">{t.student}</div>
-                            <div className="text-xs text-slate-500">
-                                {(t as any).class ?? (t as any).studentClass ?? "—"}
-                            </div>
-
-                          <div className="mt-2">
-  <div className="text-xs text-slate-400">Fee Head</div>
-  <div className="text-sm font-medium text-slate-700">
-    {t.feeHead ?? "Tuition Apr"}
-  </div>
-</div>
-
-<div className="flex justify-between mt-2 text-xs text-slate-500">
-  <span>{t.date}</span>
-</div>
-
-                            <div className="flex justify-between items-center mt-3">
-                                <span
-                                    className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${modeStyle(
-                                        t.mode
-                                    )}`}
-                                >
-                                    {t.mode}
-                                </span>
-
-                                {sentToParent === "WA Sent" ? (
-                                    <span className="text-green-600 text-xs font-medium">
-                                        ✓ WA Sent
-                                    </span>
-                                ) : (
-                                    <button className="text-indigo-500 text-xs">
-                                        Send
-                                    </button>
-                                )}
-                            </div>
-
-                            <button className="mt-3 w-full text-xs font-medium text-[#3525CD] border-t pt-2">
-                                View / Download
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* ── Desktop Table ── */}
-            <div className="hidden sm:block rounded-xl border border-slate-200 overflow-hidden">
-                <Table>
-                    {/* Header */}
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-10 bg-[#E5EEFF]">
-                                <Checkbox checked={allSelected} onChange={toggleAll} />
-                            </TableHead>
-
-                            {[
-                                "Receipt No.",
-                                "Date & Time",
-                                "Student",
-                                "Class",
-                                "Fee Head",
-                                "Amount",
-                                "Mode",
-                                "Sent to Parent",
-                                "Actions",
-                            ].map((h) => (
-                                <TableHead key={h}>{h}</TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-
-                    {/* Body */}
-                    <TableBody>
-                        {data.map((t) => {
-                            const isSelected = selected.includes(t.id);
-                            const sentToParent = (t as any).sentToParent ?? "WA Sent";
-
-                            return (
-                                <TableRow
-                                    key={t.id}
-                                    className={isSelected ? "bg-indigo-50" : ""}
-                                >
-                                    {/* Checkbox */}
-                                    <TableCell>
-                                        <Checkbox
-                                            checked={isSelected}
-                                            onChange={() => toggleOne(t.id)}
-                                        />
-                                    </TableCell>
-
-                                    {/* Receipt */}
-                                    <TableCell className="font-mono text-xs font-semibold text-[#3525CD]">
-                                        {t.receiptNo ?? t.id}
-                                    </TableCell>
-
-                                    {/* Date */}
-                                    <TableCell className={`${typography.body.xs} text-slate-500`}>
-                                        {t.date}
-                                    </TableCell>
-
-                                    {/* Student */}
-                                    <TableCell className="font-semibold">
-                                        {t.student}
-                                    </TableCell>
-
-                                    {/* Class */}
-                                    <TableCell className={`${typography.body.xs} text-slate-600 font-medium`}>
-                                        {(t as any).class ?? (t as any).studentClass ?? "—"}
-                                    </TableCell>
-
-                                    {/* Fee Head */}
-                                    <TableCell className={`${typography.body.xs} text-slate-500`}>
-                                        {t.feeHead ?? "Tuition Apr"}
-                                    </TableCell>
-
-                                    {/* Amount */}
-                                    <TableCell className="font-bold">
-                                        {formatCurrency(t.amount)}
-                                    </TableCell>
-
-                                    {/* Mode */}
-                                    <TableCell>
-                                        <span
-                                            className={`${typography.body.xs} font-bold px-2 py-0.5 rounded uppercase ${modeStyle(
-                                                t.mode
-                                            )}`}
-                                        >
-                                            {t.mode}
-                                        </span>
-                                    </TableCell>
-
-                                    {/* Sent */}
-                                    <TableCell>
-                                        {sentToParent === "WA Sent" ? (
-                                            <span className={`text-green-600 ${typography.body.xs} font-medium`}>
-                                                ✓ WA Sent
-                                            </span>
-                                        ) : (
-                                            <button className={`text-indigo-500 ${typography.body.xs} hover:underline`}>
-                                                Send
-                                            </button>
-                                        )}
-                                    </TableCell>
-
-                                    {/* Actions */}
-                                    <TableCell>
-                                        <button className={`text-[#3525CD] ${typography.body.xs} font-medium hover:underline`}>
-                                            View/Download
-                                        </button>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-
-                {/* Footer */}
-                <div className={`px-4 py-2.5 flex justify-between ${typography.body.xs} text-slate-400 border-t border-slate-100 bg-slate-50`}>
-                    <span>
-                        Showing 1–{data.length} of {data.length} receipts
-                    </span>
-                    <span className={`font-semibold ${typography.body.xs} text-slate-600`}>
-                        {formatCurrency(total)} total
-                    </span>
-                </div>
-            </div>
-        </div>
+  const toggleOne = (id: string) =>
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+
+  const toggleAll = () =>
+    setSelected((prev) =>
+      prev.length === data.length ? [] : data.map((d) => d.id)
+    );
+
+  const allSelected = selected.length === data.length && data.length > 0;
+  const someSelected = selected.length > 0 && !allSelected;
+
+  const { cash, upi, cheque, total } = useMemo(
+    () =>
+      data.reduce(
+        (acc, t) => {
+          acc.total += t.amount;
+          if (t.mode === "CASH") acc.cash += t.amount;
+          if (t.mode === "UPI") acc.upi += t.amount;
+          if (t.mode === "CHEQUE") acc.cheque += t.amount;
+          return acc;
+        },
+        { cash: 0, upi: 0, cheque: 0, total: 0 }
+      ),
+    [data]
+  );
+
+  const columns = useMemo<ColumnDef<Transaction>[]>(
+    () => [
+      {
+        id: "select",
+        header: () => (
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(el) => { if (el) el.indeterminate = someSelected; }}
+            onChange={toggleAll}
+            className="w-3.5 h-3.5 accent-[#3525CD] cursor-pointer"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={selected.includes(row.original.id)}
+            onChange={() => toggleOne(row.original.id)}
+            className="w-3.5 h-3.5 accent-[#3525CD] cursor-pointer"
+          />
+        ),
+      },
+      { accessorKey: "receiptNo", header: "Receipt No." },
+      { accessorKey: "date", header: "Date & Time" },
+      { accessorKey: "student", header: "Student" },
+      { accessorKey: "class", header: "Class" },
+      { accessorKey: "feeHead", header: "Fee Head" },
+      { accessorKey: "amount", header: "Amount" },
+      { accessorKey: "mode", header: "Mode" },
+      { id: "sentToParent", header: "Sent to Parent" },
+      { id: "actions", header: "Actions" },
+    ],
+    [selected, allSelected, someSelected]
+  );
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const rows = table.getRowModel().rows;
+
+  // Column widths matching Figma layout
+const COLS =
+  "grid grid-cols-[36px_110px_minmax(90px,1.2fr)_minmax(90px,1.2fr)_70px_minmax(90px,1fr)_90px_80px_120px_140px] w-full";
+
+  return (
+<div className="px-5 pb-5 font-sans w-full">
+
+      {/* ── SUMMARY BAR ── */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-xs">
+          <span className="w-2 h-2 bg-[#3525CD] rounded-full flex-shrink-0" />
+          <span className="font-semibold text-slate-700">
+            {data.length} payments
+          </span>
+          <span className="text-slate-300">·</span>
+          <span className="font-bold text-[#3525CD]">
+            {formatCurrency(total)} collected
+          </span>
+        </div>
+        <div className="flex gap-4 text-xs text-slate-500">
+          <span>Cash: {formatCurrency(cash)}</span>
+          <span>UPI: {formatCurrency(upi)}</span>
+          <span>Cheque: {formatCurrency(cheque)}</span>
+        </div>
+      </div>
+
+      {/* ── TABLE WRAPPER ── */}
+  <div className="border border-slate-200 rounded-xl w-full overflow-x-auto"> 
+
+        {/* ── HEADER ── */}
+        <div
+          className={`${COLS} text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-b border-slate-200 px-3 py-2.5 w-full`}
+        >
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => { if (el) el.indeterminate = someSelected; }}
+              onChange={toggleAll}
+              className="w-3.5 h-3.5 accent-[#3525CD] cursor-pointer"
+            />
+          </div>
+          <div>Receipt No.</div>
+          <div>Date &amp; Time</div>
+          <div>Student</div>
+          <div>Class</div>
+          <div>Fee Head</div>
+          <div>Amount</div>
+          <div>Mode</div>
+          <div>Sent to Parent</div>
+          <div>Actions</div>
+        </div>
+
+        {/* ── ROWS ── */}
+<Virtuoso
+  style={{
+    height: 540,
+    width: "100%",
+    overflowX: "hidden",
+  }}
+          totalCount={rows.length}
+          itemContent={(index) => {
+            const row = rows[index].original;
+            const isSelected = selected.includes(row.id);
+
+            return (
+              <div
+                className={`${COLS} text-sm px-3 border-b border-slate-100 w-full transition-colors cursor-pointer items-center
+                  ${isSelected ? "bg-indigo-50/70" : "hover:bg-slate-50/80"}`}
+                style={{ minHeight: 52 }}
+                onClick={() => toggleOne(row.id)}
+              >
+                {/* checkbox */}
+                <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleOne(row.id)}
+                    className="w-3.5 h-3.5 accent-[#3525CD] cursor-pointer"
+                  />
+                </div>
+
+                {/* receipt */}
+                <div>
+                  <a
+                    href="#"
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-mono text-[#3525CD] hover:underline text-[12px]"
+                  >
+                    {row.receiptNo ?? row.id}
+                  </a>
+                </div>
+
+                {/* date */}
+                <div className="text-slate-400 text-[12px] leading-snug">
+                  {row.date}
+                </div>
+
+                {/* student */}
+                <div className="font-medium text-slate-800 truncate pr-2 text-[13px]">
+                  {row.student}
+                </div>
+
+                {/* class */}
+                <div className="text-slate-500 text-[13px]">{row.className ?? "—"}</div>
+
+                {/* fee head */}
+                <div className="text-slate-500 text-[13px] truncate pr-1">
+                  {row.feeHead ?? "Tuition"}
+                </div>
+
+                {/* amount */}
+                <div className="font-semibold text-slate-800 text-[13px]">
+                  {formatCurrency(row.amount)}
+                </div>
+
+                {/* mode badge */}
+                <div>
+                  <span className={modeBadge(row.mode)}>{row.mode}</span>
+                </div>
+
+                {/* sent to parent */}
+                <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <WASentBadge sent={(row as any).waSent} />
+                </div>
+
+                {/* actions */}
+                <div
+                  className="flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-1.5 py-1 rounded transition-colors">
+                    <Eye className="w-3.5 h-3.5 flex-shrink-0" />
+                    View
+                  </button>
+                  <span className="text-slate-300 text-sm">/</span>
+                  <button className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-1.5 py-1 rounded transition-colors">
+                    <Download className="w-3.5 h-3.5 flex-shrink-0" />
+                    Download
+                  </button>
+                </div>
+              </div>
+            );
+          }}
+        />
+      </div>
+
+      {/* ── FOOTER ── */}
+      <div className="flex justify-between text-xs text-slate-400 mt-2 pt-2">
+        <span>
+          Showing 1–{data.length} of {data.length} receipts
+          {selected.length > 0 && (
+            <span className="ml-2 text-[#3525CD] font-medium">
+              · {selected.length} selected
+            </span>
+          )}
+        </span>
+        <span className="font-semibold text-slate-700">
+          {formatCurrency(total)} total
+        </span>
+      </div>
+    </div>
+  );
 };

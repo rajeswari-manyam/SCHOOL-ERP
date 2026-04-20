@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import typography from "@/styles/typography";
+
 const feeHeadSchema = z.object({
   name: z.string().min(1, "Fee head name is required"),
   code: z.string().min(1, "Code is required"),
@@ -57,27 +58,28 @@ export const AddFeeHeadModal = ({ onClose }: { onClose: () => void }) => {
      }`;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
+   <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
       <div className="
-    bg-white w-full h-[95vh] sm:h-auto sm:max-h-[90vh]
-    sm:w-[520px] rounded-t-2xl sm:rounded-2xl
-    shadow-xl p-4 sm:p-6 overflow-y-auto
-  ">
+        bg-white w-full h-[92vh] sm:h-auto sm:max-h-[90vh]
+        sm:w-[520px] rounded-t-2xl sm:rounded-2xl
+        shadow-xl p-4 sm:p-6 overflow-y-auto
+      ">
 
         {/* Header */}
-       <div className="flex justify-between items-center mb-4 sm:mb-5">
-  <h3 className="text-sm sm:text-base font-semibold text-gray-900">
+     <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-semibold text-gray-900">
     Add New Fee Head
   </h3>
   <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
-    <X className="w-5 h-5" />
+       <X className="w-5 h-5 text-gray-500" />
   </button>
 </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
 
           {/* Name + Code row */}
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Fee Head Name */}
             <div>
               <label className={`${typography.body.xs} font-semibold text-gray900 mb-1.5 block tracking-wide uppercase`}>
@@ -130,38 +132,41 @@ export const AddFeeHeadModal = ({ onClose }: { onClose: () => void }) => {
 
           {/* Mandatory + Taxable toggles */}
           <div className="flex gap-8">
-            <div className="flex items-center gap-3">
-              <span className="{typography.body.xs} text-gray-900">Mandatory for all students?</span>
-              <button
-                type="button"
-                onClick={() => setValue("mandatory", !mandatory)}
-                className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${
-                  mandatory ? "bg-[#3525CD]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    mandatory ? "translate-x-5" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="{typography.body.xs} text-gray-900">Taxable?</span>
-              <button
-                type="button"
-                onClick={() => setValue("taxable", !taxable)}
-                className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${
-                  taxable ? "bg-[#3525CD]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    taxable ? "translate-x-5" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
-            </div>
+            {/* Mandatory Toggle */}
+<div className="flex items-center gap-3">
+  <span className="text-xs text-gray-900">Mandatory for all students?</span>
+  <button
+    type="button"
+    onClick={() => setValue("mandatory", !mandatory)}
+    className={`relative w-11 h-6 rounded-full border-none cursor-pointer transition-colors duration-200 flex-shrink-0 ${
+      mandatory ? "bg-[#3525CD]" : "bg-gray-300"
+    }`}
+  >
+    <span
+      className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-all duration-200 ${
+        mandatory ? "left-[23px]" : "left-[3px]"
+      }`}
+    />
+  </button>
+</div>
+
+{/* Taxable Toggle */}
+<div className="flex items-center gap-3">
+  <span className="text-xs text-gray-900">Taxable?</span>
+  <button
+    type="button"
+    onClick={() => setValue("taxable", !taxable)}
+    className={`relative w-11 h-6 rounded-full border-none cursor-pointer transition-colors duration-200 flex-shrink-0 ${
+      taxable ? "bg-[#3525CD]" : "bg-gray-300"
+    }`}
+  >
+    <span
+      className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-all duration-200 ${
+        taxable ? "left-[23px]" : "left-[3px]"
+      }`}
+    />
+  </button>
+</div>
           </div>
 
           {/* Billing Cycle */}

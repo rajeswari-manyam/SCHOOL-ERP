@@ -57,14 +57,7 @@ export function TransportFees() {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         {/* Left side */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900">
-            Fee Management
-          </h2>
-          <p className="text-xs text-gray-500">
-            Academic Year 2024–25
-          </p>
-        </div>
+      
 
         {/* Right side actions */}
         <div className="flex gap-2">

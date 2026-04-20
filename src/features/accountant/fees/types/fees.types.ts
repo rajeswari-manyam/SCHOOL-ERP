@@ -113,3 +113,20 @@ export type TransportStudent = {
   routeId?: string;
   pickupPoint?: string;
 };
+
+export type ConcessionStatus = "ACTIVE" | "PENDING";
+
+export type Concession = {
+  id: string;
+  studentName: string;
+  studentInitials: string;
+  studentId: string;
+  class: string;
+  type: string;
+  typeColor: string;
+  amount: string;
+  amountUnit?: string;
+  reason: string;
+  approvedBy: string;
+  status: ConcessionStatus;
+};
