@@ -1,5 +1,5 @@
 import { useState, type JSX } from "react";
-import type { ReportCard, ReportFormat, ReportType } from "../types/reports.types";
+import type { ReportCard, ReportType } from "../types/reports.types";
 import { REPORT_CARDS } from "../utils/Report config";
 import { AutoBadge, PeriodPill } from "./Reportbadges";
 

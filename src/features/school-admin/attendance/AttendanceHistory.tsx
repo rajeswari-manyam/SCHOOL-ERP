@@ -1,24 +1,53 @@
-
 import { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import { useAttendanceTrend, useChronicAbsentees } from "../hooks/useattendance.ts";
-import { severityBadgeClass } from "../utils/attendance.utils";
+import { severityBadgeClass } from "./utils/attendance.utils";
+
+type AttendanceSeverity = "critical" | "high" | "medium";
 
 const CLASS_FILTER_OPTIONS = ["All Classes", "Class 6A", "Class 7A", "Class 8A", "Class 9B", "Class 10A"];
+
+const HISTORY_TREND_DATA = [
+  { date: "05 Mar", "6A": 78, "7A": 82, "8A": 74, avg: 79 },
+  { date: "10 Mar", "6A": 80, "7A": 84, "8A": 76, avg: 80 },
+  { date: "15 Mar", "6A": 77, "7A": 83, "8A": 78, avg: 79 },
+  { date: "20 Mar", "6A": 81, "7A": 80, "8A": 79, avg: 80 },
+  { date: "25 Mar", "6A": 86, "7A": 82, "8A": 77, avg: 82 },
+  { date: "30 Mar", "6A": 88, "7A": 84, "8A": 79, avg: 83 },
+  { date: "05 Apr", "6A": 92, "7A": 88, "8A": 85, avg: 88 },
+];
+
+const CHRONIC_ABSENTEES: Array<{
+  initials: string;
+  name: string;
+  class: string;
+  daysAbsent: number;
+  severity: AttendanceSeverity;
+  color: string;
+  lastAbsent: string;
+  phone: string;
+}> = [
+  { initials: "RT", name: "Ravi Teja", class: "10A", daysAbsent: 8, severity: "critical", color: "#7c3aed", lastAbsent: "Today", phone: "+91 98765 43210" },
+  { initials: "PS", name: "Priya S", class: "9B", daysAbsent: 6, severity: "high", color: "#0ea5e9", lastAbsent: "5 Apr", phone: "+91 87654 32109" },
+  { initials: "KR", name: "Kiran R", class: "8A", daysAbsent: 6, severity: "high", color: "#22c55e", lastAbsent: "4 Apr", phone: "+91 76543 21098" },
+  { initials: "SN", name: "Suresh N", class: "7B", daysAbsent: 5, severity: "medium", color: "#f97316", lastAbsent: "3 Apr", phone: "+91 65432 10987" },
+  { initials: "AD", name: "Anitha D", class: "6A", daysAbsent: 5, severity: "medium", color: "#f43f5e", lastAbsent: "2 Apr", phone: "+91 54321 09876" },
+  { initials: "VR", name: "Venkat R", class: "10B", daysAbsent: 5, severity: "medium", color: "#14b8a6", lastAbsent: "1 Apr", phone: "+91 43210 98765" },
+];
 
 export default function AttendanceHistory() {
   const [dateFrom,     setDateFrom]     = useState("01 Mar 2025");
   const [dateTo,       setDateTo]       = useState("07 Apr 2025");
   const [classFilter,  setClassFilter]  = useState("All Classes");
-  const [applied,      setApplied]      = useState({ dateFrom: "01 Mar 2025", dateTo: "07 Apr 2025", classFilter: "All Classes" });
 
-  const { data: trendData,   isLoading: trendLoading }     = useAttendanceTrend(applied);
-  const { data: absentees,   isLoading: absenteesLoading } = useChronicAbsentees();
-
-  const applyFilters = () => setApplied({ dateFrom, dateTo, classFilter });
+  const applyFilters = () => {
+    // static view only; filters currently update UI state but use mocked chart and table data
+    setDateFrom(dateFrom);
+    setDateTo(dateTo);
+    setClassFilter(classFilter);
+  };
 
   return (
     <div className="space-y-5">
@@ -86,24 +115,18 @@ export default function AttendanceHistory() {
                 ))}
               </div>
             </div>
-            {trendLoading ? (
-              <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">
-                Loading chart…
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={trendData ?? []} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
-                  <YAxis domain={[50, 100]} ticks={[50, 75, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }} formatter={(val: number) => [`${val}%`]} />
-                  <ReferenceLine y={85} stroke="#e2e8f0" strokeDasharray="4 4" />
-                  <Line type="monotone" dataKey="6A"  stroke="#6366f1" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="7A"  stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="8A"  stroke="#f59e0b" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="avg" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={HISTORY_TREND_DATA} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
+                <YAxis domain={[50, 100]} ticks={[50, 75, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
+                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }} formatter={(val) => [`${val ?? 0}%`]} />
+                <ReferenceLine y={85} stroke="#e2e8f0" strokeDasharray="4 4" />
+                <Line type="monotone" dataKey="6A"  stroke="#6366f1" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="7A"  stroke="#10b981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="8A"  stroke="#f59e0b" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="avg" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Right Stats */}
@@ -144,11 +167,8 @@ export default function AttendanceHistory() {
           ))}
         </div>
 
-        {absenteesLoading ? (
-          <div className="px-5 py-8 text-center text-slate-400 text-sm">Loading…</div>
-        ) : (
-          <div className="divide-y divide-slate-50">
-            {(absentees ?? []).map((s) => (
+        <div className="divide-y divide-slate-50">
+          {CHRONIC_ABSENTEES.map((s) => (
               <div key={s.name} className="grid grid-cols-[2fr_1fr_1.2fr_1.2fr_2fr_1fr] gap-2 items-center px-5 py-3.5 hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-2.5">
                   <div
@@ -178,8 +198,6 @@ export default function AttendanceHistory() {
               </div>
             ))}
           </div>
-        )}
-
         <div className="px-5 py-4 text-center border-t border-slate-100">
           <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
             View All Absentees

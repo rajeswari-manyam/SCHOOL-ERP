@@ -1,33 +1,21 @@
 import { useState } from "react";
 import { useReports, useGenerateReport } from "./hooks/useReports";
-
-// Components
 import ReportStatCards from "./components/Reportstatcards";
-import { FormatBadge, ReportTypeBadge } from "./components/Reportbadges";
-// (Assuming you have these or will create)
+import ReportCardGrid from "./components/Reportcardgrid";
+import RecentReportsTable from "./components/Recentreportstable";
 import GenerateReportModal from "./components/Generatereportmodal";
-
-// Types
+import Pagination from "./components/Pagination";
 import type { ReportType } from "./types/reports.types";
-
-const REPORT_CARDS: {
-  id: ReportType;
-  title: string;
-  description: string;
-}[] = [
-  { id: "ATTENDANCE", title: "Attendance Report", description: "Daily & monthly attendance insights" },
-  { id: "FEE_COLLECTION", title: "Fee Collection", description: "Payment summaries & dues" },
-  { id: "STUDENT", title: "Student Report", description: "Student records & analytics" },
-  { id: "WHATSAPP_ACTIVITY", title: "WhatsApp Activity", description: "Communication logs" },
-  { id: "ADMISSIONS", title: "Admissions", description: "Admission funnel reports" },
-  { id: "STAFF", title: "Staff Report", description: "Staff activity & attendance" },
-];
+import { ACADEMIC_YEARS } from "./utils/Report config";
 
 const ReportsPage = () => {
   const {
     paginatedReports,
+    filteredReports,
     stats,
     loading,
+    academicYear,
+    setAcademicYear,
     searchQuery,
     setSearchQuery,
     currentPage,
@@ -36,156 +24,133 @@ const ReportsPage = () => {
     downloadReport,
   } = useReports();
 
-  const [selectedType, setSelectedType] = useState<ReportType | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const {
-    form,
-    generating,
-    success,
-    estimatedSize,
-    openForType,
-    setField,
-    toggleSection,
-    generate,
-  } = useGenerateReport(() => {
-    setSelectedType(null);
-  });
+  const { form, generating, success, estimatedSize, openForType, setField, toggleSection, generate } =
+    useGenerateReport(() => setShowModal(false));
 
-  if (loading || !stats) {
-    return <div className="p-6 text-sm text-gray-500">Loading reports...</div>;
-  }
+  const handleGenerate = (type: ReportType) => {
+    openForType(type);
+    setShowModal(true);
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* ─── Header ───────────────────────── */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-extrabold text-gray-900">Reports</h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Generate and manage school reports
-          </p>
+          <nav className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+            <span className="font-semibold uppercase tracking-wider">Admin</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            <span className="font-semibold uppercase tracking-wider text-indigo-600">Reports</span>
+          </nav>
+          <h1 className="text-2xl font-extrabold text-gray-900">Reports</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Generate and download school reports</p>
         </div>
-      </div>
 
-      {/* ─── Stats ───────────────────────── */}
-      <ReportStatCards stats={stats} />
-
-      {/* ─── Report Cards (Generate) ───────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {REPORT_CARDS.map((card) => (
-          <div
-            key={card.id}
-            className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md cursor-pointer transition"
-            onClick={() => {
-              setSelectedType(card.id);
-              openForType(card.id);
-            }}
-          >
-            <h3 className="text-sm font-bold text-gray-800">
-              {card.title}
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">
-              {card.description}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* ─── Search ───────────────────────── */}
-      <div className="flex items-center justify-between">
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search reports..."
-          className="px-4 py-2 border border-gray-200 rounded-lg text-sm w-64"
-        />
-      </div>
-
-      {/* ─── Reports Table ───────────────────────── */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-xs">
-            <tr>
-              <th className="p-3 text-left">Report</th>
-              <th className="p-3 text-left">Generated On</th>
-              <th className="p-3 text-left">Period</th>
-              <th className="p-3 text-left">Format</th>
-              <th className="p-3 text-left">Generated By</th>
-              <th className="p-3 text-right">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {paginatedReports.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="p-3 font-medium text-gray-800">
-                  {r.reportName}
-                </td>
-
-                <td className="p-3 text-gray-500">
-                  {r.generatedOn}
-                </td>
-
-                <td className="p-3 text-gray-500">
-                  {r.period}
-                </td>
-
-                <td className="p-3 space-y-1">
-                  <FormatBadge format={r.format} />
-                  <ReportTypeBadge type={r.type} />
-                </td>
-
-                <td className="p-3 text-gray-500">
-                  {r.generatedBy.name}
-                </td>
-
-                <td className="p-3 text-right">
-                  <button
-                    onClick={() => downloadReport(r.id)}
-                    className="text-indigo-600 hover:underline text-xs font-semibold"
-                  >
-                    Download
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* ─── Pagination ───────────────────────── */}
-        <div className="flex justify-between items-center p-3 text-xs text-gray-500">
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <div className="flex gap-2">
+        {/* Academic Year Picker */}
+        <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm">
+          <svg width="14" height="14" className="text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <span className="text-xs font-bold text-gray-700">Academic Year {academicYear}</span>
+          <div className="flex gap-1">
             <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-2 py-1 border rounded disabled:opacity-50"
+              onClick={() => {
+                const idx = ACADEMIC_YEARS.indexOf(academicYear);
+                if (idx < ACADEMIC_YEARS.length - 1) setAcademicYear(ACADEMIC_YEARS[idx + 1]);
+              }}
+              className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"
             >
-              Prev
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
-
             <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-2 py-1 border rounded disabled:opacity-50"
+              onClick={() => {
+                const idx = ACADEMIC_YEARS.indexOf(academicYear);
+                if (idx > 0) setAcademicYear(ACADEMIC_YEARS[idx - 1]);
+              }}
+              className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"
             >
-              Next
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
           </div>
         </div>
       </div>
 
-      {/* ─── Generate Modal ───────────────────────── */}
-      {selectedType && (
+      {/* Stat cards */}
+      {stats && !loading && <ReportStatCards stats={stats} />}
+
+      {/* Report cards grid */}
+      <ReportCardGrid onGenerate={handleGenerate} />
+
+      {/* Recently Generated Reports */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h2 className="text-base font-bold text-gray-900">Recently Generated Reports</h2>
+          <div className="flex items-center gap-3">
+            {/* Search */}
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search reports..."
+                className="pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 w-48"
+              />
+            </div>
+            <button className="text-xs text-indigo-600 font-bold hover:underline">View All History</button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center h-40 bg-white rounded-2xl border border-gray-100">
+            <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            <RecentReportsTable reports={paginatedReports} onDownload={downloadReport} />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400">
+                Showing {paginatedReports.length} of {filteredReports.length} reports
+              </p>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Generate Report Modal */}
+      {showModal && (
         <GenerateReportModal
           form={form}
           generating={generating}
           success={success}
           estimatedSize={estimatedSize}
-          onClose={() => setSelectedType(null)}
+          onClose={() => setShowModal(false)}
           onSetField={setField}
           onToggleSection={toggleSection}
           onGenerate={generate}

@@ -39,8 +39,8 @@ const AdmissionsPage = () => {
   return (
     <div className="p-6 space-y-6">
       {/* ─── Header ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-extrabold text-gray-900">
             Admissions Pipeline
           </h1>
@@ -48,13 +48,12 @@ const AdmissionsPage = () => {
             Manage enquiries → interviews → confirmations
           </p>
         </div>
-
-        <button
-          onClick={() => setShowAdd(true)}
-          className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition"
-        >
-          + New Enquiry
-        </button>
+<button
+  onClick={() => setShowAdd(true)}
+  className="w-fit rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700"
+>
+  + New Enquiry
+</button>
       </div>
 
       {/* ─── Stats ────────────────────────────────────────────────────────── */}

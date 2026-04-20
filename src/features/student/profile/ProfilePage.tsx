@@ -1,4 +1,4 @@
-import { useProfile } from "./hooks/useProfile";
+import { useProfile, useDownloadDocument } from "./hooks/useProfile";
 
 // Components
 import ProfileCard from "./components/ProfileCard.tsx";
@@ -8,6 +8,7 @@ import QuickDownloads from "./components/QuickDownloads.tsx";
 
 const ProfilePage = () => {
   const { data, isLoading } = useProfile();
+  const { download, downloadingId } = useDownloadDocument();
 
   if (isLoading || !data) {
     return <div className="p-6">Loading profile...</div>;
@@ -27,7 +28,7 @@ const ProfilePage = () => {
 
         <div className="space-y-6 lg:col-span-2">
           <PersonalInfoCard personal={personal} />
-          <QuickDownloads downloads={downloads} />
+          <QuickDownloads downloads={downloads} onDownload={download} downloadingId={downloadingId} />
         </div>
       </div>
     </div>

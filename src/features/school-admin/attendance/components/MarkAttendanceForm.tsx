@@ -1,8 +1,19 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { CLASS_OPTIONS, SECTION_OPTIONS } from "../utils/constants";
 import type { MarkAttendanceFormValues } from "../types/attendance.types";
 import { MOCK_CLASS_DETAILS } from "../utils/constants";
+
+const markAttendanceSchema = z.object({
+  classId: z.string().min(1, "Please select a class"),
+  section: z.string().min(1, "Please select a section"),
+  presentStudentIds: z.array(z.number()).min(1, "At least one student must be marked as present"),
+});
+
+type MarkAttendanceFormData = z.infer<typeof markAttendanceSchema>;
 
 interface Props {
   onSubmit: (values: MarkAttendanceFormValues) => void;
@@ -14,70 +25,93 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
     day: "2-digit", month: "short", year: "numeric",
   });
 
-  const [selectedClass, setSelectedClass] = useState(CLASS_OPTIONS[4]); // Class 8A
-  const [selectedSection, setSelectedSection] = useState(SECTION_OPTIONS[0]);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<MarkAttendanceFormData>({
+    resolver: zodResolver(markAttendanceSchema),
+    defaultValues: {
+      classId: CLASS_OPTIONS[4], // Class 8A
+      section: SECTION_OPTIONS[0],
+      presentStudentIds: [],
+    },
+  });
 
   // Use first mock class detail students as a proxy
   const [students, setStudents] = useState(
     MOCK_CLASS_DETAILS[0].students.map((s) => ({ id: s.id, name: s.name, present: true }))
   );
-
+  // Initialize presentStudentIds with all students marked as present
+  useEffect(() => {
+    const initialPresentIds = students.filter((s) => s.present).map((s) => s.id);
+    setValue("presentStudentIds", initialPresentIds);
+  }, [setValue, students]);
   const presentCount = students.filter((s) => s.present).length;
   const absentCount  = students.filter((s) => !s.present).length;
 
-  const toggle = (id: number) =>
-    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, present: !s.present } : s)));
+  const toggle = (id: number) => {
+    setStudents((prev) => {
+      const updated = prev.map((s) => (s.id === id ? { ...s, present: !s.present } : s));
+      const presentIds = updated.filter((s) => s.present).map((s) => s.id);
+      setValue("presentStudentIds", presentIds);
+      return updated;
+    });
+  };
 
- const handleSubmit = () => {
-  onSubmit({
-    classId: selectedClass,
-    presentStudentIds: students
-      .filter((s) => s.present)
-      .map((s) => s.id),
-  });
-};
+  const handleFormSubmit = (data: MarkAttendanceFormData) => {
+    onSubmit({
+      classId: data.classId,
+      presentStudentIds: data.presentStudentIds,
+    });
+  };
 
   return (
-    <>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       {/* Form Controls */}
       <div className="px-6 pt-5 pb-4">
         <div className="grid grid-cols-3 gap-4">
           {/* Class */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-              Class
+              Class <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <select
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                {...register("classId")}
                 className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8 cursor-pointer"
               >
-                {CLASS_OPTIONS.map((c) => <option key={c}>{c}</option>)}
+                {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
+            {errors.classId && (
+              <p className="mt-1 text-xs text-red-600">{errors.classId.message}</p>
+            )}
           </div>
 
           {/* Section */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-              Section
+              Section <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <select
-                value={selectedSection}
-                onChange={(e) => setSelectedSection(e.target.value)}
+                {...register("section")}
                 className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8 cursor-pointer"
               >
-                {SECTION_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+                {SECTION_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
               <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
+            {errors.section && (
+              <p className="mt-1 text-xs text-red-600">{errors.section.message}</p>
+            )}
           </div>
 
           {/* Date */}
@@ -90,6 +124,9 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
             </div>
           </div>
         </div>
+        {errors.presentStudentIds && (
+          <p className="mt-3 text-xs text-red-600">{errors.presentStudentIds.message}</p>
+        )}
       </div>
 
       {/* Student List Header */}
@@ -163,8 +200,7 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
       {/* Footer */}
       <div className="px-6 pb-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
         <button
-          type="button"
-          onClick={handleSubmit}
+          type="submit"
           disabled={isSubmitting}
           className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2"
         >
@@ -181,6 +217,6 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
           )}
         </button>
       </div>
-    </>
+    </form>
   );
 }

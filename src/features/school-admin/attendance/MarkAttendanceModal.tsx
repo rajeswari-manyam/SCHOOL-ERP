@@ -1,7 +1,6 @@
-
 import { useState } from "react";
-import { useAttendanceMutations } from "../hooks/useattendance.ts";
-import { MarkAttendanceForm } from "../components/MarkAttendanceForm";
+import { useAttendanceMutations } from "./hooks/useAttendance.ts";
+import { MarkAttendanceForm } from "./components/MarkAttendanceForm";
 
 export default function MarkAttendanceModal() {
   const [isOpen, setIsOpen] = useState(true);

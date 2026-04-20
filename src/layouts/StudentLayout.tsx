@@ -14,7 +14,7 @@ const StudentLayout = memo(() => (
   <div className="min-h-screen flex flex-col bg-[#F4F6FA]">
     <header className="w-full bg-white border-b border-slate-200 shadow-sm">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-6">
           <span className="text-xl font-semibold text-indigo-600">SchoolERP</span>
           <nav className="hidden items-center gap-6 md:flex">
             {navItems.map((item) => (

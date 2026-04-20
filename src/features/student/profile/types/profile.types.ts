@@ -1,5 +1,8 @@
 // Profile types for student profile management
 
+export type StudentStatus = "ACTIVE" | "INACTIVE" | "TRANSFERRED";
+export type DocumentCategory = "ACADEMIC" | "IDENTITY" | "FINANCIAL" | "MEDICAL" | "OTHER";
+
 export interface StudentProfile {
   id: string;
   name: string;
@@ -9,8 +12,9 @@ export interface StudentProfile {
   email: string;
   phone: string;
   dateOfBirth: string;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   address: string;
+  status: StudentStatus;
   emergencyContact: {
     name: string;
     phone: string;
@@ -26,28 +30,28 @@ export interface AcademicInfo {
   admissionNumber: string;
   academicYear: string;
   board: string;
-  room: string;
+  classRoom: string;
   stream?: string;
   subjects: string[];
 }
 
 export interface PersonalInfo {
-  dob: string;
+  dateOfBirth: string;
   gender: string;
-  blood: string;
+  bloodGroup: string;
   age: string;
-  father: string;
+  fatherName: string;
   fatherPhone: string;
-  mother: string;
+  motherName: string;
   motherPhone: string;
-  address: string;
+  fullAddress: string;
 }
 
 export interface QuickDownload {
   id: string;
   title: string;
   size: string;
-  type: 'report_card' | 'certificate' | 'timetable' | 'id_card';
+  type: "report_card" | "certificate" | "timetable" | "id_card";
   downloadUrl: string;
   lastUpdated: string;
 }

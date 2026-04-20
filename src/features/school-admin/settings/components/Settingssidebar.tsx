@@ -25,16 +25,19 @@ interface Props {
 }
 
 export const SettingsSidebar: React.FC<Props> = ({ activeTab, onSelectTab }) => (
-  <nav className="w-56 flex-shrink-0">
-    <ul className="space-y-0.5">
+  <nav className="w-56 flex-shrink-0 bg-gradient-to-b from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 shadow-sm">
+    <div className="mb-4">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-600 px-3">Settings</h3>
+    </div>
+    <ul className="space-y-1">
       {NAV_ITEMS.map(item => (
         <li key={item.key}>
           <button
             onClick={() => onSelectTab(item.key)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-all duration-200 font-medium ${
               activeTab === item.key
-                ? "bg-indigo-50 text-indigo-700 font-semibold border-l-4 border-indigo-600 pl-2"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105"
+                : "text-gray-700 hover:bg-white hover:text-indigo-600 hover:shadow-md"
             }`}
           >
             {item.label}

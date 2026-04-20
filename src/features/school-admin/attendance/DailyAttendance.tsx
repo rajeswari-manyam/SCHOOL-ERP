@@ -1,7 +1,6 @@
-
 import { useState } from "react";
-import { useAttendanceToday, useAttendanceMutations } from "../hooks/useattendance.ts";
-import { StudentAvatar } from "../components/StudentAvatar";
+import { useAttendanceToday, useAttendanceMutations } from "./hooks/useAttendance.ts";
+import { StudentAvatar } from "./components/StudentAvatar";
 
 export default function DailyAttendance() {
   const { data, isLoading } = useAttendanceToday();

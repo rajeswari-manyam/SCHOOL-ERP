@@ -1,14 +1,5 @@
-interface PersonalInfo {
-  dob: string;
-  gender: string;
-  blood: string;
-  age: string;
-  father: string;
-  fatherPhone: string;
-  mother: string;
-  motherPhone: string;
-  address: string;
-}
+import { formatDOB, PERSONAL_INFO_FIELDS } from "../utils/Profile.utils";
+import type { PersonalInfo } from "../types/profile.types";
 
 const Item = ({ label, value }: { label: string; value: string }) => (
   <div>
@@ -22,6 +13,18 @@ interface PersonalInfoCardProps {
 }
 
 const PersonalInfoCard = ({ personal }: PersonalInfoCardProps) => {
+  const values: Record<string, string> = {
+    dateOfBirth: formatDOB(personal.dateOfBirth),
+    gender: personal.gender,
+    bloodGroup: personal.bloodGroup,
+    age: personal.age,
+    fatherName: personal.fatherName,
+    fatherPhone: personal.fatherPhone,
+    motherName: personal.motherName,
+    motherPhone: personal.motherPhone,
+    fullAddress: personal.fullAddress,
+  };
+
   return (
     <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -30,18 +33,11 @@ const PersonalInfoCard = ({ personal }: PersonalInfoCardProps) => {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Item label="Date of Birth" value={personal.dob} />
-        <Item label="Gender" value={personal.gender} />
-        <Item label="Blood Group" value={personal.blood} />
-        <Item label="Age" value={personal.age} />
-        <Item label="Father's Name" value={personal.father} />
-        <Item label="Father's Phone" value={personal.fatherPhone} />
-        <Item label="Mother's Name" value={personal.mother} />
-        <Item label="Mother's Phone" value={personal.motherPhone} />
-      </div>
-
-      <div className="mt-4">
-        <Item label="Full Address" value={personal.address} />
+        {PERSONAL_INFO_FIELDS.map(({ key, label, span }) => (
+          <div key={key} className={span > 1 ? "sm:col-span-2" : ""}>
+            <Item label={label} value={values[key]} />
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -48,18 +48,18 @@ export const WhatsAppTab: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Connection Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-2xl border-2 border-blue-200 p-8 shadow-lg shadow-blue-100/50">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">WhatsApp Connection</h2>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className={`w-2 h-2 rounded-full ${connection.connected ? "bg-green-500" : "bg-red-500"}`} />
-              <span className={`text-sm font-medium ${connection.connected ? "text-green-600" : "text-red-600"}`}>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">WhatsApp Connection</h2>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`w-3 h-3 rounded-full ${connection.connected ? "bg-emerald-500 shadow-lg shadow-emerald-500/50" : "bg-red-500 shadow-lg shadow-red-500/50"}`} />
+              <span className={`text-sm font-bold ${connection.connected ? "text-emerald-600" : "text-red-600"}`}>
                 {connection.connected ? "Connected" : "Disconnected"}
               </span>
             </div>
           </div>
-          <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button className="px-5 py-3 border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl text-sm font-bold text-blue-600 hover:bg-white hover:shadow-lg transition-all duration-200 active:scale-95">
             Manage Account
           </button>
         </div>
