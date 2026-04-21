@@ -1,5 +1,6 @@
 import type { AuditAction } from "../types/audit-logs.types";
 
+
 interface BadgeStyle { bg: string; text: string; label: string }
 
 const ACTION_STYLES: Record<AuditAction, BadgeStyle> = {
@@ -17,13 +18,6 @@ const ACTION_STYLES: Record<AuditAction, BadgeStyle> = {
   USER_DELETED:        { bg: "bg-red-50",    text: "text-red-700",    label: "User Deleted" },
 };
 
-export const ACTION_OPTIONS: { value: AuditAction | "ALL"; label: string }[] = [
-  { value: "ALL", label: "All Actions" },
-  ...Object.entries(ACTION_STYLES).map(([value, { label }]) => ({
-    value: value as AuditAction,
-    label,
-  })),
-];
 
 const ActionBadge = ({ action }: { action: AuditAction }) => {
   const style = ACTION_STYLES[action] ?? { bg: "bg-gray-100", text: "text-gray-500", label: action };

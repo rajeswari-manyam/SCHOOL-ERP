@@ -1,5 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import type { Student } from "../types/my-students.types";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   students: Student[];
@@ -24,7 +25,7 @@ const ChronicAbsenteesAlert = ({ students, onView }: Props) => {
       </div>
       <div className="flex flex-wrap gap-2">
         {students.map((s) => (
-          <button
+          <Button
             key={s.id}
             onClick={() => onView(s)}
             className="flex items-center gap-2 px-3 py-2 bg-white border border-red-200 rounded-xl hover:bg-red-50 transition-colors group"
@@ -36,7 +37,7 @@ const ChronicAbsenteesAlert = ({ students, onView }: Props) => {
               <p className="text-xs font-semibold text-gray-900 leading-tight group-hover:text-red-700 transition-colors">{s.name}</p>
               <p className="text-[10px] text-gray-400">Roll {s.rollNo} · <span className="text-red-500 font-bold">{s.attendancePct}%</span></p>
             </div>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

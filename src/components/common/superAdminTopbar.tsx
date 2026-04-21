@@ -5,56 +5,15 @@
 
 import { useState, useRef, useEffect, type RefObject } from "react";
 
-// ─── Inline SVG Icons ────────────────────────────────────────────────────────
-const BellIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-  </svg>
-);
-const HelpIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-    <line x1="12" y1="17" x2="12.01" y2="17" />
-  </svg>
-);
-const ChevronDown = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
-const UserIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-const SettingsIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
-      1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
-      a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
-      A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
-      A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51
-      1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9
-      a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-  </svg>
-);
-const LogoutIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-);
+// ─── Lucide React Icons ─────────────────────────────────────────────────────
+import {
+  Bell,
+  HelpCircle,
+  ChevronDown,
+  User,
+  Settings,
+  LogOut,
+} from "lucide-react";
 
 // ─── useClickOutside hook ────────────────────────────────────────────────────
 function useClickOutside(ref: RefObject<HTMLElement | null>, handler: () => void) {
@@ -165,8 +124,8 @@ function UserDropdown({ user, onLogout }: { user: UserProfile; onLogout: () => v
         </div>
       </div>
       {[
-        { icon: <UserIcon />, label: "My Profile", danger: false },
-        { icon: <SettingsIcon />, label: "Settings", danger: false },
+        { icon: <User size={14} />, label: "My Profile", danger: false },
+        { icon: <Settings size={14} />, label: "Settings", danger: false },
       ].map((item) => (
         <div
           key={item.label}
@@ -198,7 +157,7 @@ function UserDropdown({ user, onLogout }: { user: UserProfile; onLogout: () => v
         onMouseEnter={(e) => e.currentTarget.style.background = "#FEF2F2"}
         onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
       >
-        <LogoutIcon />
+        <LogOut size={14} />
         Sign out
       </div>
     </div>
@@ -267,45 +226,26 @@ export default function TopBar({
   };
 
   return (
-    <header style={{
-      display: "flex",
-      alignItems: "center",
-      height: 56,
-    
-      padding: "0 24px",
-      background: "#FFFFFF",
-      borderBottom: "0.5px solid #E2E8F0",
-      gap: 8,
-      fontFamily: "'Inter', sans-serif",
-      position: "sticky",
-      top: 0,
-      zIndex: 50,
-    }}>
+    <header className="flex items-center h-14 px-6 bg-white border-b border-gray-200 gap-2 font-sans sticky top-0 z-50">
       {/* Breadcrumb */}
-      <nav style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+      <nav className="flex items-center gap-1 flex-1">
         {breadcrumbs.map((crumb, i) => {
           const isLast = i === breadcrumbs.length - 1;
           return (
-            <span key={crumb.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span key={crumb.label} className="flex items-center gap-1">
               {/* {i > 0 && (
                 <span style={{ color: "#CBD5E1", fontSize: 16, fontWeight: 300, lineHeight: 1 }}>›</span>
               )} */}
               {isLast ? (
-                <span style={{ fontSize: 15, fontWeight: 700, color: "#0F172A" }}>
+                <span className="text-[15px] font-bold text-slate-900">
                   {crumb.label}
                 </span>
               ) : (
                 <button
                   onClick={() => crumb.href && onBreadcrumb(crumb.href)}
-                  style={{
-                    border: "none", background: "none", cursor: "pointer",
-                    fontSize: 14, color: "#94A3B8", padding: 0,
-                    fontFamily: "inherit",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "#1E293B"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "#94A3B8"}
+                  className="text-[14px] text-slate-400 hover:text-slate-800 transition-colors px-0 font-sans"
                 >
-                  {/* {crumb.label} */}
+                  {crumb.label}
                 </button>
               )}
             </span>
@@ -314,29 +254,17 @@ export default function TopBar({
       </nav>
 
       {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <div className="flex items-center gap-1">
         {/* Notification bell */}
-        <div ref={notifRef} style={{ position: "relative" }}>
+        <div ref={notifRef} className="relative">
           <button
             onClick={() => { setNotifOpen((v) => !v); setUserOpen(false); }}
-            style={{
-              width: 36, height: 36, display: "flex", alignItems: "center",
-              justifyContent: "center", border: "none", background: "none",
-              borderRadius: "50%", cursor: "pointer", position: "relative",
-              color: "#64748B", transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "#F8FAFC"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            className="w-9 h-9 flex items-center justify-center rounded-full cursor-pointer relative text-slate-400 hover:bg-slate-100 transition-colors"
+            type="button"
           >
-            <BellIcon />
+            <Bell size={18} />
             {unreadCount > 0 && (
-              <span style={{
-                position: "absolute", top: 3, right: 2,
-                width: 18, height: 18, background: "#EF4444", color: "#fff",
-                borderRadius: "50%", fontSize: 10, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                border: "2px solid #fff",
-              }}>
+              <span className="absolute top-1 right-0 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white">
                 {unreadCount}
               </span>
             )}
@@ -351,45 +279,30 @@ export default function TopBar({
 
         {/* Help */}
         <button
-          style={{
-            width: 36, height: 36, display: "flex", alignItems: "center",
-            justifyContent: "center", border: "none", background: "none",
-            borderRadius: "50%", cursor: "pointer", color: "#64748B",
-            transition: "background 0.12s",
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "#F8FAFC"}
-          onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+          type="button"
+          className="w-9 h-9 flex items-center justify-center rounded-full cursor-pointer text-slate-400 hover:bg-slate-100 transition-colors"
         >
-          <HelpIcon />
+          <HelpCircle size={18} />
         </button>
 
         {/* Divider */}
-        <div style={{ width: "0.5px", height: 24, background: "#E2E8F0", margin: "0 8px" }} />
+        <div className="w-px h-6 bg-gray-200 mx-2" />
 
         {/* Avatar + Dropdown */}
-        <div ref={userRef} style={{ position: "relative" }}>
+        <div ref={userRef} className="relative">
           <button
+            type="button"
             onClick={() => { setUserOpen((v) => !v); setNotifOpen(false); }}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "4px 6px", borderRadius: 8,
-              border: "none", background: "none", cursor: "pointer",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "#F8FAFC"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            className="flex items-center gap-1 px-1.5 py-1 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
           >
-            <div style={{
-              width: 34, height: 34, borderRadius: "50%",
-              background: user.avatarColor ?? "#3B4EFF",
-              color: "#fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 13, fontWeight: 600, flexShrink: 0,
-            }}>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0"
+              style={{ background: user.avatarColor ?? "#3B4EFF" }}
+            >
               {user.initials}
             </div>
-            <span style={{ color: "#94A3B8" }}>
-              <ChevronDown />
+            <span className="text-slate-400">
+              <ChevronDown size={14} />
             </span>
           </button>
           {userOpen && (

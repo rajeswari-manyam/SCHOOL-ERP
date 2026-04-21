@@ -4,13 +4,6 @@ import { LEAVE_TYPE_META } from "../hooks/useLeave";
 
 const DAY_HEADERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-const ChevronLeft = () => (
-  <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
-);
-const ChevronRight = () => (
-  <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
-);
-
 interface Props {
   days: LeaveCalendarDay[];
   monthLabel: string;
@@ -43,12 +36,12 @@ const LeaveCalendar = ({ days, monthLabel, onPrev, onNext }: Props) => {
         <div className="flex items-center gap-2">
           <button onClick={onPrev}
             className="w-7 h-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
-            <ChevronLeft />
+          <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
           </button>
           <span className="text-xs font-bold text-gray-700 min-w-[100px] text-center">{monthLabel}</span>
           <button onClick={onNext}
             className="w-7 h-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
-            <ChevronRight />
+            <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
           </button>
         </div>
       </div>

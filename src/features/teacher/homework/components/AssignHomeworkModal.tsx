@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { MessageCircle,  UploadCloud } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,36 +44,8 @@ const subjectOptions = [
   "Social Studies",
 ];
 
-const WAPreview = ({
-  title,
-  subject,
-  className,
-  dueDate,
-}: {
-  title: string;
-  subject: string;
-  className: string;
-  dueDate: string;
-}) => (
-  <div className="bg-[#e5ddd5] rounded-2xl p-4">
-    <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2.5 flex items-center gap-1.5">
-      <span className="text-[#25d366] text-base">💬</span> WhatsApp Preview
-    </div>
-    <div className="flex justify-end">
-      <div className="max-w-[260px] bg-[#dcf8c6] rounded-2xl rounded-br-sm px-4 py-3 shadow-sm">
-        <p className="text-[11px] font-black text-[#075e54] mb-1">📚 New Homework Assigned</p>
-        <p className="text-[12px] text-gray-800 font-semibold leading-snug">{title || "Homework Title"}</p>
-        <p className="text-[11px] text-gray-500 mt-1">Subject: <span className="font-semibold">{subject || "—"}</span></p>
-        <p className="text-[11px] text-gray-500">Class: <span className="font-semibold">{className || "—"}</span></p>
-        <p className="text-[11px] text-gray-500">Due: <span className="font-semibold text-red-600">{dueDate || "—"}</span></p>
-        <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Please ensure your child completes and submits this homework on time. Contact the class teacher for any queries.</p>
-        <div className="flex justify-end mt-1">
-          <span className="text-[10px] text-gray-400">10:30 AM ✓✓</span>
-        </div>
-      </div>
-    </div>
-  </div>
-);
+
+import WAPreview from "./WAPreview";
 
 interface Props {
   open: boolean;
@@ -226,11 +199,7 @@ const AssignHomeworkModal = ({
                   dragOver ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"
                 }`}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={dragOver ? "#4f46e5" : "#9ca3af"} strokeWidth="1.5" strokeLinecap="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+                <UploadCloud width={20} height={20} stroke={dragOver ? "#4f46e5" : "#9ca3af"} strokeWidth={1.5} className="inline-block" />
                 {fileName ? (
                   <p className="text-xs font-semibold text-indigo-600">{fileName}</p>
                 ) : (
@@ -292,7 +261,7 @@ const AssignHomeworkModal = ({
               />
             ) : (
               <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 h-52 border border-gray-100">
-                <span className="text-2xl opacity-30">💬</span>
+                <MessageCircle className="text-2xl opacity-30 w-6 h-6" />
                 <p className="text-xs text-gray-300 text-center">Enable WhatsApp notification to see preview</p>
               </div>
             )}

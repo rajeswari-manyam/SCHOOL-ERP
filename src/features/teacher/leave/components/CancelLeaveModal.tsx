@@ -1,5 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-
+import { Button } from "@/components/ui/button";
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -37,18 +37,18 @@ const CancelLeaveModal = ({ open, onClose, onConfirm }: Props) => {
 
           {/* Actions */}
           <div className="flex gap-3 px-6 pb-6">
-            <button
+            <Button
               onClick={onClose}
               className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
             >
               Keep it
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onConfirm}
               className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
             >
               Yes, Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -114,14 +114,7 @@ const GridCell = ({ cell, period, day, isCurrent, isToday }: CellProps) => {
   );
 };
 
-// ── Week nav icons ────────────────────────────────────────────────────────
 
-const ChevronLeft = () => (
-  <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
-);
-const ChevronRight = () => (
-  <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
-);
 
 // ── Colour legend ─────────────────────────────────────────────────────────
 
@@ -174,7 +167,7 @@ const TimetableGrid = ({
         <div className="flex items-center gap-2">
           <button onClick={onPrevWeek}
             className="w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center transition-colors text-gray-500">
-            <ChevronLeft />
+           <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
           </button>
           <div className="min-w-[180px] text-center">
             <span className="text-sm font-bold text-gray-800">{weekLabel}</span>
@@ -187,7 +180,7 @@ const TimetableGrid = ({
           </div>
           <button onClick={onNextWeek}
             className="w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center transition-colors text-gray-500">
-            <ChevronRight />
+          <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
           </button>
           {weekOffset !== 0 && (
             <button onClick={onResetWeek}

@@ -16,7 +16,7 @@ const schema = z.object({
   category: z.enum(["UTILITY", "MARKETING", "AUTHENTICATION"]),
   language: z.enum(["Telugu", "English", "Telugu+English", "Hindi"]),
   body: z.string().min(10, "Template body required"),
-  variables: z.array(z.string()).default([]),
+  variables: z.array(z.string()), // required string[] to match TemplateFormValues
 });
 
 type FormValues = z.infer<typeof schema>;

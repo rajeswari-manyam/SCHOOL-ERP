@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { Calendar, ChevronDown, Search } from "lucide-react";
 import type { AuditLogsFilters, AuditAction } from "../types/audit-logs.types";
-import { ACTION_OPTIONS } from "./ActionBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+
+const ACTION_OPTIONS: Array<{ label: string; value: AuditAction | "ALL" }> = [
+  { label: "All Actions", value: "ALL" },
+  { label: "School Created", value: "SCHOOL_CREATED" },
+  { label: "School Suspended", value: "SCHOOL_SUSPENDED" },
+  { label: "Payment Recorded", value: "PAYMENT_RECORDED" },
+  { label: "Subscription Check", value: "SUBSCRIPTION_CHECK" },
+  { label: "Template Assigned", value: "TEMPLATE_ASSIGNED" },
+  { label: "Plan Changed", value: "PLAN_CHANGED" },
+  { label: "Rep Added", value: "REP_ADDED" },
+  { label: "Fee Reminder Batch", value: "FEE_REMINDER_BATCH" },
+  { label: "Login", value: "LOGIN" },
+  { label: "Logout", value: "LOGOUT" },
+  { label: "Settings Updated", value: "SETTINGS_UPDATED" },
+  { label: "User Deleted", value: "USER_DELETED" },
+];
 interface AuditLogsFilterBarProps {
   filters: AuditLogsFilters;
   onChange: (patch: Partial<AuditLogsFilters>) => void;

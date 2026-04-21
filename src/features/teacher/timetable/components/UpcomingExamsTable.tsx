@@ -1,11 +1,6 @@
 import { Download } from "lucide-react";
 import type { UpcomingExam } from "../types/timetable.types";
 import { formatExamDate } from "../hooks/useTimetable";
-
-const DownloadIcon = () => (
-  <Download size={12} className="text-current" strokeWidth={2.5} />
-);
-
 interface Props {
   exams: UpcomingExam[];
 }
@@ -70,7 +65,7 @@ const UpcomingExamsTable = ({ exams }: Props) => (
                   {exam.hallTicketUrl ? (
                     <a href={exam.hallTicketUrl} download
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-colors shadow-sm">
-                      <DownloadIcon />
+                     <Download size={12} className="text-current" strokeWidth={2.5} />
                       Download
                     </a>
                   ) : (

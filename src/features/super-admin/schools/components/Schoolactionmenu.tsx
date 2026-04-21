@@ -38,9 +38,11 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
       icon: school.status === "SUSPENDED" ? <CheckCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />,
       className: "text-amber-600",
       onClick: () => {
-        school.status === "SUSPENDED"
-          ? reactivateSchool.mutate(school.id)
-          : suspendSchool.mutate(school.id);
+        if (school.status === "SUSPENDED") {
+          reactivateSchool.mutate(school.id);
+        } else {
+          suspendSchool.mutate(school.id);
+        }
         setOpen(false);
       },
     },

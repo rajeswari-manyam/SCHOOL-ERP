@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useForm, useWatch, type Resolver } from "react-hook-form";
+import { useForm,useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSchools } from "../../schools/hooks/useSchools";
@@ -49,19 +49,22 @@ const AssignModal = ({ open, template, onClose }: AssignModalProps) => {
 
   const { assignTemplateToSchools } = useConfigMutations();
 
+
   const {
-    control,
+    control, 
     handleSubmit,
     reset,
     setValue,
     formState: { errors },
+ 
   } = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: { assignTo: "ALL", schoolIds: [] },
   });
 
-  const assignTo = watch("assignTo");
-  const selectedIds = watch("schoolIds") ?? [];
+  // React Compiler warning: watch() cannot be memoized safely. If passing to memoized components, refactor accordingly.
+const assignTo = useWatch({ control, name: "assignTo" });
+const selectedIds = useWatch({ control, name: "schoolIds" }) ?? [];
 
   useEffect(() => {
     if (open) {

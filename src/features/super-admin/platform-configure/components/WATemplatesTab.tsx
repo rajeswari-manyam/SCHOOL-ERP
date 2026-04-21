@@ -7,7 +7,7 @@ import AddNewTemplateModal from "./AddNewTemplateModal";
 import AssignModal from "./AssignModal";
 import { useConfigTemplates, useConfigMutations } from "../hooks/useConfig";
 import type { ConfigTemplate } from "../types/config.types";
-
+import { Info } from "lucide-react";
 const CategoryBadge = ({ cat }: { cat: ConfigTemplate["category"] }) => {
   const s =
     cat === "Marketing"
@@ -220,20 +220,8 @@ const WATemplatesTab = () => {
       {/* Meta Approval Guidelines */}
       <div className="bg-amber-50 rounded-2xl border border-amber-100 px-5 py-4">
         <div className="flex items-start gap-2">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="flex-shrink-0 mt-0.5"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+          <Info width={16} height={16} stroke="#f59e0b" strokeWidth={2} className="flex-shrink-0 mt-0.5" />
+
           <div>
             <p className="text-sm font-bold text-amber-700 mb-1">
               Meta Approval Guidelines

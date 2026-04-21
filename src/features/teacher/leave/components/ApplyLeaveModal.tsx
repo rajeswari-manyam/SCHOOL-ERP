@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ApplyLeaveFormData, LeaveType } from "../types/leave.types";
 import { LEAVE_TYPE_META } from "../hooks/useLeave";
 import LeaveCalendarPreview from "./LeaveCalendarPreview";
-import type { LeaveCalendarDay } from "../types/leave.types";
+import type { LeaveCalendarDay, } from "../types/leave.types";
 
 const LEAVE_TYPES: LeaveType[] = ["CASUAL", "SICK", "PERSONAL", "EMERGENCY"];
 
@@ -25,14 +25,6 @@ interface Props {
   previewDays: LeaveCalendarDay[];
   previewMonthLabel: string;
 }
-
-const UploadIcon = () => (
-  <Upload size={16} className="text-current" />
-);
-
-const CheckIcon = () => (
-  <Check size={40} className="text-emerald-500" strokeWidth={2.5} />
-);
 
 const ApplyLeaveModal = ({
   open, onClose,
@@ -60,7 +52,7 @@ const ApplyLeaveModal = ({
               /* ── Success state ── */
               <div className="flex flex-col items-center justify-center py-10 gap-4">
                 <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <CheckIcon />
+                  <Check size={40} className="text-emerald-500" strokeWidth={2.5} />
                 </div>
                 <div className="text-center">
                   <p className="text-base font-extrabold text-gray-900">Application Submitted!</p>
@@ -186,7 +178,7 @@ const ApplyLeaveModal = ({
                           : "border-gray-200 bg-gray-50 text-gray-500 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
                       }`}
                     >
-                      <UploadIcon />
+                     <Upload size={16} className="text-current" />
                       {form.medicalCertFile
                         ? `✓ ${form.medicalCertFile.name}`
                         : "Click to upload PDF / JPG / PNG"}
