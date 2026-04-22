@@ -1,34 +1,27 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency } from "../../utils/useAccountant";
 import typography from "@/styles/typography";
+import type { PaymentModeBreakdownItem } from "../types/dashboard.types";
 
-type ModeRow = {
-  mode: string;
-  dot: string;
-  volume: number;
-  growth: number;
-};
-
-const modeData: ModeRow[] = [
-  { mode: "UPI / Online", dot: "bg-indigo-500", volume: 15440000, growth: 12.4 },
-  { mode: "Cash", dot: "bg-green-500", volume: 6669000, growth: -4.2 },
-  { mode: "Cheque", dot: "bg-amber-400", volume: 1287000, growth: 0.8 },
+const modeData: PaymentModeBreakdownItem[] = [
+  { mode: "UPI", dot: "bg-indigo-500", volume: 15440000, growth: 12.4 },
+  { mode: "CASH", dot: "bg-green-500", volume: 6669000, growth: -4.2 },
+  { mode: "CHEQUE", dot: "bg-amber-400", volume: 1287000, growth: 0.8 },
 ];
-
 export const PaymentModeBreakdown = () => {
   return (
-    <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] transition-colors">
+    <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] transition-colors h-full flex flex-col">
       <CardHeader className="px-5 py-4 border-b border-slate-100">
         <CardTitle className={typography.body.small}>
           Payment Mode Breakdown — April
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-5 py-3">
+      <CardContent className="px-5 py-3 flex-1">
 
-        {/* ================= DESKTOP TABLE ================= */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="min-w-[600px] w-full text-sm">
+       
+        <div className="hidden md:block w-full">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100">
                 <th className="text-left text-xs font-semibold text-slate-400 uppercase py-2.5">
@@ -53,14 +46,15 @@ export const PaymentModeBreakdown = () => {
                     </span>
                   </td>
 
-                  <td className="py-3 text-right font-semibold text-slate-800">
+                  <td className="py-3 text-right font-semibold text-slate-800 whitespace-nowrap">
                     {formatCurrency(row.volume)}
                   </td>
 
                   <td className="py-3 text-right">
                     <span
-                      className={`text-xs font-semibold ${row.growth >= 0 ? "text-green-600" : "text-red-500"
-                        }`}
+                      className={`text-xs font-semibold ${
+                        row.growth >= 0 ? "text-green-600" : "text-red-500"
+                      }`}
                     >
                       {row.growth >= 0 ? "+" : ""}
                       {row.growth}%
@@ -72,32 +66,23 @@ export const PaymentModeBreakdown = () => {
           </table>
         </div>
 
-        {/* ================= MOBILE CARDS ================= */}
         <div className="md:hidden space-y-3">
           {modeData.map((row) => (
-            <div
-              key={row.mode}
-              className="border rounded-xl p-4 bg-white shadow-sm"
-            >
-              {/* Top row */}
+            <div key={row.mode} className="border rounded-xl p-4 bg-white shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${row.dot}`} />
-                  <p className="text-sm font-medium text-slate-700">
-                    {row.mode}
-                  </p>
+                  <p className="text-sm font-medium text-slate-700">{row.mode}</p>
                 </div>
-
                 <span
-                  className={`text-xs font-semibold ${row.growth >= 0 ? "text-green-600" : "text-red-500"
-                    }`}
+                  className={`text-xs font-semibold ${
+                    row.growth >= 0 ? "text-green-600" : "text-red-500"
+                  }`}
                 >
                   {row.growth >= 0 ? "+" : ""}
                   {row.growth}%
                 </span>
               </div>
-
-              {/* Volume */}
               <p className="mt-2 text-sm font-semibold text-slate-900">
                 {formatCurrency(row.volume)}
               </p>

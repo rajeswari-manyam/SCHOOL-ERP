@@ -4,16 +4,13 @@ export type Transaction = {
   id: string;
   date: string;
   student: string;
-    className: string;   // ✅ consistent
+    className: string;   
   amount: number;
   mode: PaymentMode;
   feeHead?: string;
   receiptNo?: string;
 };
 
-/* =========================
-   STATUS TYPE (define first)
-========================= */
 export type FeeStatus =
   | "overdue"
   | "due-today"
@@ -21,9 +18,6 @@ export type FeeStatus =
   | "upcoming"
   | "paid";
 
-/* =========================
-   CORE TYPES
-========================= */
 export type FeeFormData = {
   studentId: string;
   amount: number;
@@ -62,9 +56,7 @@ export type FeeOption = {
   label: string;
   amount: number;
 };
-/* =========================
-   FEE STRUCTURE TYPES
-========================= */
+
 
 export type FeeHeadStatus = "ACTIVE" | "INACTIVE";
 

@@ -1,12 +1,23 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import type { TransportSlab } from "../types/fees.types";
 import { useTransportFees } from "../hooks/useFees";
 import { TransportSlabsTable } from "./TransportSlabTab";
 import { SlabModal } from "./SlabModal";
 import { StudentSlabAssignment } from "./StudentSlabAssignment";
 
-export function TransportFees() {
+interface TransportFeesProps {
+  triggerAddSlab: boolean;        // ✅ set true by parent "+ Add Slab" button
+  onAddSlabHandled: () => void;   // ✅ reset trigger after modal opens
+  triggerEditSlabs: boolean;      // ✅ set true by parent "Edit Slabs" button
+  onEditSlabsHandled: () => void; // ✅ reset trigger after modal opens
+}
+
+export function TransportFees({
+  triggerAddSlab,
+  onAddSlabHandled,
+  triggerEditSlabs,
+  onEditSlabsHandled,
+}: TransportFeesProps) {
   const {
     slabs,
     search,
@@ -23,11 +34,28 @@ export function TransportFees() {
   const [editingSlab, setEditingSlab] = useState<TransportSlab | null>(null);
   const [isAdd, setIsAdd] = useState(false);
 
-  const openAdd = () => {
-    setEditingSlab(null);
-    setIsAdd(true);
-    setModalOpen(true);
-  };
+  // ✅ React to "+ Add Slab" button click from parent header
+  useEffect(() => {
+    if (triggerAddSlab) {
+      setEditingSlab(null);
+      setIsAdd(true);
+      setModalOpen(true);
+      onAddSlabHandled(); // reset so it can fire again next click
+    }
+  }, [triggerAddSlab]);
+
+  // ✅ React to "Edit Slabs" button click from parent header
+  useEffect(() => {
+    if (triggerEditSlabs) {
+      // Edit Slabs opens the first slab for editing (or you can open a bulk edit modal)
+      if (slabs.length > 0) {
+        setEditingSlab(slabs[0]);
+        setIsAdd(false);
+        setModalOpen(true);
+      }
+      onEditSlabsHandled(); // reset so it can fire again next click
+    }
+  }, [triggerEditSlabs]);
 
   const openEdit = (slab: TransportSlab) => {
     setEditingSlab(slab);
@@ -54,32 +82,6 @@ export function TransportFees() {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
-        {/* Left side */}
-      
-
-        {/* Right side actions */}
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="text-xs h-8 bg-[#3525CD] hover:bg-[#2a1fb5] text-white"
-            onClick={openAdd}
-          >
-            + Add Slab
-          </Button>
-
-          {/* optional edit global action (if you want later) */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-xs h-8 text-[#3525CD] border-indigo-200"
-          >
-            Edit Slabs
-          </Button>
-        </div>
-      </div>
-
       {/* Modal */}
       {modalOpen && (
         <SlabModal

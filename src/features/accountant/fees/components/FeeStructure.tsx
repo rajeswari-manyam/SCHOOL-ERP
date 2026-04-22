@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -19,11 +19,11 @@ import {
   SplitSquareHorizontal,
   Copy,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AddFeeHeadModal } from "./AddFeeStructure";
 import { feeHeads, classes, classWiseFees } from "../data/fee.data";
 import type { SectionType, ClassType, FeeHead, ClassFee } from "../types/fees.types";
 import { formatINR } from "../utils/fee.utils";
+import { useState } from "react";
 
 const sections: { label: SectionType; icon: React.ReactNode }[] = [
   { label: "Section A", icon: <Layers className="w-3 h-3" /> },
@@ -198,9 +198,14 @@ function DataTable<T>({ data, columns }: { data: T[]; columns: ColumnDef<T, any>
   );
 }
 
+/* ── Props ── */
+interface FeeStructureProps {
+  showModal: boolean;          // ✅ controlled by parent
+  setShowModal: (v: boolean) => void;
+}
+
 /* ── Main ── */
-export const FeeStructure = () => {
-  const [showModal, setShowModal] = useState(false);
+export const FeeStructure = ({ showModal, setShowModal }: FeeStructureProps) => {
   const [activeClass, setActiveClass] = useState<ClassType>("Class 10");
   const [activeSection, setActiveSection] = useState<SectionType>("Both Same");
 
@@ -211,6 +216,7 @@ export const FeeStructure = () => {
 
   return (
     <div className="px-5 pt-4 pb-10 space-y-6 font-sans">
+      {/* Modal — opens from both top header button AND bottom "+ Add Fee Head" link */}
       {showModal && <AddFeeHeadModal onClose={() => setShowModal(false)} />}
 
       {/* ── Fee Heads block ── */}
@@ -224,19 +230,13 @@ export const FeeStructure = () => {
               {feeHeads.length} configured
             </span>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-[#3525CD] text-white text-[12px] font-semibold hover:bg-[#2a1fb5] transition-colors"
-          >
-            + Add Fee Head
-          </button>
         </div>
 
         <DataTable data={feeHeads as FeeHead[]} columns={feeHeadColumns} />
 
         <div className="px-5 py-3 border-t border-slate-100">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModal(true)} // ✅ same modal, via props
             className="text-[#3525CD] text-[12px] font-medium hover:underline flex items-center gap-1"
           >
             + Add Fee Head

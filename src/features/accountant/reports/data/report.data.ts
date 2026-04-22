@@ -1,10 +1,8 @@
-// src/features/accountant/reports/data/data.ts
+
 
 import type { Report, ReportType } from "../types/reports.types";
 
-/* =========================
-   REPORT LIST (HISTORY)
-========================= */
+
 export const mockReports: Report[] = [
   {
     id: "1",
@@ -24,11 +22,45 @@ export const mockReports: Report[] = [
     generatedBy: "Admin",
     period: "March 2025",
   },
+  {
+    id: "3",
+    name: "Payment Reconciliation",
+    type: "reconciliation",
+    generatedAt: new Date().toISOString(),
+    format: "PDF",
+    generatedBy: "Admin",
+    period: "Q1 2025",
+  },
+  {
+    id: "4",
+    name: "Annual Fee Summary",
+    type: "annual",
+    generatedAt: new Date().toISOString(),
+    format: "Excel",
+    generatedBy: "Admin",
+    period: "2024-2025",
+  },  
+  {
+    id: "5",
+    name: "Payroll Report",
+    type: "payroll",
+    generatedAt: new Date().toISOString(),
+    format: "PDF",
+    generatedBy: "Admin",
+    period: "April 2025",
+  },
+  {
+    id: "6",
+    name: "Income & Expense Report",
+    type: "ledger",
+    generatedAt: new Date().toISOString(),
+    format: "Excel",
+    generatedBy: "Admin",
+    period: "2024-2025",
+  },    
 ];
 
-/* =========================
-   REPORT CARDS (DASHBOARD)
-========================= */
+
 export const reportCards = [
   {
     id: "monthly" as ReportType,

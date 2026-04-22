@@ -52,6 +52,9 @@ export default function FeeManagementPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showConcessionModal, setShowConcessionModal] = useState(false);
+  const [showFeeHeadModal, setShowFeeHeadModal] = useState(false);
+  const [triggerAddSlab, setTriggerAddSlab] = useState(false);     // ✅ Transport: Add Slab
+  const [triggerEditSlabs, setTriggerEditSlabs] = useState(false);  // ✅ Transport: Edit Slabs
   const [activeFilters, setActiveFilters] = useState<FilterValues | null>(null);
 
   const isPendingFees   = activeTab === "Pending Fees";
@@ -60,13 +63,8 @@ export default function FeeManagementPage() {
   const isTransportFees = activeTab === "Transport Fees";
   const isConcessions   = activeTab === "Concessions";
 
-  // Month nav + Import Fee + Record Payment only on Pending Fees & All Transactions
-  const showHeaderButtons = isPendingFees || isAllTx;
-
-  // Filter bar hidden on Fee Structure / Transport / Concessions
-  const hideFilterBar = isFeeStructure || isTransportFees || isConcessions;
-
-  // Stats hidden on Fee Structure / Transport / Concessions / All Transactions
+  const showHeaderButtons  = isPendingFees || isAllTx;
+  const hideFilterBar      = isFeeStructure || isTransportFees || isConcessions;
   const hideStandardHeader = isFeeStructure || isTransportFees || isConcessions || isAllTx;
 
   const handlePrevMonth = () =>
@@ -127,7 +125,6 @@ export default function FeeManagementPage() {
 
         {/* ── Header ── */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-5 pt-5 pb-3 gap-4">
-          {/* Heading always visible */}
           <div>
             <h2 className={`${typography.heading.h6} font-medium text-gray-1000`}>
               Fee Management
@@ -137,7 +134,7 @@ export default function FeeManagementPage() {
             </p>
           </div>
 
-          {/* Month nav + action buttons — Pending Fees & All Transactions only */}
+          {/* Month nav + action buttons — Pending Fees & All Transactions */}
           {showHeaderButtons && (
             <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
               <div className="flex items-center px-4 h-8 rounded-full gap-3 bg-[#3525CD] w-full sm:w-auto justify-between sm:justify-start">
@@ -151,11 +148,9 @@ export default function FeeManagementPage() {
                   <ChevronRight className="w-4 h-4 text-white" />
                 </button>
               </div>
-
               <Button variant="outline" size="sm" className="text-xs h-8 text-[#3525CD] flex-1 sm:flex-none">
                 Import Fee
               </Button>
-
               <Button
                 size="sm"
                 className={`${typography.body.xs} h-8 bg-[#3525CD] hover:bg-[#2a1fb5] text-white flex-1 sm:flex-none`}
@@ -166,7 +161,7 @@ export default function FeeManagementPage() {
             </div>
           )}
 
-          {/* Fee Structure buttons — inline with heading */}
+          {/* Fee Structure buttons */}
           {isFeeStructure && (
             <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
               <Button
@@ -177,6 +172,7 @@ export default function FeeManagementPage() {
                 Copy from Last Year
               </Button>
               <Button
+                onClick={() => setShowFeeHeadModal(true)}
                 variant="outline"
                 size="sm"
                 className="h-8 px-4 text-xs font-semibold border-slate-300 text-slate-700 hover:bg-slate-50"
@@ -188,6 +184,27 @@ export default function FeeManagementPage() {
                 className="h-8 px-4 text-xs font-semibold bg-[#3525CD] hover:bg-[#2a1fb5] text-white"
               >
                 Save Fee Structure
+              </Button>
+            </div>
+          )}
+
+          {/* ✅ Transport Fees buttons — top right */}
+          {isTransportFees && (
+            <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+              <Button
+                size="sm"
+                className="h-8 px-4 text-xs font-semibold bg-[#3525CD] hover:bg-[#2a1fb5] text-white"
+                onClick={() => setTriggerAddSlab(true)}
+              >
+                + Add Slab
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-4 text-xs font-semibold text-[#3525CD] border-indigo-200 hover:bg-indigo-50"
+                onClick={() => setTriggerEditSlabs(true)}
+              >
+                Edit Slabs
               </Button>
             </div>
           )}
@@ -228,8 +245,20 @@ export default function FeeManagementPage() {
         {/* Tab content */}
         {isPendingFees   && <PendingFeesTable data={filteredFees} />}
         {isAllTx         && <AllTransactionsTable data={transactions} />}
-        {isFeeStructure  && <FeeStructure />}
-        {isTransportFees && <TransportFees />}
+        {isFeeStructure  && (
+          <FeeStructure
+            showModal={showFeeHeadModal}
+            setShowModal={setShowFeeHeadModal}
+          />
+        )}
+        {isTransportFees && (
+          <TransportFees
+            triggerAddSlab={triggerAddSlab}
+            onAddSlabHandled={() => setTriggerAddSlab(false)}
+            triggerEditSlabs={triggerEditSlabs}
+            onEditSlabsHandled={() => setTriggerEditSlabs(false)}
+          />
+        )}
         {isConcessions   && (
           <Concessions onAddConcession={() => setShowConcessionModal(true)} />
         )}

@@ -1,4 +1,4 @@
-// utils/ledger.utils.ts
+
 export const formatCurrency = (amt: number) => {
   if (amt === 0) return "₹0";
   return `₹${amt.toLocaleString("en-IN")}`;

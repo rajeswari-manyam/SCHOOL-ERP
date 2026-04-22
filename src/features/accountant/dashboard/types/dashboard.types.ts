@@ -3,7 +3,7 @@ export type StatItem = {
   value: string | number;
 };
 
-export type PaymentMode = "UPI" | "Cash" | "Cheque";
+export type PaymentMode = "UPI" | "CASH" | "CHEQUE" | "ONLINE";
 
 export type Transaction = {
   id: string;
@@ -11,7 +11,7 @@ export type Transaction = {
   student: string;
   className: string;
   feeHead: string;
-  amount: string;
+  amount: number;
   mode: PaymentMode;
 };
 
@@ -24,4 +24,23 @@ export type ReminderStatus = {
   sent: number;
   delivered: number;
   failed: number;
+};
+
+export type MonthlyTrendItem = {
+  month: string;
+  actual: number;
+  target: number;
+};
+
+export type PaymentModeBreakdownItem = {
+  mode: PaymentMode;
+  dot: string;
+  volume: number;
+  growth: number;
+};
+
+export type TopPayingClassItem = {
+  className: string;
+  amount: number;
+  pct: number; 
 };

@@ -1,4 +1,4 @@
-// types/Ledger.types.ts
+
 export type EntryType = "Income" | "Expense";
 
 export type LedgerEntry = {

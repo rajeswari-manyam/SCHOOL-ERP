@@ -9,14 +9,15 @@ import {
     Line,
     ComposedChart,
 } from "recharts";
+import type { MonthlyTrendItem } from "../types/dashboard.types";
 
-const data = [
-    { month: "NOV", actual: 180000, target: 352000 },
-    { month: "DEC", actual: 210000, target: 352000 },
-    { month: "JAN", actual: 240000, target: 352000 },
-    { month: "FEB", actual: 195000, target: 352000 },
-    { month: "MAR", actual: 320000, target: 352000 },
-    { month: "APR", actual: 352000, target: 352000 },
+const data: MonthlyTrendItem[] = [
+  { month: "NOV", actual: 180000, target: 352000 },
+  { month: "DEC", actual: 210000, target: 352000 },
+  { month: "JAN", actual: 240000, target: 352000 },
+  { month: "FEB", actual: 195000, target: 352000 },
+  { month: "MAR", actual: 320000, target: 352000 },
+  { month: "APR", actual: 352000, target: 352000 },
 ];
 
 const formatY = (val: number) =>
@@ -26,7 +27,7 @@ export const MonthlyCollectionTrend = () => {
     return (
         <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD]">
 
-            {/* Header */}
+        
             <CardHeader className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 
                 <div>
@@ -38,7 +39,6 @@ export const MonthlyCollectionTrend = () => {
                     </p>
                 </div>
 
-                {/* Legend */}
                 <div className="flex flex-wrap gap-3 sm:gap-4 text-[11px] sm:text-xs text-slate-500">
                     <span className="flex items-center gap-1.5">
                         <span className="w-3 h-3 rounded-sm bg-indigo-600 inline-block" />
@@ -51,7 +51,7 @@ export const MonthlyCollectionTrend = () => {
                 </div>
             </CardHeader>
 
-            {/* Chart */}
+     
             <CardContent className="px-3 sm:px-5 py-3 sm:py-4">
                 <div className="w-full h-[180px] sm:h-[220px] md:h-[260px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -73,19 +73,15 @@ export const MonthlyCollectionTrend = () => {
                                 tickLine={false}
                                 width={42}
                             />
-
-                            <Tooltip
-                                formatter={(val: number) => [
-                                    `₹${val.toLocaleString("en-IN")}`,
-                                    "",
-                                ]}
-                                contentStyle={{
-                                    borderRadius: 8,
-                                    border: "1px solid #e2e8f0",
-                                    fontSize: 12,
-                                }}
-                            />
-
+<Tooltip
+  formatter={(val: any, name: any) => {
+    const value = Number(val ?? 0);
+    return [
+      `₹${value.toLocaleString("en-IN")}`,
+      name === "actual" ? "Actual" : "Target",
+    ];
+  }}
+/>
                             <Bar dataKey="actual" fill="#4F46E5" radius={[4, 4, 0, 0]} />
 
                             <Line

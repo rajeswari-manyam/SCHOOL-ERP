@@ -1,13 +1,14 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency } from "../../utils/useAccountant";
 import typography from "../../../../styles/typography";
-const data = [
-  { className: "Class XX", amount: 4800000, pct: 85 },
-  { className: "Class X",  amount: 4200000, pct: 78 },
-  { className: "Class IX", amount: 3600000, pct: 62 },
-  { className: "Class VII",amount: 2900000, pct: 55 },
-];
+import type { TopPayingClassItem } from "../types/dashboard.types";
 
+const data: TopPayingClassItem[] = [
+  { className: "Class XX", amount: 4800000, pct: 85 },
+  { className: "Class X", amount: 4200000, pct: 78 },
+  { className: "Class IX", amount: 3600000, pct: 62 },
+  { className: "Class VII", amount: 2900000, pct: 55 },
+];
 export const TopPayingClasses = () => {
   return (
    <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] transition-colors">
@@ -22,7 +23,7 @@ export const TopPayingClasses = () => {
     {data.map((item) => (
       <div key={item.className} className="space-y-1.5">
 
-        {/* Top row */}
+      
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <span className={`${typography.body.small} text-sm`}>
             {item.className}
@@ -33,7 +34,7 @@ export const TopPayingClasses = () => {
           </span>
         </div>
 
-        {/* Progress row */}
+ 
         <div className="flex items-center gap-2 sm:gap-3">
 
           <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">

@@ -1,9 +1,11 @@
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useDashboardData } from "../hooks/useDashboard";
 import { StatCardsSection } from "../components/StatCard";
 import { TransactionsTable } from "../components/TransactionTable";
-import { PaymentModeTable } from "../components/PaymentMethodTable";
+import { PaymentModeTable } from "../components/PaymentModeTable";
 import { ReminderStatusCard } from "../components/RemainderStatus";
 import { MonthlyCollectionTrend } from "../components/MontyCollectionTrend";
 import { TopPayingClasses } from "../components/TopPayingClasses";
@@ -11,10 +13,12 @@ import { PaymentModeBreakdown } from "../components/PaymentBreakDown";
 
 export default function DashboardPage() {
   const { stats, transactions, paymentModes, reminder } = useDashboardData();
+const [viewAllTransactions, setViewAllTransactions] = useState(false);
+
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
-      {/* Header */}
+   
 <div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
         <div>
           <h1 className="text-lg font-semibold text-slate-800">Finance Dashboard</h1>
@@ -36,43 +40,47 @@ export default function DashboardPage() {
       </div>
 
      <div className="p-4 md:p-6 space-y-5">
-        {/* KPI Stats */}
+    
         <StatCardsSection data={stats} />
 
-        {/* Transactions (left 2/3) + Right column: Fee Collection + Reminder stacked */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
-          {/* Transactions — 2 cols */}
           <Card className="lg:col-span-2 border border-slate-200 shadow-none rounded-xl hover:border-indigo-300 transition-colors">
             <CardHeader className="px-5 py-4 border-b border-slate-100 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-semibold text-slate-800">
                 Recent Transactions — Today
               </CardTitle>
-              <button className="text-xs text-indigo-600 font-medium hover:underline">
-                View All Transactions
-              </button>
+            <button
+  onClick={() => setViewAllTransactions((prev) => !prev)}
+  className="text-xs text-indigo-600 font-medium hover:underline"
+>
+  {viewAllTransactions ? "Show Less" : "View All Transactions"}
+</button>
             </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              {transactions.length > 0 ? (
-                <TransactionsTable data={transactions} />
-              ) : (
-                <p className="text-slate-400 text-center py-8 text-sm">
-                  No transactions found
-                </p>
-              )}
-            </CardContent>
+   <CardContent className="p-0 overflow-x-auto">
+  {transactions.length > 0 ? (
+    <TransactionsTable
+      data={transactions}
+      viewAll={viewAllTransactions}
+    />
+  ) : (
+    <p className="text-slate-400 text-center py-8 text-sm">
+      No transactions found
+    </p>
+  )}
+</CardContent>
           </Card>
 
-          {/* Right column — Fee Collection + Reminder stacked */}
+        
           <div className="flex flex-col gap-4">
-            {/* Fee Collection by Mode */}
+      
             <Card className="border border-slate-200 shadow-none rounded-xl hover:border-indigo-300 transition-colors">
               <CardHeader className="px-5 py-4 border-b border-slate-100">
                 <CardTitle className="text-sm font-semibold text-slate-800">
                   Fee Collection by Mode
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-0">
                 {paymentModes.length > 0 ? (
                   <PaymentModeTable data={paymentModes} />
                 ) : (
@@ -83,19 +91,19 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Reminder Status — directly below Fee Collection */}
             <ReminderStatusCard data={reminder} />
           </div>
         </div>
 
-        {/* Monthly Collection Trend — full width */}
         <MonthlyCollectionTrend />
 
-        {/* Bottom Row: Top Paying Classes + Payment Mode Breakdown */}
+    
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TopPayingClasses />
           <PaymentModeBreakdown />
         </div>
+
+ 
       </div>
     </div>
   );

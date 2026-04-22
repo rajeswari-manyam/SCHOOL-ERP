@@ -1,11 +1,11 @@
+import { useMemo } from "react";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  createColumnHelper,
+} from "@tanstack/react-table";
+import { TableVirtuoso } from "react-virtuoso";
 import { Button } from "@/components/ui/button";
 import type { TransportSlab, TransportStudent } from "../types/fees.types";
 
@@ -34,6 +34,11 @@ const initials = (name: string) =>
     .toUpperCase();
 
 /* ─────────────────────────────────────────
+   Column helper
+───────────────────────────────────────── */
+const columnHelper = createColumnHelper<TransportStudent>();
+
+/* ─────────────────────────────────────────
    Component
 ───────────────────────────────────────── */
 export function StudentSlabAssignment({
@@ -45,11 +50,114 @@ export function StudentSlabAssignment({
   onSlabChange,
   onSaveStudentSlab,
 }: Props) {
-  const filtered = students.filter(
-    (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.cls.toLowerCase().includes(search.toLowerCase())
+  /* ── Filtered rows ── */
+  const filtered = useMemo(
+    () =>
+      students.filter(
+        (s) =>
+          s.name.toLowerCase().includes(search.toLowerCase()) ||
+          s.cls.toLowerCase().includes(search.toLowerCase())
+      ),
+    [students, search]
   );
+
+  /* ── Column definitions ── */
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("name", {
+        header: "Student",
+        cell: (info) => {
+          const st = info.row.original;
+          return (
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-indigo-50 text-[#3525CD] flex items-center justify-center text-[11px] font-medium flex-shrink-0">
+                {initials(st.name)}
+              </div>
+              <div>
+                <div className="text-xs font-medium text-gray-800">{st.name}</div>
+                <div className="text-[11px] text-gray-400">ID: {st.id}</div>
+              </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.accessor("cls", {
+        header: "Class",
+        cell: (info) => (
+          <span className="text-xs text-gray-700">{info.getValue()}</span>
+        ),
+      }),
+      columnHelper.accessor("distance", {
+        header: "Distance",
+        cell: (info) => (
+          <span className="text-xs text-gray-700">{info.getValue()} km</span>
+        ),
+      }),
+      columnHelper.display({
+        id: "currentSlab",
+        header: "Current Slab",
+        cell: ({ row }) => {
+          const currentSlab = slabs.find((s) => s.id === row.original.slabId);
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-[#3525CD]">
+              {currentSlab?.name ?? "—"}
+            </span>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "changeSlab",
+        header: "Change Slab",
+        cell: ({ row }) => {
+          const st = row.original;
+          const selectedSlabId = pendingSlabs[st.id] ?? st.slabId;
+          return (
+            <select
+              value={selectedSlabId}
+              onChange={(e) => onSlabChange(st.id, e.target.value)}
+              className="border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-700 focus:outline-none focus:border-[#3525CD] bg-white"
+            >
+              {slabs.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "action",
+        header: "Action",
+        cell: ({ row }) => (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-7 text-[#3525CD] border-indigo-200 hover:bg-indigo-50"
+            onClick={() => onSaveStudentSlab(row.original.id)}
+          >
+            Save
+          </Button>
+        ),
+      }),
+    ],
+    [slabs, pendingSlabs, onSlabChange, onSaveStudentSlab]
+  );
+
+  /* ── Table instance ── */
+  const table = useReactTable({
+    data: filtered,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const { rows } = table.getRowModel();
+  const headerGroups = table.getHeaderGroups();
+
+  /* ── Shared cell classes ── */
+  const thClass =
+    "text-xs font-bold uppercase text-gray-400 tracking-wider px-4 py-3 text-left";
+  const tdClass = "px-4 py-3";
 
   return (
     <div>
@@ -72,7 +180,12 @@ export function StudentSlabAssignment({
             viewBox="0 0 16 16"
           >
             <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10 10L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M10 10L14 14"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
           <input
             value={search}
@@ -83,76 +196,48 @@ export function StudentSlabAssignment({
         </div>
       </div>
 
-      {/* Students table */}
-      <div className="overflow-x-auto no-scrollbar">
-        <Table className="min-w-[700px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Distance</TableHead>
-              <TableHead>Current Slab</TableHead>
-              <TableHead>Change Slab</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((st) => {
-              const key = st.id;
-              const selectedSlabId = pendingSlabs[key] ?? st.slabId;
-              const currentSlab = slabs.find((s) => s.id === st.slabId);
-
-              return (
-                <TableRow key={st.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-indigo-50 text-[#3525CD] flex items-center justify-center text-[11px] font-medium flex-shrink-0">
-                        {initials(st.name)}
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-800">{st.name}</div>
-                        <div className="text-[11px] text-gray-400">ID: {st.id}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{st.cls}</TableCell>
-                  <TableCell>{st.distance} km</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-[#3525CD]">
-                      {currentSlab?.name ?? "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <select
-                      value={selectedSlabId}
-                      onChange={(e) =>
-                        onSlabChange(st.id, e.target.value)
-                      }
-                      className="border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-700 focus:outline-none focus:border-[#3525CD] bg-white"
-                    >
-                      {slabs.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7 text-[#3525CD] border-indigo-200 hover:bg-indigo-50"
-                      onClick={() => onSaveStudentSlab(st.id)}
-                    >
-                      Save
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Virtualised students table */}
+      <TableVirtuoso
+        style={{ height: Math.min(rows.length * 56 + 44, 480) }}
+        totalCount={rows.length}
+        fixedHeaderContent={() =>
+          headerGroups.map((hg) => (
+            <tr key={hg.id} className="bg-white border-b border-gray-100">
+              {hg.headers.map((header) => (
+                <th key={header.id} className={thClass}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              ))}
+            </tr>
+          ))
+        }
+        itemContent={(index) => {
+          const row = rows[index];
+          return row.getVisibleCells().map((cell) => (
+            <td key={cell.id} className={tdClass}>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </td>
+          ));
+        }}
+        components={{
+          Table: ({ style, ...props }) => (
+            <table
+              {...props}
+              style={{ ...style, minWidth: 700, borderCollapse: "collapse" }}
+              className="w-full"
+            />
+          ),
+          TableRow: ({ style, ...props }) => (
+            <tr
+              {...props}
+              style={style}
+              className="hover:bg-gray-50/50 border-b border-gray-50 last:border-0"
+            />
+          ),
+        }}
+      />
     </div>
   );
 }

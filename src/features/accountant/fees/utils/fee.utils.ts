@@ -48,9 +48,7 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-/* =========================
-   FEE STRUCTURE UTILS
-========================= */
+
 
 import type { BillingCycle } from "../types/fees.types";
 

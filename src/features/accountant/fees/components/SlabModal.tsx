@@ -1,10 +1,33 @@
-import { useState } from "react";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import type { TransportSlab } from "../types/fees.types";
+import { X } from "lucide-react";
+import typography from "@/styles/typography";
+/* ─────────────────────────────
+   Zod Schema (Zod v4)
+   - invalid_type_error was renamed to `error` in Zod v4
+   - Using z.number() + valueAsNumber on register() for react-hook-form compat
+───────────────────────────── */
+const transportSlabSchema = z.object({
+  name: z.string().min(1, "Slab name is required"),
+from: z.number().min(1, "Distance must be at least 1 km"),
+  to: z.number().nullable().optional(),
+  monthly: z.number().min(1, "Monthly fee is required"),
+}).refine(
+  (data) => data.to === null || data.to === undefined || data.to >= data.from,
+  {
+    message: "'To' must be greater than or equal to 'From'",
+    path: ["to"],
+  }
+);
+type FormData = z.infer<typeof transportSlabSchema>;
 
-/* ─────────────────────────────────────────
-   Types
-───────────────────────────────────────── */
+/* ─────────────────────────────
+   Props
+───────────────────────────── */
 type Props = {
   slab: TransportSlab | null;
   isAdd: boolean;
@@ -12,151 +35,156 @@ type Props = {
   onSave: (data: Omit<TransportSlab, "id" | "students">) => void;
 };
 
-/* ─────────────────────────────────────────
+/* ─────────────────────────────
    Component
-───────────────────────────────────────── */
+───────────────────────────── */
 export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
-  const [name, setName] = useState(slab?.name ?? "");
-  const [from, setFrom] = useState<string>(slab ? String(slab.from) : "");
-  const [to, setTo] = useState<string>(
-    slab?.to != null ? String(slab.to) : ""
-  );
-  const [monthly, setMonthly] = useState<string>(
-    slab ? String(slab.monthly) : ""
-  );
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(transportSlabSchema),
+    defaultValues: {
+      name: slab?.name ?? "",
+      from: slab?.from ?? 0,
+      to: slab?.to ?? null,
+      monthly: slab?.monthly ?? 0,
+    },
+  });
 
-  const annual = monthly ? Number(monthly) * 12 : "";
+  const monthly = watch("monthly");
 
-  const handleSave = () => {
-    if (!name.trim() || !monthly) {
-      alert("Please fill in Slab Name and Monthly Fee.");
-      return;
-    }
+ const annual = useMemo(() => {
+  if (isNaN(monthly)) return 0;
+  return monthly * 12;
+}, [monthly]);
+
+  const onSubmit = (data: FormData) => {
     onSave({
-      name: name.trim(),
-      from: Number(from) || 0,
-      to: to !== "" ? Number(to) : null,
-      monthly: Number(monthly),
+      name: data.name.trim(),
+      from: data.from,
+      to: data.to ?? null,
+      monthly: data.monthly,
     });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl border border-gray-200 w-[420px] p-6 relative shadow-lg">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+      <div className="bg-white w-full sm:w-[420px] rounded-t-2xl sm:rounded-xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto relative shadow-lg ">
+
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg leading-none"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
-          ✕
+          <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900">
           {isAdd ? "Add Transport Slab" : "Edit Transport Slab"}
-        </h3>
-        <p className="text-xs text-gray-400 mt-0.5">
-          {isAdd ? "New slab configuration" : `${slab?.name} Configuration`}
+        </h2>
+        <p className="text-xs text-gray-400 mt-1">
+          {isAdd ? "New slab configuration" : `${slab?.name} configuration`}
         </p>
 
-        {/* Slab Name */}
-        <div className="mt-4">
-          <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">
-            Slab Name
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Slab 1"
-            className="w-full h-9 border border-gray-200 rounded-lg px-3 text-sm focus:outline-none focus:border-[#3525CD] text-gray-900 placeholder:text-gray-300"
-          />
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
 
-        {/* From / To */}
-        <div className="flex gap-3 mt-3">
-          <div className="flex-1">
-            <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">
-              From
+          {/* Slab Name */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 uppercase">
+              Slab Name
             </label>
-            <div className="relative">
+            <input
+              {...register("name")}
+              placeholder="e.g. Slab 1"
+              className=" bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
+            />
+            {errors.name && (
+              <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
+            )}
+          </div>
+
+          {/* From / To */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={`${typography.form.label} text-gray-500 uppercase`}>
+                From (km)
+              </label>
               <input
                 type="number"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                placeholder="0"
-                className="w-full h-9 border border-gray-200 rounded-lg px-3 pr-10 text-sm focus:outline-none focus:border-[#3525CD] text-gray-900"
+            {...register("from", {
+  setValueAs: (v) => (v === "" ? 0 : Number(v)),
+})}
+                className="bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                km
-              </span>
+              {errors.from && (
+                <p className="text-xs text-red-500 mt-1">{errors.from.message}</p>
+              )}
             </div>
-          </div>
-          <div className="flex-1">
-            <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">
-              To
-            </label>
-            <div className="relative">
+
+            <div>
+              <label className="text-xs font-medium text-gray-500 uppercase">
+                To (km)
+              </label>
               <input
                 type="number"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder="blank = unlimited"
-                className="w-full h-9 border border-gray-200 rounded-lg px-3 pr-10 text-sm focus:outline-none focus:border-[#3525CD] text-gray-900 placeholder:text-gray-300"
+                {...register("to", {
+                  setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
+                })}
+                placeholder="∞"
+                className=" bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                km
-              </span>
+              {errors.to && (
+                <p className="text-xs text-red-500 mt-1">{errors.to.message}</p>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Monthly Fee */}
-        <div className="mt-3">
-          <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">
-            Monthly Fee (Rs.) <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            value={monthly}
-            onChange={(e) => setMonthly(e.target.value)}
-            placeholder="e.g. 1200"
-            className="w-full h-9 border border-gray-200 rounded-lg px-3 text-sm focus:outline-none focus:border-[#3525CD] text-gray-900"
-          />
-        </div>
+          {/* Monthly Fee */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 uppercase">
+              Monthly Fee (₹)
+            </label>
+            <input
+              type="number"
+             {...register("monthly", {
+  setValueAs: (v) => (v === "" ? 0 : Number(v)),
+})}
+              className=" bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
+            />
+            {errors.monthly && (
+              <p className="text-xs text-red-500 mt-1">{errors.monthly.message}</p>
+            )}
+          </div>
 
-        {/* Annual Fee (read-only) */}
-        <div className="mt-3">
-          <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">
-            Annual Fee (Rs.)
-          </label>
-          <input
-            readOnly
-            value={annual}
-            placeholder="Auto-calculated"
-            className="w-full h-9 border border-gray-100 rounded-lg px-3 text-sm bg-gray-50 text-gray-500 cursor-default"
-          />
-        </div>
+          {/* Annual (read-only derived value) */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 uppercase">
+              Annual Fee
+            </label>
+            <input
+              readOnly
+              value={`₹${annual.toLocaleString("en-IN")}`}
+              className="bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-gray-500"
+            />
+          </div>
 
-        {/* Students note */}
-        {!isAdd && slab && slab.students > 0 && (
-          <p className="text-xs text-gray-400 mt-3">
-            {slab.students} students currently on this slab
-          </p>
-        )}
-
-        {/* Footer */}
-        <div className="flex justify-end gap-2 mt-5">
-          <Button variant="outline" size="sm" className="text-xs h-8" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="text-xs h-8 bg-[#3525CD] hover:bg-[#2a1fb5] text-white"
-            onClick={handleSave}
-          >
-            Save Slab
-          </Button>
-        </div>
+          {/* Footer */}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" type="button" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-[#3525CD] hover:bg-[#2a1fb5] text-white"
+            >
+              Save Slab
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

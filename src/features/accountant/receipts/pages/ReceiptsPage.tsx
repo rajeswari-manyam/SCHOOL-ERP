@@ -1,49 +1,28 @@
-// components/ReceiptsPage.tsx
-import { useState } from "react";
+import { useState,useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Eye, FileText } from "lucide-react";
 import { ReceiptFilters } from "../components/ReceptFilter";
 import { ReceiptDetailModal } from "../components/ReceiptDetailModal";
 import { ExportModal } from "../components/ExportModal";
-import { GenerateReceiptModal } from "../components/GenarateReceiptModal"; // ← NEW
-import { useReceipts } from "../hooks/useReceipts";
-import { formatCurrency } from "../utils/recept.utils";
-import type { Receipt, PaymentMode } from "../types/receipts.types";
-
-const getModeBadge = (mode: PaymentMode) => {
-  const styles = {
-    UPI: "bg-purple-100 text-purple-700 border-purple-200",
-    Cash: "bg-green-100 text-green-700 border-green-200",
-    Cheque: "bg-blue-100 text-blue-700 border-blue-200",
-  };
-  return styles[mode] || "bg-gray-100 text-gray-700";
-};
-
-const getModeIcon = (mode: PaymentMode) => {
-  switch (mode) {
-    case "UPI":    return <span className="text-xs">⚡</span>;
-    case "Cash":   return <span className="text-xs">💵</span>;
-    case "Cheque": return <span className="text-xs">📄</span>;
-    default:       return null;
-  }
-};
-
-interface ReceiptDetailData extends Receipt {
-  fatherName: string;
-  admissionNo: string;
-  referenceNo: string;
-  period: string;
-  collectedBy: string;
-}
-
+import { GenerateReceiptModal } from "../components/GenerateReceiptModal";
+import { useReceiptsManager } from "../hooks/useReceiptsManager";
+import {
+  formatCurrency,
+  getModeBadge,
+  getModeIcon,
+} from "../../utils/useAccountant";
+import type { Receipt, ReceiptDetail } from "../types/receipts.types";
+import Pagination from "../../../../components/ui/pagination";
 export default function ReceiptsPage() {
-  const { data } = useReceipts();
-  const [selectedReceipt, setSelectedReceipt]     = useState<ReceiptDetailData | null>(null);
-  const [showExportModal, setShowExportModal]       = useState(false);
-  const [showGenerateModal, setShowGenerateModal]   = useState(false); // ← NEW
+  const { receipts } = useReceiptsManager();
+const [page, setPage] = useState(1);
+const pageSize = 10;
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptDetail | null>(null);
+  const [showExportModal, setShowExportModal]   = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   const handleViewReceipt = (receipt: Receipt) => {
-    const extendedReceipt: ReceiptDetailData = {
+    const extendedReceipt: ReceiptDetail = {
       ...receipt,
       fatherName:  "Suresh Kumar",
       admissionNo: "ADM001",
@@ -53,7 +32,16 @@ export default function ReceiptsPage() {
     };
     setSelectedReceipt(extendedReceipt);
   };
+useEffect(() => {
+  setPage(1);
+}, [receipts.length]);
+const total = receipts.length;
 
+const paginatedReceipts = receipts.slice(
+  (page - 1) * pageSize,
+  
+  page * pageSize
+);
   return (
     <div className="space-y-4 p-6 bg-[#EFF4FF] min-h-screen">
 
@@ -75,8 +63,6 @@ export default function ReceiptsPage() {
             <Download className="w-3.5 h-3.5" />
             Export All
           </Button>
-
-          {/* ── GENERATE RECEIPT button — opens modal ── */}
           <Button
             size="sm"
             className="flex-1 md:flex-none h-8 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white gap-2"
@@ -93,7 +79,7 @@ export default function ReceiptsPage() {
         {["All Receipts", "Generate Receipt", "Tax Invoices"].map((tab, idx) => (
           <button
             key={tab}
-            onClick={() => idx === 1 && setShowGenerateModal(true)} // ← tab also triggers modal
+            onClick={() => { if (idx === 1) setShowGenerateModal(true); }}
             className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap flex-1 md:flex-none ${
               idx === 0
                 ? "bg-[#3525CD] text-white"
@@ -121,7 +107,7 @@ export default function ReceiptsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data.map((receipt) => (
+           {paginatedReceipts.map((receipt: Receipt) => (
               <tr key={receipt.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <span className="text-xs font-medium text-blue-600">{receipt.receiptNo}</span>
@@ -180,15 +166,14 @@ export default function ReceiptsPage() {
         </table>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-          <span className="text-xs text-gray-500">Showing 1-10 of 24</span>
-          <div className="flex gap-1">
-            <button className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-50">‹</button>
-            <button className="w-7 h-7 flex items-center justify-center rounded bg-blue-600 text-white text-xs">1</button>
-            <button className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs">2</button>
-            <button className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-50">›</button>
-          </div>
-        </div>
+      <Pagination
+  page={page}
+  total={total}
+  pageSize={pageSize}
+  onChange={setPage}
+  itemLabel="receipts"
+  showPageNumbers={true}
+/>
       </div>
 
       {/* Generate Report */}
@@ -198,14 +183,13 @@ export default function ReceiptsPage() {
         </Button>
       </div>
 
-      {/* ── MODALS ── */}
+      {/* Modals */}
       {selectedReceipt && (
         <ReceiptDetailModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} />
       )}
       {showExportModal && (
         <ExportModal onClose={() => setShowExportModal(false)} />
       )}
-      {/* NEW ↓ */}
       {showGenerateModal && (
         <GenerateReceiptModal
           onClose={() => setShowGenerateModal(false)}

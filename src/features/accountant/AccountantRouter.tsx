@@ -7,7 +7,7 @@ import ReceiptsPage from "./receipts/pages/ReceiptsPage";
 import PayrollPage from "./payroll/pages/PayrollPage";
 import LedgerPage from "./ledger/pages/LedgerPage";
 import ReportsPage from "./reports/pages/ReportsPage";
-import ReportHistoryPage from "./reports/pages/ReportHistoryPage";
+
 export default function AccountantRouter() {
   return (
     <Routes>
@@ -22,7 +22,7 @@ export default function AccountantRouter() {
         <Route path="payroll" element={<PayrollPage />} />
         <Route path="ledger" element={<LedgerPage />} />
 <Route path="reports" element={<ReportsPage />} />
-<Route path="reports/history" element={<ReportHistoryPage />} />
+
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />

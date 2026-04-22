@@ -21,7 +21,6 @@ export const ReminderStatusCard = ({ data }: ReminderStatusProps) => {
     <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] hover:border transition-colors">
       <CardContent className="px-4 py-3 sm:px-5 sm:py-4 space-y-4">
 
-        {/* Title row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
@@ -35,7 +34,7 @@ export const ReminderStatusCard = ({ data }: ReminderStatusProps) => {
           </span>
         </div>
 
-        {/* 3-box grid */}
+     
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
 
           <div className="bg-[#E5EEFF] border border-slate-200 rounded-xl py-3 px-3 text-center">
@@ -66,7 +65,7 @@ export const ReminderStatusCard = ({ data }: ReminderStatusProps) => {
           </div>
         </div>
 
-        {/* Delivery rate */}
+     
         <div className="space-y-1.5">
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
@@ -82,7 +81,7 @@ export const ReminderStatusCard = ({ data }: ReminderStatusProps) => {
             </span>
           </div>
 
-          {/* Progress bar */}
+        
           <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${deliveryRate >= 80 ? "bg-green-500" : "bg-red-500"
@@ -91,7 +90,6 @@ export const ReminderStatusCard = ({ data }: ReminderStatusProps) => {
             />
           </div>
 
-          {/* Chips */}
           <div className="flex flex-wrap gap-2 text-xs font-medium">
             <span className="text-green-700 bg-green-50 px-2 py-1 rounded-md">
               {data.delivered} delivered

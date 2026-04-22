@@ -1,5 +1,5 @@
 import type { StatItem } from "../types/dashboard.types";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency } from "../../utils/useAccountant";
 import { TrendingUp, LayoutGrid, AlertCircle, MessageSquare, Activity, Monitor, CalendarDays } from "lucide-react";
 const cardConfig = [
   {
@@ -85,7 +85,6 @@ export const StatCardsSection = ({ data }: { data: StatItem[] }) => {
               <span className="scale-90 sm:scale-100">{config.icon}</span>
             </div>
 
-            {/* Content */}
             <div className="min-w-0 flex-1">
               <p className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
                 {config.label}
@@ -125,7 +124,7 @@ export const StatCardsSection = ({ data }: { data: StatItem[] }) => {
               )}
             </div>
 
-            {/* Online badge */}
+        
             {config.badge === "online" && (
               <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 flex-shrink-0 mt-1" />
             )}
