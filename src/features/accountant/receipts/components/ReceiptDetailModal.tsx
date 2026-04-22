@@ -1,6 +1,6 @@
 import { X, Download, Printer, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { numberToWords } from "../../utils/useAccountant";
+import { numberToWords } from "../../../../utils/number";
 import type { ReceiptDetail } from "../types/receipts.types";
 
 interface ReceiptDetailModalProps {

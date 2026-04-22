@@ -1,12 +1,10 @@
 import { CheckCircle } from "lucide-react";
-import { formatCurrency } from "../../utils/payroll.utils";
-import type { PayrollSummary } from "../../types/payroll.types";
+import { formatCurrency } from "../../../../../utils/formatters";
+import type {  PayrollStatsProps } from "../../types/payroll.types";
 import { StatCard } from "../../../../../components/ui/statcard";
 import typography, { combineTypography } from "@/styles/typography";
 
-interface PayrollStatsProps {
-  summary: PayrollSummary;
-}
+
 
 export const PayrollStats = ({ summary }: PayrollStatsProps) => {
   return (

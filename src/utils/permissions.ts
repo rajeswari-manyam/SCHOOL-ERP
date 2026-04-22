@@ -6,7 +6,7 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     "fees.manage",
     "students.manage",
   ],
-  // ...other roles
+
 };
 
 export const hasPermission = (role: string, permission: string) => {

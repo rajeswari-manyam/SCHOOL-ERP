@@ -3,16 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import typography, { combineTypography } from "@/styles/typography";
 
-import { formatCurrency } from "../../utils/payroll.utils";
-import type { PayrollSummary } from "../../types/payroll.types";
+import { formatCurrency } from "../../../../../utils/formatters";
+import type { StatusBannerProps } from "../../types/payroll.types";
 
-interface StatusBannerProps {
-  isProcessed: boolean;
-  summary: PayrollSummary;
-  processedDate: string | null;
-  processedBy: string | null;
-  onStartProcessing: () => void;
-}
+
 
 export const StatusBanner = ({
   isProcessed,

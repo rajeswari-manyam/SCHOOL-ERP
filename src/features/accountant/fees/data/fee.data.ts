@@ -10,9 +10,7 @@ import type {
   FeeHead,
 } from "../types/fees.types";
 
-/* ─────────────────────────────
-   FEES (Pending / Overdue)
-───────────────────────────── */
+
 export const mockFees: FeeRow[] = [
   {
     id: "1",
@@ -52,9 +50,7 @@ export const mockFees: FeeRow[] = [
   },
 ];
 
-/* ─────────────────────────────
-   TRANSACTIONS
-───────────────────────────── */
+
 export const mockTransactions: Transaction[] = [
   {
     id: "1",
@@ -78,9 +74,7 @@ export const mockTransactions: Transaction[] = [
   },
 ];
 
-/* ─────────────────────────────
-   STUDENTS
-───────────────────────────── */
+
 export const mockStudents: Student[] = [
   {
     id: "s1",
@@ -100,9 +94,7 @@ export const mockStudents: Student[] = [
   },
 ];
 
-/* ─────────────────────────────
-   FEE OPTIONS
-───────────────────────────── */
+
 export const feeOptions: FeeOption[] = [
   { id: "tuition-t1", label: "Term I Tuition", amount: 12000 },
   { id: "tuition-t2", label: "Term II Tuition", amount: 12500 },
@@ -112,9 +104,7 @@ export const feeOptions: FeeOption[] = [
   { id: "exam", label: "Examination Fee", amount: 1500 },
 ];
 
-/* ─────────────────────────────
-   FEE HEADS (Master Data)
-───────────────────────────── */
+
 export const feeHeads: FeeHead[] = [
   {
     id: "1",
@@ -148,9 +138,7 @@ export const feeHeads: FeeHead[] = [
   },
 ];
 
-/* ─────────────────────────────
-   CLASSES
-───────────────────────────── */
+
 export const classes: ClassType[] = [
   "Class 6",
   "Class 7",
@@ -159,9 +147,7 @@ export const classes: ClassType[] = [
   "Class 10",
 ];
 
-/* ─────────────────────────────
-   CLASS WISE FEES
-───────────────────────────── */
+
 export const classWiseFees: ClassFee[] = [
   {
     id: "cf1",
@@ -183,9 +169,7 @@ export const classWiseFees: ClassFee[] = [
   },
 ];
 
-/* ─────────────────────────────
-   TRANSPORT
-───────────────────────────── */
+
 export const initialSlabs: TransportSlab[] = [
   { id: "1", name: "Slab 1", from: 0, to: 3, monthly: 800, students: 45 },
   { id: "2", name: "Slab 2", from: 3, to: 6, monthly: 1200, students: 67 },
@@ -209,9 +193,7 @@ export const initialStudents: TransportStudent[] = [
   },
 ];
 
-/* ─────────────────────────────
-   CONCESSIONS
-───────────────────────────── */
+
 export interface Concession {
   id: string;
   studentName: string;

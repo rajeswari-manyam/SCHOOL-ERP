@@ -1,18 +1,11 @@
 import { useState } from "react";
 import { Card } from "../../../../components/ui/card";
 import { Button } from "../../../../components/ui/button";
+import { X, MessageSquare } from "lucide-react";
 import typography from "@/styles/typography";
+import type { SendFeeReminderModalProps } from "../types/fees.types";
 
-interface Props {
-  onClose: () => void;
-  studentName?: string;
-  studentClass?: string;
-  amountOverdue?: number;
-  daysPastDue?: number;
-  remindersSent?: number;
-  fatherPhone?: string;
-  motherPhone?: string;
-}
+
 
 export function SendFeeReminderModal({
   onClose,
@@ -23,14 +16,13 @@ export function SendFeeReminderModal({
   remindersSent = 3,
   fatherPhone = "+91 98765 43210",
   motherPhone = "+91 87654 32109",
-}: Props) {
+}: SendFeeReminderModalProps) {
   const [sendToFather, setSendToFather] = useState(true);
   const [sendToMother, setSendToMother] = useState(false);
 
   const messagePreview = `Dear Parent, This is a reminder that ${studentName}'s fee of Rs.${amountOverdue.toLocaleString()} (Tuition — April 2025) is overdue by ${daysPastDue} days. Please pay at the school counter at the earliest. — Hanamkonda Public School`;
 
   const handleSend = () => {
-    // handle send logic
     onClose();
   };
 
@@ -57,16 +49,14 @@ export function SendFeeReminderModal({
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 mt-0.5"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* ── Body ── */}
         <div className="px-5 py-4 space-y-4">
 
-          {/* Overdue summary pill */}
+          {/* Overdue summary pills */}
           <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
             <span className="bg-red-100 text-red-600 px-2.5 py-1 rounded-full">
               Rs.{amountOverdue.toLocaleString()} overdue
@@ -142,9 +132,7 @@ export function SendFeeReminderModal({
               disabled={!sendToFather && !sendToMother}
               className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z"/>
-              </svg>
+              <MessageSquare className="w-4 h-4" />
               Send WhatsApp Reminder
             </Button>
           </div>

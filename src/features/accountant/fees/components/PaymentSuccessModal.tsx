@@ -1,17 +1,8 @@
 
 import { useState } from "react";
 import { SendFeeReminderModal } from "./SendRemainderModal";
+import type{Props} from "../types/fees.types";
 
-interface Props {
-  receiptNo: string;
-  amount: number;
-  paymentMode: string;
-  paymentDate: string;
-  studentName: string;
-  studentClass: string;
-  onRecordAnother: () => void;
-  onClose: () => void;
-}
 
 export function PaymentSuccessModal({
   receiptNo, amount, paymentMode, paymentDate,

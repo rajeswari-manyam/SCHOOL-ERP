@@ -3,14 +3,9 @@ import { Download, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HistoryStats } from "./HistoryStats";
 import { HistoryTable } from "./HistoryTable";
-import type { PayrollHistory } from "../../types/payroll.types";
+import type { PayrollHistoryTabProps } from "../../types/payroll.types";
 
-interface PayrollHistoryTabProps {
-  history: PayrollHistory[];
-  totalPayrollFY: number;
-  avgMonthlyPayroll: number;
-  staffCount: number;
-}
+
 
 const MONTHS = ["JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
 

@@ -1,28 +1,12 @@
+
 import { TrendingUp, Users, Wallet } from "lucide-react";
-import { formatCurrency } from "../../utils/payroll.utils";
+import { formatCurrency } from "../../../../../utils/formatters";
 import { StatCard } from "@/components/ui/statcard";
+import { Avatar } from "@/components/ui/avatar";
+import type { HistoryStatsProps } from "../../types/payroll.types";
 
-/* =========================
-   TYPES
-========================= */
-interface HistoryStatsProps {
-  totalPayrollFY: number;
-  avgMonthlyPayroll: number;
-  staffCount: number;
-  fyLabel?: string;
-  growthPercent?: number;
-  avatars?: string[];
-}
 
-/* =========================
-   AVATAR STACK
-========================= */
-const AVATAR_COLORS = [
-  "bg-violet-100 text-violet-700",
-  "bg-sky-100 text-sky-700",
-  "bg-pink-100 text-pink-700",
-  "bg-amber-100 text-amber-700",
-];
+const MAX_SHOWN = 4;
 
 const AvatarStack = ({
   avatars,
@@ -31,34 +15,36 @@ const AvatarStack = ({
   avatars: string[];
   total: number;
 }) => {
-  const MAX_SHOWN = 4;
   const shown = avatars.slice(0, MAX_SHOWN);
   const extra = total - shown.length;
 
+  const overlapStyle = (i: number) => ({
+    marginLeft: i === 0 ? 0 : -8,
+  });
+
   return (
     <div className="flex items-center">
-      {shown.length > 0
-        ? shown.map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              alt=""
-              className="w-7 h-7 rounded-full border-2 border-white object-cover"
-              style={{ marginLeft: i === 0 ? 0 : -8 }}
+      {shown.length > 0 ? (
+        shown.map((src, i) => (
+          <div key={i} style={overlapStyle(i)}>
+            <Avatar src={src} size="sm" />
+          </div>
+        ))
+      ) : (
+        Array.from({ length: Math.min(MAX_SHOWN, total) }).map((_, i) => (
+          <div key={i} style={overlapStyle(i)}>
+            <Avatar
+              fallback={String.fromCharCode(65 + i)}
+              size="sm"
+              className="bg-gray-100"
             />
-          ))
-        : Array.from({ length: Math.min(MAX_SHOWN, total) }).map((_, i) => (
-            <div
-              key={i}
-              className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-semibold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
-              style={{ marginLeft: i === 0 ? 0 : -8 }}
-            >
-              {String.fromCharCode(65 + i)}
-            </div>
-          ))}
+          </div>
+        ))
+      )}
+
       {extra > 0 && (
         <div
-          className="w-7 h-7 rounded-full border-2 border-white bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-semibold"
+          className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-semibold"
           style={{ marginLeft: -8 }}
         >
           +{extra}
@@ -68,9 +54,6 @@ const AvatarStack = ({
   );
 };
 
-/* =========================
-   MAIN COMPONENT
-========================= */
 export const HistoryStats = ({
   totalPayrollFY,
   avgMonthlyPayroll,
@@ -83,14 +66,19 @@ export const HistoryStats = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
       {/* TOTAL PAYROLL */}
-      <StatCard
-        label={`Total Payroll ${fyLabel}`}
-        icon={<TrendingUp className="w-4 h-4 text-[#3525CD]" />}
-        value={
-          <span className="text-[#3525CD]">{formatCurrency(totalPayrollFY)}</span>
-        }
-        badge={{ text: `+${growthPercent}% vs last FY`, variant: "green" }}
-      />
+    <StatCard
+  label={`Total Payroll ${fyLabel}`}
+  icon={<TrendingUp className="w-4 h-4 text-[#3525CD]" />}
+  value={
+    <span className="text-[#3525CD]">
+      {formatCurrency(totalPayrollFY)}
+    </span>
+  }
+  badge={{
+    text: `+${growthPercent}% vs last FY`,
+    variant: "green",
+  }}
+/>
 
       {/* STAFF COUNT */}
       <StatCard

@@ -3,16 +3,9 @@ import { Button } from "@/components/ui/button";
 import { StatusBanner } from "./StatusBanner";
 import { PayrollStats } from "./PayrollStats";
 import { PayrollTable } from "./PayrollTable";
-import type { PayrollSummary, StaffPayroll } from "../../types/payroll.types";
+import type { MonthlyPayrollTabProps } from "../../types/payroll.types";
 
-interface MonthlyPayrollTabProps {
-  staffData: StaffPayroll[];
-  summary: PayrollSummary;
-  isProcessed: boolean;
-  processedDate: string | null;
-  processedBy: string | null;
-  onStartProcessing: () => void;
-}
+
 
 export const MonthlyPayrollTab = ({
   staffData,

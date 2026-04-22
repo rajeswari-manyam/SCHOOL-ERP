@@ -1,5 +1,5 @@
 import type { StatItem } from "../types/dashboard.types";
-import { formatCurrency } from "../../utils/useAccountant";
+import { formatCurrency } from "../../../../utils/formatters";
 import { TrendingUp, LayoutGrid, AlertCircle, MessageSquare, Activity, Monitor, CalendarDays } from "lucide-react";
 const cardConfig = [
   {

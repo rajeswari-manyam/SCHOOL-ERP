@@ -7,24 +7,11 @@ import {
 } from "@tanstack/react-table";
 import { TableVirtuoso } from "react-virtuoso";
 import { Button } from "@/components/ui/button";
-import type { TransportSlab, TransportStudent } from "../types/fees.types";
+import { Search } from "lucide-react";
+import type { TransportStudent, StudentSlabAssignmentProps } from "../types/fees.types";
 
-/* ─────────────────────────────────────────
-   Types
-───────────────────────────────────────── */
-type Props = {
-  students: TransportStudent[];
-  slabs: TransportSlab[];
-  search: string;
-  onSearchChange: (val: string) => void;
-  pendingSlabs: Record<string, string>;
-  onSlabChange: (studentId: string, slabId: string) => void;
-  onSaveStudentSlab: (studentId: string) => void;
-};
 
-/* ─────────────────────────────────────────
-   Helpers
-───────────────────────────────────────── */
+
 const initials = (name: string) =>
   name
     .split(" ")
@@ -33,14 +20,10 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-/* ─────────────────────────────────────────
-   Column helper
-───────────────────────────────────────── */
 const columnHelper = createColumnHelper<TransportStudent>();
 
-/* ─────────────────────────────────────────
-   Component
-───────────────────────────────────────── */
+
+
 export function StudentSlabAssignment({
   students,
   slabs,
@@ -49,8 +32,8 @@ export function StudentSlabAssignment({
   pendingSlabs,
   onSlabChange,
   onSaveStudentSlab,
-}: Props) {
-  /* ── Filtered rows ── */
+}: StudentSlabAssignmentProps) {
+ 
   const filtered = useMemo(
     () =>
       students.filter(
@@ -61,7 +44,6 @@ export function StudentSlabAssignment({
     [students, search]
   );
 
-  /* ── Column definitions ── */
   const columns = useMemo(
     () => [
       columnHelper.accessor("name", {
@@ -144,7 +126,7 @@ export function StudentSlabAssignment({
     [slabs, pendingSlabs, onSlabChange, onSaveStudentSlab]
   );
 
-  /* ── Table instance ── */
+
   const table = useReactTable({
     data: filtered,
     columns,
@@ -154,7 +136,7 @@ export function StudentSlabAssignment({
   const { rows } = table.getRowModel();
   const headerGroups = table.getHeaderGroups();
 
-  /* ── Shared cell classes ── */
+ 
   const thClass =
     "text-xs font-bold uppercase text-gray-400 tracking-wider px-4 py-3 text-left";
   const tdClass = "px-4 py-3";
@@ -174,19 +156,7 @@ export function StudentSlabAssignment({
       {/* Search */}
       <div className="px-5 mb-3">
         <div className="relative w-64">
-          <svg
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
-            fill="none"
-            viewBox="0 0 16 16"
-          >
-            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M10 10L14 14"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}

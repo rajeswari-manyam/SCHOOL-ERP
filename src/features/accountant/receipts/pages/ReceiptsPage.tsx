@@ -1,16 +1,14 @@
 import { useState,useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Eye, FileText } from "lucide-react";
-import { ReceiptFilters } from "../components/ReceptFilter";
+import { ReceiptFilters } from "../components/ReceiptFilters";
 import { ReceiptDetailModal } from "../components/ReceiptDetailModal";
 import { ExportModal } from "../components/ExportModal";
 import { GenerateReceiptModal } from "../components/GenerateReceiptModal";
 import { useReceiptsManager } from "../hooks/useReceiptsManager";
-import {
-  formatCurrency,
-  getModeBadge,
-  getModeIcon,
-} from "../../utils/useAccountant";
+
+import { formatCurrency } from "../../../../utils/formatters";
+import { getModeBadge } from "../../../../utils/receipt";
 import type { Receipt, ReceiptDetail } from "../types/receipts.types";
 import Pagination from "../../../../components/ui/pagination";
 export default function ReceiptsPage() {
@@ -129,10 +127,11 @@ const paginatedReceipts = receipts.slice(
                   <span className="text-xs font-semibold text-gray-900">{formatCurrency(receipt.amount)}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${getModeBadge(receipt.mode)}`}>
-                    {getModeIcon(receipt.mode)}
-                    {receipt.mode}
-                  </span>
+                  <span
+  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${getModeBadge(receipt.mode)}`}
+>
+  {receipt.mode}
+</span>
                 </td>
                 <td className="px-4 py-3">
                   {receipt.waStatus === "Sent" ? (
@@ -153,7 +152,7 @@ const paginatedReceipts = receipts.slice(
                     <button className="p-1.5 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600">
                       <Download className="w-4 h-4" />
                     </button>
-                    {receipt.status === "Not Sent" && (
+                    {receipt.waStatus === "Not Sent" && (
                       <button className="px-2 py-1 bg-blue-600 text-white text-[10px] font-medium rounded hover:bg-blue-700">
                         Send Now
                       </button>

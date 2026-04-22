@@ -1,7 +1,8 @@
 import * as React from "react";
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
-export interface ToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ToggleProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   checked?: boolean;
   defaultChecked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
@@ -19,8 +20,9 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
       disabled,
       ...props
     },
-    ref,
+    ref
   ) => {
+    // Controlled vs uncontrolled
     const [internalChecked, setInternalChecked] =
       React.useState(defaultChecked);
 
@@ -35,6 +37,7 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
       onCheckedChange?.(newValue);
     };
 
+    // Sizes
     const sizes = {
       sm: "h-5 w-9",
       md: "h-6 w-11",
@@ -47,38 +50,40 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
       lg: "h-5 w-5",
     };
 
-    const translate = {
-      sm: value ? "translate-x-5" : "translate-x-1",
-      md: value ? "translate-x-6" : "translate-x-1",
-      lg: value ? "translate-x-8" : "translate-x-1",
-    };
-
     return (
       <button
         ref={ref}
+        type="button"
         role="switch"
         aria-checked={value}
-        onClick={toggle}
         disabled={disabled}
+        onClick={toggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        }}
         className={cn(
-          "relative inline-flex items-center rounded-full transition",
+          "inline-flex items-center rounded-full px-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400",
           sizes[size],
-          value ? "bg-primary" : "bg-gray-300",
+          value
+            ? "bg-indigo-600 justify-end"
+            : "bg-gray-300 justify-start",
           disabled && "opacity-50 cursor-not-allowed",
-          className,
+          className
         )}
         {...props}
       >
         <span
           className={cn(
-            "inline-block rounded-full bg-white transform transition",
-            thumbSizes[size],
-            translate[size],
+            "rounded-full bg-white shadow-sm transition-all duration-200",
+            thumbSizes[size]
           )}
         />
       </button>
     );
-  },
+  }
 );
 
 Toggle.displayName = "Toggle";

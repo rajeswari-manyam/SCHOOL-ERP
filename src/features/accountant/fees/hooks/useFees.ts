@@ -2,9 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import { mockFees, mockTransactions, initialSlabs, initialStudents } from "../data/fee.data";
 import type { TransportSlab, TransportStudent } from "../types/fees.types";
 
-/* ─────────────────────────────────────────
-   Transport Fees Hook
-───────────────────────────────────────── */
+
 export const useTransportFees = () => {
   const [slabs, setSlabs] = useState<TransportSlab[]>(initialSlabs);
   const [students, setStudents] = useState<TransportStudent[]>(initialStudents);
@@ -12,10 +10,10 @@ export const useTransportFees = () => {
   const [search, setSearch] = useState("");
   const [slabFilter, setSlabFilter] = useState<string | null>(null);
 
-  // Key is studentId (string), value is slabId (string)
+ 
   const [pendingSlabs, setPendingSlabs] = useState<Record<string, string>>({});
 
-  // ── Derived ──────────────────────────────
+
   const filteredStudents = useMemo(() => {
     return students.filter((st) => {
       const matchSearch =
@@ -41,21 +39,20 @@ export const useTransportFees = () => {
     }, 0);
   }, [students, slabs, pendingSlabs]);
 
-  // ── Slab Handlers ────────────────────────
   const handleSaveSlab = useCallback(
     (
       existingSlab: TransportSlab | null,
       data: Omit<TransportSlab, "id" | "students">
     ) => {
       if (existingSlab) {
-        // Edit existing
+       
         setSlabs((prev) =>
           prev.map((s) =>
             s.id === existingSlab.id ? { ...s, ...data } : s
           )
         );
       } else {
-        // Add new
+       
         const newId = String(Math.max(0, ...slabs.map((s) => Number(s.id))) + 1);
         setSlabs((prev) => [...prev, { id: newId, students: 0, ...data }]);
       }
@@ -67,21 +64,21 @@ export const useTransportFees = () => {
     setSlabs((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  // ── Student Slab Handler ─────────────────
+ 
   const handleSaveStudentSlab = useCallback(
     (studentId: string) => {
       const key = studentId;
       const newSlabId = pendingSlabs[key];
       if (newSlabId == null) return;
 
-      // Update student's assigned slab
+   
       setStudents((prev) =>
         prev.map((st) =>
           st.id === key ? { ...st, slabId: newSlabId } : st
         )
       );
 
-      // Update slab student counts
+    
       setSlabs((prev) => {
         const oldSlabId = students.find((st) => st.id === key)?.slabId;
         return prev.map((s) => {
@@ -91,7 +88,7 @@ export const useTransportFees = () => {
         });
       });
 
-      // Clear this student's pending entry
+  
       setPendingSlabs((prev) => {
         const next = { ...prev };
         delete next[key];
@@ -119,9 +116,7 @@ export const useTransportFees = () => {
   };
 };
 
-/* ─────────────────────────────────────────
-   Fee Data Hook
-───────────────────────────────────────── */
+
 export const useFeeData = () => {
   const fees = useMemo(() => mockFees, []);
   const transactions = useMemo(() => mockTransactions, []);

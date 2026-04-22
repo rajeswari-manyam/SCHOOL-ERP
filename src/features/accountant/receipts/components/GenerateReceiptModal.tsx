@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { X, Search, Phone, CheckCircle2, RefreshCw, Download, MessageCircle, Save } from "lucide-react";
-import { formatCurrency, FEE_HEADS, PAYMENT_MODES, numberToWords } from "../../utils/useAccountant";
+import { formatCurrency } from "../../../../utils/formatters";
+import { FEE_HEADS } from "../../../../utils/fee";
+import { PAYMENT_OPTIONS } from "../../../../utils/payment";
+import { numberToWords } from "../../../../utils/number";
 import { useReceiptsManager } from "../hooks/useReceiptsManager";
 import { ReceiptDetailModal } from "./ReceiptDetailModal";
 import type { GenerateReceiptModalProps, Student, ReceiptDetail } from "../types/receipts.types";
@@ -172,7 +175,7 @@ export const GenerateReceiptModal = ({
                 <div>
                   <label className="text-[10px] font-semibold text-gray-500 block mb-1">Payment Mode</label>
                   <div className="flex gap-1.5">
-                    {PAYMENT_MODES.map((m) => (
+                  {PAYMENT_OPTIONS.map((m) => (
                       <button
                         key={m.value}
                         onClick={() => setPaymentMode(m.value)}

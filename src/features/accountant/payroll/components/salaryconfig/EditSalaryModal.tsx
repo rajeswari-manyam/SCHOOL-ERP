@@ -1,60 +1,29 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom"; // Add this import
-
 import { X, Calendar } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import typography, { combineTypography } from "@/styles/typography";
-
-
-import type { SalaryConfig, SalaryFormData } from "../../types/payroll.types";
+import { formatCurrency } from "../../../../../utils/formatters";
+import { getTodayISO } from "../../../../../utils/date";
+import type { EditSalaryModalProps } from "../../types/payroll.types";
 
 const schema = z.object({
-  basicSalary: z.number().min(1, "Required"),
-  hra: z.number(),
+  basicSalary:        z.number().min(1, "Required"),
+  hra:                z.number(),
   transportAllowance: z.number(),
-  otherAllowance: z.number(),
-  pfPercentage: z.number().min(0),
-  professionalTax: z.number(),
-  tds: z.number(),
-  effectiveFrom: z.string().min(1, "Date required"),
+  otherAllowance:     z.number(),
+  pfPercentage:       z.number().min(0),
+  professionalTax:    z.number(),
+  tds:                z.number(),
+  effectiveFrom:      z.string().min(1, "Date required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
-interface EditSalaryModalProps {
-  staff?: SalaryConfig | null;
-  onClose: () => void;
-  onSave: (id: string, data: SalaryFormData) => void;
-}
 
-// Custom format function for Rs. format
-const formatRsCurrency = (amount: number) => {
-  return `Rs.${amount.toLocaleString("en-IN")}`;
-};
-
-// Format date to "01 May 2025" format
-const formatDisplayDate = (dateString: string) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-export const EditSalaryModal = ({
-  staff,
-  onClose,
-  onSave,
-}: EditSalaryModalProps) => {
-  const navigate = useNavigate(); // Add this
-  
+export const EditSalaryModal = ({ staff, onClose, onSave }: EditSalaryModalProps) => {
   const {
     register,
     handleSubmit,
@@ -63,79 +32,62 @@ export const EditSalaryModal = ({
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onChange",
-  defaultValues: {
-  basicSalary: staff?.basic || 0,
-  hra: staff?.hra || 0,
-  transportAllowance: staff?.transport || 0,
-  otherAllowance: staff?.other || 0,
-  pfPercentage: staff?.pfPercentage || 12,
-  professionalTax: staff?.professionalTax || 0,
-  tds: 0,
-  effectiveFrom: "2025-05-01",
-},
+    defaultValues: {
+      basicSalary:        staff?.basic          || 0,
+      hra:                staff?.hra             || 0,
+      transportAllowance: staff?.transport       || 0,
+      otherAllowance:     staff?.other           || 0,
+      pfPercentage:       staff?.pfPercentage    || 12,
+      professionalTax:    staff?.professionalTax || 0,
+      tds:                0,
+      effectiveFrom:      getTodayISO(),
+    },
   });
 
   const values = watch();
-
-  const gross =
-    values.basicSalary +
-    values.hra +
-    values.transportAllowance +
-    values.otherAllowance;
-
-  const pf = (values.basicSalary * values.pfPercentage) / 100;
-
+  const gross           = values.basicSalary + values.hra + values.transportAllowance + values.otherAllowance;
+  const pf              = (values.basicSalary * values.pfPercentage) / 100;
   const totalDeductions = pf + values.professionalTax + values.tds;
-
-  const net = gross - totalDeductions;
-
-  // Handle cancel with navigation
-  const handleCancel = () => {
-    onClose();
-    navigate(-1); // Go back to previous page
-  };
+  const net             = gross - totalDeductions;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3">
-      <div className="bg-white w-full max-w-[480px] rounded-xl shadow-xl flex flex-col max-h-[90vh]">
-        
-        {/* HEADER - Fixed to show name and role properly */}
-   <div className="flex justify-between items-start p-5">     
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-[560px] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-start px-6 py-5 border-b border-gray-100">
           <div>
-            <h2 className={combineTypography(typography.body.small, "font-semibold text-gray-900")}>
-             Edit Salary — {staff?.name || "New Staff"}
+            <h2 className="text-base font-semibold text-gray-900">
+              Edit Salary — {staff?.name || "New Staff"}
             </h2>
-            <p className={combineTypography(typography.body.xs, "text-gray-500 mt-0.5")}>
-            {staff?.role || "New Role"} • EMP-{staff?.id || "NEW"}• Current since: 1 June 2024
+            <p className="text-xs text-gray-500 mt-0.5">
+              {staff?.role || "New Role"} | EMP-{staff?.id || "NEW"} | Current since: 1 June 2024
             </p>
           </div>
-
           <button
-            onClick={handleCancel}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
 
         {/* SCROLL BODY */}
-        <div className="overflow-y-auto p-5 space-y-4">
-          
-          {/* INPUT GRID - Fixed layout with proper labels */}
-          <div className="grid grid-cols-1 gap-4">
-            
-            {/* Row 1: Basic Salary + PF Percentage */}
+        <div className="overflow-y-auto px-6 py-5 space-y-5">
+
+          {/* 2-COLUMN GRID */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+
+            {/* Basic Salary */}
             <div>
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Basic Salary *
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  Rs.
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
                 <Input
                   type="number"
-                  className="pl-10"
+                  className="pl-9 text-sm"
                   {...register("basicSalary", { valueAsNumber: true })}
                 />
               </div>
@@ -144,174 +96,161 @@ export const EditSalaryModal = ({
               )}
             </div>
 
+            {/* PF Percentage */}
             <div>
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 PF Percentage *
               </label>
               <div className="relative">
                 <Input
                   type="number"
-                  className="pr-8"
+                  className="pr-9 text-sm"
                   {...register("pfPercentage", { valueAsNumber: true })}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  %
-                </span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
               </div>
               <p className="text-[10px] text-gray-400 mt-1">Of basic salary</p>
             </div>
 
-            {/* Row 2: HRA + Professional Tax */}
+            {/* HRA */}
             <div>
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 HRA
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  Rs.
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
                 <Input
                   type="number"
-                  className="pl-10"
+                  className="pl-9 text-sm"
                   {...register("hra", { valueAsNumber: true })}
                 />
               </div>
             </div>
 
+            {/* Professional Tax */}
             <div>
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Professional Tax
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  Rs.
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
                 <Input
                   type="number"
-                  className="pl-10"
+                  className="pl-9 text-sm"
                   {...register("professionalTax", { valueAsNumber: true })}
                 />
               </div>
             </div>
 
-            {/* Row 3: Transport Allowance + TDS */}
+            {/* Transport Allowance */}
             <div>
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Transport Allowance
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  Rs.
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
                 <Input
                   type="number"
-                  className="pl-10"
+                  className="pl-9 text-sm"
                   {...register("transportAllowance", { valueAsNumber: true })}
                 />
               </div>
             </div>
 
+            {/* TDS */}
             <div>
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 TDS (monthly)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  Rs.
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
                 <Input
                   type="number"
-                  className="pl-10"
+                  className="pl-9 text-sm"
                   {...register("tds", { valueAsNumber: true })}
                 />
               </div>
             </div>
 
-            {/* Row 4: Other Allowance (full width) */}
-            <div className="col-span-2">
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+            {/* Other Allowance */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Other Allowance
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  Rs.
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rs.</span>
                 <Input
                   type="number"
-                  className="pl-10"
+                  className="pl-9 text-sm"
                   {...register("otherAllowance", { valueAsNumber: true })}
                 />
               </div>
             </div>
 
-            {/* Row 5: Effective From (full width) */}
-            <div className="col-span-2">
-              <label className={combineTypography(typography.form.label, "mb-1.5 block text-sm font-medium text-gray-700")}>
+            {/* Effective From */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Effective From *
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="date"
-                  className="pl-10"
+                  className="pr-9 text-sm"
                   {...register("effectiveFrom")}
                 />
+                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
+              {errors.effectiveFrom && (
+                <p className="text-xs text-red-500 mt-1">{errors.effectiveFrom.message}</p>
+              )}
             </div>
+
           </div>
 
-          {/* SALARY PREVIEW - Updated with Rs. format */}
-          <div className="bg-[#F8F9FF] rounded-lg p-4 space-y-3">
+          {/* SALARY PREVIEW */}
+          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#E5EEFF" }}>
             <p className="text-[11px] font-semibold text-[#3525CD] uppercase tracking-wide">
               Salary Preview
             </p>
-
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600">Gross Salary</span>
-              <span className="font-semibold text-[#3525CD]">
-                {formatRsCurrency(gross)}
-              </span>
+              <span className="font-semibold text-[#3525CD]">{formatCurrency(gross)}</span>
             </div>
-
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600">Total Deductions</span>
-              <span className="font-semibold text-red-500">
-                {formatRsCurrency(totalDeductions)}
-              </span>
+              <span className="font-semibold text-red-500">{formatCurrency(totalDeductions)}</span>
             </div>
-
-            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+            <div className="flex justify-between items-center pt-2 border-t border-[#C7D7F9]">
               <span className="font-semibold text-gray-900">Net Pay</span>
-              <span className="font-bold text-lg text-green-600">
-                {formatRsCurrency(net)}
-              </span>
+              <span className="font-bold text-lg text-[#3525CD]">{formatCurrency(net)}</span>
             </div>
           </div>
 
           {/* DISCLAIMER */}
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-400 text-center">
             Changes apply from May 2025 onward. Previous months unaffected.
           </p>
+
         </div>
 
-        {/* FOOTER - Fixed with Cancel navigation */}
-        <div className="flex items-center justify-end gap-3 p-5 border-t bg-gray-50">
+        {/* FOOTER */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
           <Button
             variant="outline"
-            onClick={handleCancel}
-            className="px-6 py-2 h-auto font-medium"
+            onClick={onClose}
+            className="px-6 h-9 text-sm font-medium text-gray-700"
           >
             Cancel
           </Button>
-
           <Button
             disabled={!isValid}
-           onClick={handleSubmit((data) => onSave(staff?.id || "new", data))}
-            className="px-6 py-2 h-auto bg-[#3525CD] hover:bg-[#2a1da3] text-white font-medium"
+            onClick={handleSubmit((data) => { onSave(staff?.id || "new", data); onClose(); })}
+            className="px-6 h-9 text-sm font-medium bg-[#3525CD] hover:bg-[#2a1da3] text-white disabled:opacity-50"
           >
             Save Salary Config
           </Button>
         </div>
+
       </div>
     </div>
   );

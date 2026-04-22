@@ -8,55 +8,36 @@ import {
 } from "@tanstack/react-table";
 import { TableVirtuoso } from "react-virtuoso";
 import { Button } from "@/components/ui/button";
-import type { Transaction } from "../types/fees.types";
-import { formatCurrency } from "../utils/fee.utils";
+import {
+  MessageSquare,
+  MoreVertical,
+  Check,
+  Download,
+  X,
+} from "lucide-react";
+import type { FeeTransaction } from "../types/fees.types";
+import { formatCurrency } from "../../../../utils/formatters";
 import { SendFeeReminderModal } from "./SendRemainderModal";
+import {
+  getInitials,
+  getTransactionStatusStyle,
+  AVATAR_INDIGO,
+} from "../utils/fee.utils";
 
-// ── Extend Transaction with fields used in this table ──────────────────────
-type FeeTransaction = Transaction & {
-  class?: string;
-  status?: string;
-};
 
-// ── Status badge helper ─────────────────────────────────────────────────────
-function getStatusStyle(status: string) {
-  switch (status?.toLowerCase()) {
-    case "severely overdue":
-      return "bg-red-100 text-red-700 border border-red-200";
-    case "overdue":
-      return "bg-orange-100 text-orange-700 border border-orange-200";
-    case "due today":
-      return "bg-yellow-100 text-yellow-700 border border-yellow-200";
-    case "pending":
-      return "bg-slate-100 text-slate-600 border border-slate-200";
-    default:
-      return "bg-green-100 text-green-700 border border-green-200";
-  }
-}
 
-// ── Avatar initials ─────────────────────────────────────────────────────────
-function initials(name: string) {
-  return (name ?? "")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-// ── Column helper ───────────────────────────────────────────────────────────
 const col = createColumnHelper<FeeTransaction>();
 
-// ── Component ───────────────────────────────────────────────────────────────
+
+
 export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [reminderStudent, setReminderStudent] = useState<FeeTransaction | null>(null);
   const [showBulkReminder, setShowBulkReminder] = useState(false);
 
-  // ── Column definitions ──────────────────────────────────────────────────
   const columns = useMemo(
     () => [
-      // Checkbox column
+    
       col.display({
         id: "select",
         size: 40,
@@ -81,13 +62,15 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         ),
       }),
 
-      // Student details
+    
       col.accessor("student", {
         header: "Student Details",
         cell: ({ row, getValue }) => (
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold flex-shrink-0">
-              {initials(getValue())}
+            <div
+              className={`w-8 h-8 rounded-full ${AVATAR_INDIGO} flex items-center justify-center text-xs font-bold flex-shrink-0`}
+            >
+              {getInitials(getValue())}
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-800">{getValue()}</p>
@@ -97,7 +80,7 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         ),
       }),
 
-      // Class
+     
       col.accessor("class", {
         header: "Class",
         cell: ({ getValue }) => (
@@ -105,7 +88,6 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         ),
       }),
 
-      // Amount
       col.accessor("amount", {
         header: "Amount Due",
         cell: ({ getValue }) => (
@@ -115,7 +97,6 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         ),
       }),
 
-      // Due date
       col.accessor("date", {
         header: "Due Date",
         cell: ({ getValue }) => (
@@ -123,14 +104,14 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         ),
       }),
 
-      // Status
+    
       col.accessor("status", {
         header: "Status",
         cell: ({ getValue, row }) => {
           const status = getValue() ?? row.original.mode ?? "";
           return (
             <span
-              className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide ${getStatusStyle(status)}`}
+              className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide ${getTransactionStatusStyle(status)}`}
             >
               {status}
             </span>
@@ -138,7 +119,7 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         },
       }),
 
-      // Actions
+     
       col.display({
         id: "actions",
         header: "Actions",
@@ -149,26 +130,18 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
               title="Send WhatsApp Reminder"
               className="w-7 h-7 flex items-center justify-center rounded-lg bg-green-50 hover:bg-green-100 text-green-600 transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
-              </svg>
+              <MessageSquare className="w-3.5 h-3.5" />
             </button>
             <button className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="1.5" />
-                <circle cx="12" cy="12" r="1.5" />
-                <circle cx="12" cy="19" r="1.5" />
-              </svg>
+              <MoreVertical className="w-4 h-4" />
             </button>
           </div>
         ),
       }),
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-  // ── Table instance ──────────────────────────────────────────────────────
   const table = useReactTable({
     data,
     columns,
@@ -181,7 +154,6 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
   const selectedIds = Object.keys(rowSelection).filter((k) => rowSelection[k]);
   const selectedCount = selectedIds.length;
 
-  // ── Header rows (stable reference for TableVirtuoso) ───────────────────
   const headerGroups = table.getHeaderGroups();
   const { rows } = table.getRowModel();
 
@@ -226,38 +198,34 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
     []
   );
 
-  // ── Render ──────────────────────────────────────────────────────────────
   return (
     <>
       {/* ── Bulk Action Bar ── */}
       {selectedCount > 0 && (
         <div className="flex items-center gap-3 px-4 py-2.5 mb-3 bg-indigo-50 border border-indigo-200 rounded-xl">
           <div className="w-5 h-5 rounded bg-indigo-600 flex items-center justify-center flex-shrink-0">
-            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="w-3 h-3 text-white" />
           </div>
           <span className="text-sm font-semibold text-indigo-700">
             {selectedCount} student{selectedCount > 1 ? "s" : ""} selected
           </span>
-
           <div className="ml-auto flex items-center gap-2">
             <Button
               onClick={() => setShowBulkReminder(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
-              </svg>
+              <MessageSquare className="w-3.5 h-3.5" />
               Send WhatsApp Reminder
             </Button>
-            <Button className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors">
+            <Button className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+              <Download className="w-3.5 h-3.5" />
               Export Selected
             </Button>
             <button
               onClick={() => setRowSelection({})}
-              className="px-3 py-1.5 rounded-lg text-slate-400 text-xs font-semibold hover:text-slate-600 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-slate-400 text-xs font-semibold hover:text-slate-600 transition-colors"
             >
+              <X className="w-3.5 h-3.5" />
               Clear Selection
             </button>
           </div>
@@ -268,15 +236,12 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
       <div className="rounded-xl border border-slate-200 overflow-hidden">
         <TableVirtuoso
           data={rows}
-          style={{ height: 520 }}                    // ← set a fixed height for virtualization
+          style={{ height: 520 }}
           fixedHeaderContent={fixedHeaderContent}
           itemContent={itemContent}
           components={{
             Table: (props) => (
-              <table
-                {...props}
-                className="w-full border-collapse table-auto"
-              />
+              <table {...props} className="w-full border-collapse table-auto" />
             ),
             TableHead: (props) => (
               <thead {...props} className="sticky top-0 z-10 shadow-sm" />

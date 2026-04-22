@@ -6,43 +6,18 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import { TableVirtuoso } from "react-virtuoso";
-import type { TransportSlab } from "../types/fees.types";
+import type { TransportSlab, TransportSlabsTableProps } from "../types/fees.types";
+import { distanceLabel } from "../utils/fee.utils";
+import { formatINR } from "../../../../utils/formatters";
 
-/* ─────────────────────────────────────────
-   Helpers
-───────────────────────────────────────── */
-const formatINR = (n: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(n);
-
-const distanceLabel = (slab: TransportSlab) =>
-  slab.to == null ? `${slab.from}+ km` : `${slab.from}–${slab.to} km`;
-
-/* ─────────────────────────────────────────
-   Types
-───────────────────────────────────────── */
-type Props = {
-  slabs: TransportSlab[];
-  onEdit: (slab: TransportSlab) => void;
-  onDelete: (id: string) => void;
-};
-
-/* ─────────────────────────────────────────
-   Column helper
-───────────────────────────────────────── */
 const columnHelper = createColumnHelper<TransportSlab>();
 
-/* ─────────────────────────────────────────
-   Component
-───────────────────────────────────────── */
-export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
+
+
+export function TransportSlabsTable({ slabs, onEdit, onDelete }: TransportSlabsTableProps) {
   const totalStudents = slabs.reduce((sum, s) => sum + s.students, 0);
   const totalRevenue = slabs.reduce((sum, s) => sum + s.monthly * s.students, 0);
 
-  /* ── Column definitions ── */
   const columns = useMemo(
     () => [
       columnHelper.accessor("name", {
@@ -112,7 +87,6 @@ export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
     [onEdit, onDelete]
   );
 
-  /* ── Table instance ── */
   const table = useReactTable({
     data: slabs,
     columns,
@@ -122,7 +96,6 @@ export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
   const { rows } = table.getRowModel();
   const headerGroups = table.getHeaderGroups();
 
-  /* ── Common th/td class ── */
   const thClass =
     "text-xs font-bold uppercase text-gray-400 tracking-wider px-4 py-3 text-left";
   const tdClass = "px-4 py-3";
@@ -139,12 +112,12 @@ export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
             Distance-based fee configuration
           </span>
         </div>
-        <div className=" bg-[#EFF4FF] flex items-center gap-6">
+        <div className="bg-[#EFF4FF] flex items-center gap-6">
           <div className="text-center">
             <div className="text-sm font-medium text-gray-800">
               {totalStudents} students
             </div>
-            <div className=" text-xs text-gray-400">Total Usage</div>
+            <div className="text-xs text-gray-400">Total Usage</div>
           </div>
           <div className="text-center">
             <div className="text-sm font-medium text-[#3525CD]">
@@ -155,11 +128,10 @@ export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
         </div>
       </div>
 
-      {/* Virtualised table — TableVirtuoso keeps the <table> structure intact */}
+      {/* Virtualised table */}
       <TableVirtuoso
-        style={{ height: Math.min(rows.length * 52 + 44, 420) }} // auto-size up to ~8 rows
+        style={{ height: Math.min(rows.length * 52 + 44, 420) }}
         totalCount={rows.length}
-        /* Sticky header rendered by react-virtuoso */
         fixedHeaderContent={() =>
           headerGroups.map((hg) => (
             <tr key={hg.id} className="bg-white border-b border-gray-100">
@@ -167,13 +139,15 @@ export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
                 <th key={header.id} className={thClass}>
                   {header.isPlaceholder
                     ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                 </th>
               ))}
             </tr>
           ))
         }
-        /* Row renderer */
         itemContent={(index) => {
           const row = rows[index];
           return row.getVisibleCells().map((cell) => (
@@ -182,7 +156,6 @@ export function TransportSlabsTable({ slabs, onEdit, onDelete }: Props) {
             </td>
           ));
         }}
-        /* Wrap rows in <tr> */
         components={{
           Table: ({ style, ...props }) => (
             <table

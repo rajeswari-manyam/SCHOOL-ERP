@@ -6,8 +6,13 @@ import { X, Search, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import typography from "@/styles/typography";
+import {
+  CONCESSION_TYPES,
+  FEE_TYPES,
+  DEFAULT_STUDENT,
+} from "../constants/fee.constants";
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
+
 
 const schema = z.object({
   student: z
@@ -29,36 +34,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const CONCESSION_TYPES = [
-  "Sibling Discount",
-  "Merit Scholarship",
-  "Financial Aid",
-  "Staff Ward",
-  "Sports Quota",
-  "Other",
-];
-
-const FEE_TYPES = [
-  { id: "tuition", label: "Tuition fee" },
-  { id: "examination", label: "Examination" },
-  { id: "transport", label: "Transport" },
-  { id: "activity", label: "Activity" },
-  { id: "library", label: "Library" },
-  { id: "all", label: "All fees" },
-];
-
-const DEFAULT_STUDENT = {
-  id: "1",
-  name: "Ravi Kumar",
-  class: "Class 10A",
-  admissionId: "2024098",
-  initials: "RK",
-};
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
   const [selectedStudent, setSelectedStudent] = useState<FormValues["student"]>(
@@ -87,7 +62,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
 
   const values = watch();
 
-  // ─── Handlers ───────────────────────────────────────────────────────────────
+ 
 
   const toggleFee = (feeId: string) => {
     const current = values.applicableFees || [];
@@ -116,7 +91,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
     setValue("student", null);
   };
 
-  // ─── UI ─────────────────────────────────────────────────────────────────────
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">

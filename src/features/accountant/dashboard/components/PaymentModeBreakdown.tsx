@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "../../utils/useAccountant";
+import { formatCurrency } from "../../../../utils/formatters";
 import typography from "@/styles/typography";
 import type { PaymentModeBreakdownItem } from "../types/dashboard.types";
 

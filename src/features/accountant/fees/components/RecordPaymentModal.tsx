@@ -2,43 +2,47 @@ import { useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, X, CreditCard, Banknote, Smartphone, CheckCircle2 } from "lucide-react";
+import {
+  Search, X, CreditCard, Banknote,
+  Smartphone, CheckCircle2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PaymentSuccessModal } from "./PaymentSuccessModal";
 import { mockStudents, feeOptions } from "../data/fee.data";
-interface Props {
-  onClose: () => void;
-}
+import type { RecordFeePaymentModalProps } from "../types/fees.types";
+import { PAYMENT_MODE_OPTIONS, type PaymentModeOption } from "../constants/fee.constants";
 
-/* ─── schema ─────────────────────────────────────────────────────────────── */
+
+
 const schema = z.object({
-  search: z.string().min(1),
-  paymentMode: z.enum(["UPI", "CASH", "CARD"]),
+  search:        z.string().min(1),
+  paymentMode:   z.enum(["UPI", "CASH", "CARD"]),
   transactionId: z.string().min(1),
-  receiptNo: z.string().min(1),
-  paymentDate: z.string().min(1),
+  receiptNo:     z.string().min(1),
+  paymentDate:   z.string().min(1),
   fees: z.array(
     z.object({
-      id: z.string(),
-      label: z.string(),
-      amount: z.number(),
+      id:       z.string(),
+      label:    z.string(),
+      amount:   z.number(),
       selected: z.boolean(),
-      overdue: z.boolean().optional(),
+      overdue:  z.boolean().optional(),
     })
   ),
 });
 
 type FormType = z.infer<typeof schema>;
-type PaymentMode = "UPI" | "CASH" | "CARD";
 
-const selectedStudent = mockStudents[0];
-const PAYMENT_MODES: { value: PaymentMode; label: string; Icon: React.ElementType }[] = [
-  { value: "UPI",  label: "UPI",  Icon: Smartphone },
-  { value: "CASH", label: "Cash", Icon: Banknote   },
-  { value: "CARD", label: "Card", Icon: CreditCard  },
-];
 
-/* ─── step label ─────────────────────────────────────────────────────────── */
+
+const PAYMENT_MODE_ICONS: Record<PaymentModeOption, React.ElementType> = {
+  UPI:  Smartphone,
+  CASH: Banknote,
+  CARD: CreditCard,
+};
+
+
+
 function StepLabel({ n, text }: { n: number; text: string }) {
   return (
     <div className="flex items-center gap-2 mb-2">
@@ -52,51 +56,54 @@ function StepLabel({ n, text }: { n: number; text: string }) {
   );
 }
 
-/* ─── component ──────────────────────────────────────────────────────────── */
-export function RecordFeePaymentModal({ onClose }: Props) {
-  const [showSuccess, setShowSuccess] = useState(false);
- const [studentSelected, setStudentSelected] = useState(true);  // mock: already selected
+
+
+export function RecordFeePaymentModal({ onClose }: RecordFeePaymentModalProps) {
+  const [showSuccess, setShowSuccess]       = useState(false);
+  const [studentSelected, setStudentSelected] = useState(true);
+
+  const selectedStudent = mockStudents[0];
 
   const { register, control, watch, setValue, handleSubmit } = useForm<FormType>({
     resolver: zodResolver(schema),
     defaultValues: {
-      search: "Ravi",
-      paymentMode: "UPI",
+      search:        "Ravi",
+      paymentMode:   "UPI",
       transactionId: "UPI123456789",
-      receiptNo: "RCP-2025-6848",
-      paymentDate: "2025-04-07",
-      fees: feeOptions.map((f) => ({ ...f, selected: false }))
+      receiptNo:     "RCP-2025-6848",
+      paymentDate:   "2025-04-07",
+      fees:          feeOptions.map((f) => ({ ...f, selected: false })),
     },
   });
 
   const fees        = watch("fees");
   const paymentMode = watch("paymentMode");
-const toggleFee = (id: string) => {
-  const updated = fees.map((f) =>
-    f.id === id ? { ...f, selected: !f.selected } : f
-  );
-  setValue("fees", updated);
-};
+
+  const toggleFee = (id: string) => {
+    setValue(
+      "fees",
+      fees.map((f) => f.id === id ? { ...f, selected: !f.selected } : f)
+    );
+  };
 
   const totalPayable = useMemo(
     () => fees.filter((f) => f.selected).reduce((s, f) => s + f.amount, 0),
     [fees]
   );
 
+  const hasOverdue = useMemo(() => fees.some((f) => f.overdue), [fees]);
+
   const onSubmit = (_data: FormType) => setShowSuccess(true);
-const hasOverdue = useMemo(
-  () => fees.some((f) => f.overdue),
-  [fees]
-);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* backdrop */}
+      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* modal */}
+      {/* Modal */}
       <div className="relative z-10 w-[520px] max-w-[95vw] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
 
-        {/* ── header ── */}
+        {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-900">Record Fee Payment</h2>
           <button
@@ -107,11 +114,8 @@ const hasOverdue = useMemo(
           </button>
         </div>
 
-        {/* ── body ── */}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
-        >
+        {/* ── Body ── */}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
           {/* ── 1. Search Student ── */}
           <div>
@@ -125,10 +129,8 @@ const hasOverdue = useMemo(
               />
             </div>
 
-            {/* student result card */}
             {studentSelected && (
               <div className="mt-2 border border-[#3525CD]/30 rounded-xl overflow-hidden">
-                {/* selected student header */}
                 <div className="flex items-center gap-2.5 px-3 py-2 bg-[#EEF0FF]">
                   <div className="w-6 h-6 rounded-full bg-[#3525CD]/20 flex items-center justify-center text-[10px] font-bold text-[#3525CD]">
                     RK
@@ -144,40 +146,31 @@ const hasOverdue = useMemo(
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-
-                {/* student detail row */}
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
                     RK
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 leading-tight">
-                      {selectedStudent?.name}
-                    </p>
-                    <p className="text-[11px] text-gray-400 leading-tight">
-                      {selectedStudent?.className} | {selectedStudent?.admissionNo}
-                    </p>
-                    <p className="text-[11px] text-gray-400 leading-tight">
-                      Parent: {selectedStudent?.parentName}
-                    </p>
+                    <p className="text-xs font-semibold text-gray-900 leading-tight">{selectedStudent?.name}</p>
+                    <p className="text-[11px] text-gray-400 leading-tight">{selectedStudent?.className} | {selectedStudent?.admissionNo}</p>
+                    <p className="text-[11px] text-gray-400 leading-tight">Parent: {selectedStudent?.parentName}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs font-bold text-red-600">
                       ₹{selectedStudent?.pendingAmount?.toLocaleString("en-IN")} pending
                     </p>
-     {hasOverdue && (
-  <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">
-    OVERDUE FEES AVAILABLE
-  </span>
-)}
-                   
+                    {hasOverdue && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">
+                        OVERDUE FEES AVAILABLE
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* ── 2. Select Fees to Pay ── */}
+          {/* ── 2. Select Fees ── */}
           <div>
             <StepLabel n={2} text="Select Fees to Pay" />
             <div className="space-y-2">
@@ -218,21 +211,24 @@ const hasOverdue = useMemo(
               name="paymentMode"
               render={({ field }) => (
                 <div className="flex gap-2">
-                  {PAYMENT_MODES.map(({ value, label, Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => field.onChange(value)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-colors ${
-                        field.value === value
-                          ? "bg-[#3525CD] text-white border-[#3525CD]"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      {label}
-                    </button>
-                  ))}
+                  {PAYMENT_MODE_OPTIONS.map(({ value, label }) => {
+                    const Icon = PAYMENT_MODE_ICONS[value];
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => field.onChange(value)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-colors ${
+                          field.value === value
+                            ? "bg-[#3525CD] text-white border-[#3525CD]"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             />
@@ -251,7 +247,7 @@ const hasOverdue = useMemo(
             </div>
           </div>
 
-          {/* ── Transaction ID + Receipt No (side by side) ── */}
+          {/* ── Transaction ID + Receipt No ── */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 block mb-1.5">
@@ -315,7 +311,7 @@ const hasOverdue = useMemo(
         </form>
       </div>
 
-      {/* Success modal */}
+      {/* ── Success Modal ── */}
       {showSuccess && (
         <PaymentSuccessModal
           receiptNo={watch("receiptNo")}

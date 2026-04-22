@@ -1,18 +1,9 @@
-// components/StatCard.tsx
+
 import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "../utils/ledger.utils";
+import { formatCurrency } from "../../../../utils/formatters";
 import { TrendingUp, Wallet, CreditCard, PiggyBank } from "lucide-react";
 import typography, { combineTypography } from "@/styles/typography";
-
-interface StatCardProps {
-  title: string;
-  amount: number;
-  subtitle?: string;
-  trend?: string;
-  icon: "income" | "expense" | "wallet" | "savings" | "payroll";
-  variant?: "green" | "red" | "blue" | "purple";
-  progress?: number;
-}
+import type { StatCardProps } from "../types/Ledger.types";
 
 const iconMap = {
   income: Wallet,

@@ -1,4 +1,4 @@
-// receipts.types.ts
+
 
 export type PaymentMode = "UPI" | "CASH" | "CHEQUE" | "ONLINE";
 

@@ -3,42 +3,32 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import type { TransportSlab } from "../types/fees.types";
 import { X } from "lucide-react";
 import typography from "@/styles/typography";
-/* ─────────────────────────────
-   Zod Schema (Zod v4)
-   - invalid_type_error was renamed to `error` in Zod v4
-   - Using z.number() + valueAsNumber on register() for react-hook-form compat
-───────────────────────────── */
-const transportSlabSchema = z.object({
-  name: z.string().min(1, "Slab name is required"),
-from: z.number().min(1, "Distance must be at least 1 km"),
-  to: z.number().nullable().optional(),
-  monthly: z.number().min(1, "Monthly fee is required"),
-}).refine(
-  (data) => data.to === null || data.to === undefined || data.to >= data.from,
-  {
-    message: "'To' must be greater than or equal to 'From'",
-    path: ["to"],
-  }
-);
+import type { SlabModalProps } from "../types/fees.types";
+
+
+
+const transportSlabSchema = z
+  .object({
+    name: z.string().min(1, "Slab name is required"),
+    from: z.number().min(1, "Distance must be at least 1 km"),
+    to: z.number().nullable().optional(),
+    monthly: z.number().min(1, "Monthly fee is required"),
+  })
+  .refine(
+    (data) => data.to === null || data.to === undefined || data.to >= data.from,
+    {
+      message: "'To' must be greater than or equal to 'From'",
+      path: ["to"],
+    }
+  );
+
 type FormData = z.infer<typeof transportSlabSchema>;
 
-/* ─────────────────────────────
-   Props
-───────────────────────────── */
-type Props = {
-  slab: TransportSlab | null;
-  isAdd: boolean;
-  onClose: () => void;
-  onSave: (data: Omit<TransportSlab, "id" | "students">) => void;
-};
 
-/* ─────────────────────────────
-   Component
-───────────────────────────── */
-export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
+
+export function SlabModal({ slab, isAdd, onClose, onSave }: SlabModalProps) {
   const {
     register,
     handleSubmit,
@@ -56,10 +46,10 @@ export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
 
   const monthly = watch("monthly");
 
- const annual = useMemo(() => {
-  if (isNaN(monthly)) return 0;
-  return monthly * 12;
-}, [monthly]);
+  const annual = useMemo(() => {
+    if (isNaN(monthly)) return 0;
+    return monthly * 12;
+  }, [monthly]);
 
   const onSubmit = (data: FormData) => {
     onSave({
@@ -72,7 +62,7 @@ export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-      <div className="bg-white w-full sm:w-[420px] rounded-t-2xl sm:rounded-xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto relative shadow-lg ">
+      <div className="bg-white w-full sm:w-[420px] rounded-t-2xl sm:rounded-xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto relative shadow-lg">
 
         {/* Close */}
         <button
@@ -100,7 +90,7 @@ export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
             <input
               {...register("name")}
               placeholder="e.g. Slab 1"
-              className=" bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
+              className="bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
             />
             {errors.name && (
               <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
@@ -115,9 +105,9 @@ export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
               </label>
               <input
                 type="number"
-            {...register("from", {
-  setValueAs: (v) => (v === "" ? 0 : Number(v)),
-})}
+                {...register("from", {
+                  setValueAs: (v) => (v === "" ? 0 : Number(v)),
+                })}
                 className="bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
               />
               {errors.from && (
@@ -135,7 +125,7 @@ export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
                   setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
                 })}
                 placeholder="∞"
-                className=" bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
+                className="bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
               />
               {errors.to && (
                 <p className="text-xs text-red-500 mt-1">{errors.to.message}</p>
@@ -150,10 +140,10 @@ export function SlabModal({ slab, isAdd, onClose, onSave }: Props) {
             </label>
             <input
               type="number"
-             {...register("monthly", {
-  setValueAs: (v) => (v === "" ? 0 : Number(v)),
-})}
-              className=" bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
+              {...register("monthly", {
+                setValueAs: (v) => (v === "" ? 0 : Number(v)),
+              })}
+              className="bg-[#EFF4FF] mt-1 w-full h-9 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-[#3525CD]"
             />
             {errors.monthly && (
               <p className="text-xs text-red-500 mt-1">{errors.monthly.message}</p>

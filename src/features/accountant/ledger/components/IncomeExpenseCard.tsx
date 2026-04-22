@@ -1,15 +1,9 @@
-// components/IncomeExpenseCards.tsx
 import { StatCard } from "./StatCard";
-
-interface IncomeExpenseCardsProps {
-  totalIncome: number;
-  feeCollection: number;
-  otherIncome: number;
-  totalExpense: number;
-  payrollExpense: number;
-  operatingExpenses: number;
-  type: "income" | "expense";
-}
+import type { IncomeExpenseCardsProps } from "../types/Ledger.types";
+import {
+  calculateIncomeBreakdown,
+  calculateExpenseBreakdown,
+} from "../utils/incomeExpenseCalculations";
 
 export const IncomeExpenseCards = ({
   totalIncome,
@@ -21,8 +15,11 @@ export const IncomeExpenseCards = ({
   type,
 }: IncomeExpenseCardsProps) => {
   if (type === "income") {
-    const feePercentage = totalIncome > 0 ? Math.round((feeCollection / totalIncome) * 100) : 0;
-    const otherPercentage = totalIncome > 0 ? Math.round((otherIncome / totalIncome) * 100) : 0;
+    const { feePercentage, otherPercentage } = calculateIncomeBreakdown(
+      totalIncome,
+      feeCollection,
+      otherIncome
+    );
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -53,8 +50,12 @@ export const IncomeExpenseCards = ({
     );
   }
 
-  const payrollPercentage = totalExpense > 0 ? Math.round((payrollExpense / totalExpense) * 100) : 0;
-  const operatingPercentage = totalExpense > 0 ? Math.round((operatingExpenses / totalExpense) * 100) : 0;
+  const { payrollPercentage, operatingPercentage } =
+    calculateExpenseBreakdown(
+      totalExpense,
+      payrollExpense,
+      operatingExpenses
+    );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

@@ -2,18 +2,10 @@ import { Plus, Save, FileText, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SalaryTable } from "./SalaryTable";
 import { EditSalaryModal } from "./EditSalaryModal";
-import { formatCurrency } from "../../utils/payroll.utils";
-import type { SalaryConfig, SalaryFormData } from "../../types/payroll.types";
+import { formatCurrency } from "../../../../../utils/formatters";
+
 import typography from "@/styles/typography";
-interface SalaryConfigTabProps {
-  salaryData: SalaryConfig[];
-  isEditing: boolean;
-  selectedStaff: SalaryConfig | null;
-  onEdit: (staff: SalaryConfig) => void;
-  onClose: () => void;
-  onSave: (id: string, data: SalaryFormData) => void;
-  onAdd: () => void;
-}
+import type { SalaryConfigTabProps } from "../../types/payroll.types";
 
 export const SalaryConfigTab = ({
   salaryData,

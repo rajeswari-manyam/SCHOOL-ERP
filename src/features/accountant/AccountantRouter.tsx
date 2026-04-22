@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import DashboardPage from "./dashboard/pages/DashBoard"
+import DashboardPage from "./dashboard/pages/DashboardPage"
 import AccountantLayout from "@/layouts/AccountantLayout";
 import FeeManagementPage from "./fees/pages/FeeManagementPage";
 import ReceiptsPage from "./receipts/pages/ReceiptsPage";

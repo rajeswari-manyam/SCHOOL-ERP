@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useDashboardData } from "../hooks/useDashboard";
 import { StatCardsSection } from "../components/StatCard";
-import { TransactionsTable } from "../components/TransactionTable";
+import { TransactionsTable } from "../components/TransactionsTable";
 import { PaymentModeTable } from "../components/PaymentModeTable";
-import { ReminderStatusCard } from "../components/RemainderStatus";
+import { ReminderStatusCard } from "../components/ReminderStatusCard";
 import { MonthlyCollectionTrend } from "../components/MontyCollectionTrend";
 import { TopPayingClasses } from "../components/TopPayingClasses";
-import { PaymentModeBreakdown } from "../components/PaymentBreakDown";
+import { PaymentModeBreakdown } from "../components/PaymentModeBreakdown";
 
 export default function DashboardPage() {
   const { stats, transactions, paymentModes, reminder } = useDashboardData();

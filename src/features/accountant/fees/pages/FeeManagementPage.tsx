@@ -1,50 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FeeTabs } from "../components/FeeTabs";
-import { FilterBar, type FilterValues } from "../components/FilterBar";
+import { FilterBar } from "../components/FilterBar";
 import { PendingFeesTable } from "../components/PendingFeeTable";
 import { useFeeData } from "../hooks/useFees";
 import { StatCard } from "../../../../components/ui/statcard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, Download } from "lucide-react";
 import typography from "@/styles/typography";
 import { RecordFeePaymentModal } from "../components/RecordPaymentModal";
-import { AllTransactionsTable } from "../components/AllTransactions";
+import { AllTransactionsTable } from "../components/AllTransactionTable";
 import { FeeStructure } from "../components/FeeStructure";
 import { TransportFees } from "../components/TransportFee";
 import { Concessions } from "../components/ConcessionTable";
-import { AddFeeConcessionModal } from "../components/AddConcession";
-import type { FeeRow } from "../types/fees.types";
-
-const stats = [
-  { label: "Total Pending", value: "₹1,18,000", color: "text-red-600" },
-  { label: "Collected Today", value: "₹24,500", color: "text-green-600" },
-  { label: "Reminders Sent", value: "47", color: "text-blue-600" },
-  { label: "Overdue 30+ days", value: "12 students", color: "text-amber-600" },
-];
-
-// ── helpers ────────────────────────────────────────────────────────────────
-
-function applyDueStatus(rows: FeeRow[], status: string): FeeRow[] {
-  switch (status) {
-    case "3-Day Warning":    return rows.filter((r) => r.daysOverdue > 0 && r.daysOverdue <= 3);
-    case "Due Today":        return rows.filter((r) => r.daysOverdue === 0);
-    case "Overdue":          return rows.filter((r) => r.daysOverdue > 0 && r.daysOverdue <= 30);
-    case "Severely Overdue": return rows.filter((r) => r.daysOverdue > 30);
-    default:                 return rows;
-  }
-}
-
-function applySortBy(rows: FeeRow[], sortBy: string): FeeRow[] {
-  const copy = [...rows];
-  switch (sortBy) {
-    case "Oldest First":         return copy.sort((a, b) => a.daysOverdue - b.daysOverdue);
-    case "Amount (High to Low)": return copy.sort((a, b) => b.amount - a.amount);
-    case "Amount (Low to High)": return copy.sort((a, b) => a.amount - b.amount);
-    default:                     return copy.sort((a, b) => b.daysOverdue - a.daysOverdue);
-  }
-}
-
-// ── component ──────────────────────────────────────────────────────────────
+import { AddFeeConcessionModal } from "../components/AddFeeConcessionModal";
+import { FEE_STATS } from "../constants/fee.constants";
+import { applyDueStatus, applySortBy } from "../utils/fee.utils";
+import type { FeeRow, FilterValues } from "../types/fees.types";
 
 export default function FeeManagementPage() {
   const [activeTab, setActiveTab] = useState("Pending Fees");
@@ -53,8 +24,8 @@ export default function FeeManagementPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showConcessionModal, setShowConcessionModal] = useState(false);
   const [showFeeHeadModal, setShowFeeHeadModal] = useState(false);
-  const [triggerAddSlab, setTriggerAddSlab] = useState(false);     // ✅ Transport: Add Slab
-  const [triggerEditSlabs, setTriggerEditSlabs] = useState(false);  // ✅ Transport: Edit Slabs
+  const [triggerAddSlab, setTriggerAddSlab] = useState(false);
+  const [triggerEditSlabs, setTriggerEditSlabs] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterValues | null>(null);
 
   const isPendingFees   = activeTab === "Pending Fees";
@@ -75,7 +46,6 @@ export default function FeeManagementPage() {
 
   const formattedMonth = currentDate.toLocaleString("default", { month: "long", year: "numeric" });
 
-  // ── filtered + sorted fee rows ───────────────────────────────────────────
   const filteredFees: FeeRow[] = (() => {
     if (!activeFilters) return fees;
 
@@ -107,23 +77,23 @@ export default function FeeManagementPage() {
         <AddFeeConcessionModal onClose={() => setShowConcessionModal(false)} />
       )}
 
-      {/* Stats — only on Pending Fees */}
       {!hideStandardHeader && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 px-4 md:px-6 pt-5 pb-2">
-          {stats.map((s) => (
-            <StatCard
-              key={s.label}
-              label={s.label}
-              value={<span className={`${s.color} font-bold text-sm md:text-base`}>{s.value}</span>}
-            />
-          ))}
+        {FEE_STATS.map((s) => (
+  <StatCard
+    key={s.label}
+    label={s.label}
+    value={<span className={`${s.color} font-bold text-sm md:text-base`}>{s.value}</span>}
+  />
+))}
+        
         </div>
       )}
 
       {/* Main Card */}
       <div className="mx-0 sm:mx-6 my-4 bg-white rounded-none sm:rounded-xl border-y sm:border border-gray-200 overflow-hidden">
 
-        {/* ── Header ── */}
+      
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-5 pt-5 pb-3 gap-4">
           <div>
             <h2 className={`${typography.heading.h6} font-medium text-gray-1000`}>
@@ -134,7 +104,7 @@ export default function FeeManagementPage() {
             </p>
           </div>
 
-          {/* Month nav + action buttons — Pending Fees & All Transactions */}
+       
           {showHeaderButtons && (
             <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
               <div className="flex items-center px-4 h-8 rounded-full gap-3 bg-[#3525CD] w-full sm:w-auto justify-between sm:justify-start">
@@ -188,7 +158,7 @@ export default function FeeManagementPage() {
             </div>
           )}
 
-          {/* ✅ Transport Fees buttons — top right */}
+          {/* Transport Fees buttons */}
           {isTransportFees && (
             <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
               <Button
@@ -259,7 +229,7 @@ export default function FeeManagementPage() {
             onEditSlabsHandled={() => setTriggerEditSlabs(false)}
           />
         )}
-        {isConcessions   && (
+        {isConcessions && (
           <Concessions onAddConcession={() => setShowConcessionModal(true)} />
         )}
 
@@ -267,17 +237,21 @@ export default function FeeManagementPage() {
         {isPendingFees && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 flex-wrap gap-3">
             <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="text-xs h-8 text-red-600 border-red-200 hover:bg-red-50">
-                📤 Send Reminder to All Overdue (29 students)
+              <Button variant="outline" size="sm" className="text-xs h-8 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5" />
+                Send Reminder to All Overdue (29 students)
               </Button>
-              <Button variant="outline" size="sm" className="text-xs h-8">
-                📤 Send Reminder Due Today (12 students)
+              <Button variant="outline" size="sm" className="text-xs h-8 flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5" />
+                Send Reminder Due Today (12 students)
               </Button>
-              <Button variant="outline" size="sm" className="text-xs h-8">
-                ⬇ Export CSV
+              <Button variant="outline" size="sm" className="text-xs h-8 flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5" />
+                Export CSV
               </Button>
-              <Button variant="outline" size="sm" className="text-xs h-8">
-                ⬇ Export Full Defaulters PDF
+              <Button variant="outline" size="sm" className="text-xs h-8 flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5" />
+                Export Full Defaulters PDF
               </Button>
             </div>
 

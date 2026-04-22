@@ -1,4 +1,4 @@
-// useReceiptsManager.ts
+
 
 import { useState, useRef, useEffect } from "react";
 import type { Receipt, Student, PaymentMode } from"../types/receipts.types";
@@ -8,17 +8,17 @@ export const useReceiptsManager = (
   onClose?: () => void,
   onSuccess?: (receiptNo: string) => void
 ) => {
-  // ─── Receipts List ─────────────────────────────────────────────────────────
+  
   const [receipts, setReceipts] = useState<Receipt[]>(RECEIPTS_DUMMY_DATA);
 
-  // ─── Student Search ────────────────────────────────────────────────────────
+ 
   const [query, setQuery]                   = useState("");
   const [suggestions, setSuggestions]       = useState<Student[]>([]);
   const [showDropdown, setShowDropdown]     = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const dropdownRef                         = useRef<HTMLDivElement>(null);
 
-  // ─── Form Fields ───────────────────────────────────────────────────────────
+ 
   const [feeHead, setFeeHead]           = useState("");
   const [paymentMode, setPaymentMode]   = useState<PaymentMode | null>(null);
   const [period, setPeriod]             = useState("");
@@ -26,11 +26,11 @@ export const useReceiptsManager = (
   const [paymentDate, setPaymentDate]   = useState("");
   const [receiptNo, setReceiptNo]       = useState("");
 
-  // ─── Submission State ──────────────────────────────────────────────────────
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess]       = useState(false);
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
+ 
   const canGenerate =
     !!selectedStudent &&
     !!feeHead &&
@@ -40,7 +40,7 @@ export const useReceiptsManager = (
     !!receiptNo &&
     !isSubmitting;
 
-  // ─── Close dropdown on outside click ──────────────────────────────────────
+ 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -51,7 +51,7 @@ export const useReceiptsManager = (
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ─── Handlers ──────────────────────────────────────────────────────────────
+ 
 
   const handleQueryChange = (val: string) => {
     setQuery(val);
@@ -109,17 +109,17 @@ export const useReceiptsManager = (
   };
 
   return {
-    // data
+  
     receipts,
 
-    // search
+  
     query,
     suggestions,
     showDropdown,
     selectedStudent,
     dropdownRef,
 
-    // form
+    
     feeHead,
     paymentMode,
     period,
@@ -127,12 +127,11 @@ export const useReceiptsManager = (
     paymentDate,
     receiptNo,
 
-    // status
     isSubmitting,
     isSuccess,
     canGenerate,
 
-    // setters
+   
     setFeeHead,
     setPaymentMode,
     setPeriod,
@@ -140,12 +139,12 @@ export const useReceiptsManager = (
     setPaymentDate,
     setReceiptNo,
 
-    // handlers
+ 
     handleQueryChange,
     handleSelectStudent,
     handleGenerate,
   };
 };
 
-// alias for backwards compatibility
+
 export const useReceipts = useReceiptsManager;

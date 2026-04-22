@@ -3,7 +3,7 @@ import { ChevronRight, ChevronDown, Check } from "lucide-react";
 
 import { ReportCard } from "../components/ReportCard";
 import { GenerateReportModal } from "../components/GenerateReportModal";
-import { RecentReportsTable } from "../components/ReportTable";
+import { RecentReportsTable } from "../components/RecentReportsTable";
 import { useReports } from "../hooks/useReports";
 import { useReportsStore } from "../store/useReportStore";
 import { Outlet } from "react-router-dom";

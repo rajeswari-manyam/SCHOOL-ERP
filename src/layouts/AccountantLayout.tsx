@@ -1,5 +1,3 @@
-
-
 import { Outlet } from "react-router-dom";
 import {
   FaThLarge,
@@ -12,10 +10,9 @@ import {
 
 import Sidebar from "@/components/common/Sidebar";
 import Topbar from "@/components/common/Topbar";
+import WhatsAppFAB from "@/components/ui/whatsappfab"; // ✅ ADD THIS
 
-/* ---------------------------------- */
-/* Sidebar Navigation (Accountant Only) */
-/* ---------------------------------- */
+
 const NavItem = [
   {
     label: "Dashboard",
@@ -49,9 +46,7 @@ const NavItem = [
   },
 ];
 
-/* ---------------------------------- */
-/* Layout */
-/* ---------------------------------- */
+
 export const AccountantLayout = () => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F4F6FA]">
@@ -62,7 +57,7 @@ export const AccountantLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 md:pl-72">
         
-        {/* Topbar (UNCHANGED) */}
+        {/* Topbar */}
         <Topbar />
 
         {/* Page Content */}
@@ -70,6 +65,9 @@ export const AccountantLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* ── WhatsApp FAB (same as ParentLayout) ── */}
+      <WhatsAppFAB />
     </div>
   );
 };
