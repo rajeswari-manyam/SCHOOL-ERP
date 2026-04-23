@@ -1,6 +1,6 @@
-// src/styles/typography.ts
+
 export const typography = {
-  // Logo
+ 
   logo: {
     title: "text-3xl sm:text-4xl font-bold",
     subtitle: "text-lg text-gray-500",
