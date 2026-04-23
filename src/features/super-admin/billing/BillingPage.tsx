@@ -6,6 +6,7 @@ import { RevenuePlanChart } from './components/RevenuePlanChart';
 import { TopInstitutionsTable } from './components/TopInstitutionsTable';
 import { InstitutionsTable } from './components/InstitutionsTable';
 import { RecordPaymentModal } from './components/RecordPaymentModal';
+
 import {
   useBillingOverview,
   useMRRHistory,
@@ -14,6 +15,9 @@ import {
 } from './hooks/useBilling';
 import type { TabKey } from './types/billing.types';
 import { Button } from '@/components/ui/button';
+import { PlansCard } from './components/PlansCard';
+import { plans } from './components/PlanConfig';
+import Invoice from './components/Invoice';
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'revenue',       label: 'Revenue Overview' },
   { key: 'subscriptions', label: 'Subscriptions' },
@@ -128,15 +132,22 @@ export const BillingPage: React.FC = () => {
         )}
 
         {tab === 'invoices' && (
-          <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
-            <p className="text-sm text-gray-400">Invoice management — connect your billing provider</p>
+         <div className="space-y-4">
+       <Invoice/>
           </div>
         )}
 
         {tab === 'plan-config' && (
-          <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
-            <p className="text-sm text-gray-400">Plan configuration settings</p>
-          </div>
+          <div className="space-y-4 flex gap-4">
+    {plans.map((plan) => (
+      <PlansCard
+        key={plan.name}
+        plan={plan}
+        onFeatureToggle={() => {}}
+        onFieldChange={() => {}}
+      />
+    ))}
+  </div>
         )}
       </div>
 

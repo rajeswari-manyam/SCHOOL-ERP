@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import type { InstitutionFilters, PlanType, PaymentStatus } from '../types/billing.types';
-import { Select } from '@/components/ui/select';
+
 import { Button } from '@/components/ui/button';
 interface BillingFilterBarProps {
   filters: InstitutionFilters;

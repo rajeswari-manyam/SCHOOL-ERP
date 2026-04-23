@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
-import AuditLogsTabs from "./components/AuditLogsTabs";
+// import AuditLogsTabs from "./components/AuditLogsTabs";
 import AuditLogsFilterBar from "./components/AuditLogsFilterBar";
 import AuditLogsTable from "./components/AuditLogsTable";
 import AuditLogDetailDrawer from "./components/AuditLogDetailDrawer";
 import Pagination from "../components/Pagination";
 import { useAuditLogs, useExportLogs } from "./hooks/useAuditLogs";
-import type { AuditLogsFilters, AuditLog, AuditTab } from "./types/audit-logs.types";
+import type { AuditLogsFilters, AuditLog } from "./types/audit-logs.types";
 import { Button } from "@/components/ui/button";
 const DEFAULT_FILTERS: AuditLogsFilters = {
   search: "",
@@ -17,8 +17,8 @@ const DEFAULT_FILTERS: AuditLogsFilters = {
 };
 
 const AuditLogsPage = () => {
-  const [activeTab, setActiveTab]   = useState<AuditTab>("api-logs");
-  const [filters, setFilters]       = useState<AuditLogsFilters>(DEFAULT_FILTERS);
+ 
+  const [filters, setFilters] = useState<AuditLogsFilters>(DEFAULT_FILTERS);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
   const { data, isLoading } = useAuditLogs(filters);
@@ -80,6 +80,7 @@ const AuditLogsPage = () => {
         log={selectedLog}
         onClose={() => setSelectedLog(null)}
       />
+      
     </div>
   );
 };

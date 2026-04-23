@@ -1,4 +1,4 @@
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import type { RevenuePoint } from "../types/dashboard.types";
 
 interface RevenueChartProps { data: RevenuePoint[]; currentMrr: number; }
@@ -6,7 +6,7 @@ interface RevenueChartProps { data: RevenuePoint[]; currentMrr: number; }
 const fmt = (v: number) => `₹${(v / 100000).toFixed(2)}L`;
 
 const RevenueChart = ({ data, currentMrr }: RevenueChartProps) => {
-  const latest = data[data.length - 1];
+  // const latest = data[data.length - 1];
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <h2 className="text-sm font-extrabold text-gray-900 mb-4">Revenue Growth (Lakhs)</h2>
@@ -26,7 +26,12 @@ const RevenueChart = ({ data, currentMrr }: RevenueChartProps) => {
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
             <YAxis hide />
             <Tooltip
-              formatter={(v: number) => [fmt(v), "MRR"]}
+              formatter={(v) => {
+                if (typeof v === "number") {
+                  return [fmt(v), "MRR"];
+                }
+                return ["", "MRR"];
+              }}
               contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
             />
             <Area

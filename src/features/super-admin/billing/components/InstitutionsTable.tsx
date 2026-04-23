@@ -45,24 +45,40 @@ export const InstitutionsTable: React.FC<InstitutionsTableProps> = ({
   const rows = data?.data ?? [];
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
 
+
   const toggleAll = () => {
-    if (allSelected) {
-      setSelected((s) => { const n = new Set(s); rows.forEach((r) => n.delete(r.id)); return n; });
-    } else {
-      setSelected((s) => { const n = new Set(s); rows.forEach((r) => n.add(r.id)); return n; });
-    }
+    setSelected((s) => {
+      const n = new Set(s);
+      if (allSelected) {
+        rows.forEach((r) => n.delete(r.id));
+      } else {
+        rows.forEach((r) => n.add(r.id));
+      }
+      return n;
+    });
   };
 
-  const toggleOne = (id: string) =>
-    setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleOne = (id: string) => {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
 
   const handleExport = () => exportCsv.mutate(filters);
 
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
+  // Compute 'now' only after mount to keep it pure
+  const [now, setNow] = React.useState<number>(0);
+  React.useEffect(() => {
+    setNow(Date.now());
+  }, []);
   const renewalColor = (iso: string) => {
-    const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+    const days = Math.ceil((new Date(iso).getTime() - now) / 86_400_000);
     if (days < 0) return 'text-red-500 dark:text-red-400';
     if (days <= 14) return 'text-orange-500 dark:text-orange-400';
     if (days <= 30) return 'text-yellow-600 dark:text-yellow-400';

@@ -30,9 +30,9 @@ const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTable
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="flex items-center justify-between px-4 py-4 border-b border-gray-50">
       <h2 className="text-sm font-extrabold text-gray-900">Schools Activity Today</h2>
-      <button onClick={onViewAll} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+      <Button onClick={onViewAll} variant="link" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
         View Detailed Stats
-      </button>
+      </Button>
     </div>
 
     {isLoading ? (

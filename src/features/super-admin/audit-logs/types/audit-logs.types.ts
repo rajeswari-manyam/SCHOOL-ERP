@@ -42,4 +42,4 @@ export interface AuditLogsResponse {
   pageSize: number;
 }
 
-export type AuditTab = "overview" | "security" | "api-logs";
+
