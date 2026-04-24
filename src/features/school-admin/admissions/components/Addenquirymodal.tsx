@@ -1,5 +1,9 @@
 import { useState } from "react";
 import type { AddEnquiryFormData, EnquirySource } from "../types/admissions.types";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const SOURCES: EnquirySource[] = ["Walk-in", "Phone Inquiry", "Social Media", "Referral", "Website", "Newspaper Ad"];
 const CLASSES = ["LKG", "UKG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
@@ -42,9 +46,6 @@ const InputField = ({
     {children}
   </div>
 );
-
-const inputCls =
-  "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50 placeholder:text-gray-400";
 
 const AddEnquiryModal = ({
   onClose,
@@ -103,22 +104,24 @@ const AddEnquiryModal = ({
               </span>
             </p>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+            className="text-gray-400 hover:text-gray-600 p-1"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {/* Form */}
         <div className="p-6 grid grid-cols-2 gap-4">
           {/* Left col */}
           <InputField label="Parent's Name" required>
-            <input
-              className={inputCls}
+            <Input
+              className="bg-gray-50"
               placeholder="Father or Mother name"
               value={form.parentName}
               onChange={e => set("parentName", e.target.value)}
@@ -127,22 +130,21 @@ const AddEnquiryModal = ({
           </InputField>
 
           <InputField label="Class Applying For" required>
-            <select
-              className={inputCls}
+            <Select
+              className="bg-gray-50"
+              placeholder="Select Class"
+              options={CLASSES.map(c => ({ label: `Class ${c}`, value: c }))}
               value={form.classApplied}
-              onChange={e => set("classApplied", e.target.value)}
-            >
-              <option value="">Select Class</option>
-              {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
-            </select>
+              onValueChange={value => set("classApplied", value)}
+            />
             {errors.classApplied && <p className="text-red-500 text-[10px]">{errors.classApplied}</p>}
           </InputField>
 
           <InputField label="Parent's Phone" required>
             <div className="flex gap-2">
               <span className="px-3 py-2.5 text-sm bg-gray-100 border border-gray-200 rounded-xl text-gray-600 font-semibold">+91</span>
-              <input
-                className={`${inputCls} flex-1`}
+              <Input
+                className="bg-gray-50 flex-1"
                 placeholder="98765 43210"
                 value={form.parentPhone}
                 onChange={e => set("parentPhone", e.target.value)}
@@ -156,9 +158,9 @@ const AddEnquiryModal = ({
           </InputField>
 
           <InputField label="Enquiry Date" required>
-            <input
+            <Input
               type="date"
-              className={inputCls}
+              className="bg-gray-50"
               value={form.enquiryDate}
               onChange={e => set("enquiryDate", e.target.value)}
             />
@@ -166,8 +168,8 @@ const AddEnquiryModal = ({
           </InputField>
 
           <InputField label="Parent's Email">
-            <input
-              className={inputCls}
+            <Input
+              className="bg-gray-50"
               placeholder="optional"
               value={form.parentEmail}
               onChange={e => set("parentEmail", e.target.value)}
@@ -175,20 +177,19 @@ const AddEnquiryModal = ({
           </InputField>
 
           <InputField label="Enquiry Source" required>
-            <select
-              className={inputCls}
+            <Select
+              className="bg-gray-50"
+              placeholder="Select Source"
+              options={SOURCES.map(s => ({ label: s, value: s }))}
               value={form.source}
-              onChange={e => set("source", e.target.value)}
-            >
-              <option value="">Select Source</option>
-              {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+              onValueChange={value => set("source", value)}
+            />
             {errors.source && <p className="text-red-500 text-[10px]">{errors.source}</p>}
           </InputField>
 
           <InputField label="Student's Name" required>
-            <input
-              className={inputCls}
+            <Input
+              className="bg-gray-50"
               placeholder="Child's full name"
               value={form.studentName}
               onChange={e => set("studentName", e.target.value)}
@@ -197,8 +198,8 @@ const AddEnquiryModal = ({
           </InputField>
 
           <InputField label="Referred By">
-            <input
-              className={inputCls}
+            <Input
+              className="bg-gray-50"
               placeholder="Name of person who referred"
               value={form.referredBy}
               onChange={e => set("referredBy", e.target.value)}
@@ -206,17 +207,17 @@ const AddEnquiryModal = ({
           </InputField>
 
           <InputField label="Date of Birth">
-            <input
+            <Input
               type="date"
-              className={inputCls}
+              className="bg-gray-50"
               value={form.dob}
               onChange={e => set("dob", e.target.value)}
             />
           </InputField>
 
           <InputField label="Notes">
-            <textarea
-              className={`${inputCls} resize-none`}
+            <Textarea
+              className="bg-gray-50 resize-none"
               rows={3}
               placeholder="Any specific requirements or queries"
               value={form.notes}
@@ -243,16 +244,16 @@ const AddEnquiryModal = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
-          <button
+          <Button
+            variant="outline"
             onClick={onClose}
-            className="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={saving}
-            className="px-5 py-2.5 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-60 flex items-center gap-2 shadow-sm"
+            className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2"
           >
             {saving ? (
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -262,7 +263,7 @@ const AddEnquiryModal = ({
               </svg>
             )}
             Add Enquiry & Send WhatsApp
-          </button>
+          </Button>
         </div>
       </div>
     </div>

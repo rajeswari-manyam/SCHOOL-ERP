@@ -1,74 +1,87 @@
-import axios from "@/config/axios";
+import {
+  mockTimetablePageResponse,
+  mockClass10Timetable,
+  mockExamTimetable,
+  mockSubjectOptions,
+  mockTeacherOptions,
+} from "../store";
 import type {
-  WeeklyTimetable,
-  ExamScheduleEntry,
+  TimetablePageResponse,
+  ClassTimetable,
+  ExamTimetable,
   EditPeriodPayload,
-  AddExamPayload,
-  TimetableConflict,
-  TeacherOption,
+  ExamEntry,
   SubjectOption,
+  TeacherOption,
 } from "../types/timetable.types";
 
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 export const timetableApi = {
-  getTimetable: async (classId: string): Promise<WeeklyTimetable> => {
-    const { data } = await axios.get(`/school-admin/timetable/${classId}`);
-    return data;
+  /** Full timetable page payload */
+  getTimetablePage: async (classId = "class-10"): Promise<TimetablePageResponse> => {
+    await delay(500);
+    return { ...mockTimetablePageResponse, selectedClassId: classId };
   },
 
-  getExamSchedule: async (classId: string): Promise<ExamScheduleEntry[]> => {
-    const { data } = await axios.get(`/school-admin/timetable/${classId}/exams`);
-    return data;
+  /** Weekly class timetable for a given class */
+  getClassTimetable: async (classId: string): Promise<ClassTimetable> => {
+    await delay(400);
+    return mockClass10Timetable;
   },
 
-  checkConflicts: async (
-    payload: Omit<EditPeriodPayload, "applyToAllWeeks">
-  ): Promise<TimetableConflict[]> => {
-    const { data } = await axios.post(
-      "/school-admin/timetable/check-conflicts",
-      payload
-    );
-    return data;
+  /** Exam timetable */
+  getExamTimetable: async (): Promise<ExamTimetable> => {
+    await delay(400);
+    return mockExamTimetable;
   },
 
-  updatePeriod: async (payload: EditPeriodPayload): Promise<WeeklyTimetable> => {
-    const { data } = await axios.patch(
-      `/school-admin/timetable/${payload.classId}/period`,
-      payload
-    );
-    return data;
+  /** Save an edited period */
+  savePeriod: async (payload: EditPeriodPayload): Promise<{ success: boolean }> => {
+    await delay(800);
+    console.log("Saving period:", payload);
+    return { success: true };
   },
 
-  addExam: async (payload: AddExamPayload): Promise<ExamScheduleEntry> => {
-    const { data } = await axios.post("/school-admin/timetable/exams", payload);
-    return data;
+  /** Add an exam entry */
+  addExam: async (entry: Omit<ExamEntry, "id" | "notifyStatus">): Promise<ExamEntry> => {
+    await delay(600);
+    return { ...entry, id: `E${Date.now()}`, notifyStatus: "PENDING" };
   },
 
-  updateExam: async (
-    id: string,
-    payload: Partial<AddExamPayload>
-  ): Promise<ExamScheduleEntry> => {
-    const { data } = await axios.patch(`/school-admin/timetable/exams/${id}`, payload);
-    return data;
+  /** Delete an exam entry */
+  deleteExam: async (examId: string): Promise<{ success: boolean }> => {
+    await delay(400);
+    return { success: true };
   },
 
-  deleteExam: async (id: string): Promise<void> => {
-    await axios.delete(`/school-admin/timetable/exams/${id}`);
+  /** Toggle notify-parents for exam timetable */
+  toggleNotifyParents: async (enabled: boolean): Promise<{ success: boolean }> => {
+    await delay(300);
+    return { success: true };
   },
 
-  resendNotification: async (classId: string): Promise<{ sentTo: number }> => {
-    const { data } = await axios.post(
-      `/school-admin/timetable/${classId}/exams/notify`
-    );
-    return data;
+  /** Resend exam notification */
+  resendNotification: async (): Promise<{ success: boolean; sentCount: number }> => {
+    await delay(700);
+    return { success: true, sentCount: 66 };
   },
 
-  getTeachers: async (): Promise<TeacherOption[]> => {
-    const { data } = await axios.get("/school-admin/teachers");
-    return data;
+  /** Print timetable as PDF blob */
+  printTimetable: async (classId: string): Promise<Blob> => {
+    await delay(900);
+    return new Blob([`Timetable PDF for ${classId}`], { type: "application/pdf" });
   },
 
-  getSubjects: async (): Promise<SubjectOption[]> => {
-    const { data } = await axios.get("/school-admin/subjects");
-    return data;
+  /** Subject dropdown options */
+  getSubjectOptions: async (): Promise<SubjectOption[]> => {
+    await delay(200);
+    return mockSubjectOptions;
+  },
+
+  /** Teacher dropdown options */
+  getTeacherOptions: async (): Promise<TeacherOption[]> => {
+    await delay(200);
+    return mockTeacherOptions;
   },
 };

@@ -1,4 +1,6 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import type { FeeHead, GradeFeeStructure, TransportSlab, FeeQuickInsights } from "../types/settings.types";
 import { formatCurrency } from "../utils/Settings.utils";
 
@@ -25,41 +27,43 @@ export const FeeConfigTab: React.FC<Props> = ({
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Fee Heads</h2>
-          <button className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+          <Button variant="ghost" className="text-indigo-600 font-medium flex items-center gap-1 text-sm">
             + Add Fee Head
-          </button>
+          </Button>
         </div>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100">
-              {["Fee Name", "Code", "Mandatory", "Taxability", "Status", "Action"].map(h => (
-                <th key={h} className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide pr-4">{h}</th>
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              {["Fee Name", "Code", "Mandatory", "Taxability", "Status", "Action"].map((h) => (
+                <TableHead key={h}>{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {feeHeads.map(head => (
-              <tr key={head.id} className="border-b border-gray-50 last:border-0">
-                <td className="py-3 text-sm font-medium text-gray-900 pr-4">{head.feeName}</td>
-                <td className="py-3 text-sm text-gray-600 pr-4">{head.code}</td>
-                <td className="py-3 pr-4">
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {feeHeads.map((head) => (
+              <TableRow key={head.id}>
+                <TableCell className="font-medium text-gray-900">{head.feeName}</TableCell>
+                <TableCell className="text-gray-600">{head.code}</TableCell>
+                <TableCell>
                   <span className={`px-2 py-0.5 rounded text-xs font-semibold ${head.mandatory ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600"}`}>
                     {head.mandatory ? "MANDATORY" : "OPTIONAL"}
                   </span>
-                </td>
-                <td className="py-3 text-sm text-gray-600 pr-4">{head.taxable ? "Taxable" : "Not Taxable"}</td>
-                <td className="py-3 pr-4">
+                </TableCell>
+                <TableCell className="text-gray-600">{head.taxable ? "Taxable" : "Not Taxable"}</TableCell>
+                <TableCell>
                   <span className="flex items-center gap-1.5 text-sm text-gray-700">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> {head.status}
                   </span>
-                </td>
-                <td className="py-3">
-                  <button className="text-gray-400 hover:text-gray-600 text-lg">⋮</button>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                    ⋮
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Fee Structure */}
@@ -69,54 +73,55 @@ export const FeeConfigTab: React.FC<Props> = ({
             <h2 className="text-lg font-semibold text-gray-900">Fee Structure</h2>
             <p className="text-sm text-gray-500 mt-0.5">Configure installments and amounts per grade.</p>
           </div>
-          <button
+          <Button
             onClick={onSaveStructure}
             disabled={saving}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-60"
+            className="rounded-lg text-sm font-medium"
+            size="sm"
           >
             Save Structure
-          </button>
+          </Button>
         </div>
 
         {/* Grade Tabs */}
         <div className="flex gap-1 mb-5 border-b border-gray-100">
-          {gradeStructures.map(g => (
-            <button
+          {gradeStructures.map((g) => (
+            <Button
               key={g.grade}
+              variant={selectedGrade === g.grade ? "default" : "ghost"}
+              size="sm"
               onClick={() => onSelectGrade(g.grade)}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${selectedGrade === g.grade
-                ? "bg-indigo-600 text-white"
-                : "text-gray-600 hover:text-gray-900"}`}
+              className={`rounded-t-lg ${selectedGrade === g.grade ? "bg-indigo-600 text-white" : "text-gray-600 hover:text-gray-900"}`}
             >
               {g.grade}
-            </button>
+            </Button>
           ))}
         </div>
 
         {currentGrade && (
           <>
-            <table className="w-full mb-4">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {["Fee Component", "Amount", "Frequency", "Due Day", "Total Annual"].map(h => (
-                    <th key={h} className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide pr-4">{h}</th>
+            <Table className="w-full mb-4">
+              <TableHeader>
+                <TableRow>
+                  {["Fee Component", "Amount", "Frequency", "Due Day", "Total Annual"].map((h) => (
+                    <TableHead key={h}>{h}</TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {currentGrade.components.map(comp => (
-                  <tr key={comp.id} className="border-b border-gray-50 last:border-0">
-                    <td className="py-3 text-sm font-medium text-gray-900 pr-4">{comp.name}</td>
-                    <td className="py-3 text-sm text-gray-700 pr-4">{formatCurrency(comp.amount)}</td>
-                    <td className="py-3 pr-4">
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentGrade.components.map((comp) => (
+                  <TableRow key={comp.id}>
+                    <TableCell className="font-medium text-gray-900">{comp.name}</TableCell>
+                    <TableCell className="text-gray-700">{formatCurrency(comp.amount)}</TableCell>
+                    <TableCell>
                       <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs">{comp.frequency}</span>
-                    </td>
-                    <td className="py-3 text-sm text-gray-700 pr-4">{comp.dueDay}</td>
-                    <td className="py-3 text-sm font-semibold text-indigo-700">{formatCurrency(comp.totalAnnual)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="text-gray-700">{comp.dueDay}</TableCell>
+                    <TableCell className="font-semibold text-indigo-700">{formatCurrency(comp.totalAnnual)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
             <div className="flex justify-end border-t border-gray-100 pt-3">
               <div className="text-sm text-gray-500">
                 Total {currentGrade.grade} Fees:{" "}
@@ -132,34 +137,34 @@ export const FeeConfigTab: React.FC<Props> = ({
         <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Transport Fee Slabs</h2>
-            <button className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+            <Button variant="ghost" className="text-indigo-600 font-medium flex items-center gap-1 text-sm">
               + Add Slab
-            </button>
+            </Button>
           </div>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                {["Slab Name", "Range", "Rate (Mo)", "Students"].map(h => (
-                  <th key={h} className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide pr-4">{h}</th>
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow>
+                {["Slab Name", "Range", "Rate (Mo)", "Students"].map((h) => (
+                  <TableHead key={h}>{h}</TableHead>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {transportSlabs.map(slab => (
-                <tr key={slab.id} className="border-b border-gray-50 last:border-0">
-                  <td className="py-3 text-sm font-medium text-gray-900 pr-4">{slab.slabName}</td>
-                  <td className="py-3 text-sm text-gray-700 pr-4">
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transportSlabs.map((slab) => (
+                <TableRow key={slab.id}>
+                  <TableCell className="font-medium text-gray-900">{slab.slabName}</TableCell>
+                  <TableCell className="text-gray-700">
                     {slab.rangeFrom}–{slab.rangeTo !== null ? slab.rangeTo : "∞"} km
-                  </td>
-                  <td className="py-3 pr-4">
+                  </TableCell>
+                  <TableCell>
                     <div className="text-sm font-semibold text-gray-900">{formatCurrency(slab.rateMonthly)}</div>
                     <div className="text-xs text-gray-500">{formatCurrency(slab.rateAnnual)} yr</div>
-                  </td>
-                  <td className="py-3 text-sm text-gray-700">{slab.studentCount}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-gray-700">{slab.studentCount}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* Quick Insights Sidebar */}

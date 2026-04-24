@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface SuspendModalProps {
   schoolId: string;
@@ -16,18 +19,17 @@ export const SuspendModal = ({ schoolId, schoolName, onConfirm, onClose }: Suspe
         <h3 className="text-lg font-bold mb-4">Suspend School</h3>
         <p className="mb-4">Are you sure you want to suspend <strong>{schoolName}</strong>?</p>
         <div className="mb-4">
-          <label>Reason (optional)</label>
-          <textarea
+          <Label>Reason (optional)</Label>
+          <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="input w-full"
             rows={3}
             placeholder="Enter reason for suspension"
           />
         </div>
         <div className="flex gap-2 justify-end">
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-danger" onClick={onConfirm}>Suspend</button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="destructive" onClick={onConfirm}>Suspend</Button>
         </div>
       </div>
     </div>

@@ -1,119 +1,101 @@
+// ─── Enums / Unions ─────────────────────────────────────────────────────────────
 export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT";
 
-export interface Period {
-  periodNumber: number;
-  startTime: string; // "8:30 AM"
-  endTime: string;   // "9:15 AM"
+export type SlotKind = "PERIOD" | "BREAK" | "LUNCH" | "FREE";
+
+export type ConflictSeverity = "ERROR" | "WARNING" | "INFO";
+
+export type ExamNotifyStatus = "SENT" | "PENDING" | "FAILED";
+
+// ─── Core Period ────────────────────────────────────────────────────────────────
+export interface PeriodCell {
   subject: string;
-  teacher: string;
+  teacherName: string;
   room?: string;
+  isConflict?: boolean;
 }
 
-export interface TimetableCell {
-  subject: string;
-  teacher: string;
-  room?: string;
-  isFree?: boolean;
+export interface TimetableSlot {
+  kind: SlotKind;
+  periodNo?: number;        // e.g. 1 → "P1"
+  startTime: string;        // "08:30"
+  endTime: string;          // "09:15"
+  label?: string;           // for BREAK / LUNCH rows e.g. "BREAK 10:45–11:00"
+  // keyed by DayOfWeek for PERIOD rows
+  cells?: Partial<Record<DayOfWeek, PeriodCell>>;
 }
 
-export interface WeeklyTimetable {
-  classId: string;
-  className: string;  // "10A"
-  classTeacher: string;
-  currentPeriod?: string; // "Period 4 (Social)"
-  periods: PeriodRow[];
-  breaks: BreakRow[];
-  resourceLoad?: number;    // percentage
-  substitutions?: number;
-  overlapWarning?: string;
+// ─── Class Timetable ────────────────────────────────────────────────────────────
+export interface ClassTimetable {
+  classId: string;          // "class-10"
+  classLabel: string;       // "Class 10"
+  section: string;          // "A"
+  classTeacher: string;     // "Venkat R"
+  academicYear: string;     // "2024-25"
+  currentPeriodLabel?: string; // "CURRENT: PERIOD 4 (SOCIAL)"
+  slots: TimetableSlot[];
+  resourceLoad: number;     // percentage 0–100
+  substitutionCount: number;
+  conflicts: TimetableConflict[];
 }
 
-export interface PeriodRow {
-  periodNumber: number;
-  label: string;   // "P1"
-  startTime: string;
-  endTime: string;
-  days: Partial<Record<DayOfWeek, TimetableCell>>;
-}
-
-export interface BreakRow {
-  type: "BREAK" | "LUNCH";
-  label: string;   // "BREAK (10:45–11:00)"
-  afterPeriod: number;
-}
-
-export interface ExamScheduleEntry {
+// ─── Conflict ───────────────────────────────────────────────────────────────────
+export interface TimetableConflict {
   id: string;
-  subject: string;
-  classId: string;
-  className: string;
-  date: string;   // "10 Apr, 2025"
-  day: string;    // "Thursday"
-  startTime: string;
-  endTime: string;
-  venue: string;
-  notified: boolean;
+  severity: ConflictSeverity;
+  message: string;          // "Physics Lab conflict on Thursday"
+  day?: DayOfWeek;
+  periodNo?: number;
 }
 
+// ─── Edit Period Modal ───────────────────────────────────────────────────────────
 export interface EditPeriodPayload {
   classId: string;
-  periodNumber: number;
   day: DayOfWeek;
+  periodNo: number;
   subject: string;
-  teacherId: string;
-  room?: string;
+  teacherName: string;
+  room: string;
   applyToAllWeeks: boolean;
 }
 
-export interface TimetableFilters {
-  classId: string;
+// ─── Exam Timetable ─────────────────────────────────────────────────────────────
+export interface ExamEntry {
+  id: string;
+  subject: string;
+  className: string;        // "10A"
+  date: string;             // ISO date string
+  startTime: string;        // "09:00"
+  endTime: string;          // "12:00"
+  venue: string;            // "Room 10A"
+  notifyStatus: ExamNotifyStatus;
 }
 
-export interface TimetableConflict {
-  type: "TEACHER_OVERLAP" | "ROOM_OVERLAP";
-  message: string;
-  teacherName?: string;
-  conflictingClass?: string;
-  conflictingPeriod?: number;
-  conflictingDay?: DayOfWeek;
+export interface ExamTimetable {
+  title: string;            // "Exam Timetable — April 2025"
+  subtitle: string;         // "Final Assessment Schedule"
+  notifyParentsEnabled: boolean;
+  lastNotificationSentAt?: string; // ISO date
+  notificationRecipientsCount?: number;
+  entries: ExamEntry[];
+}
+
+// ─── Full page response ─────────────────────────────────────────────────────────
+export interface TimetablePageResponse {
+  classTabs: { id: string; label: string }[];
+  selectedClassId: string;
+  classTimetable: ClassTimetable;
+  examTimetable: ExamTimetable;
+}
+
+// ─── Available subjects & teachers (for dropdowns) ──────────────────────────────
+export interface SubjectOption {
+  value: string;
+  label: string;
 }
 
 export interface TeacherOption {
-  id: string;
-  name: string;
-}
-
-export interface SubjectOption {
-  id: string;
-  name: string;
-}
-
-export interface AddExamPayload {
-  subject: string;
-  classId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  venue: string;
-  notifyParents: boolean;
-}
-
-export interface TimetableCreateInput {
-  classId: string;
-  periods: PeriodCreateInput[];
-  breaks: BreakCreateInput[];
-}
-
-export interface PeriodCreateInput {
-  periodNumber: number;
-  startTime: string;
-  endTime: string;
-  subject: string;
-  teacher: string;
-  room?: string;
-}
-
-export interface BreakCreateInput {
-  type: "BREAK" | "LUNCH";
-  afterPeriod: number;
+  value: string;
+  label: string;
+  conflictWarning?: string; // "Venkat R is assigned to Class 9A on Monday Period 1."
 }

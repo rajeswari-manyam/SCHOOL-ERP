@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { StudentAttendanceDay } from "../types/student.types";
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -45,13 +46,13 @@ const StudentAttendanceTab = ({ attendance }: { attendance: StudentAttendanceDay
       {/* Calendar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+          <Button variant="ghost" size="sm" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
+          </Button>
           <h3 className="font-bold text-gray-800">April 2025</h3>
-          <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+          <Button variant="ghost" size="sm" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+          </Button>
         </div>
 
         {/* Legend */}

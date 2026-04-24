@@ -1,5 +1,8 @@
 import React from "react";
 import type { FeeStatusFilter, SortOption } from "../types/fees.types";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 interface PendingFeesFilterBarProps {
   searchQuery: string;
@@ -36,66 +39,67 @@ export function PendingFeesFilterBar({
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-48">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-          <input
-            type="text"
+          <Input
             placeholder="Search student/adm no."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full pl-9"
           />
         </div>
-        <select
+        <Select
           value={classFilter}
           onChange={(e) => onClassChange(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="text-sm"
         >
           {CLASSES.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select
+        </Select>
+        <Select
           value={sectionFilter}
           onChange={(e) => onSectionChange(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="text-sm"
         >
           {SECTIONS.map((s) => <option key={s}>{s}</option>)}
-        </select>
+        </Select>
       </div>
 
       {/* Status tabs */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-gray-500 font-medium">STATUS:</span>
         {STATUS_OPTIONS.map((s) => (
-          <button
+          <Button
             key={s}
+            variant={statusFilter === s ? "default" : "outline"}
+            size="sm"
             onClick={() => onStatusChange(s)}
-            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+            className={`text-xs px-3 py-1.5 font-medium transition-colors ${
               statusFilter === s
                 ? "bg-indigo-600 text-white"
                 : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-300"
             }`}
           >
             {s}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Fee head + sort */}
       <div className="flex gap-2 flex-wrap">
-        <select
+        <Select
           value={feeHeadFilter}
           onChange={(e) => onFeeHeadChange(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="text-sm"
         >
           {FEE_HEADS.map((f) => <option key={f}>{f}</option>)}
-        </select>
+        </Select>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 font-medium">SORT:</span>
-          <select
+          <Select
             value={sortOption}
             onChange={(e) => onSortChange(e.target.value as SortOption)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="text-sm"
           >
             {SORT_OPTIONS.map((o) => <option key={o}>{o}</option>)}
-          </select>
+          </Select>
         </div>
       </div>
     </div>

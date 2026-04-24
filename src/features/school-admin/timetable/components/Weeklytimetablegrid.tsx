@@ -1,215 +1,161 @@
-import type { WeeklyTimetable, DayOfWeek, PeriodRow } from "../types/timetable.types";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { ClassTimetable, DayOfWeek } from "../types/timetable.types";
+import {
+  DAY_ORDER,
+  DAY_LABELS,
+  getPeriodLabel,
+  getTimeRange,
+  getSubjectColor,
+  SLOT_KIND_STYLES,
+  getLoadBarColor,
+  CONFLICT_SEVERITY_STYLES,
+} from "../utils/Timetable.utils";
 
-interface WeeklyTimetableGridProps {
-  timetable: WeeklyTimetable;
-  isLoading: boolean;
-  onCellClick: (period: PeriodRow, day: DayOfWeek) => void;
+interface Props {
+  timetable: ClassTimetable;
+  onEditCell: (day: DayOfWeek, periodNo: number, subject: string, teacherName: string) => void;
 }
 
-const DAYS: DayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-const HeaderCell = ({ label }: { label: string }) => (
-  <th className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-3 py-3 text-left">
-    {label}
-  </th>
-);
-
-const SkeletonRow = () => (
-  <tr className="border-b border-gray-50">
-    {[...Array(8)].map((_, i) => (
-      <td key={i} className="px-3 py-4">
-        <div className="animate-pulse space-y-1.5">
-          <div className="h-3 w-16 rounded bg-gray-100" />
-          <div className="h-2.5 w-10 rounded bg-gray-100" />
-        </div>
-      </td>
-    ))}
-  </tr>
-);
-
-const WeeklyTimetableGrid = ({ timetable, isLoading, onCellClick }: WeeklyTimetableGridProps) => {
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-        <table className="w-full min-w-[700px]">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <HeaderCell label="Period" />
-              {DAYS.map((d) => <HeaderCell key={d} label={d} />)}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  // Merge periods and breaks into display rows
-  const rows: Array<{ type: "period"; period: PeriodRow } | { type: "break"; label: string; bgClass: string }> = [];
-
-  for (const period of timetable.periods) {
-    rows.push({ type: "period", period });
-    const brk = timetable.breaks.find((b) => b.afterPeriod === period.periodNumber);
-    if (brk) {
-      rows.push({
-        type: "break",
-        label: brk.label,
-        bgClass: brk.type === "LUNCH" ? "bg-amber-50" : "bg-gray-50",
-      });
-    }
-  }
+const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell }) => {
+  const { slots, resourceLoad, substitutionCount, conflicts, currentPeriodLabel } = timetable;
+  const loadColor = getLoadBarColor(resourceLoad);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-      <div className="flex items-center justify-between px-5 pt-5 pb-4">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Card header */}
+      <div className="flex items-start justify-between p-5 pb-3">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">
-            Class {timetable.className} — Weekly Timetable
+          <h2 className="text-base font-bold text-gray-900">
+            {timetable.classLabel}{timetable.section} — Weekly Timetable
           </h2>
-          <p className="text-sm text-gray-400 mt-0.5">Class Teacher: {timetable.classTeacher}</p>
+          <p className="text-xs text-gray-400 mt-0.5">Class Teacher: {timetable.classTeacher}</p>
         </div>
-        {timetable.currentPeriod && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Current: {timetable.currentPeriod}
-            </span>
-          </div>
+        {currentPeriodLabel && (
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            {currentPeriodLabel}
+          </span>
         )}
       </div>
 
-      <table className="w-full min-w-[700px]">
-        <thead>
-          <tr className="border-b border-gray-100">
-            <th className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-5 py-3 text-left w-28">
-              Periods
-            </th>
-            {DAYS.map((d) => <HeaderCell key={d} label={d} />)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, idx) => {
-            if (row.type === "break") {
+      {/* Grid */}
+      <div className="overflow-x-auto">
+        <Table className="w-full text-sm border-collapse">
+          <TableHeader>
+            <TableRow className="border-b border-gray-100">
+              <TableHead className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-24">
+                Periods
+              </TableHead>
+              {DAY_ORDER.map((day) => (
+                <TableHead key={day} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {DAY_LABELS[day]}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {slots.map((slot, idx) => {
+              if (slot.kind === "BREAK" || slot.kind === "LUNCH") {
+                const style = SLOT_KIND_STYLES[slot.kind];
+                return (
+                  <TableRow key={idx} className={`border-b border-gray-100 ${style}`}>
+                    <TableCell colSpan={7} className="text-center py-2.5 px-4 tracking-[0.25em]">
+                      {slot.label}
+                    </TableCell>
+                  </TableRow>
+                );
+              }
+
+              const periodLabel = getPeriodLabel(slot);
+              const timeLabel = getTimeRange(slot);
+
               return (
-                <tr key={`break-${idx}`} className={row.bgClass}>
-                  <td colSpan={7} className="py-2">
-                    <p className="text-center text-[11px] font-bold tracking-[0.25em] uppercase text-gray-400 py-0.5">
-                      {row.label}
-                    </p>
-                  </td>
-                </tr>
-              );
-            }
+                <TableRow key={idx} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors group">
+                  {/* Period + time column */}
+                  <TableCell className="px-4 py-3 align-top">
+                    <span className="text-xs font-bold text-indigo-600">{periodLabel}</span>
+                    <br />
+                    <span className="text-xs text-gray-400">{timeLabel}</span>
+                  </TableCell>
 
-            const { period } = row;
-            return (
-              <tr key={period.periodNumber} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/40 transition-colors">
-                {/* Period label */}
-                <td className="px-5 py-4">
-                  <p className="text-sm font-bold text-indigo-600">{period.label}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{period.startTime}</p>
-                </td>
-
-                {/* Day cells */}
-                {DAYS.map((day) => {
-                  const cell = period.days[day];
-                  if (!cell) {
+                  {/* Subject cells */}
+                  {DAY_ORDER.map((day) => {
+                    const cell = slot.cells?.[day];
+                    if (!cell) {
+                      return <TableCell key={day} className="px-4 py-3 text-gray-300 text-xs">—</TableCell>;
+                    }
                     return (
-                      <td
+                      <TableCell
                         key={day}
-                        onClick={() => onCellClick(period, day)}
-                        className="px-3 py-4 cursor-pointer group"
+                        className="px-4 py-3 cursor-pointer"
+                        onClick={() =>
+                          slot.periodNo != null &&
+                          onEditCell(day, slot.periodNo, cell.subject, cell.teacherName)
+                        }
                       >
-                        <span className="text-xs text-gray-300 group-hover:text-indigo-400 transition-colors">—</span>
-                      </td>
+                        <p className={`font-semibold text-sm leading-tight ${getSubjectColor(cell.subject)}`}>
+                          {cell.subject}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">{cell.teacherName}</p>
+                      </TableCell>
                     );
-                  }
-                  if (cell.isFree) {
-                    return (
-                      <td key={day} className="px-3 py-4">
-                        <span className="text-xs text-gray-400 italic">Free Period</span>
-                      </td>
-                    );
-                  }
-                  return (
-                    <td
-                      key={day}
-                      onClick={() => onCellClick(period, day)}
-                      className="px-3 py-4 cursor-pointer group"
-                    >
-                      <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                        {cell.subject}
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{cell.teacher}</p>
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  })}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
-      {/* Bottom stats row */}
-      {(timetable.resourceLoad !== undefined || timetable.substitutions !== undefined || timetable.overlapWarning) && (
-        <div className="border-t border-gray-100 px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {timetable.resourceLoad !== undefined && (
-            <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <svg width="16" height="16" fill="none" stroke="#6366f1" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Resource Load</span>
-              </div>
-              <p className="text-2xl font-extrabold text-gray-900">{timetable.resourceLoad}%</p>
-              <p className="text-xs text-gray-400">Classroom occupancy for Grade 10</p>
-              <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-indigo-600 transition-all"
-                  style={{ width: `${timetable.resourceLoad}%` }}
-                />
-              </div>
-            </div>
-          )}
-          {timetable.substitutions !== undefined && (
-            <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <svg width="16" height="16" fill="none" stroke="#6366f1" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-                  <line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" />
-                </svg>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Substitution</span>
-              </div>
-              <p className="text-2xl font-extrabold text-gray-900">{timetable.substitutions}</p>
-              <p className="text-xs text-gray-400">Periods currently need substitute teachers</p>
-              <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 text-left">
-                Assign Now →
-              </button>
-            </div>
-          )}
-          {timetable.overlapWarning && (
-            <div className="bg-red-50 rounded-xl p-4 flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-                  <svg width="16" height="16" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                    <line x1="9" y1="15" x2="15" y2="15" /><line x1="12" y1="12" x2="12" y2="18" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-red-800">Overlap Detected</p>
-                  <p className="text-xs text-red-600">{timetable.overlapWarning}</p>
-                </div>
-              </div>
-            </div>
-          )}
+      {/* Footer stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 border-t border-gray-100">
+        {/* Resource load */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-base">👥</span>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Resource Load</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{resourceLoad}%</p>
+          <p className="text-xs text-gray-400">Classroom occupancy for Grade 10</p>
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${loadColor}`}
+              style={{ width: `${resourceLoad}%` }}
+            />
+          </div>
         </div>
-      )}
+
+        {/* Substitution */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-base">🔄</span>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Substitution</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{substitutionCount}</p>
+          <p className="text-xs text-gray-400">Periods currently need substitute teachers</p>
+          <Button variant="ghost" size="sm" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 text-left transition-colors p-0 h-auto">
+            Assign Now →
+          </Button>
+        </div>
+
+        {/* Conflicts */}
+        <div className="flex flex-col gap-2">
+          {conflicts.map((c) => (
+            <div
+              key={c.id}
+              className={`flex items-center gap-3 border rounded-xl p-3 ${CONFLICT_SEVERITY_STYLES[c.severity]}`}
+            >
+              <span className="text-lg">⚠️</span>
+              <div>
+                <p className="text-xs font-bold">Overlap Detected</p>
+                <p className="text-xs">{c.message}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

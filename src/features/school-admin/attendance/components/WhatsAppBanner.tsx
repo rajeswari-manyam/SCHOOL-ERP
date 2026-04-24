@@ -1,8 +1,5 @@
 
-interface Props {
-  whatsappNumber: string;
-  onDismiss: () => void;
-}
+import { Button } from "@/components/ui/button";
 
 export function WhatsAppBanner({ whatsappNumber, onDismiss }: Props) {
   return (
@@ -19,13 +16,15 @@ export function WhatsAppBanner({ whatsappNumber, onDismiss }: Props) {
           Format: <span className="font-mono">7A Absent: Student Name1, Student Name2</span>
         </p>
       </div>
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onDismiss}
         aria-label="Dismiss banner"
-        className="text-indigo-300 hover:text-indigo-500 text-xl leading-none shrink-0 transition-colors"
+        className="text-indigo-300 hover:text-indigo-500 text-xl leading-none shrink-0 transition-colors p-1 h-auto"
       >
         ×
-      </button>
+      </Button>
     </div>
   );
 }

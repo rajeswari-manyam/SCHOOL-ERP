@@ -8,6 +8,7 @@ import { FeeStructureTab } from "../components/Feestructuretab";
 import { RecordPaymentModal } from "../components/Recordpaymentmodal";
 import { PaymentSuccessModal } from "../components/Paymentsuccessmodal";
 import { CommunicationCenter } from "../components/Communicationcenter";
+import { Button } from "@/components/ui/button";
 
 const MONTHS = [
   "January 2025", "February 2025", "March 2025", "April 2025",
@@ -43,9 +44,23 @@ export function FeeCollectionPage() {
           <h1 className="text-2xl font-bold text-gray-900">Fee Collection</h1>
           <div className="flex items-center gap-3 mt-1">
             <div className="flex items-center gap-2">
-              <button onClick={handlePrevMonth} className="text-gray-400 hover:text-gray-600 text-lg leading-none">‹</button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePrevMonth}
+                className="text-gray-400 hover:text-gray-600 text-lg leading-none p-0"
+              >
+                ‹
+              </Button>
               <span className="text-sm font-semibold text-gray-700">{fee.currentMonth}</span>
-              <button onClick={handleNextMonth} className="text-gray-400 hover:text-gray-600 text-lg leading-none">›</button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNextMonth}
+                className="text-gray-400 hover:text-gray-600 text-lg leading-none p-0"
+              >
+                ›
+              </Button>
             </div>
             <span className="flex items-center gap-1.5 text-xs text-gray-500">
               <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
@@ -53,12 +68,12 @@ export function FeeCollectionPage() {
             </span>
           </div>
         </div>
-        <button
+        <Button
           onClick={() => fee.openRecordPayment()}
           className="flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
         >
           💳 Record Payment
-        </button>
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -68,8 +83,9 @@ export function FeeCollectionPage() {
           { key: "transactions", label: "All Transactions" },
           { key: "structure", label: "Fee Structure" },
         ].map((tab) => (
-          <button
+          <Button
             key={tab.key}
+            variant={fee.activeTab === tab.key ? "default" : "ghost"}
             onClick={() => fee.setActiveTab(tab.key as any)}
             className={`relative px-4 py-2 text-sm font-semibold transition-colors ${
               fee.activeTab === tab.key
@@ -83,7 +99,7 @@ export function FeeCollectionPage() {
                 {tab.count} Due
               </span>
             )}
-          </button>
+          </Button>
         ))}
       </div>
 

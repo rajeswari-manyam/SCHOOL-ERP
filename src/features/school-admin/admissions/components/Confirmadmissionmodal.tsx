@@ -1,5 +1,9 @@
 import { useState } from "react";
 import type { Admission, ConfirmAdmissionFormData } from "../types/admissions.types";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const SECTIONS = ["A", "B", "C", "D", "E"];
 
@@ -10,9 +14,6 @@ interface Props {
   schoolName?: string;
   principalName?: string;
 }
-
-const inputCls =
-  "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50 placeholder:text-gray-400";
 
 const admNoPreview = `ADM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`;
 
@@ -56,11 +57,16 @@ const ConfirmAdmissionModal = ({
           <h2 className="text-base font-extrabold text-gray-900">
             Confirm Admission — {admission.studentName}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 p-1"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -96,13 +102,21 @@ const ConfirmAdmissionModal = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Section <span className="text-red-500">*</span></label>
-              <select className={inputCls} value={form.section} onChange={e => set("section", e.target.value)}>
-                {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <Select
+                className="bg-gray-50"
+                options={SECTIONS.map(s => ({ label: s, value: s }))}
+                value={form.section}
+                onValueChange={value => set("section", value)}
+              />
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Roll Number</label>
-              <input className={inputCls} placeholder="e.g. 36" value={form.rollNumber} onChange={e => set("rollNumber", e.target.value)} />
+              <Input
+                className="bg-gray-50"
+                placeholder="e.g. 36"
+                value={form.rollNumber}
+                onChange={e => set("rollNumber", e.target.value)}
+              />
             </div>
           </div>
 
@@ -110,19 +124,29 @@ const ConfirmAdmissionModal = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-1">First Day of School <span className="text-red-500">*</span></label>
-              <input type="date" className={inputCls} value={form.firstDayOfSchool} onChange={e => set("firstDayOfSchool", e.target.value)} />
+              <Input
+                type="date"
+                className="bg-gray-50"
+                value={form.firstDayOfSchool}
+                onChange={e => set("firstDayOfSchool", e.target.value)}
+              />
             </div>
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Annual Fee (₹)</label>
-              <input className={inputCls} placeholder="18500" value={form.annualFee} onChange={e => set("annualFee", e.target.value)} />
+              <Input
+                className="bg-gray-50"
+                placeholder="18500"
+                value={form.annualFee}
+                onChange={e => set("annualFee", e.target.value)}
+              />
             </div>
           </div>
 
           {/* Notes */}
           <div>
             <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Notes</label>
-            <textarea
-              className={`${inputCls} resize-none`}
+            <Textarea
+              className="bg-gray-50 resize-none"
               rows={2}
               placeholder="Add optional admission notes..."
               value={form.notes}
@@ -147,20 +171,23 @@ const ConfirmAdmissionModal = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
-          <button onClick={onClose} className="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200">
+          <Button
+            variant="outline"
+            onClick={onClose}
+          >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleConfirm}
             disabled={!form.section || !form.firstDayOfSchool || saving}
-            className="px-5 py-2.5 text-sm font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
+            className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2"
           >
             {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
             Confirm & Send Welcome WhatsApp
-          </button>
+          </Button>
         </div>
       </div>
     </div>

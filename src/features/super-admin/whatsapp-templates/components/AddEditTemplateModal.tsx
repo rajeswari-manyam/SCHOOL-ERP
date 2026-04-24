@@ -8,6 +8,7 @@ import { useTemplateMutations } from "../hooks/useTemplates";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 
@@ -140,7 +141,7 @@ const AddEditTemplateModal = ({ open, template, onClose }: AddEditTemplateModalP
               <Label className={labelClass} required>
                 Template Body
               </Label>
-              <textarea
+              <Textarea
                 {...register("body")}
                 rows={4}
                 placeholder={`Dear {{1}}, your fee of ₹{{2}} is due on {{3}}.`}

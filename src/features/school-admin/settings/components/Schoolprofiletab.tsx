@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import type { SchoolProfile } from "../types/settings.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { BOARD_OPTIONS, SCHOOL_TYPE_OPTIONS } from "../utils/Settings.utils";
 
 interface Props {
@@ -7,6 +11,9 @@ interface Props {
   saving: boolean;
   onSave: (data: Partial<SchoolProfile>) => void;
 }
+
+const BOARD_SELECT_OPTIONS = BOARD_OPTIONS.map((value) => ({ label: value, value }));
+const SCHOOL_TYPE_SELECT_OPTIONS = SCHOOL_TYPE_OPTIONS.map((value) => ({ label: value, value }));
 
 export const SchoolProfileTab: React.FC<Props> = ({
   profile, saving, onSave,
@@ -27,91 +34,90 @@ export const SchoolProfileTab: React.FC<Props> = ({
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">School Information</h2>
             <p className="text-sm text-gray-600 mt-1">Manage your school's core details and branding</p>
           </div>
-          <button
+          <Button
             onClick={() => onSave(form)}
             disabled={saving}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
           >
             {saving ? "Saving…" : "Save School Profile"}
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">School Name</label>
-            <input
+            <Input
               value={form.schoolName}
-              onChange={e => handleChange("schoolName", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
+              onChange={(e) => handleChange("schoolName", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Board</label>
-            <select
+            <Select
               value={form.board}
-              onChange={e => handleChange("board", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
-            >
-              {BOARD_OPTIONS.map(b => <option key={b}>{b}</option>)}
-            </select>
+              onValueChange={(value) => handleChange("board", value)}
+              options={BOARD_SELECT_OPTIONS}
+              placeholder="Select board"
+              className="w-full"
+            />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Principal Name</label>
-            <input
+            <Input
               value={form.principalName}
-              onChange={e => handleChange("principalName", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
+              onChange={(e) => handleChange("principalName", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Established Year</label>
-            <input
-              value={form.establishedYear}
-              onChange={e => handleChange("establishedYear", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
+            <Input
+              value={String(form.establishedYear)}
+              onChange={(e) => handleChange("establishedYear", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Phone</label>
-            <input
+            <Input
               value={form.phone}
-              onChange={e => handleChange("phone", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
+              onChange={(e) => handleChange("phone", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Total Student Capacity</label>
-            <input
-              value={form.totalStudentCapacity}
-              onChange={e => handleChange("totalStudentCapacity", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
+            <Input
+              value={String(form.totalStudentCapacity)}
+              onChange={(e) => handleChange("totalStudentCapacity", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Email</label>
-            <input
+            <Input
               value={form.email}
-              onChange={e => handleChange("email", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
+              onChange={(e) => handleChange("email", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">School Type</label>
-            <select
+            <Select
               value={form.schoolType}
-              onChange={e => handleChange("schoolType", e.target.value)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200"
-            >
-              {SCHOOL_TYPE_OPTIONS.map(s => <option key={s}>{s}</option>)}
-            </select>
+              onValueChange={(value) => handleChange("schoolType", value)}
+              options={SCHOOL_TYPE_SELECT_OPTIONS}
+              placeholder="Select school type"
+              className="w-full"
+            />
           </div>
           <div className="col-span-2">
             <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Address</label>
-            <textarea
+            <Textarea
               value={form.address}
-              onChange={e => handleChange("address", e.target.value)}
-              rows={3}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-blue-50 transition-all duration-200 resize-none"
+              onChange={(e) => handleChange("address", e.target.value)}
+              className="resize-none"
             />
           </div>
         </div>
@@ -130,9 +136,9 @@ export const SchoolProfileTab: React.FC<Props> = ({
             }
           </div>
           <div>
-            <button className="px-5 py-3 border-2 border-blue-300 bg-white rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 hover:shadow-lg transition-all duration-200 active:scale-95">
+            <Button variant="outline" className="px-5 py-3 rounded-xl text-sm font-bold text-blue-600">
               Upload New Logo
-            </button>
+            </Button>
         
             <p className="text-xs text-gray-600 mt-2 font-medium">Recommended: 512×512px. Supports PNG, JPG (Max 2MB).</p>
           </div>

@@ -241,12 +241,13 @@ export default function TopBar({
                   {crumb.label}
                 </span>
               ) : (
-                <button
+                <Button
                   onClick={() => crumb.href && onBreadcrumb(crumb.href)}
+                  variant="ghost"
                   className="text-[14px] text-slate-400 hover:text-slate-800 transition-colors px-0 font-sans"
                 >
                   {crumb.label}
-                </button>
+                </Button>
               )}
             </span>
           );
@@ -257,8 +258,9 @@ export default function TopBar({
       <div className="flex items-center gap-1">
         {/* Notification bell */}
         <div ref={notifRef} className="relative">
-          <button
+          <Button
             onClick={() => { setNotifOpen((v) => !v); setUserOpen(false); }}
+            variant="ghost"
             className="w-9 h-9 flex items-center justify-center rounded-full cursor-pointer relative text-slate-400 hover:bg-slate-100 transition-colors"
             type="button"
           >
@@ -268,7 +270,7 @@ export default function TopBar({
                 {unreadCount}
               </span>
             )}
-          </button>
+          </Button>
           {notifOpen && (
             <NotificationDropdown
               notifications={notifications}
@@ -278,19 +280,21 @@ export default function TopBar({
         </div>
 
         {/* Help */}
-        <button
+        <Button
+          variant="ghost"
           type="button"
           className="w-9 h-9 flex items-center justify-center rounded-full cursor-pointer text-slate-400 hover:bg-slate-100 transition-colors"
         >
           <HelpCircle size={18} />
-        </button>
+        </Button>
 
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200 mx-2" />
 
         {/* Avatar + Dropdown */}
         <div ref={userRef} className="relative">
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => { setUserOpen((v) => !v); setNotifOpen(false); }}
             className="flex items-center gap-1 px-1.5 py-1 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
@@ -304,7 +308,7 @@ export default function TopBar({
             <span className="text-slate-400">
               <ChevronDown size={14} />
             </span>
-          </button>
+          </Button>
           {userOpen && (
             <UserDropdown
               user={user}

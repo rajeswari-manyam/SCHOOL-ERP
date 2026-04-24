@@ -1,4 +1,6 @@
 import type { AdmissionApplication } from "../types/Admissions.types";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface ApplicationTableProps {
   applications: AdmissionApplication[];
@@ -9,36 +11,34 @@ export const ApplicationTable = ({
   applications,
   onReview,
 }: ApplicationTableProps) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full bg-white rounded shadow">
-      <thead>
-        <tr>
-          <th className="px-4 py-2">Student</th>
-          <th className="px-4 py-2">Class</th>
-          <th className="px-4 py-2">Parent</th>
-          <th className="px-4 py-2">Phone</th>
-          <th className="px-4 py-2">Status</th>
-          <th className="px-4 py-2">Applied At</th>
-          <th className="px-4 py-2">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {applications.map((a) => (
-          <tr key={a.id}>
-            <td className="px-4 py-2">{a.studentName}</td>
-            <td className="px-4 py-2">{a.class}</td>
-            <td className="px-4 py-2">{a.parentName}</td>
-            <td className="px-4 py-2">{a.phone}</td>
-            <td className="px-4 py-2 capitalize">{a.status}</td>
-            <td className="px-4 py-2">{a.appliedAt}</td>
-            <td className="px-4 py-2">
-              <button className="text-blue-600" onClick={() => onReview(a.id)}>
-                Review
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+  <Table>
+    <TableHeader>
+      <TableRow>
+        <TableHead>Student</TableHead>
+        <TableHead>Class</TableHead>
+        <TableHead>Parent</TableHead>
+        <TableHead>Phone</TableHead>
+        <TableHead>Status</TableHead>
+        <TableHead>Applied At</TableHead>
+        <TableHead>Action</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {applications.map((a) => (
+        <TableRow key={a.id}>
+          <TableCell>{a.studentName}</TableCell>
+          <TableCell>{a.class}</TableCell>
+          <TableCell>{a.parentName}</TableCell>
+          <TableCell>{a.phone}</TableCell>
+          <TableCell className="capitalize">{a.status}</TableCell>
+          <TableCell>{a.appliedAt}</TableCell>
+          <TableCell>
+            <Button variant="link" size="sm" onClick={() => onReview(a.id)}>
+              Review
+            </Button>
+          </TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
 );

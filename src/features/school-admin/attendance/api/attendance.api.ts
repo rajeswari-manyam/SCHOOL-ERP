@@ -1,86 +1,108 @@
-// attendance/api/attendance.api.ts
 import axios from "@/config/axios";
 import type {
-  ClassAttendanceRow, TodaySummary, ClassAttendanceDetail,
-  AttendanceTrendPoint, ChronicAbsentee, Holiday, WebFormStudent,
+  AttendancePageData,
+  ClassDetail,
+  ChronicAbsentee,
+  Holiday,
+  AttendanceTrendPoint,
+  AttendanceHistoryFilters,
 } from "../types/attendance.types";
+import {
+  MOCK_ATTENDANCE_DATA,
+  MOCK_CLASS_DETAILS,
+  MOCK_CHRONIC_ABSENTEES,
+  MOCK_HOLIDAYS,
+  MOCK_TREND_DATA,
+} from "../utils/constants";
 
 export const attendanceApi = {
   // ── Today ──────────────────────────────────────────────────────────────────
-  getTodaySummary: async (): Promise<TodaySummary> => {
-    const { data } = await axios.get("/attendance/today/summary");
-    return data;
+  getTodayAttendance: async (): Promise<AttendancePageData> => {
+    // const response = await axios.get("/attendance/today");
+    // return response.data;
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(MOCK_ATTENDANCE_DATA), 500);
+    });
   },
 
-  getTodayClasses: async (date: string): Promise<ClassAttendanceRow[]> => {
-    const { data } = await axios.get("/attendance/today/classes", { params: { date } });
-    return data;
-  },
-
-  getClassDetail: async (classId: string, date: string): Promise<ClassAttendanceDetail> => {
-    const { data } = await axios.get(`/attendance/class/${classId}`, { params: { date } });
-    return data;
-  },
-
-  sendRemindersToUnmarked: async (date: string): Promise<{ sent: number }> => {
-    const { data } = await axios.post("/attendance/remind-unmarked", { date });
-    return data;
-  },
-
-  resendFailedAlerts: async (classId: string, date: string): Promise<void> => {
-    await axios.post("/attendance/resend-alerts", { classId, date });
-  },
-
-  // ── Web Form ───────────────────────────────────────────────────────────────
-  getClassStudents: async (classId: string): Promise<WebFormStudent[]> => {
-    const { data } = await axios.get(`/attendance/class/${classId}/students`);
-    return data;
-  },
-
-  submitWebForm: async (payload: {
-    classId: string;
-    section: string;
-    date: string;
-    records: { studentId: string; present: boolean }[];
-  }): Promise<void> => {
-    await axios.post("/attendance/mark/web", payload);
+  getClassDetails: async (classId: string): Promise<ClassDetail> => {
+    // const response = await axios.get(`/attendance/class/${classId}`);
+    // return response.data;
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const classDetail = MOCK_CLASS_DETAILS.find((c) => c.id === classId);
+        if (!classDetail) throw new Error("Class not found");
+        resolve(classDetail);
+      }, 300);
+    });
   },
 
   // ── History ────────────────────────────────────────────────────────────────
-  getAttendanceTrend: async (params: {
-    from: string; to: string; classFilter?: string;
-  }): Promise<AttendanceTrendPoint[]> => {
-    const { data } = await axios.get("/attendance/history/trend", { params });
-    return data;
-  },
-
-  getChronicAbsentees: async (params: {
-    from: string; to: string; classFilter?: string;
-  }): Promise<ChronicAbsentee[]> => {
-    const { data } = await axios.get("/attendance/chronic-absentees", { params });
-    return data;
-  },
-
-  exportCsv: async (date: string): Promise<Blob> => {
-    const { data } = await axios.get("/attendance/export", {
-      params: { date },
-      responseType: "blob",
+  getAttendanceHistory: async (
+    filters: AttendanceHistoryFilters
+  ): Promise<AttendanceTrendPoint[]> => {
+    // const response = await axios.get("/attendance/history", { params: filters });
+    // return response.data;
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(MOCK_TREND_DATA), 500);
     });
-    return data;
   },
 
-  // ── Holiday Calendar ───────────────────────────────────────────────────────
-  getHolidays: async (year: number, month: number): Promise<Holiday[]> => {
-    const { data } = await axios.get("/attendance/holidays", { params: { year, month } });
-    return data;
+  getChronicAbsentees: async (): Promise<ChronicAbsentee[]> => {
+    // const response = await axios.get("/attendance/chronic-absentees");
+    // return response.data;
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(MOCK_CHRONIC_ABSENTEES), 500);
+    });
   },
 
-  addHoliday: async (payload: Omit<Holiday, "id">): Promise<Holiday> => {
-    const { data } = await axios.post("/attendance/holidays", payload);
-    return data;
+  // ── Holidays ───────────────────────────────────────────────────────────────
+  getHolidays: async (): Promise<Holiday[]> => {
+    // const response = await axios.get("/attendance/holidays");
+    // return response.data;
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(MOCK_HOLIDAYS), 500);
+    });
+  },
+
+  createHoliday: async (holiday: Omit<Holiday, "id">): Promise<Holiday> => {
+    // const response = await axios.post("/attendance/holidays", holiday);
+    // return response.data;
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newHoliday: Holiday = { ...holiday, id: Date.now().toString() };
+        resolve(newHoliday);
+      }, 300);
+    });
   },
 
   deleteHoliday: async (id: string): Promise<void> => {
-    await axios.delete(`/attendance/holidays/${id}`);
+    // await axios.delete(`/attendance/holidays/${id}`);
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(), 300);
+    });
+  },
+
+  // ── Mutations ──────────────────────────────────────────────────────────────
+  markAttendance: async (
+    studentId: string,
+    date: string,
+    status: "present" | "absent" | "late"
+  ): Promise<void> => {
+    // await axios.post("/attendance/mark", { studentId, date, status });
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(), 300);
+    });
+  },
+
+  bulkMarkAttendance: async (
+    classId: string,
+    date: string,
+    attendance: Record<string, "present" | "absent" | "late">
+  ): Promise<void> => {
+    // await axios.post("/attendance/bulk-mark", { classId, date, attendance });
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(), 500);
+    });
   },
 };

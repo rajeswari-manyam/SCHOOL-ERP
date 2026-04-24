@@ -1,5 +1,6 @@
 import type { AdmissionsSummary, QuickAction } from "../types/dashboard.types";
 import { formatWeeklyDelta } from "../utils/formatters.ts";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   admissions: AdmissionsSummary;
@@ -46,14 +47,14 @@ export function WeeklySummaryStrip({ admissions }: Props) {
         <p className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">Quick actions</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {QUICK_ACTIONS.map((action) => (
-            <button
+            <Button
               key={action.label}
-              type="button"
+              variant="outline"
               className="flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
             >
               <span className="text-2xl">{action.icon}</span>
               <span className="uppercase tracking-[0.12em] text-xs text-slate-700">{action.label}</span>
-            </button>
+            </Button>
           ))}
         </div>
       </div>

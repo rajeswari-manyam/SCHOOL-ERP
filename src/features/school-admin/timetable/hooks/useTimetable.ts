@@ -1,86 +1,161 @@
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { timetableApi } from "../api/timetable.api";
-import type { EditPeriodPayload, AddExamPayload } from "../types/timetable.types";
+import type { EditPeriodPayload, ExamEntry, DayOfWeek } from "../types/timetable.types";
 
+// ─── Query key factory ──────────────────────────────────────────────────────────
 export const TIMETABLE_KEYS = {
-  all: ["school-admin", "timetable"] as const,
-  detail: (classId: string) =>
-    [...TIMETABLE_KEYS.all, "detail", classId] as const,
-  exams: (classId: string) =>
-    [...TIMETABLE_KEYS.all, "exams", classId] as const,
-  teachers: () => [...TIMETABLE_KEYS.all, "teachers"] as const,
-  subjects: () => [...TIMETABLE_KEYS.all, "subjects"] as const,
+  all:          ["timetable"] as const,
+  page:         (classId: string) => [...TIMETABLE_KEYS.all, "page", classId] as const,
+  classTt:      (classId: string) => [...TIMETABLE_KEYS.all, "class", classId] as const,
+  exam:         () => [...TIMETABLE_KEYS.all, "exam"] as const,
+  subjects:     () => [...TIMETABLE_KEYS.all, "subjects"] as const,
+  teachers:     () => [...TIMETABLE_KEYS.all, "teachers"] as const,
 };
 
-export const useTimetable = (classId: string) => {
-  return useQuery({
-    queryKey: TIMETABLE_KEYS.detail(classId),
-    queryFn: () => timetableApi.getTimetable(classId),
-    enabled: !!classId,
+// ─── Full page ──────────────────────────────────────────────────────────────────
+export const useTimetablePage = (classId = "class-10") =>
+  useQuery({
+    queryKey: TIMETABLE_KEYS.page(classId),
+    queryFn: () => timetableApi.getTimetablePage(classId),
     staleTime: 1000 * 60 * 5,
-    retry: 2,
   });
-};
 
-export const useExamSchedule = (classId: string) => {
-  return useQuery({
-    queryKey: TIMETABLE_KEYS.exams(classId),
-    queryFn: () => timetableApi.getExamSchedule(classId),
-    enabled: !!classId,
+// ─── Class timetable ────────────────────────────────────────────────────────────
+export const useClassTimetable = (classId: string) =>
+  useQuery({
+    queryKey: TIMETABLE_KEYS.classTt(classId),
+    queryFn: () => timetableApi.getClassTimetable(classId),
     staleTime: 1000 * 60 * 5,
-    retry: 2,
   });
-};
 
-export const useTeachers = () => {
-  return useQuery({
-    queryKey: TIMETABLE_KEYS.teachers(),
-    queryFn: timetableApi.getTeachers,
-    staleTime: 1000 * 60 * 10,
+// ─── Exam timetable ─────────────────────────────────────────────────────────────
+export const useExamTimetable = () =>
+  useQuery({
+    queryKey: TIMETABLE_KEYS.exam(),
+    queryFn: timetableApi.getExamTimetable,
+    staleTime: 1000 * 60 * 5,
   });
-};
 
-export const useSubjects = () => {
-  return useQuery({
+// ─── Subject options ────────────────────────────────────────────────────────────
+export const useSubjectOptions = () =>
+  useQuery({
     queryKey: TIMETABLE_KEYS.subjects(),
-    queryFn: timetableApi.getSubjects,
-    staleTime: 1000 * 60 * 10,
+    queryFn: timetableApi.getSubjectOptions,
+    staleTime: Infinity,
+  });
+
+// ─── Teacher options ────────────────────────────────────────────────────────────
+export const useTeacherOptions = () =>
+  useQuery({
+    queryKey: TIMETABLE_KEYS.teachers(),
+    queryFn: timetableApi.getTeacherOptions,
+    staleTime: Infinity,
+  });
+
+// ─── Save period ────────────────────────────────────────────────────────────────
+export const useSavePeriod = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: EditPeriodPayload) => timetableApi.savePeriod(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all }),
   });
 };
 
-export const useTimetableMutations = (classId: string) => {
+// ─── Add / delete exam ──────────────────────────────────────────────────────────
+export const useAddExam = () => {
   const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entry: Omit<ExamEntry, "id" | "notifyStatus">) =>
+      timetableApi.addExam(entry),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+  });
+};
 
-  const invalidateTimetable = () =>
-    qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.detail(classId) });
+export const useDeleteExam = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (examId: string) => timetableApi.deleteExam(examId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+  });
+};
 
-  const invalidateExams = () =>
-    qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exams(classId) });
+// ─── Notify parents toggle ──────────────────────────────────────────────────────
+export const useToggleNotifyParents = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => timetableApi.toggleNotifyParents(enabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+  });
+};
 
-  const updatePeriod = useMutation({
-    mutationFn: (payload: EditPeriodPayload) => timetableApi.updatePeriod(payload),
-    onSuccess: invalidateTimetable,
+// ─── Resend notification ────────────────────────────────────────────────────────
+export const useResendNotification = () =>
+  useMutation({
+    mutationFn: () => timetableApi.resendNotification(),
   });
 
-  const addExam = useMutation({
-    mutationFn: (payload: AddExamPayload) => timetableApi.addExam(payload),
-    onSuccess: invalidateExams,
-  });
+// ─── Print timetable ────────────────────────────────────────────────────────────
+export const usePrintTimetable = () => {
+  const [loading, setLoading] = useState(false);
 
-  const updateExam = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<AddExamPayload> }) =>
-      timetableApi.updateExam(id, payload),
-    onSuccess: invalidateExams,
-  });
+  const print = useCallback(async (classId: string) => {
+    setLoading(true);
+    try {
+      const blob = await timetableApi.printTimetable(classId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `timetable-${classId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const deleteExam = useMutation({
-    mutationFn: (id: string) => timetableApi.deleteExam(id),
-    onSuccess: invalidateExams,
-  });
+  return { print, loading };
+};
 
-  const resendNotification = useMutation({
-    mutationFn: () => timetableApi.resendNotification(classId),
-  });
+// ─── Edit period modal state ────────────────────────────────────────────────────
+export interface EditPeriodState {
+  open: boolean;
+  classId: string;
+  day: DayOfWeek | null;
+  periodNo: number | null;
+  subject: string;
+  teacherName: string;
+  room: string;
+  applyToAllWeeks: boolean;
+}
 
-  return { updatePeriod, addExam, updateExam, deleteExam, resendNotification };
+export const useEditPeriodState = () => {
+  const initial: EditPeriodState = {
+    open: false,
+    classId: "class-10",
+    day: null,
+    periodNo: null,
+    subject: "",
+    teacherName: "",
+    room: "Room 10A (default class room)",
+    applyToAllWeeks: false,
+  };
+
+  const [state, setState] = useState<EditPeriodState>(initial);
+
+  const openModal = useCallback(
+    (classId: string, day: DayOfWeek, periodNo: number, subject: string, teacherName: string) =>
+      setState((s) => ({ ...s, open: true, classId, day, periodNo, subject, teacherName })),
+    []
+  );
+
+  const closeModal = useCallback(() => setState(initial), []);
+
+  const setField = useCallback(
+    <K extends keyof EditPeriodState>(key: K, value: EditPeriodState[K]) =>
+      setState((s) => ({ ...s, [key]: value })),
+    []
+  );
+
+  return { state, openModal, closeModal, setField };
 };

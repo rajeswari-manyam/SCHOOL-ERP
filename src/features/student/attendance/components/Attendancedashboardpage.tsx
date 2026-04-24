@@ -1,5 +1,6 @@
 import { useAttendanceDashboard } from "../hooks/Useattendance";
 import { useMonthNavigation } from "../hooks/Useattendance";
+import { Button } from "@/components/ui/button";
 import StatCards from "../components/Statcards";
 import AttendanceCalendar from "../components/Attendancecalendar";
 import AbsentDaysPanel from "../components/Absentdayspanel";
@@ -34,19 +35,23 @@ const AttendanceDashboardPage = () => {
 
         {/* Month navigation */}
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <button
+          <Button
             onClick={nav.prev}
-            className="w-7 h-7 rounded-full flex items-center justify-center border hover:bg-gray-50"
+            variant="outline"
+            size="sm"
+            className="w-7 h-7 rounded-full flex items-center justify-center border hover:bg-gray-50 p-0"
           >
             ‹
-          </button>
+          </Button>
           <span>{nav.label}</span>
-          <button
+          <Button
             onClick={nav.next}
-            className="w-7 h-7 rounded-full flex items-center justify-center border hover:bg-gray-50"
+            variant="outline"
+            size="sm"
+            className="w-7 h-7 rounded-full flex items-center justify-center border hover:bg-gray-50 p-0"
           >
             ›
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -1,6 +1,11 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   AccountantSettings,
   UpdateAccountantSettingsInput,
@@ -11,6 +16,11 @@ const schema = z.object({
   theme: z.enum(["light", "dark"]),
   language: z.string().min(2),
 });
+
+const THEME_OPTIONS = [
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+];
 
 type SettingsFormProps = {
   defaultValues: AccountantSettings;
@@ -26,6 +36,7 @@ export const SettingsForm = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<UpdateAccountantSettingsInput>({
     resolver: zodResolver(schema),
@@ -35,8 +46,8 @@ export const SettingsForm = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md">
       <div>
-        <label className="block">Notifications</label>
-        <input type="checkbox" {...register("notificationsEnabled")} />
+        <Label>Notifications</Label>
+        <Checkbox {...register("notificationsEnabled")} />
         {errors.notificationsEnabled && (
           <span className="text-red-600">
             {errors.notificationsEnabled.message as string}
@@ -44,27 +55,34 @@ export const SettingsForm = ({
         )}
       </div>
       <div>
-        <label className="block">Theme</label>
-        <select {...register("theme")} className="input">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
+        <Label>Theme</Label>
+        <Controller
+          name="theme"
+          control={control}
+          render={({ field }) => (
+            <Select
+              options={THEME_OPTIONS}
+              value={field.value}
+              onValueChange={field.onChange}
+            />
+          )}
+        />
         {errors.theme && (
           <span className="text-red-600">{errors.theme.message as string}</span>
         )}
       </div>
       <div>
-        <label className="block">Language</label>
-        <input {...register("language")} className="input" />
+        <Label>Language</Label>
+        <Input {...register("language")} />
         {errors.language && (
           <span className="text-red-600">
             {errors.language.message as string}
           </span>
         )}
       </div>
-      <button type="submit" className="btn btn-primary" disabled={loading}>
+      <Button type="submit" disabled={loading}>
         Save
-      </button>
+      </Button>
     </form>
   );
 };

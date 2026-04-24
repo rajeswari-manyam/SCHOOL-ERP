@@ -1,5 +1,10 @@
 import type { GenerateReportFormData, ReportType } from "../types/reports.types";
+import type { ChangeEventHandler, ReactNode } from "react";
 import { REPORT_CARDS, CLASSES } from "../utils/Report config";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface GenerateReportModalProps {
   form: GenerateReportFormData;
@@ -12,18 +17,11 @@ interface GenerateReportModalProps {
   onGenerate: () => void;
 }
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Field = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-xs font-bold text-gray-700">{label}</label>
     {children}
   </div>
-);
-
-const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-  <input
-    {...props}
-    className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full bg-white"
-  />
 );
 
 const DATE_RANGE_OPTIONS = ["This Month", "Last Month", "Custom Range"] as const;
@@ -36,16 +34,15 @@ const SectionCheckbox = ({
 }: {
   label: string;
   checked: boolean;
-  onChange: () => void;
+  onChange: ChangeEventHandler<HTMLInputElement>;
   premium?: boolean;
 }) => (
   <label className="flex items-center gap-2.5 cursor-pointer">
-    <input
-      type="checkbox"
+    <Checkbox
       checked={checked}
       onChange={onChange}
       disabled={premium}
-      className="w-4 h-4 accent-indigo-600 rounded"
+      className="w-4 h-4"
     />
     <span className={`text-sm ${premium ? "text-gray-400" : "text-gray-700"}`}>{label}</span>
     {premium && (
@@ -77,48 +74,45 @@ const GenerateReportModal = ({
             <h2 className="text-lg font-bold text-gray-900">Generate {reportLabel}</h2>
             <p className="text-xs text-gray-400 mt-0.5">Configure and download your report</p>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         <div className="p-6 flex flex-col gap-5">
           {/* Report Type */}
           <Field label="Report Type">
-            <select
+            <Select
+              options={REPORT_CARDS.map(c => ({ label: c.title, value: c.id }))}
               value={form.reportType}
-              onChange={e => onSetField("reportType", e.target.value as ReportType)}
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white w-full"
-            >
-              {REPORT_CARDS.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => onSetField("reportType", value as ReportType)}
+              className="text-sm"
+            />
           </Field>
 
           {/* Date Range */}
           <Field label="Date Range">
             <div className="flex gap-2">
               {DATE_RANGE_OPTIONS.map(opt => (
-                <button
+                <Button
                   key={opt}
+                  type="button"
+                  variant={form.dateRangeType === opt ? "default" : "outline"}
+                  size="sm"
                   onClick={() => onSetField("dateRangeType", opt)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${
-                    form.dateRangeType === opt
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
-                  }`}
+                  className="flex-1"
                 >
                   {opt}
-                </button>
+                </Button>
               ))}
             </div>
           </Field>
@@ -129,48 +123,44 @@ const GenerateReportModal = ({
               <Input
                 type="date"
                 value={form.fromDate}
-                onChange={e => onSetField("fromDate", e.target.value)}
+                onChange={(e) => onSetField("fromDate", e.target.value)}
+                className="w-full"
               />
             </Field>
             <Field label="To">
               <Input
                 type="date"
                 value={form.toDate}
-                onChange={e => onSetField("toDate", e.target.value)}
+                onChange={(e) => onSetField("toDate", e.target.value)}
+                className="w-full"
               />
             </Field>
           </div>
 
           {/* Class */}
           <Field label="Class">
-            <select
+            <Select
+              options={CLASSES.map(c => ({ label: c, value: c }))}
               value={form.classFilter}
-              onChange={e => onSetField("classFilter", e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white w-full"
-            >
-              {CLASSES.map(c => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => onSetField("classFilter", value)}
+              className="text-sm"
+            />
           </Field>
 
           {/* Format */}
           <Field label="Format">
             <div className="flex gap-2">
               {(["PDF", "CSV"] as const).map(f => (
-                <button
+                <Button
                   key={f}
+                  type="button"
+                  variant={form.format === f ? "default" : "outline"}
+                  size="sm"
                   onClick={() => onSetField("format", f)}
-                  className={`px-5 py-2 rounded-lg text-xs font-bold border transition-colors ${
-                    form.format === f
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
-                  }`}
+                  className="px-5"
                 >
                   {f}
-                </button>
+                </Button>
               ))}
             </div>
           </Field>
@@ -212,18 +202,17 @@ const GenerateReportModal = ({
           <div className="flex flex-col gap-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Report To</p>
             <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={form.emailToSelf}
                 onChange={() => onSetField("emailToSelf", !form.emailToSelf)}
-                className="w-4 h-4 accent-indigo-600 rounded"
+                className="w-4 h-4"
               />
               <span className="text-sm text-gray-700">My email (principal@hps.edu.in)</span>
             </label>
             <Input
               placeholder="Additional email (optional)"
               value={form.additionalEmail}
-              onChange={e => onSetField("additionalEmail", e.target.value)}
+              onChange={(e) => onSetField("additionalEmail", e.target.value)}
             />
           </div>
 
@@ -243,16 +232,19 @@ const GenerateReportModal = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
             onClick={onGenerate}
             disabled={generating || success}
-            className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2 disabled:opacity-60"
+            className="px-5 py-2.5 flex items-center gap-2"
           >
             {success ? (
               <>
@@ -276,7 +268,7 @@ const GenerateReportModal = ({
                 Generate & Download
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

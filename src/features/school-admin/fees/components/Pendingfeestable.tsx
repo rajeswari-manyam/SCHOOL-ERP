@@ -2,6 +2,16 @@ import React from "react";
 import type { PendingFee } from "../types/fees.types";
 import { formatCurrency, getInitialsColor } from "../utils/Fee.utils";
 import { StatusBadge, ReminderDots } from "./Feebadges";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 
 interface PendingFeesTableProps {
   fees: PendingFee[];
@@ -30,63 +40,56 @@ export function PendingFeesTable({
       {selectedIds.size > 0 && (
         <div className="flex items-center justify-between bg-indigo-50 border-b border-indigo-100 px-4 py-2">
           <div className="flex items-center gap-2">
-            <input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} className="rounded" />
+            <Checkbox checked={allSelected} onCheckedChange={onToggleSelectAll} />
             <span className="text-sm font-semibold text-indigo-700">
               {selectedIds.size} students selected
             </span>
             <span className="text-xs text-indigo-500">READY FOR BULK ACTIONS</span>
           </div>
           <div className="flex gap-2">
-            <button className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-orange-600 transition-colors">
+            <Button variant="secondary" size="sm" className="flex items-center gap-1.5">
               📤 Send Reminder
-            </button>
-            <button className="flex items-center gap-1.5 bg-white border border-gray-300 text-gray-700 text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+            </Button>
+            <Button variant="outline" size="sm" className="flex items-center gap-1.5">
               ⬇ Export Selected
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="w-10 p-3">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={onToggleSelectAll}
-                  className="rounded"
-                />
-              </th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Class</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Fee Head</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Due Date</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Status/Overdue</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Reminders</th>
-              <th className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10 p-3">
+                <Checkbox checked={allSelected} onCheckedChange={onToggleSelectAll} />
+              </TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Student</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Class</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Fee Head</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Amount</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Due Date</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Status/Overdue</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Reminders</TableHead>
+              <TableHead className="text-left p-3 text-xs font-semibold text-gray-500 uppercase">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {fees.map((fee) => (
-              <tr
+              <TableRow
                 key={`${fee.studentId}-${fee.feeHead}`}
                 className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
                   selectedIds.has(fee.studentId) ? "bg-indigo-50/30" : ""
                 }`}
               >
-                <td className="p-3">
-                  <input
-                    type="checkbox"
+                <TableCell className="p-3">
+                  <Checkbox
                     checked={selectedIds.has(fee.studentId)}
-                    onChange={() => onToggleSelect(fee.studentId)}
-                    className="rounded"
+                    onCheckedChange={() => onToggleSelect(fee.studentId)}
                   />
-                </td>
-                <td className="p-3">
+                </TableCell>
+                <TableCell className="p-3">
                   <div className="flex items-center gap-2">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
@@ -99,38 +102,31 @@ export function PendingFeesTable({
                       <div className="text-xs text-gray-400">ADM: {fee.admissionNo}</div>
                     </div>
                   </div>
-                </td>
-                <td className="p-3 text-gray-700">{fee.class}{fee.section}</td>
-                <td className="p-3 text-gray-700">{fee.feeHead}</td>
-                <td className="p-3 font-semibold text-gray-900">{formatCurrency(fee.amount)}</td>
-                <td className="p-3 text-gray-500 text-xs">{fee.dueDate}</td>
-                <td className="p-3">
+                </TableCell>
+                <TableCell className="p-3 text-gray-700">{fee.class}{fee.section}</TableCell>
+                <TableCell className="p-3 text-gray-700">{fee.feeHead}</TableCell>
+                <TableCell className="p-3 font-semibold text-gray-900">{formatCurrency(fee.amount)}</TableCell>
+                <TableCell className="p-3 text-gray-500 text-xs">{fee.dueDate}</TableCell>
+                <TableCell className="p-3">
                   <StatusBadge fee={fee} />
-                </td>
-                <td className="p-3">
+                </TableCell>
+                <TableCell className="p-3">
                   <ReminderDots sent={fee.reminders.sent} total={fee.reminders.total} />
-                </td>
-                <td className="p-3">
+                </TableCell>
+                <TableCell className="p-3">
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onMarkPaid(fee)}
-                      className="bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                    >
+                    <Button variant="default" size="sm" className="whitespace-nowrap" onClick={() => onMarkPaid(fee)}>
                       Mark Paid
-                    </button>
-                    <button
-                      onClick={() => onSendReminder(fee)}
-                      className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm"
-                      title="Send WhatsApp reminder"
-                    >
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
                       💬
-                    </button>
+                    </Button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Footer */}
@@ -138,14 +134,16 @@ export function PendingFeesTable({
         <span className="text-xs text-gray-500">Showing {fees.length} of {totalRecords} records</span>
         <div className="flex gap-1">
           {[1, 2, 3].map((p) => (
-            <button
+            <Button
               key={p}
+              variant={p === 1 ? "default" : "outline"}
+              size="icon"
               className={`w-8 h-8 rounded text-xs font-medium ${
                 p === 1 ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"
               }`}
             >
               {p}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

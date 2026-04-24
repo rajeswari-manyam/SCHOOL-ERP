@@ -1,4 +1,7 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Toggle } from "@/components/ui/toggle";
 import type { WAConnection, WATemplate, NotificationSettings } from "../types/settings.types";
 
 interface Props {
@@ -21,15 +24,6 @@ const TemplateStatusBadge: React.FC<{ status: WATemplate["status"] }> = ({ statu
     </span>
   );
 };
-
-const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void }> = ({ checked, onChange }) => (
-  <button
-    onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-indigo-600" : "bg-gray-300"}`}
-  >
-    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-6" : "translate-x-1"}`} />
-  </button>
-);
 
 const NOTIFICATION_ITEMS: { key: keyof NotificationSettings; label: string; description: string }[] = [
   { key: "attendanceAlerts", label: "Attendance Alerts", description: "Send instant WhatsApp messages when a student is absent." },
@@ -59,9 +53,9 @@ export const WhatsAppTab: React.FC<Props> = ({
               </span>
             </div>
           </div>
-          <button className="px-5 py-3 border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl text-sm font-bold text-blue-600 hover:bg-white hover:shadow-lg transition-all duration-200 active:scale-95">
+          <Button variant="outline" className="px-5 py-3 rounded-xl text-sm font-bold text-blue-600">
             Manage Account
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-4">
@@ -105,31 +99,31 @@ export const WhatsAppTab: React.FC<Props> = ({
               {templates.length} TEMPLATES
             </span>
           </div>
-          <button className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+          <Button variant="ghost" className="text-indigo-600 font-medium flex items-center gap-1 text-sm">
             <span className="text-lg leading-none">⊕</span> New Template
-          </button>
+          </Button>
         </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Template Name</th>
-              <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Category</th>
-              <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
-              <th className="text-right py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Last Used</th>
-            </tr>
-          </thead>
-          <tbody>
-            {templates.map(t => (
-              <tr key={t.id} className="border-b border-gray-50 last:border-0">
-                <td className="py-3 text-sm font-medium text-gray-900">{t.name}</td>
-                <td className="py-3 text-sm text-gray-600">{t.category}</td>
-                <td className="py-3"><TemplateStatusBadge status={t.status} /></td>
-                <td className="py-3 text-right text-sm text-gray-500">{t.lastUsed ?? "—"}</td>
-              </tr>
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Template Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Last Used</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {templates.map((t) => (
+              <TableRow key={t.id}>
+                <TableCell className="font-medium text-gray-900">{t.name}</TableCell>
+                <TableCell className="text-gray-600">{t.category}</TableCell>
+                <TableCell><TemplateStatusBadge status={t.status} /></TableCell>
+                <TableCell className="text-right text-gray-500">{t.lastUsed ?? "—"}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Notification Settings Card */}
@@ -143,8 +137,8 @@ export const WhatsAppTab: React.FC<Props> = ({
                 <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
               </div>
               <Toggle
-                checked={notifications[item.key]}
-                onChange={v => onToggleNotification(item.key, v)}
+                pressed={notifications[item.key]}
+                onPressedChange={(pressed) => onToggleNotification(item.key, pressed)}
               />
             </div>
           ))}

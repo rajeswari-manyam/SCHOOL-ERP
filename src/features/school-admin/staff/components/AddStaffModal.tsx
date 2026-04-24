@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { Button } from "../../../../components/ui/button";
 import { Form, FormField } from "../../../../components/ui/form";
+import { Input } from "../../../../components/ui/input";
 import { typography } from "@/styles/typography";
 
 interface Props {
@@ -44,15 +45,11 @@ export const AddStaffModal = ({ onClose }: Props) => {
         <Form className="p-6 grid grid-cols-2 gap-4">
           {FIELDS.map((field) => (
             <FormField key={field.name} label={field.label}>
-              <input
+              <Input
                 name={field.name}
                 placeholder={field.placeholder}
-                className="
-                  h-9 px-3 w-full rounded-lg border border-slate-200
-                  text-sm text-slate-800 placeholder:text-slate-300
-                  focus:outline-none focus:ring-2 focus:ring-indigo-300
-                  focus:border-indigo-400 transition
-                "
+                inputSize="sm"
+                className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               />
             </FormField>
           ))}

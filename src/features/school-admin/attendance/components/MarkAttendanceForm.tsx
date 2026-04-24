@@ -6,6 +6,8 @@ import { z } from "zod";
 import { CLASS_OPTIONS, SECTION_OPTIONS } from "../utils/constants";
 import type { MarkAttendanceFormValues } from "../types/attendance.types";
 import { MOCK_CLASS_DETAILS } from "../utils/constants";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const markAttendanceSchema = z.object({
   classId: z.string().min(1, "Please select a class"),
@@ -78,12 +80,11 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
               Class <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <select
+              <Select
+                options={CLASS_OPTIONS.map(c => ({ label: c, value: c }))}
+                placeholder="Select Class"
                 {...register("classId")}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8 cursor-pointer"
-              >
-                {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              />
               <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -99,12 +100,11 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
               Section <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <select
+              <Select
+                options={SECTION_OPTIONS.map(s => ({ label: s, value: s }))}
+                placeholder="Select Section"
                 {...register("section")}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8 cursor-pointer"
-              >
-                {SECTION_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              />
               <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -199,10 +199,10 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
 
       {/* Footer */}
       <div className="px-6 pb-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
-        <button
+        <Button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2"
+          className="flex items-center gap-2"
         >
           {isSubmitting ? (
             <>
@@ -215,7 +215,7 @@ export function MarkAttendanceForm({ onSubmit, isSubmitting }: Props) {
           ) : (
             "Submit Attendance"
           )}
-        </button>
+        </Button>
       </div>
     </form>
   );

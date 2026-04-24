@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useStudentProfile } from "../hooks/useStudents";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import StudentAttendanceTab from "./StudentAttendanceTab";
@@ -43,7 +44,7 @@ const StudentProfilePage = () => {
     return (
       <div className="text-center py-20">
         <p className="text-gray-400 text-sm">Student not found.</p>
-        <button onClick={() => navigate("/school-admin/students")} className="mt-4 text-indigo-600 text-sm font-semibold hover:underline">← Back to Students</button>
+        <Button onClick={() => navigate("/school-admin/students")} variant="link" className="mt-4 text-indigo-600 text-sm font-semibold hover:underline">← Back to Students</Button>
       </div>
     );
   }
@@ -86,34 +87,35 @@ const StudentProfilePage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
+            <Button variant="outline" size="sm" className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Edit Student
-            </button>
-            <button className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
+            </Button>
+            <Button variant="outline" size="sm" className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Issue TC
-            </button>
-            <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+            </Button>
+            <Button variant="ghost" size="sm" className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-0 mt-5 border-b border-gray-100">
           {TABS.map(t => (
-            <button
+            <Button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
+              variant="ghost"
               className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
                 activeTab === t.key
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-gray-400 hover:text-gray-600"
+                  ? "border-indigo-600 text-indigo-600 hover:bg-transparent"
+                  : "border-transparent text-gray-400 hover:text-gray-600 hover:bg-transparent"
               }`}
             >
               {t.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -126,10 +128,10 @@ const StudentProfilePage = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-gray-800">Personal Information</h3>
-                <button className="text-xs text-indigo-600 font-bold hover:text-indigo-800 transition-colors flex items-center gap-1">
+                <Button variant="link" size="sm" className="text-xs text-indigo-600 font-bold hover:text-indigo-800 transition-colors flex items-center gap-1">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   Edit
-                </button>
+                </Button>
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <InfoRow label="Admission No" value={student.admissionNo} />
@@ -184,9 +186,9 @@ const StudentProfilePage = () => {
                       <p className="text-xs text-red-400 font-semibold">pending</p>
                       <p className="text-xs text-red-400 mt-1">{feePayments.find(p => p.status === "PENDING")?.description}</p>
                       <p className="text-[10px] text-red-300 mt-1">12 days overdue</p>
-                      <button className="mt-2 w-full py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
+                      <Button variant="ghost" size="sm" className="mt-2 w-full py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
                         Send Reminder
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">

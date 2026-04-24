@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import type { ClassSection, WorkingDaysConfig } from "../types/settings.types";
 import { ALL_DAYS, type Day } from "../utils/Settings.utils";
 
@@ -46,9 +49,9 @@ export const AcademicConfigTab: React.FC<Props> = ({
             <h2 className="text-lg font-semibold text-gray-900">Academic Year Configuration</h2>
             <p className="text-sm text-gray-500 mt-0.5">Manage the operational dates for the current academic session.</p>
           </div>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+          <Button className="rounded-lg text-sm font-medium" size="sm">
             Save Changes
-          </button>
+          </Button>
         </div>
         <div className="flex items-center gap-3 mb-5">
           <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">2024-25</span>
@@ -59,65 +62,64 @@ export const AcademicConfigTab: React.FC<Props> = ({
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Year Start Date</label>
-            <input defaultValue="01 June 2024" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <Input defaultValue="01 June 2024" inputSize="md" className="w-full" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Year End Date</label>
-            <input defaultValue="30 April 2025" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <Input defaultValue="30 April 2025" inputSize="md" className="w-full" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Year Label</label>
-            <input defaultValue="2024-25" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <Input defaultValue="2024-25" inputSize="md" className="w-full" />
           </div>
         </div>
-        <button className="mt-4 text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+        <Button variant="ghost" className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
           <span className="text-lg leading-none">⊕</span> Create New Academic Year
-        </button>
+        </Button>
       </div>
 
       {/* Classes & Sections */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Classes & Sections</h2>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
-          >
+          <Button onClick={() => setShowAdd(true)} className="rounded-lg text-sm font-medium" size="sm">
             Add Class
-          </button>
+          </Button>
         </div>
 
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100">
-              {["Class", "Sections", "Class Teacher", "Total Students", "Status", "Actions"].map(h => (
-                <th key={h} className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide pr-4">{h}</th>
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              {["Class", "Sections", "Class Teacher", "Total Students", "Status", "Actions"].map((h) => (
+                <TableHead key={h}>{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {classes.map(cls => (
-              <tr key={cls.id} className="border-b border-gray-50 last:border-0">
-                <td className="py-3 text-sm font-semibold text-gray-900 pr-4">{cls.className}</td>
-                <td className="py-3 pr-4">
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {classes.map((cls) => (
+              <TableRow key={cls.id}>
+                <TableCell className="font-semibold text-gray-900">{cls.className}</TableCell>
+                <TableCell>
                   <div className="flex gap-1">
-                    {cls.sections.map(s => (
+                    {cls.sections.map((s) => (
                       <span key={s} className="w-7 h-7 flex items-center justify-center bg-indigo-50 text-indigo-700 rounded text-xs font-bold">{s}</span>
                     ))}
                   </div>
-                </td>
-                <td className="py-3 text-sm text-gray-700 pr-4">{cls.classTeacher}</td>
-                <td className="py-3 text-sm text-gray-700 pr-4">{cls.totalStudents}</td>
-                <td className="py-3 pr-4">
+                </TableCell>
+                <TableCell className="text-gray-700">{cls.classTeacher}</TableCell>
+                <TableCell className="text-gray-700">{cls.totalStudents}</TableCell>
+                <TableCell>
                   <span className="px-2.5 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">{cls.status}</span>
-                </td>
-                <td className="py-3">
-                  <button className="text-gray-400 hover:text-gray-600">✏️</button>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                    ✏️
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
         {/* Inline add class form */}
         {showAdd && (
@@ -126,26 +128,32 @@ export const AcademicConfigTab: React.FC<Props> = ({
             <div className="grid grid-cols-3 gap-3 mb-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Class Name</label>
-                <input
+                <Input
                   value={newClass.className}
-                  onChange={e => setNewClass(p => ({ ...p, className: e.target.value }))}
+                  onChange={(e) => setNewClass((p) => ({ ...p, className: e.target.value }))}
                   placeholder="e.g. Class 11"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  inputSize="md"
+                  className="w-full"
                 />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Class Teacher</label>
-                <input
+                <Input
                   value={newClass.classTeacher}
-                  onChange={e => setNewClass(p => ({ ...p, classTeacher: e.target.value }))}
+                  onChange={(e) => setNewClass((p) => ({ ...p, classTeacher: e.target.value }))}
                   placeholder="Teacher name"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  inputSize="md"
+                  className="w-full"
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleAddClass} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Add Class</button>
-              <button onClick={() => setShowAdd(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-600">Cancel</button>
+              <Button onClick={handleAddClass} className="rounded-lg text-sm font-medium">
+                Add Class
+              </Button>
+              <Button variant="outline" onClick={() => setShowAdd(false)} className="rounded-lg text-sm font-medium">
+                Cancel
+              </Button>
             </div>
           </div>
         )}
@@ -155,28 +163,31 @@ export const AcademicConfigTab: React.FC<Props> = ({
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Working Days</h2>
-          <button
+          <Button
             onClick={() => onSaveWorkingDays(wdForm)}
             disabled={saving}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            className="rounded-lg text-sm font-medium"
+            size="sm"
           >
             Save Settings
-          </button>
+          </Button>
         </div>
 
         <div className="mb-4">
           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Select Active Working Days</label>
           <div className="flex gap-2">
-            {ALL_DAYS.map(day => {
+            {ALL_DAYS.map((day) => {
               const active = wdForm.activeDays.includes(day as any);
               return (
-                <button
+                <Button
                   key={day}
+                  variant={active ? "default" : "outline"}
+                  size="sm"
                   onClick={() => toggleDay(day as Day)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${active ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                  className={active ? "rounded-full bg-indigo-600 text-white" : "rounded-full text-gray-500 hover:bg-gray-100"}
                 >
                   {day}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -185,34 +196,42 @@ export const AcademicConfigTab: React.FC<Props> = ({
         <div className="grid grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Start Time</label>
-            <input
+            <Input
               value={wdForm.startTime}
-              onChange={e => setWdForm(p => ({ ...p, startTime: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => setWdForm((p) => ({ ...p, startTime: e.target.value }))}
+              inputSize="md"
+              className="w-full"
+            />
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">End Time</label>
-            <input
+            <Input
               value={wdForm.endTime}
-              onChange={e => setWdForm(p => ({ ...p, endTime: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => setWdForm((p) => ({ ...p, endTime: e.target.value }))}
+              inputSize="md"
+              className="w-full"
+            />
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Period Duration</label>
-            <input
+            <Input
               value={wdForm.periodDuration}
-              onChange={e => setWdForm(p => ({ ...p, periodDuration: Number(e.target.value) }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => setWdForm((p) => ({ ...p, periodDuration: Number(e.target.value) }))}
+              inputSize="md"
+              className="w-full"
+            />
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Number of Periods</label>
-            <input
+            <Input
               value={wdForm.numberOfPeriods}
-              onChange={e => setWdForm(p => ({ ...p, numberOfPeriods: Number(e.target.value) }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => setWdForm((p) => ({ ...p, numberOfPeriods: Number(e.target.value) }))}
+              inputSize="md"
+              className="w-full"
+            />
             />
           </div>
         </div>

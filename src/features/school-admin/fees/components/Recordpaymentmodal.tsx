@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import type { PendingFee, PaymentMode, RecordPaymentForm } from "../types/fees.types";
 import { formatCurrency, generateReceiptNumber, getTodayDate } from "../utils/Fee.utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface RecordPaymentModalProps {
   fee: PendingFee | null;
@@ -54,7 +57,9 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">Record Fee Payment</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none p-0">
+            ×
+          </Button>
         </div>
 
         {/* Student info */}
@@ -100,11 +105,11 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
               </label>
               <div className="relative mt-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₹</span>
-                <input
+                <Input
                   type="number"
                   value={amountReceived}
                   onChange={(e) => setAmountReceived(Number(e.target.value))}
-                  className="w-full pl-7 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full pl-7"
                 />
               </div>
               <div className="text-xs text-gray-400 mt-1">Enter partial amount if paying in parts</div>
@@ -118,17 +123,15 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
             </label>
             <div className="flex gap-2 mt-2">
               {PAYMENT_MODES.map((mode) => (
-                <button
+                <Button
                   key={mode}
+                  variant={paymentMode === mode ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setPaymentMode(mode)}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-colors ${
-                    paymentMode === mode
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "border-gray-200 text-gray-600 hover:border-indigo-300"
-                  }`}
+                  className="flex-1 text-xs font-semibold"
                 >
                   {mode}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -139,12 +142,12 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 UPI Reference Number <span className="text-red-500">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="Enter UPI transaction ID"
                 value={upiReference}
                 onChange={(e) => setUpiReference(e.target.value)}
-                className="mt-1 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="mt-1 w-full"
               />
             </div>
           )}
@@ -155,12 +158,12 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Cheque Number <span className="text-red-500">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="Enter cheque number"
                 value={chequeNumber}
                 onChange={(e) => setChequeNumber(e.target.value)}
-                className="mt-1 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="mt-1 w-full"
               />
             </div>
           )}
@@ -179,11 +182,11 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Payment Date <span className="text-red-500">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="mt-1 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="mt-1 w-full"
               />
             </div>
           </div>
@@ -191,12 +194,12 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
           {/* Notes */}
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</label>
-            <input
+            <Input
               type="text"
               placeholder="Optional notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="mt-1 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="mt-1 w-full"
             />
           </div>
 
@@ -225,17 +228,10 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
             <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center text-white text-xs">
               💬
             </div>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={sendWhatsApp}
-              onChange={(e) => setSendWhatsApp(e.target.checked)}
-              className="sr-only"
+              onCheckedChange={(checked) => setSendWhatsApp(Boolean(checked))}
             />
-            <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
-              sendWhatsApp ? "bg-indigo-600 border-indigo-600" : "border-gray-300"
-            }`}>
-              {sendWhatsApp && <span className="text-white text-xs">✓</span>}
-            </div>
             <span className="text-sm text-gray-600">
               Send receipt to parent via WhatsApp{" "}
               <span className="text-gray-400">({fee.parentPhone})</span>
@@ -245,19 +241,20 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
 
         {/* Footer */}
         <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
-          <button
+          <Button
+            variant="outline"
+            className="flex-1 py-2.5 text-sm font-semibold rounded-xl"
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            className="flex-1 py-2.5 text-sm font-semibold rounded-xl"
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
             {loading ? "Recording..." : "Record Payment & Send Receipt"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

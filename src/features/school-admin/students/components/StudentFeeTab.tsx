@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { FeePayment } from "../types/student.types";
 
 const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -21,9 +22,9 @@ const StudentFeeTab = ({ payments }: { payments: FeePayment[] }) => {
           {outstanding > 0 && payments.find(p => p.status === "PENDING") && (
             <p className="text-xs text-red-400 mt-1">{payments.find(p => p.status === "PENDING")?.description}</p>
           )}
-          <button className="mt-3 px-3 py-1.5 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+          <Button className="mt-3 px-3 py-1.5 text-xs font-bold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
             Send Reminder
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -32,12 +33,12 @@ const StudentFeeTab = ({ payments }: { payments: FeePayment[] }) => {
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <h4 className="font-bold text-gray-800">Payment History</h4>
           <div className="flex gap-2">
-            <button className="text-xs text-gray-500 hover:text-indigo-600 font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
+            <Button variant="outline" size="sm" className="text-xs text-gray-500 hover:text-indigo-600 font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
               Filter
-            </button>
-            <button className="text-xs text-indigo-600 font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors">
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs text-indigo-600 font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors">
               ↓ Download All Receipts
-            </button>
+            </Button>
           </div>
         </div>
         <div>
@@ -57,9 +58,9 @@ const StudentFeeTab = ({ payments }: { payments: FeePayment[] }) => {
                 {p.mode && <span className="text-xs text-gray-400">{p.mode}</span>}
                 {p.receiptNo && <span className="text-xs text-gray-400">{p.receiptNo}</span>}
                 {p.status === "PAID" && (
-                  <button className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors">
+                  <Button variant="ghost" size="sm" className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>

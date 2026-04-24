@@ -1,5 +1,6 @@
 import type { ReportCard as ReportCardType } from "../types/Exam.types";
 import { getMidtermColor } from "../utils/Exam.utils";
+import { Button } from "@/components/ui/button";
 
 interface ReportCardProps { data: ReportCardType; }
 
@@ -81,9 +82,9 @@ export default function ReportCard({ data }: ReportCardProps) {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm text-slate-500">Last updated on {data.lastUpdated}</span>
-          <button className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+          <Button className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
             Download Report Card PDF
-          </button>
+          </Button>
         </div>
       </div>
     </div>

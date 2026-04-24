@@ -5,6 +5,8 @@ import ReportCardGrid from "../components/Reportcardgrid";
 import RecentReportsTable from "../components/Recentreportstable";
 import GenerateReportModal from "../components/Generatereportmodal";
 import Pagination from "../components/Pagination";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import type { ReportType } from "../types/reports.types";
 import { ACADEMIC_YEARS } from "../utils/Report config";
 
@@ -60,28 +62,34 @@ const ReportsPage = () => {
           </svg>
           <span className="text-xs font-bold text-gray-700">Academic Year {academicYear}</span>
           <div className="flex gap-1">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const idx = ACADEMIC_YEARS.indexOf(academicYear);
                 if (idx < ACADEMIC_YEARS.length - 1) setAcademicYear(ACADEMIC_YEARS[idx + 1]);
               }}
-              className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"
+              className="w-8 h-8 p-0"
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const idx = ACADEMIC_YEARS.indexOf(academicYear);
                 if (idx > 0) setAcademicYear(ACADEMIC_YEARS[idx - 1]);
               }}
-              className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-gray-400"
+              className="w-8 h-8 p-0"
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -111,14 +119,16 @@ const ReportsPage = () => {
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
-              <input
+              <Input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search reports..."
-                className="pl-8 pr-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 w-48"
+                className="pl-8 pr-3 py-2 text-xs w-48"
               />
             </div>
-            <button className="text-xs text-indigo-600 font-bold hover:underline">View All History</button>
+            <Button variant="link" size="sm" className="text-xs font-bold">
+              View All History
+            </Button>
           </div>
         </div>
 

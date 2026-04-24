@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import StudentLayout from "../../layouts/StudentLayout";
 import StudentDashboard from "./dashboard/StudentDashBoard";
-import DashboardPage from "./teachers/pages/DashBoardpage";
 import AttendanceDashboard from "./attendance/AttendenceDashboard";
 import HomeworkPage from "./homework/HomeWorkPage";
 import ExamPage from "./exams/ExamPage";
@@ -19,7 +18,7 @@ export default function StudentRouter() {
         <Route path="exams" element={<ExamPage />} />
         <Route path="timetable" element={<ClassTimetable />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="teachers" element={<DashboardPage />} />
+        <Route path="teachers" element={<StudentDashboard />} />
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
     </Routes>

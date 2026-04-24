@@ -1,4 +1,5 @@
 import type { QuickDownload } from "../types/profile.types";
+import { Button } from "@/components/ui/button";
 
 interface QuickDownloadsProps {
   downloads: QuickDownload[];
@@ -25,14 +26,14 @@ const QuickDownloads = ({ downloads, onDownload, downloadingId }: QuickDownloads
                 <p className="text-xs text-slate-500">{doc.size}</p>
                 <p className="text-xs text-slate-400">Last updated {doc.lastUpdated}</p>
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => onDownload(doc.id, doc.title)}
                 disabled={isDownloading}
                 className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isDownloading ? "Downloading..." : "Download PDF"}
-              </button>
+              </Button>
             </div>
           );
         })}
