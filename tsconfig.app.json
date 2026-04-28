@@ -19,9 +19,11 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
 
-   "paths": {
-  "@/*": ["./src/*"]
-}
+    "baseUrl": ".",   // ✅ ADD THIS BACK
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }
