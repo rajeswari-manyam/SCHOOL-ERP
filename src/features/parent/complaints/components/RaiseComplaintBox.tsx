@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Camera, Images, Send, CheckCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -144,7 +145,7 @@ export function RaiseComplaintCard({
             size="sm"
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8EBF2] text-[12px] font-semibold text-[#0B1C30] hover:bg-[#F4F6FB]"
           >
-            <CameraIcon />
+            <Camera size={14} />
             Take Photo
           </Button>
           <Button
@@ -162,7 +163,7 @@ export function RaiseComplaintCard({
             size="sm"
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8EBF2] text-[12px] font-semibold text-[#0B1C30] hover:bg-[#F4F6FB]"
           >
-            <GalleryIcon />
+            <Images size={14} />
             Choose from Gallery
           </Button>
           <Input
@@ -174,8 +175,9 @@ export function RaiseComplaintCard({
           />
         </div>
         {current.photoFile && (
-          <p className="text-[11px] text-[#006C49] mt-1.5">
-            ✓ {current.photoFile.name}
+          <p className="flex items-center gap-1 text-[11px] text-[#006C49] mt-1.5">
+            <CheckCircle size={12} />
+            {current.photoFile.name}
           </p>
         )}
       </div>
@@ -194,8 +196,10 @@ export function RaiseComplaintCard({
           disabled:opacity-40 disabled:cursor-not-allowed
           active:scale-[0.98]
           transition-all duration-200
+          flex items-center justify-center gap-2
         "
       >
+        <Send size={14} />
         Submit Complaint
       </Button>
 
@@ -205,27 +209,5 @@ export function RaiseComplaintCard({
       </p>
 
     </div>
-  );
-}
-
-function CameraIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
-        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"
-      />
-      <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
-function GalleryIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-    </svg>
   );
 }

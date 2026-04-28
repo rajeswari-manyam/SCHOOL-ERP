@@ -1,5 +1,6 @@
 // HomeworkPage.tsx
 import { useOutletContext } from "react-router-dom";
+import { HelpCircle } from "lucide-react";
 import { useHomeworkStore } from "../store/HomeWork.store";
 import { homeworkData, studyMaterials } from "../data/HomeWork.data";
 import { filterHomeworkByDay, groupBySubject, sortByDueDate } from "../utils/homework.utils";
@@ -31,10 +32,7 @@ const SUBJECT_ORDER = ["ENGLISH", "MATHEMATICS", "SCIENCE"];
 const NeedHelpCard = () => (
   <div className="bg-white rounded-2xl border border-[#E8EBF2] p-4 flex gap-3">
     <div className="w-8 h-8 rounded-xl bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6.5" stroke="#3525CD" strokeWidth="1.3" />
-        <path d="M8 11V8M8 5.5h.01" stroke="#3525CD" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
+      <HelpCircle size={16} color="#3525CD" strokeWidth={1.5} />
     </div>
     <div>
       <p className={combineTypography(typography.body.small, "font-semibold text-[#0B1C30] mb-0.5")}>

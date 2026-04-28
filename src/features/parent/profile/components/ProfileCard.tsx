@@ -1,28 +1,7 @@
-const PhoneIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 14 14"
-    fill="none"
-    style={{ display: "block" }}
-  >
-    <path
-      d="M2 3a1 1 0 011-1h2l1 3-1.5 1.5a9 9 0 004 4L10 9l3 1v2a1 1 0 01-1 1A11 11 0 012 3z"
-      stroke="currentColor"
-      strokeWidth="1.2"
-    />
-  </svg>
-);
-
 import { Card, CardContent } from "@/components/ui/card";
-interface ProfileCardProps {
-  name: string;
-  initials: string;
-  role: string;
-  phone: string;
-  onEdit?: () => void;   // ✅ ADD THIS
-}
+import { Phone, Pencil } from "lucide-react";
 
+import type { ProfileCardProps } from "../types/profile.types";
 export function ProfileCard({
   name,
   initials,
@@ -68,25 +47,27 @@ export function ProfileCard({
           flex items-center justify-center gap-1.5
           text-[12px] text-gray-500 mt-2
         ">
-          <PhoneIcon />
+          <Phone size={12} strokeWidth={1.2} style={{ display: "block" }} />
           {phone}
         </div>
 
         {/* BUTTON */}
-      <button
-  onClick={onEdit}   // ✅ ADD THIS
-  className="
-    w-full mt-4 py-2.5
-    border border-[#E8EBF2]
-    rounded-xl
-    text-[12px] font-semibold text-[#3525CD]
-    hover:bg-[#EEF2FF]
-    active:scale-95
-    transition-all duration-200
-  "
->
-  ✎ Edit Profile
-</button>
+        <button
+          onClick={onEdit}
+          className="
+            w-full mt-4 py-2.5
+            border border-[#E8EBF2]
+            rounded-xl
+            text-[12px] font-semibold text-[#3525CD]
+            flex items-center justify-center gap-1.5
+            hover:bg-[#EEF2FF]
+            active:scale-95
+            transition-all duration-200
+          "
+        >
+          <Pencil size={12} strokeWidth={1.5} />
+          Edit Profile
+        </button>
 
       </CardContent>
     </Card>

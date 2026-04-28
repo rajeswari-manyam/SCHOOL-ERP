@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { HomeworkTab } from "../types/types";
+import type { HomeworkTab } from "../types/homework.types";
 
 interface HomeworkState {
   tab: HomeworkTab;

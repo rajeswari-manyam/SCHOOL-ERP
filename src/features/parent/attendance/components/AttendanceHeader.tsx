@@ -1,14 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import type { AttendanceHeaderProps } from "../types/attendance.types"
 
-interface AttendanceHeaderProps {
-  currentDate: Date
-  onPrev: () => void
-  onNext: () => void
-  child: {
-    name: string
-    class: string
-  }
-}
 const MONTH_NAMES = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December",

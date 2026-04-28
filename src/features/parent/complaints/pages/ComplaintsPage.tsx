@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { Plus, X, AlertCircle, MessageSquareWarning } from "lucide-react";
 import { useComplaintsStore } from "../hooks/useComplaintsStore";
 import { RaiseComplaintCard } from "../components/RaiseComplaintBox";
 import { ComplaintSubmittedCard } from "../components/ComplaintsSubmittedBox";
@@ -41,9 +42,9 @@ export default function ComplaintsPage() {
               <p className="text-[15px] font-bold text-[#0B1C30]">Raise a Complaint</p>
               <button
                 onClick={() => setIsFormOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg border border-[#E8EBF2] text-gray-400 hover:text-gray-600 hover:bg-gray-50 text-[14px]"
+                className="w-7 h-7 flex items-center justify-center rounded-lg border border-[#E8EBF2] text-gray-400 hover:text-gray-600 hover:bg-gray-50"
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
             <div className="p-6">
@@ -90,9 +91,7 @@ export default function ComplaintsPage() {
               transition-all duration-200 shrink-0 mt-1
             "
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1v12M1 7h12" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
+            <Plus size={14} strokeWidth={2.5} />
             Raise Complaint
           </button>
         </div>
@@ -107,10 +106,7 @@ export default function ComplaintsPage() {
         ) : (
           <div className="bg-white rounded-2xl border border-[#E8EBF2] px-6 py-16 text-center">
             <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] flex items-center justify-center mx-auto mb-3">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5v7m0 4h.01" stroke="#3525CD" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="12" cy="12" r="9" stroke="#3525CD" strokeWidth="1.5"/>
-              </svg>
+              <AlertCircle size={22} color="#3525CD" strokeWidth={1.5} />
             </div>
             <p className="text-[14px] font-semibold text-[#0B1C30] mb-1">No complaints yet</p>
             <p className="text-[12px] text-gray-400">Click "Raise Complaint" to submit a new concern.</p>
@@ -138,10 +134,7 @@ function SubmittedListCard({ complaint }: { complaint: any }) {
     <div className="bg-white rounded-2xl border border-[#E8EBF2] p-5 flex items-start justify-between gap-4 hover:shadow-md transition-all duration-200">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl bg-[#EEF2FF] flex items-center justify-center shrink-0 mt-0.5">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v7m0 4h.01" stroke="#3525CD" strokeWidth="2" strokeLinecap="round"/>
-            <circle cx="12" cy="12" r="9" stroke="#3525CD" strokeWidth="1.5"/>
-          </svg>
+          <MessageSquareWarning size={16} color="#3525CD" strokeWidth={1.5} />
         </div>
         <div>
           <p className="text-[14px] font-bold text-[#0B1C30] mb-0.5">{complaint.subject}</p>

@@ -1,40 +1,25 @@
-
-
-
-
-
-
-
-
-
 import { useEffect } from "react";
-
+import { Check, MessageCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-
+import { Card, CardContent } from "@/components/ui/card";
 import typography from "@/styles/typography";
 import { cn } from "@/utils/cn";
 
-interface PaymentSuccessModalProps {
-  amount: number;
-  feeHead: string;
-  mode: string;
-  onDownload?: () => void;
-  onBack: () => void;
-}
+import type { PaymentSuccessModalProps } from "../types/fee.types";
+import { paymentSuccessDefaults } from "../data/fee.data";
 
 export function PaymentSuccessModal({
   amount,
   feeHead,
   mode,
+  receiptNo = paymentSuccessDefaults.receiptNo,
+  date = paymentSuccessDefaults.date,
+  studentName = paymentSuccessDefaults.studentName,
+  className = paymentSuccessDefaults.className,
+  whatsappNumber = paymentSuccessDefaults.whatsappNumber,
   onDownload,
   onBack,
 }: PaymentSuccessModalProps) {
-  const receiptNo = "RCP-2025-0848";
-  const date = "7 April 2025";
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -52,22 +37,13 @@ export function PaymentSuccessModal({
         onClick={onBack}
       />
 
-      {/* CARD */}
       <Card className="relative z-10 w-full max-w-[400px] overflow-hidden">
 
-        {/* SUCCESS HEADER */}
+        {/* HEADER */}
         <CardContent className="flex flex-col items-center pt-8 pb-5 px-6">
 
           <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-            <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-              <path
-                d="M5 14l6 6L23 7"
-                stroke="#16A34A"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Check size={26} className="text-emerald-600" />
           </div>
 
           <p className={cn(typography.heading.h6, "text-emerald-600")}>
@@ -75,70 +51,43 @@ export function PaymentSuccessModal({
           </p>
 
           <p className={cn(typography.body.small, "text-gray-400 mt-1 text-center")}>
-            Rs.{amount.toLocaleString("en-IN")} paid for Ravi Kumar
+            Rs.{amount.toLocaleString("en-IN")} paid for {studentName}
           </p>
+
         </CardContent>
 
         {/* DETAILS */}
-        <CardContent className="mx-5 mb-4 rounded-xl overflow-hidden text-[#0B1C30] p-0">
+        <CardContent className="mx-5 mb-4 rounded-xl overflow-hidden p-0 text-[#0B1C30]">
 
-          {/* Receipt + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2">
-            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
-              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Receipt No</p>
-              <p className="text-sm font-bold font-mono group-hover:text-white">{receiptNo}</p>
-            </div>
-
-            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
-              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Date</p>
-              <p className="text-sm font-bold group-hover:text-white">{date}</p>
-            </div>
+            <Detail label="Receipt No" value={receiptNo} mono />
+            <Detail label="Date" value={date} />
           </div>
 
-          {/* Student */}
-          <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
-            <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Student Details</p>
-            <p className="text-sm font-bold group-hover:text-white">
-              Ravi Kumar{" "}
-              <span className="text-gray-400 font-normal group-hover:text-white/70">Class: 10A</span>
-            </p>
-          </div>
+          <Detail
+            label="Student Details"
+            value={`${studentName} | Class: ${className}`}
+          />
 
-          {/* Fee Head */}
-          <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
-            <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Fee Head</p>
-            <p className="text-sm font-bold group-hover:text-white">{feeHead}</p>
-          </div>
+          <Detail label="Fee Head" value={feeHead} />
 
-          {/* Mode + Amount */}
           <div className="grid grid-cols-1 sm:grid-cols-2">
-            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
-              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Mode</p>
-              <p className="text-sm font-bold group-hover:text-white">{mode}</p>
-            </div>
-
-            <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors cursor-default">
-              <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">Amount</p>
-              <p className="text-sm font-bold text-emerald-600 group-hover:text-white">
-                Rs.{amount.toLocaleString("en-IN")}
-              </p>
-            </div>
+            <Detail label="Mode" value={mode} />
+            <Detail
+              label="Amount"
+              value={`Rs.${amount.toLocaleString("en-IN")}`}
+              highlight
+            />
           </div>
 
           {/* WhatsApp */}
           <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="8" fill="#25D366" />
-              <path
-                d="M10.8 9.7c-.3.6-1.1 1.1-1.8 1C7 10.3 5.7 9 5.4 7c-.1-.7.4-1.5 1-1.8.3-.1.6 0 .7.2l.6 1.1c.1.2 0 .5-.2.7l-.3.3c.3.6.8 1.1 1.4 1.4l.3-.3c.2-.2.5-.3.7-.2l1.1.6c.3.1.3.4.1.7Z"
-                fill="white"
-              />
-            </svg>
-
+            <MessageCircle size={16} className="text-emerald-600" />
             <p className="text-xs text-emerald-700">
-              Receipt sent to +91 98765 43210 via WhatsApp
+              Receipt sent to {whatsappNumber} via WhatsApp
             </p>
           </div>
+
         </CardContent>
 
         {/* ACTIONS */}
@@ -147,17 +96,9 @@ export function PaymentSuccessModal({
           <Button
             onClick={onDownload}
             variant="outline"
-            className="w-full flex items-center justify-center gap-2 text-[#3525CD] border-[#E8EBF2] hover:bg-[#F5F4FF]"
+            className="w-full flex items-center gap-2 text-[#3525CD]"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M7 1v8M4 6l3 3 3-3M1 12h12"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Download size={14} />
             Download Receipt PDF
           </Button>
 
@@ -171,6 +112,38 @@ export function PaymentSuccessModal({
         </CardContent>
 
       </Card>
+    </div>
+  );
+}
+
+/* ---------- reusable sub-component ---------- */
+
+function Detail({
+  label,
+  value,
+  mono,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="px-4 py-3 bg-[#F8FAFC] hover:bg-[#3525CD] group transition-colors">
+      <p className="text-xs text-gray-400 uppercase group-hover:text-white/70">
+        {label}
+      </p>
+
+      <p
+        className={cn(
+          "text-sm font-bold group-hover:text-white",
+          mono && "font-mono",
+          highlight && "text-emerald-600 group-hover:text-white"
+        )}
+      >
+        {value}
+      </p>
     </div>
   );
 }

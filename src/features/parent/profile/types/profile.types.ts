@@ -34,3 +34,10 @@ export interface ParentProfile {
   children: Child[];
   notifications: NotificationPref[];
 }
+export interface ProfileCardProps {
+  name: string;
+  initials: string;
+  role: string;
+  phone: string;
+  onEdit?: () => void;
+}

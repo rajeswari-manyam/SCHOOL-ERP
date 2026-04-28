@@ -1,9 +1,13 @@
-interface FeeBannerProps {
-  text: string;
-  onPayNow?: () => void;
-}
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export function FeeBanner({ text, onPayNow }: FeeBannerProps) {
+import type { FeeBannerProps } from "../types/fee.types";
+import { feeBannerDummy } from "../data/fee.data";
+
+export function FeeBanner({
+  text = feeBannerDummy.text,
+  onPayNow,
+}: FeeBannerProps) {
   return (
     <div
       className="
@@ -24,28 +28,14 @@ export function FeeBanner({ text, onPayNow }: FeeBannerProps) {
     >
       {/* Left side */}
       <div className="flex items-center gap-2">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M8 2L14.5 13H1.5L8 2Z"
-            stroke="#92400E"
-            strokeWidth="1.3"
-          />
-          <path
-            d="M8 6.5v3"
-            stroke="#92400E"
-            strokeWidth="1.3"
-            strokeLinecap="round"
-          />
-          <circle cx="8" cy="11" r="0.6" fill="#92400E" />
-        </svg>
-
+        <AlertTriangle size={16} color="#92400E" strokeWidth={1.5} />
         <span className="text-[13px] text-[#92400E] font-medium">
           {text}
         </span>
       </div>
 
       {/* Button */}
-      <button
+      <Button
         onClick={onPayNow}
         className="
           shrink-0
@@ -60,7 +50,7 @@ export function FeeBanner({ text, onPayNow }: FeeBannerProps) {
         "
       >
         Pay Now
-      </button>
+      </Button>
     </div>
   );
 }

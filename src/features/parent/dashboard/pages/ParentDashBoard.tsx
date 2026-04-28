@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
-import { useOutletContext } from "react-router-dom";
 import { StatCard } from "../../../../components/ui/statcard";
 import { AttendanceWidget } from "../components/AttendanceWidge";
 import { HomeworkCard } from "../components/HomeWorkCard";
@@ -8,81 +7,33 @@ import { FeeStatusCard } from "../components/FeeStatusCard";
 import { AnnouncementCard } from "../components/AnnouncamentsCard";
 import { UpcomingExamsTable } from "../components/UpCommingExampleTimeTable";
 
+
+import { paidStats, unpaidStats } from "../data/dashboard.data";
+import { feeSummary } from "../data/dashboard.data";
+
 type ParentLayoutContext = {
   activeChild: {
-    id: number
-    name: string
-    class: string
-    school: string
-    avatar: string
-  }
-}
+    id: number;
+    name: string;
+    class: string;
+    school: string;
+    avatar: string;
+  };
+};
 
 const DashboardPage = () => {
   const { activeChild } = useOutletContext<ParentLayoutContext>();
   const navigate = useNavigate();
+
   const isPaid = activeChild.id === 2;
 
-  const stats = isPaid
-    ? [
-      {
-        label: "Today's Attendance",
-        badge: { text: "Present", variant: "green" as const },
-        sub: "7 April 2025",
-        path: "/parent/attendance", // ✅ ADD
-      },
-      {
-        label: "Fee Status",
-        badge: { text: "All Paid", variant: "green" as const },
-        sub: "April fees paid",
-        path: "/parent/fees",
-      },
-      {
-        label: "Homework Due",
-        value: "2 assignments",
-        badge: { text: "Due today", variant: "amber" as const },
-        path: "/parent/homework",
-      },
-      {
-        label: "Next Exam",
-        value: <span className="text-[#3525CD]">9 days</span>,
-        badge: { text: "Mathematics", variant: "blue" as const },
-        sub: "Unit Test",
-        path: "/parent/exams",
-      },
-    ]
-    : [
-      {
-        label: "Today's Attendance",
-        badge: { text: "Present", variant: "green" as const },
-        sub: "7 April 2025",
-        path: "/parent/attendance",
-      },
-      {
-        label: "Fee Status",
-        value: <span className="text-[#BA1A1A]">Rs.8,500 Pending</span>,
-        badge: { text: "Pending", variant: "red" as const },
-        sub: <span className="text-[#BA1A1A]">Tuition-Due 9 Apr</span>,
-        path: "/parent/fees",
-      },
-      {
-        label: "Homework Due",
-        value: <span className="text-[#3525CD]">2 assignments</span>,
-        badge: { text: "Pending submission", variant: "amber" as const },
-        path: "/parent/homework",
-      },
-      {
-        label: "Next Exam",
-        value: <span className="text-[#3525CD]">9 days</span>,
-        badge: { text: "Mathematics", variant: "blue" as const },
-        sub: "Unit Test",
-        path: "/parent/exams",
-      },
-    ];
+
+  const stats = isPaid ? paidStats : unpaidStats;
+
   return (
     <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
-      {/* ── Welcome Banner — shown for BOTH children ── */}
+   
       <div className="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-white leading-tight">
@@ -94,7 +45,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* ── Stat Cards ── */}
+     
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((item, i) => (
           <div
@@ -107,33 +58,46 @@ const DashboardPage = () => {
         ))}
       </div>
 
-      {/* ── Main Content ── */}
+     
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* Left: Attendance + Homework */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <AttendanceWidget />
           <HomeworkCard variant={isPaid ? "simple" : "card"} />
         </div>
 
-        {/* Right: Fee Status + Announcement */}
+      
         <div className="flex flex-col gap-4">
-          <FeeStatusCard isPaid={isPaid} />
+
+       
+          <FeeStatusCard
+            isPaid={isPaid}
+            fees={feeSummary.fees}
+            lastPayment={feeSummary.lastPayment}
+            nextDue={feeSummary.nextDue}
+          />
+
+        
           <AnnouncementCard
             variant={isPaid ? "announcements" : "latest"}
-            title={isPaid ? "Summer Vacation Schedule" : "School Sports Day 2025"}
+            title={
+              isPaid
+                ? "Summer Vacation Schedule"
+                : "School Sports Day 2025"
+            }
             description={
               isPaid
-                ? "The school will remain closed for summer break from May 15th to June 20th. Assignments are available in the Academic section."
-                : "The Annual School Sports Day is scheduled for the last Saturday of April. Students interested in track and field events are requested to submit their names by April 14."
+                ? "The school will remain closed for summer break from May 15th to June 20th."
+                : "Annual Sports Day scheduled for last Saturday of April."
             }
             tag={isPaid ? "Administrative" : "Latest Announcement"}
             postedAt={isPaid ? "Posted 2 hours ago" : undefined}
           />
+
         </div>
       </div>
 
-      {/* ── Upcoming Exams ── */}
+     
       <div className="w-full overflow-x-auto">
         <UpcomingExamsTable />
       </div>

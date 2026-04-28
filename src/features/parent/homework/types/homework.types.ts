@@ -27,3 +27,27 @@ export interface StudyMaterial {
   type: MaterialType;
   isLink?: boolean;
 }
+
+// src/study-material/types/types.ts
+
+export type StudyMaterialType = "pdf" | "jpg" | "doc" | "link";
+
+export interface StudyMaterial {
+  id: string;
+  title: string;
+  uploaded: string;
+  class: string;
+  subject: string;
+  type: StudyMaterialType;
+  isLink?: boolean;
+}
+// src/recommended-resources/types/types.ts
+
+export type ResourceType = "download" | "link";
+
+export interface RecommendedResource {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: ResourceType;
+}

@@ -1,4 +1,4 @@
-import type { Homework, StudyMaterial } from "../types/types";
+import type { Homework, StudyMaterial } from "../types/homework.types";
 
 export const homeworkData: Homework[] = [
   {
@@ -152,4 +152,23 @@ export const DAYS = [
   { day: 9, label: "WED" },
   { day: 10, label: "THU" },
   { day: 11, label: "FRI" },
+];
+
+// src/recommended-resources/data/mock.ts
+
+import type { RecommendedResource } from "../types/homework.types";
+
+export const resources: RecommendedResource[] = [
+  {
+    id: "1",
+    title: "Math Formulas 101",
+    subtitle: "Class 10 Revision",
+    type: "download",
+  },
+  {
+    id: "2",
+    title: "Light Refraction Video",
+    subtitle: "Science Lab Supplement",
+    type: "link",
+  },
 ];
