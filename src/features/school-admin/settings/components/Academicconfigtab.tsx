@@ -202,7 +202,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
               inputSize="md"
               className="w-full"
             />
-            />
+          
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">End Time</label>
@@ -212,7 +212,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
               inputSize="md"
               className="w-full"
             />
-            />
+          
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Period Duration</label>
@@ -222,7 +222,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
               inputSize="md"
               className="w-full"
             />
-            />
+            
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Number of Periods</label>
@@ -232,7 +232,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
               inputSize="md"
               className="w-full"
             />
-            />
+         
           </div>
         </div>
       </div>
