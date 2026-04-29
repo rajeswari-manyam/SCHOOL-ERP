@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react";
-import { getDashboardData } from "../api/dashboard.api";
+import { fetchDashboardData } from "../api/dashboardApi";
 import type {
-  Attendance,
-  Defaulter,
-  Activity,
-  PipelineItem,
+  AttendanceSummary,
+  FeeDefaulter,
+  WhatsAppActivity,
+  pipelineItem,
   QuickAction,
 } from "../types/dashboard.types";
 
 interface DashboardData {
-  attendanceData: Attendance[];
-  defaulters: Defaulter[];
-  whatsappActivity: Activity[];
-  pipeline: PipelineItem[];
+  attendanceData: AttendanceSummary[];
+  defaulters: FeeDefaulter[];
+  whatsappActivity: WhatsAppActivity[];
+  pipeline: pipelineItem[];
   quickActions: QuickAction[];
 }
 
 export const useDashboard = () => {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, ] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    getDashboardData().then(setData);
+    fetchDashboardData().then();
   }, []);
 
   return { data };

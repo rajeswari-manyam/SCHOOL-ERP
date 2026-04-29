@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+
 import { z } from "zod";
 import { MessageSquare, Check, CheckCircle } from "lucide-react";
 import { ConfigCard, FieldLabel, SecretInput, TextInput, ReadOnlyField, ConnectedBadge } from "./ConfigFields";
@@ -28,7 +28,7 @@ const DialogConfigCard = ({ config }: DialogConfigCardProps) => {
   const { saveDialog, testDialog } = useConfigMutations();
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { isDirty } } = useForm<FormValues>({
+  const { register, handleSubmit, formState: { } } = useForm<FormValues>({
     defaultValues: {
       apiKey: config?.apiKey ?? "",
       partnerId: config?.partnerId ?? "MANYAM-001",

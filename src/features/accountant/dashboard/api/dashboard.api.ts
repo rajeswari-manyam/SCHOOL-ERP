@@ -1,10 +1,10 @@
 import type { AccountantDashboardStats } from "../types/dashboard.types";
 
 const MOCK_ACCOUNTANT_STATS: AccountantDashboardStats = {
-  totalFeesCollected: 1248000,
-  pendingFees:        342000,
-  defaulters:         47,
-  transactions:       312,
+  totalCollected:     1250000,
+  pendingDues:       250000,
+  totalTransactions:  312,
+  
 };
 
 export const fetchAccountantDashboardStats =

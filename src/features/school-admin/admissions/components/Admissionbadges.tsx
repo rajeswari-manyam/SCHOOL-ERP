@@ -1,4 +1,4 @@
-import type { AdmissionStage, EnquirySource } from "../types/admissions.types";
+import type { AdmissionStage, EnquirySource } from "../types/Admissions.types";
 import { Badge } from "@/components/ui/badge";
 
 export const StageBadge = ({ stage }: { stage: AdmissionStage }) => {

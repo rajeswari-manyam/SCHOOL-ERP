@@ -25,7 +25,7 @@ export const timetableApi = {
   },
 
   /** Weekly class timetable for a given class */
-  getClassTimetable: async (classId: string): Promise<ClassTimetable> => {
+  getClassTimetable: async (): Promise<ClassTimetable> => {
     await delay(400);
     return mockClass10Timetable;
   },
@@ -52,12 +52,14 @@ export const timetableApi = {
   /** Delete an exam entry */
   deleteExam: async (examId: string): Promise<{ success: boolean }> => {
     await delay(400);
+    console.log("Deleted exam:", examId);
     return { success: true };
   },
 
   /** Toggle notify-parents for exam timetable */
   toggleNotifyParents: async (enabled: boolean): Promise<{ success: boolean }> => {
     await delay(300);
+    console.log("Notify parents enabled:", enabled);
     return { success: true };
   },
 

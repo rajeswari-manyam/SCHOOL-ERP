@@ -2,7 +2,7 @@ import { useHomework } from "./hooks/useHomework";
 import { Plus, Upload } from "lucide-react";
 import HomeworkCard from "./components/HomeworkCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
-import { ConfirmAssignModal, DeleteConfirmModal } from "./components/ConfirmModals";
+import {  DeleteConfirmModal } from "./components/ConfirmModals";
 import { StudyMaterialCard, UploadMaterialModal } from "./components/StudyMaterials";
 import { Button } from "@/components/ui/button";
 import type { AssignHomeworkFormValues } from "./types/homework.types";
@@ -16,7 +16,7 @@ const HomeworkPage = () => {
     deleteHomework, deleteMaterial,
   } = useHomework();
 
-  const [pendingAssign, setPendingAssign] =
+  const [pendingAssign, ] =
     [null as AssignHomeworkFormValues | null, (_: AssignHomeworkFormValues | null) => {}];
 
   const TABS = [

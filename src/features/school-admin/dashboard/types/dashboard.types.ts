@@ -21,7 +21,11 @@ export interface AttendanceSummary {
   pendingClasses: string[];
   rows: ClassAttendanceRow[];
 }
-
+export interface pipelineItem {
+  id: string;
+  name: string;
+  count: number;
+}
 // ─── Fees ─────────────────────────────────────────────────────────────────────
 
 export interface FeeDefaulter {

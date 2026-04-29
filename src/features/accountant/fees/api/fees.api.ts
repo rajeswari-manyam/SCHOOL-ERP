@@ -1,5 +1,5 @@
 import { axios } from "@/config/axios";
-import { Fee, FeeCreateInput, FeeUpdateInput } from "../types/fees.types";
+import type { Fee, FeeCreateInput, FeeUpdateInput } from "../types/fees.types";
 
 export const fetchFees = async (): Promise<Fee[]> => {
   const { data } = await axios.get("/accountant/fees");

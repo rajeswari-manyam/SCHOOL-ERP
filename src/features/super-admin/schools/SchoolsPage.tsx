@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { Upload, Plus } from "lucide-react";
 import SchoolFilterBar from "./components/SchoolFilterBar";
 import SchoolTable from "./components/SchoolTable";
@@ -21,7 +21,7 @@ const DEFAULT_FILTERS: SchoolFilters = {
 const CITIES = ["Hanamkonda", "Warangal", "Kazipet", "Khammam"];
 
 const SchoolsPage = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const csvInputRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState<SchoolFilters>(DEFAULT_FILTERS);
 

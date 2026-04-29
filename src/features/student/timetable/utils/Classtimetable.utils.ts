@@ -1,4 +1,4 @@
-import type { SubjectName, DayName } from "../types/Classtimetable.types";
+import type {  DayName } from "../types/Classtimetable.types";
 
 // ─── Days ────────────────────────────────────────────────────────────────────────
 export const WEEK_DAYS: DayName[] = [

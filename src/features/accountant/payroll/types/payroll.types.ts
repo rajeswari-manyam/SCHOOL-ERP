@@ -4,7 +4,7 @@
 
 export type PayrollStatus = "Draft" | "Processed" | "Paid";
 
-export type StaffPayroll = {
+export type Payroll = {
   id: string;
   name: string;
   initials: string;
@@ -79,8 +79,30 @@ export type PayrollFormData = {
 // ==========================
 // 5. SUMMARY & DEDUCTION
 // ==========================
+export interface  CreatePayrollInput{
+  month: string;
+  year: number;
+  attendanceDeductions: {
+    staffId: string;
+    daysAbsent: number;
+    amountDeducted: number;
+  }[];
+}
+ 
 
-export interface PayrollSummary {
+export interface StaffPayroll {
+  id: string;
+  name: string;
+  initials: string;
+  role: string;
+  present: number;
+  absent: number;
+  gross: number;
+  deductions: number;
+  net: number;
+  status: PayrollStatus;
+}
+export interface UpdatePayrollInput {
   totalStaff: number;
   totalGross: number;
   totalDeductions: number;
@@ -106,6 +128,17 @@ export type MonthlyPayrollTabProps = {
   processedBy: string | null;
   onStartProcessing: () => void;
 };
+
+export interface PayrollSummary {
+  totalStaff: number;
+  totalGross: number;      
+  totalDeductions: number;
+  totalNet: number;
+  month: string;
+  year: number;
+  processingDueDate: string;
+}
+
 
 export interface StatusBannerProps {
   isProcessed: boolean;

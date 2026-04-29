@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,  ResponsiveContainer } from "recharts";
 import { ChevronLeft, ChevronRight, Calendar, ArrowRight } from "lucide-react";
 import type { MarketingRep } from "../types/marketing.types";
 import { RepAvatar, AchievementBadge } from "./RepBadges";

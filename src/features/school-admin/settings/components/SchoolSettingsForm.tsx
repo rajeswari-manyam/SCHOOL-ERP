@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
+import type {
   SchoolSettings,
   UpdateSchoolSettingsInput,
 } from "../types/settings.types";

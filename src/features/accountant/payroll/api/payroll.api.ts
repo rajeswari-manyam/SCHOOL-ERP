@@ -1,8 +1,10 @@
 import { axios } from "@/config/axios";
-import {
+import  type {
   Payroll,
   CreatePayrollInput,
   UpdatePayrollInput,
+
+
 } from "../types/payroll.types";
 
 export const fetchPayrolls = async (): Promise<Payroll[]> => {

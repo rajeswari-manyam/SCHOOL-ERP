@@ -1,4 +1,5 @@
 import type { StudentDocument } from "../types/student.types";
+import { Button } from "@/components/ui/button";
 
 const StudentDocumentsTab = ({ documents }: { documents: StudentDocument[] }) => {
   return (

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
-import { Label } from "@/components/ui/label";
+  
 
 const FILE_TYPE_CONFIG = {
   PDF:   { icon: "📄", bg: "bg-red-50",    text: "text-red-600",    label: "PDF"  },
@@ -82,9 +82,6 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const inputClass  = "w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition";
-const selectClass = `${inputClass} appearance-none cursor-pointer pr-8`;
-const labelClass  = "block text-[11px] font-bold tracking-widest uppercase text-gray-400 mb-1.5";
 
 interface ModalProps {
   open: boolean;

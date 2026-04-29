@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
+import type {
   AccountantSettings,
-  UpdateAccountantSettingsInput,
+ 
 } from "../types/settings.types";
 
 const schema = z.object({
@@ -17,6 +17,8 @@ const schema = z.object({
   language: z.string().min(2),
 });
 
+type SettingsFormValues = z.infer<typeof schema>;
+
 const THEME_OPTIONS = [
   { label: "Light", value: "light" },
   { label: "Dark", value: "dark" },
@@ -24,7 +26,7 @@ const THEME_OPTIONS = [
 
 type SettingsFormProps = {
   defaultValues: AccountantSettings;
-  onSubmit: (values: UpdateAccountantSettingsInput) => void;
+  onSubmit: (values: SettingsFormValues) => void;
   loading?: boolean;
 };
 
@@ -38,9 +40,13 @@ export const SettingsForm = ({
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<UpdateAccountantSettingsInput>({
+  } = useForm<SettingsFormValues>({
     resolver: zodResolver(schema),
-    defaultValues,
+    defaultValues: {
+      notificationsEnabled: defaultValues.notificationsEnabled,
+      theme: defaultValues.theme,
+      language: defaultValues.language,
+    },
   });
 
   return (

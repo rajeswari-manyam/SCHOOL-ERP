@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FaThLarge, FaSchool, FaCreditCard, FaCog, FaComment, FaTicketAlt, FaUsers, FaFileAlt, FaChartBar } from "react-icons/fa";
 import Sidebar from "../components/common/Sidebar";
-import Topbar from "../components/common/SuperAdminTopbar";
+import Topbar from "../components/common/superAdminTopbar";
 
 const BreadcrumbLabels: Record<string, string> = {
   "/superadmin/dashboard": "Dashboard",

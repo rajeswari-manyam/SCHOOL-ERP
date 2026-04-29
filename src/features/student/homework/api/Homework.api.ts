@@ -5,7 +5,7 @@ import {
 import type {
   HomeworkResponse,
   StudyMaterialsResponse,
-  SubmitPayload,
+ 
   SubmitResult,
   Assignment,
 } from "../types/Homework.types";
@@ -39,7 +39,7 @@ export const homeworkApi = {
   },
 
   /** Submit an assignment (file upload or text response) */
-  submitAssignment: async (payload: SubmitPayload): Promise<SubmitResult> => {
+  submitAssignment: async (): Promise<SubmitResult> => {
     await delay(1200);
     return {
       success: true,

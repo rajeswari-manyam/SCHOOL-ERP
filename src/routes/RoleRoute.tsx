@@ -7,7 +7,8 @@ interface RoleRouteProps {
 }
 
 export const RoleRoute = ({ allowedRoles }: RoleRouteProps) => {
-  const { role } = useAuthStore();
+  const { user } = useAuthStore();
+  const role = user?.role;
   if (!role) return <Navigate to="/unauthorized" replace />;
   return allowedRoles.includes(role) ? (
     <Outlet />

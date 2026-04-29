@@ -1,4 +1,4 @@
-import type { Attendance } from "../types/dashboard.types";
+import type { ClassAttendanceRow as Attendance } from "../types/dashboard.types";
 import {
   Table,
   TableHeader,
@@ -24,8 +24,8 @@ export const AttendanceTable = ({ data }: { data: Attendance[] }) => {
         </TableHeader>
         <TableBody>
           {data.map((row) => (
-            <TableRow key={row.class} className="hover:bg-slate-50 transition-colors">
-              <TableCell className="text-slate-700">{row.class}</TableCell>
+            <TableRow key={row.cls} className="hover:bg-slate-50 transition-colors">
+              <TableCell className="text-slate-700">{row.cls}</TableCell>
               <TableCell className="text-slate-700">{row.teacher}</TableCell>
               <TableCell className="text-slate-700">{row.present}</TableCell>
               <TableCell className="text-slate-700">{row.absent}</TableCell>

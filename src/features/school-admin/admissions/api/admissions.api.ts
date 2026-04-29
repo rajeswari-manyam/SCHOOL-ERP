@@ -1,4 +1,4 @@
-import type { Admission, AdmissionDocument, AddEnquiryFormData, ConfirmAdmissionFormData } from "../types/admissions.types";
+import type { Admission, AdmissionDocument, AddEnquiryFormData, ConfirmAdmissionFormData } from "../types/Admissions.types";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -251,5 +251,24 @@ export const admissionsApi = {
         : a
     );
     return MOCK_ADMISSIONS.find(a => a.id === id)!;
+  },
+
+  updateApplicationStatus: async (
+    id: string,
+    status: "approved" | "rejected",
+    remarks?: string
+  ): Promise<Admission> => {
+    await new Promise(r => setTimeout(r, 300));
+    MOCK_ADMISSIONS = MOCK_ADMISSIONS.map((a) =>
+      a.id === id
+        ? {
+            ...a,
+            stage: status === "approved" ? "CONFIRMED" : "DECLINED",
+            declineReason: status === "rejected" ? remarks || "Rejected by admission review." : a.declineReason,
+            notes: status === "approved" ? remarks || a.notes : a.notes,
+          }
+        : a
+    );
+    return MOCK_ADMISSIONS.find((a) => a.id === id)!;
   },
 };

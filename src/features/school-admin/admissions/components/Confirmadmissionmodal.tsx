@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Admission, ConfirmAdmissionFormData } from "../types/admissions.types";
+import type { Admission, ConfirmAdmissionFormData } from "../types/Admissions.types";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";

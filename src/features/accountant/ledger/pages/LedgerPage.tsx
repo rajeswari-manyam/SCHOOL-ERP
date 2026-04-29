@@ -9,7 +9,7 @@ import { AddExpenseModal } from "../components/AddExpenseModal";
 import { BalanceSheet } from "../components/BalanceSheet";
 import { PettyCash } from "../components/PettyCash";
 import { ExportModal } from "../components/ExportModal";
-import { useLedger } from "../hooks/useLedger";
+import { useLedger } from "../hooks/useledger";
 
 import type { LedgerEntry } from "../types/Ledger.types"; 
 const TAB_ITEMS = [

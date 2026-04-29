@@ -15,6 +15,9 @@ import {
   LogOut,
 } from "lucide-react";
 
+// ─── UI Components ─────────────────────────────────────────────────────────
+import { Button } from "@/components/ui/button";
+
 // ─── useClickOutside hook ────────────────────────────────────────────────────
 function useClickOutside(ref: RefObject<HTMLElement | null>, handler: () => void) {
   useEffect(() => {

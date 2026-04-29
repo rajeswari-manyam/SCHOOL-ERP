@@ -1,4 +1,4 @@
-import type { Admission, AdmissionStage } from "../types/admissions.types";
+import type { Admission, AdmissionStage } from "../types/Admissions.types";
 import { SourceBadge } from "./Admissionbadges";
 
 // ─── WA icon ─────────────────────────────────────────────────────────────────

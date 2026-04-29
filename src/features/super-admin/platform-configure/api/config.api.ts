@@ -53,7 +53,7 @@ export const configApi = {
   },
   assignTemplateToSchools: async (
     templateId: string,
-    payload: ConfigTemplateAssignPayload
+    payload: { schoolIds: string[] }
   ): Promise<void> => {
     await axios.post(`/super-admin/config/wa-templates/${templateId}/assign`, payload);
   },

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+
 import { useMarkAttendance } from "../hooks/useTeacherDashboard";
 import { Modal } from "../../../../components/ui/modal";
 import { Button } from "../../../../components/ui/button";
@@ -25,7 +25,7 @@ const PLACEHOLDER: Student[] = Array.from({ length: 8 }, (_, i) => ({
 const statusBtn = (active: boolean, color: string) =>
   `px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${active ? `${color} text-white shadow-sm` : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`;
 
-const MarkAttendanceModal = ({ open, onClose, totalStudents, students }: MarkAttendanceModalProps) => {
+const MarkAttendanceModal = ({ open, onClose,  students }: MarkAttendanceModalProps) => {
   const list = students ?? PLACEHOLDER;
   const [records, setRecords] = useState<Record<string, AttStatus>>(
     () => Object.fromEntries(list.map((s) => [s.id, "PRESENT" as AttStatus]))

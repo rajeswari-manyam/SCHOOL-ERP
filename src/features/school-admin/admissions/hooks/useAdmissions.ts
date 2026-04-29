@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { admissionsApi } from "../api/admissions.api";
 import type {
   Admission,
@@ -6,7 +7,7 @@ import type {
   AdmissionStats,
   AddEnquiryFormData,
   ConfirmAdmissionFormData,
-} from "../types/admissions.types";
+} from "../types/Admissions.types";
 
 // ─── useAdmissions ────────────────────────────────────────────────────────────
 
@@ -111,4 +112,24 @@ export const useAdmissions = () => {
     toggleDocVerified,
     sendWhatsApp,
   };
+};
+
+// ─── Update application status ─────────────────────────────────────────────────
+export const useUpdateApplicationStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      remarks,
+    }: {
+      id: string;
+      status: "approved" | "rejected";
+      remarks?: string;
+    }) => admissionsApi.updateApplicationStatus(id, status, remarks),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admissions"] });
+    },
+  });
 };

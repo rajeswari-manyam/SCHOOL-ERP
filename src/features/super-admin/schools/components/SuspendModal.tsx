@@ -10,7 +10,7 @@ interface SuspendModalProps {
   onClose: () => void;
 }
 
-export const SuspendModal = ({ schoolId, schoolName, onConfirm, onClose }: SuspendModalProps) => {
+export const SuspendModal = ({  schoolName, onConfirm, onClose }: SuspendModalProps) => {
   const [reason, setReason] = useState("");
 
   return (

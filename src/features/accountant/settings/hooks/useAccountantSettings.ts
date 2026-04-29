@@ -3,7 +3,7 @@ import {
   fetchAccountantSettings,
   updateAccountantSettings,
 } from "../api/settings.api";
-import { UpdateAccountantSettingsInput } from "../types/settings.types";
+
 
 export const useAccountantSettings = () => {
   return useQuery({

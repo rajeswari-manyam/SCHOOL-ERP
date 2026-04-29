@@ -93,3 +93,13 @@ export interface AdmissionStats {
   declined: number;
   conversionRate: number;
 }
+
+export interface AdmissionApplication {
+  id: string;
+  studentName: string;
+  class: string;
+  parentName: string;
+  phone: string;
+  status: string;
+  appliedAt: string;
+}

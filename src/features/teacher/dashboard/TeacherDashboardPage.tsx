@@ -43,7 +43,7 @@ const MOCK_OVERVIEW = {
 
 const TeacherDashboardPage = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useTeacherDashboard();
+  const { data } = useTeacherDashboard();
   const [hwModal,     setHwModal]     = useState(false);
   const [leaveModal,  setLeaveModal]  = useState(false);
   const [uploadModal, setUploadModal] = useState(false);

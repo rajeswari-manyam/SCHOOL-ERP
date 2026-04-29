@@ -34,7 +34,7 @@ export interface AuditLogsFilters {
   page: number;
   pageSize: number;
 }
-
+export type AuditTabs = "ALL" | "SCHOOL_CREATED" | "SCHOOL_SUSPENDED" | "PAYMENT_RECORDED" | "SUBSCRIPTION_CHECK" | "TEMPLATE_ASSIGNED" | "PLAN_CHANGED" | "REP_ADDED" | "FEE_REMINDER_BATCH" | "LOGIN" | "LOGOUT" | "SETTINGS_UPDATED" | "USER_DELETED";
 export interface AuditLogsResponse {
   data: AuditLog[];
   total: number;

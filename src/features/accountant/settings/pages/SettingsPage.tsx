@@ -17,7 +17,7 @@ export default function SettingsPage() {
       <SettingsForm
         defaultValues={data}
         onSubmit={(values) => updateSettings.mutate(values)}
-        loading={updateSettings.isLoading}
+        loading={updateSettings.isPending}
       />
     </div>
   );

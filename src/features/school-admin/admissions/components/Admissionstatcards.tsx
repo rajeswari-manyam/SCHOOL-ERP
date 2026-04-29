@@ -1,4 +1,4 @@
-import type { AdmissionStats } from "../types/admissions.types";
+import type { AdmissionStats } from "../types/Admissions.types";
 
 interface Props {
   stats: AdmissionStats;

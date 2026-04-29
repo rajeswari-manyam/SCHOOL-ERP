@@ -139,11 +139,11 @@ export const SchoolProfileTab: React.FC<Props> = ({
             <Button variant="outline" className="px-5 py-3 rounded-xl text-sm font-bold text-blue-600">
               Upload New Logo
             </Button>
-        
+              <input type="file" accept="image/*" className="hidden"/>
             <p className="text-xs text-gray-600 mt-2 font-medium">Recommended: 512×512px. Supports PNG, JPG (Max 2MB).</p>
           </div>
         </div>
-      </div>
+      </div>  
 
     </div>
   );

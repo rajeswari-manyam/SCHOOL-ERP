@@ -60,6 +60,9 @@ export interface GenerateReportInput {
   };
 }
 
+export type ReportCreateInput = GenerateReportInput;
+export type ReportUpdateInput = Partial<GenerateReportInput>;
+
 // ─── Component Props ───────────────────────────────────────────────────────
 
 export interface ReportCardProps {

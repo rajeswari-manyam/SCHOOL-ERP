@@ -1,102 +1,103 @@
-// ─── Primitives ───────────────────────────────────────────────────────────────
+// ─── Attendance Types ─────────────────────────────────────────────────────────
 
-export type AttendanceStatus  = "MARKED" | "NOT_MARKED";
-export type AttendanceMethod  = "WhatsApp" | "Web Form" | null;
-export type AlertStatus       = "delivered" | "failed" | "pending" | null;
-export type AbsenceSeverity   = "critical" | "high" | "medium";
-export type HolidayType       = "National" | "State" | "School" | "Other";
-
-// ─── Class-level row ──────────────────────────────────────────────────────────
+export type AttendanceMethod = "WhatsApp" | "Web Form" | "Manual";
+export type ClassStatus = "MARKED" | "NOT_MARKED";
 
 export interface ClassAttendanceRow {
-  id: string;
-  cls: string;
-  section: string;
-  teacherInitials: string;
+  classSec: string;
   teacherName: string;
+  teacherInitials: string;
+  teacherColor: string;
   total: number;
   present: number | null;
   absent: number | null;
-  status: AttendanceStatus;
-  method: AttendanceMethod;
-  alertsSent: string | null;
+  status: ClassStatus;
+  method: AttendanceMethod | null;
+  alertsSent: number;
+  alertsTotal: number;
 }
 
-// ─── Student-level ────────────────────────────────────────────────────────────
-
-export interface Student {
-  id: number;
-  roll: string;
-  name: string;
-  present: boolean;
-  alertStatus: AlertStatus;
+export interface AttendanceSummary {
+  totalPresent: number;
+  totalPresentChange: number;   // e.g. +2.4
+  totalAbsent: number;
+  totalAbsentChange: number;    // e.g. +9.8
+  classesMarked: number;
+  classesTotal: number;
+  alertsSent: number;
+  alertsTotal: number;
 }
 
-export interface ClassDetail {
-  id: string;
-  label: string;
-  teacher: string;
-  markedAt: string;
-  present: number;
-  absent: number;
-  students: Student[];
+export interface AttendanceDay {
+  date: string; // YYYY-MM-DD
+  summary: AttendanceSummary;
+  classes: ClassAttendanceRow[];
 }
 
-// ─── Chronic absentee ─────────────────────────────────────────────────────────
+// History
+export interface AttendanceTrendPoint {
+  date: string;   // e.g. "05MAR"
+  class6A: number;
+  class7A: number;
+  class8A: number;
+  avg: number;
+}
 
 export interface ChronicAbsentee {
-  initials: string;
+  id: string;
   name: string;
-  class: string;
+  initials: string;
+  avatarColor: string;
+  className: string;
   absentDays: number;
-  severity: AbsenceSeverity;
+  absentSeverity: "high" | "medium" | "low"; // red=8+, orange=6-7, yellow=5
+  lastAbsent: string; // "Today", "5 Apr", etc.
+  parentPhone: string;
 }
 
-// ─── Holiday ──────────────────────────────────────────────────────────────────
+export interface AttendanceHistory {
+  dateRange: { from: string; to: string };
+  selectedClass: string;
+  monthlyAverage: number;
+  improvementFromLastMonth: number;
+  trendData: AttendanceTrendPoint[];
+  chronicAbsentees: ChronicAbsentee[];
+  actionRequired?: {
+    className: string;
+    message: string;
+  };
+}
+
+// Holiday Calendar
+export type HolidayType = "NATIONAL_HOLIDAY" | "PUBLIC_HOLIDAY" | "SCHOOL_EVENT" | "SCHOOL_DAY";
 
 export interface Holiday {
   id: string;
-  date: string;
   name: string;
+  date: string; // YYYY-MM-DD
   type: HolidayType;
 }
 
-// ─── History & trends ─────────────────────────────────────────────────────────
-
-export interface AttendanceHistoryFilters {
-  dateFrom: string;
-  dateTo: string;
-  classId?: string;
+export interface HolidayCalendar {
+  month: string;
+  year: number;
+  holidays: Holiday[];
+  totalHolidaysThisYear: number;
+  academicYear: string;
 }
 
-export interface AttendanceTrendPoint {
+// Web Form (Mark Attendance)
+export interface StudentAttendanceEntry {
+  rollNo: string;
+  name: string;
+  isPresent: boolean;
+}
+
+export interface MarkAttendanceForm {
+  class: string;
+  section: string;
   date: string;
-  present: number;
-  absent: number;
-  total: number;
+  students: StudentAttendanceEntry[];
 }
 
-// ─── Page data ────────────────────────────────────────────────────────────────
-
-export interface AttendancePageData {
-  date: string;
-  whatsappNumber: string;
-  stats: {
-    totalPresent: number;
-    presentDelta: string;
-    totalAbsent: number;
-    absentDelta: string;
-    classesMarked: number;
-    totalClasses: number;
-    alertsSent: number;
-    totalAlerts: number;
-  };
-  rows: ClassAttendanceRow[];
-}
-
-// ─── Forms ────────────────────────────────────────────────────────────────────
-
-export interface MarkAttendanceFormValues {
-  classId: string;
-  presentStudentIds: number[];
-}
+export type AttendanceTab = "today" | "history" | "holiday";

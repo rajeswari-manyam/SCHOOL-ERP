@@ -7,6 +7,7 @@ import type {
   PlatformConfigData,
   ConfigTemplateFormValues,
   ConfigTemplateAssignPayload,
+  N8nWorkflow,
 } from "../types/config.types";
 
 export const CONFIG_KEYS = {
@@ -24,7 +25,7 @@ export const useFeatureFlags = () =>
   useQuery({ queryKey: CONFIG_KEYS.flags(), queryFn: configApi.getFeatureFlags, staleTime: 1000 * 60 });
 
 export const useWorkflows = () =>
-  useQuery({ queryKey: CONFIG_KEYS.workflows(), queryFn: configApi.getWorkflows, staleTime: 1000 * 60 });
+  useQuery<N8nWorkflow[]>({ queryKey: CONFIG_KEYS.workflows(), queryFn: configApi.getWorkflows, staleTime: 1000 * 60 });
 
 export const useConfigTemplates = () =>
   useQuery({ queryKey: CONFIG_KEYS.templates(), queryFn: configApi.getTemplates, staleTime: 1000 * 60 });
@@ -42,7 +43,9 @@ export const useConfigMutations = () => {
     createTemplate: useMutation({ mutationFn: (p: ConfigTemplateFormValues) => configApi.createTemplate(p), onSuccess: inv }),
     assignTemplateToSchools: useMutation({
       mutationFn: ({ templateId, payload }: { templateId: string; payload: ConfigTemplateAssignPayload }) =>
-        configApi.assignTemplateToSchools(templateId, payload),
+        configApi.assignTemplateToSchools(templateId, {
+          schoolIds: payload.schoolIds ?? [],
+        }),
       onSuccess: inv,
     }),
     syncTemplates: useMutation({ mutationFn: () => configApi.syncTemplatesFromMeta(), onSuccess: inv }),

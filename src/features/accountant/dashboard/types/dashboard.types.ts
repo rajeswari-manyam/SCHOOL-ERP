@@ -15,6 +15,12 @@ export type Transaction = {
   mode: PaymentMode;
 };
 
+
+export type AccountantDashboardStats = {
+  totalCollected: number;
+  pendingDues: number;
+  totalTransactions: number;
+}
 export type PaymentModeSummary = {
   mode: PaymentMode;
   amount: number;

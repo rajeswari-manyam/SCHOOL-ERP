@@ -1,10 +1,8 @@
 import { useFeatureFlags, useConfigMutations } from "../hooks/useConfig";
 
 const FeatureFlagsTab = () => {
-  const { data: flagsData, isLoading } = useFeatureFlags();
+  const { data: flags, isLoading } = useFeatureFlags();
   const { toggleFlag } = useConfigMutations();
-
-  const flags = Array.isArray(flagsData) ? flagsData : flagsData?.data ?? [];
 
   if (isLoading) return <div className="text-sm text-gray-400 animate-pulse">Loading flags…</div>;
 
@@ -15,7 +13,7 @@ const FeatureFlagsTab = () => {
         <p className="text-sm text-gray-400 mt-0.5">Toggle platform features globally or per school</p>
       </div>
       <div className="divide-y divide-gray-50">
-        {(flags ?? []).map((flag) => (
+        {(flags ?? []).map((flag: any) => (
           <div key={flag.id} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 transition-colors">
             <div>
               <p className="text-sm font-semibold text-gray-900">{flag.name}</p>

@@ -19,7 +19,13 @@ export interface MarketingRep {
   conversionPct: number;
   achievementPct: number;
 }
-
+export interface TicketFilters {
+  search: string;
+  territory: string;
+  status: RepStatus | "ALL";
+  page: number;
+  pageSize: number;
+}
 export interface MarketingStats {
   totalReps: number;
   presentToday: number;
