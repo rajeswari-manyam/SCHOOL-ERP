@@ -84,7 +84,6 @@ type FormValues = z.infer<typeof schema>;
 
 const inputClass  = "w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition";
 const selectClass = `${inputClass} appearance-none cursor-pointer pr-8`;
-const labelClass  = "block text-[11px] font-bold tracking-widest uppercase text-gray-400 mb-1.5";
 
 interface ModalProps {
   open: boolean;

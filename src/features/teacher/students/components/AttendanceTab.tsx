@@ -8,7 +8,6 @@ const AttendanceTab = ({ student }: { student: Student }) => {
   const days: AttendanceDay[] = student.attendanceDays;
   const present = days.filter((d) => d.status === "PRESENT").length;
   const absent  = days.filter((d) => d.status === "ABSENT").length;
-  const total   = days.filter((d) => d.status === "PRESENT" || d.status === "ABSENT").length;
 
   // Build calendar grid (April 2025 starts on Tuesday — index 2)
   const startDow = new Date("2025-04-01").getDay();

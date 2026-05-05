@@ -1,4 +1,4 @@
-import { School } from "../types/school.types";
+import type { School } from "../types/school.types";
 
 interface SchoolDetailCardProps {
   school: School;
@@ -12,8 +12,8 @@ export const SchoolDetailCard = ({ school }: SchoolDetailCardProps) => (
         <p className="text-gray-500">{school.email}</p>
       </div>
       <span className={`px-3 py-1 rounded ${
-        school.status === "active" ? "bg-green-100 text-green-800" :
-        school.status === "suspended" ? "bg-red-100 text-red-800" :
+        school.status === "ACTIVE" ? "bg-green-100 text-green-800" :
+        school.status === "SUSPENDED" ? "bg-red-100 text-red-800" :
         "bg-yellow-100 text-yellow-800"
       }`}>
         {school.status}

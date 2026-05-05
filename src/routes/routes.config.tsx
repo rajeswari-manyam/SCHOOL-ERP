@@ -1,12 +1,12 @@
 import { lazy } from "react";
 import type { ReactNode } from "react";
 
-const TeacherMarks = lazy(() => import("@/features/teacher/marks/pages/MarksPage"));
-const TeacherLeave = lazy(() => import("@/features/teacher/leave/pages/LeavePage"));
-const TeacherHomework = lazy(() => import("@/features/teacher/homework/pages/HomeworkPage"));
-const TeacherTimetable = lazy(() => import("@/features/teacher/timetable/pages/TimetablePage"));
+const TeacherMarks = lazy(() => import("@/features/teacher/exam/ExamMarksPage"));
+const TeacherLeave = lazy(() => import("@/features/teacher/leave/LeavePage"));
+const TeacherHomework = lazy(() => import("@/features/teacher/homework/HomeworkPage"));
+const TeacherTimetable = lazy(() => import("@/features/teacher/timetable/TimetablePage"));
 const TeacherAttendance = lazy(() => import("@/features/teacher/attendance/Myattendancepage"));
-const TeacherDashboard = lazy(() => import("@/features/teacher/dashboard/pages/DashboardPage"));
+const TeacherDashboard = lazy(() => import("@/features/teacher/dashboard/TeacherDashboardPage"));
 const AccountantFees = lazy(() => import("@/features/accountant/fees").then(m => ({ default: m.FeesPage })));
 const AccountantDashboard = lazy(() => import("@/features/accountant/dashboard").then(m => ({ default: m.DashboardPage })));
 const AccountantReports = lazy(() => import("@/features/accountant/reports/pages/ReportsPage"));
@@ -19,7 +19,7 @@ const SchoolAdminTimetable = lazy(() => import("@/features/school-admin/timetabl
 const SchoolAdminStaff = lazy(() => import("@/features/school-admin/staff").then(m => ({ default: m.StaffPage })));
 
 
-const SchoolAdminDashboard = lazy(() => import("@/features/school-admin/dashboard").then(m => ({ default: m.DashboardPage })));
+const SchoolAdminDashboard = lazy(() => import("@/features/school-admin/dashboard").then(m => ({ default: m.SchoolAdminDashboardPage })));
 const SchoolAdminAttendance = lazy(() => import("@/features/school-admin/attendance").then(m => ({ default: m.AttendancePage })));
 const SchoolAdminFees = lazy(() => import("@/features/school-admin/fees").then(m => ({ default: m.FeesPage })));
 const SchoolAdminStudents = lazy(() => import("@/features/school-admin/students").then(m => ({ default: m.StudentsPage })));
