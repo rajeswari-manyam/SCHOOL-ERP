@@ -1,5 +1,6 @@
 import type { StudentProfile } from "../types/profile.types";
 import { STATUS_STYLES } from "../utils/Profile.utils";
+import { Button } from "@/components/ui/button";
 
 interface ProfileCardProps {
   student: StudentProfile;
@@ -28,9 +29,9 @@ const ProfileCard = ({ student }: ProfileCardProps) => {
         {status.label}
       </span>
 
-      <button className="mt-6 w-full rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100">
+      <Button className="mt-6 w-full rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100">
         Download ID Card
-      </button>
+      </Button>
     </div>
   );
 };

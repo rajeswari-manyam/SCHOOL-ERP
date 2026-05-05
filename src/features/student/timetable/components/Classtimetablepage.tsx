@@ -9,7 +9,7 @@ import { classTimetableApi } from "../api/Classtimetable.api";
 const ClassTimetablePage = () => {
   const { data: timetable, isLoading, isError } = useClassTimetable();
   const { data: examinations } = useUpcomingExaminations();
-  const { addAll, isAdding } = useAddExamsToCalendar();
+  const { addAll, } = useAddExamsToCalendar();
 
   if (isLoading) {
     return (

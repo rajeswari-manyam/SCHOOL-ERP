@@ -16,7 +16,7 @@ const ClassOverviewCard = ({ overview }: { overview: ClassOverview }) => (
         <BarChart data={overview.trend} barCategoryGap="20%">
           <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
           <Tooltip
-            formatter={(v: number, name: string) => [v, name === "present" ? "Present" : "Absent"]}
+            formatter={(value, name) => [value as number, name === "present" ? "Present" : "Absent"] as [number, string]}
             contentStyle={{ borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 11 }}
           />
           <Bar dataKey="present" fill="#6366f1" radius={[3, 3, 0, 0]} />

@@ -6,6 +6,7 @@ import {PaymentSuccessModal} from "../fees/components/Paymentsuccessmodal";
 import {AllTransactionsTab} from "../fees/components/Alltransactionstab";
 import {FeeStructureTab} from "../fees/components/Feestructuretab";
 import {CommunicationCenter} from "./components/Communicationcenter";
+import { Button } from "@/components/ui/button";
 
 import { useFeeCollection } from "./hooks/Usefeecollection";
 
@@ -91,17 +92,18 @@ const FeeCollectionPage = () => {
           { key: "transactions", label: "Transactions" },
           { key: "structure", label: "Fee Structure" },
         ].map((tab) => (
-          <button
+          <Button
             key={tab.key}
+            variant={activeTab === tab.key ? "default" : "ghost"}
             onClick={() => setActiveTab(tab.key as any)}
             className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition ${
               activeTab === tab.key
-                ? "bg-white border border-b-0 border-gray-200 text-indigo-600"
+                ? "border-b-0 border-gray-200 text-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 

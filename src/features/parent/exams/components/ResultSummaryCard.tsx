@@ -9,7 +9,7 @@ export function ResultSummaryCard({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
 
-      {/* ================= LEFT CARD ================= */}
+   
       <Card className="rounded-2xl border-0 shadow-sm hover:shadow-xl hover:-translate-y-1  hover:border-[#3525CD] hover:border-1 transition-all duration-300">
         <CardContent className="p-6 flex flex-col items-center">
           <p className="text-[12px] text-gray-1000 text-center">
@@ -51,11 +51,11 @@ export function ResultSummaryCard({
         </CardContent>
       </Card>
 
-      {/* ================= RIGHT CARD ================= */}
+    
       <Card className="rounded-2xl border-0 bg-[#3525CD] text-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
         <CardContent className="p-7 flex flex-col justify-between h-full">
           
-          {/* TOP SECTION */}
+        
           <div>
             <h3 className="text-[18px] font-bold mb-3">
               Performance Analytics
@@ -66,7 +66,6 @@ export function ResultSummaryCard({
             </p>
           </div>
 
-          {/* BOTTOM SECTION */}
           <div className="mt-6">
             <div className="flex gap-3 flex-wrap mb-2">
               {summary.strongestSubjects.map((s) => (

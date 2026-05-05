@@ -18,11 +18,11 @@ import typography, { combineTypography } from "@/styles/typography";
 const columnHelper = createColumnHelper<StaffPayroll>();
 
 export const PayrollTable = ({ data, isProcessed = false }: PayrollTableProps) => {
-  const totalPresent    = data.reduce((sum, s) => sum + s.present, 0);
-  const totalAbsent     = data.reduce((sum, s) => sum + s.absent, 0);
-  const totalGross      = data.reduce((sum, s) => sum + s.gross, 0);
-  const totalDeductions = data.reduce((sum, s) => sum + s.deductions, 0);
-  const totalNet        = data.reduce((sum, s) => sum + s.net, 0);
+  const totalPresent    = data.reduce((sum: number, s: StaffPayroll) => sum + s.present, 0);
+  const totalAbsent     = data.reduce((sum: number, s: StaffPayroll) => sum + s.absent, 0);
+  const totalGross      = data.reduce((sum: number, s: StaffPayroll) => sum + s.gross, 0);
+  const totalDeductions = data.reduce((sum: number, s: StaffPayroll) => sum + s.deductions, 0);
+  const totalNet        = data.reduce((sum: number, s: StaffPayroll) => sum + s.net, 0);
 
   const columns = useMemo(() => [
     columnHelper.accessor("name", {

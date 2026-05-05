@@ -1,4 +1,10 @@
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import type { AddStudentFormData } from "../types/student.types";
 
 interface AddStudentModalProps {
@@ -13,26 +19,42 @@ const EMPTY_FORM: AddStudentFormData = {
   emergencyContact: "", whatsappNumber: "", sameAsFather: false,
 };
 
-const CLASSES = ["1","2","3","4","5","6","7","8","9","10","11","12"];
-const SECTIONS = ["A","B","C","D"];
-const BLOOD_GROUPS = ["A+","A-","B+","B-","O+","O-","AB+","AB-"];
+const CLASSES = [
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+  { value: "5", label: "5" },
+  { value: "6", label: "6" },
+  { value: "7", label: "7" },
+  { value: "8", label: "8" },
+  { value: "9", label: "9" },
+  { value: "10", label: "10" },
+  { value: "11", label: "11" },
+  { value: "12", label: "12" },
+];
+const SECTIONS = [
+  { value: "A", label: "A" },
+  { value: "B", label: "B" },
+  { value: "C", label: "C" },
+  { value: "D", label: "D" },
+];
+const BLOOD_GROUPS = [
+  { value: "A+", label: "A+" },
+  { value: "A-", label: "A-" },
+  { value: "B+", label: "B+" },
+  { value: "B-", label: "B-" },
+  { value: "O+", label: "O+" },
+  { value: "O-", label: "O-" },
+  { value: "AB+", label: "AB+" },
+  { value: "AB-", label: "AB-" },
+];
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex flex-col gap-1">
     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{label}</label>
     {children}
   </div>
-);
-
-const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-  <input {...props} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full" />
-);
-
-const Select = ({ value, onChange, options, placeholder }: { value: string; onChange: (v: string) => void; options: string[]; placeholder?: string }) => (
-  <select value={value} onChange={e => onChange(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full bg-white text-gray-700">
-    {placeholder && <option value="">{placeholder}</option>}
-    {options.map(o => <option key={o} value={o}>{o}</option>)}
-  </select>
 );
 
 const StepIndicator = ({ step }: { step: 1 | 2 }) => (
@@ -83,9 +105,14 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
             <h2 className="text-lg font-bold text-gray-900">Add New Student</h2>
             <p className="text-xs text-gray-400 mt-0.5">Enter student's personal details</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+          <Button 
+            onClick={onClose} 
+            variant="ghost" 
+            size="sm"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          </Button>
         </div>
 
         <div className="p-6">
@@ -117,31 +144,32 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
               <Field label="Gender">
                 <div className="flex gap-2">
                   {["Male","Female","Other"].map(g => (
-                    <button
+                    <Button
                       key={g}
                       type="button"
+                      variant={form.gender === g ? "default" : "outline"}
                       onClick={() => set("gender")(g)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${form.gender === g ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors`}
                     >
                       {g}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </Field>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <Field label="Class">
-                    <Select value={form.class} onChange={set("class")} options={CLASSES} placeholder="Class" />
+                    <Select value={form.class} onValueChange={set("class")} options={CLASSES} placeholder="Class" />
                   </Field>
                 </div>
                 <div className="flex-1">
                   <Field label="Section">
-                    <Select value={form.section} onChange={set("section")} options={SECTIONS} placeholder="Section" />
+                    <Select value={form.section} onValueChange={set("section")} options={SECTIONS} placeholder="Section" />
                   </Field>
                 </div>
               </div>
               <Field label="Blood Group">
-                <Select value={form.bloodGroup} onChange={set("bloodGroup")} options={BLOOD_GROUPS} placeholder="Select Blood Group" />
+                <Select value={form.bloodGroup} onValueChange={set("bloodGroup")} options={BLOOD_GROUPS} placeholder="Select Blood Group" />
               </Field>
               <Field label="Roll Number">
                 <Input placeholder="e.g. 24" value={form.rollNumber} onChange={e => set("rollNumber")(e.target.value)} />
@@ -156,12 +184,11 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
               </div>
               <div className="col-span-2">
                 <Field label="Residential Address">
-                  <textarea
+                  <Textarea
                     placeholder="Enter complete home address..."
                     value={form.residentialAddress}
                     onChange={e => set("residentialAddress")(e.target.value)}
                     rows={3}
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full resize-none"
                   />
                 </Field>
               </div>
@@ -189,15 +216,17 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
               <div className="col-span-2">
                 <Field label="WhatsApp Alert Number">
                   <Input placeholder="+91 98765 43210" value={form.whatsappNumber} onChange={e => set("whatsappNumber")(e.target.value)} disabled={form.sameAsFather} />
-                  <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-center gap-2 mt-2 cursor-pointer">
+                    <Checkbox
                       checked={form.sameAsFather}
-                      onChange={e => { set("sameAsFather")(e.target.checked); if (e.target.checked) set("whatsappNumber")(form.fatherPhone); }}
-                      className="w-4 h-4 accent-indigo-600"
+                      onCheckedChange={(checked) => { 
+                        set("sameAsFather")(checked);
+                        if (checked) set("whatsappNumber")(form.fatherPhone); 
+                      }}
+                      id="sameAsFather"
                     />
-                    <span className="text-xs text-gray-500">Same as Father's Phone</span>
-                  </label>
+                    <Label htmlFor="sameAsFather" className="text-xs text-gray-500 cursor-pointer">Same as Father's Phone</Label>
+                  </div>
                 </Field>
               </div>
             </div>
@@ -206,24 +235,36 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+          <Button 
+            onClick={onClose} 
+            variant="outline"
+            className="px-4 py-2 text-sm text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Cancel
+          </Button>
           {step === 1 ? (
-            <button
+            <Button
               onClick={handleNext}
               className="px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
             >
               Next: Parent & Contact →
-            </button>
+            </Button>
           ) : (
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="px-4 py-2 text-sm text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">← Back</button>
-              <button
+              <Button 
+                onClick={() => setStep(1)} 
+                variant="outline"
+                className="px-4 py-2 text-sm text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                ← Back
+              </Button>
+              <Button
                 onClick={handleSubmit}
                 disabled={loading}
                 className="px-5 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {loading ? "Adding..." : "➕ Add Student & Send Welcome WhatsApp"}
-              </button>
+              </Button>
             </div>
           )}
         </div>

@@ -5,7 +5,9 @@ import { Shield } from "lucide-react";
 import { OtpInput } from "../components/OtpInput";
 import { RoleBrandingPanel } from "../components/RoleBrandingPanel";
 import { useAuthStore } from "../../../store/authStore";
-const PHONE_ROLE_MAP: Record<string, string> = {
+import type { Role } from "@/types/api.types";
+
+const PHONE_ROLE_MAP: Record<string, Role> = {
   "9000000001": "superadmin",
   "9000000002": "schooladmin",
   "9000000003": "teacher",
@@ -19,15 +21,22 @@ export default function OtpPage() {
     const setAuth = useAuthStore((s) => s.setAuth);
 
     const phone: string = location.state?.phone ?? "";
-const roleRedirect = (role?: string): string => {
+const roleRedirect = (role?: Role): string => {
   switch (role) {
-    case "superadmin": return "/superadmin/dashboard";
-    case "schooladmin": return "/schooladmin/dashboard";
-    case "accountant": return "/accountant/dashboard";
-    case "teacher": return "/teacher/dashboard";
-    case "student": return "/student/dashboard";
-    case "parent": return "/parent/dashboard";
-    default: return "/login";
+    case "superadmin":
+      return "/superadmin/dashboard";
+    case "schooladmin":
+      return "/schooladmin/dashboard";
+    case "accountant":
+      return "/accountant/dashboard";
+    case "teacher":
+      return "/teacher/dashboard";
+    case "student":
+      return "/student/dashboard";
+    case "parent":
+      return "/parent/dashboard";
+    default:
+      return "/login";
   }
 };
  
@@ -51,7 +60,7 @@ const handleVerified = () => {
       id: "phone-user",
       name: "Phone User",
       phone: cleanedPhone,
-      role: role,
+      role,
     },
     "dummy-token"
   );

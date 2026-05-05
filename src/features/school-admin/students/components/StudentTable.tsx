@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Student } from "../types/student.types";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 
@@ -27,58 +29,62 @@ const StudentTable = ({ students }: { students: Student[] }) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px]">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Photo</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Admission No.</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Student Name</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Class</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Section</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Parent Phone</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Status</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Fee Status</th>
-              <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-gray-100">
+              <TableHead className="text-left px-4 py-3">Photo</TableHead>
+              <TableHead className="text-left px-4 py-3">Admission No.</TableHead>
+              <TableHead className="text-left px-4 py-3">Student Name</TableHead>
+              <TableHead className="text-left px-4 py-3">Class</TableHead>
+              <TableHead className="text-left px-4 py-3">Section</TableHead>
+              <TableHead className="text-left px-4 py-3">Parent Phone</TableHead>
+              <TableHead className="text-left px-4 py-3">Status</TableHead>
+              <TableHead className="text-left px-4 py-3">Fee Status</TableHead>
+              <TableHead className="text-left px-4 py-3">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {students.map((s, i) => (
-              <tr
+              <TableRow
                 key={s.id}
                 className={`border-b border-gray-50 hover:bg-indigo-50/30 transition-colors cursor-pointer ${i % 2 === 0 ? "" : "bg-gray-50/30"}`}
                 onClick={() => navigate(`/school-admin/students/${s.id}`)}
               >
-                <td className="px-4 py-3"><Avatar s={s} /></td>
-                <td className="px-4 py-3 text-xs font-semibold text-gray-500">{s.admissionNo}</td>
-                <td className="px-4 py-3">
+                <TableCell className="px-4 py-3"><Avatar s={s} /></TableCell>
+                <TableCell className="px-4 py-3 text-xs font-semibold text-gray-500">{s.admissionNo}</TableCell>
+                <TableCell className="px-4 py-3">
                   <p className="text-sm font-semibold text-gray-900">{s.firstName} {s.lastName}</p>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">{s.class}</td>
-                <td className="px-4 py-3 text-sm text-gray-700">{s.section}</td>
-                <td className="px-4 py-3 text-xs text-gray-600">{s.parentPhone}</td>
-                <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
-                <td className="px-4 py-3"><FeeBadge status={s.feeStatus} /></td>
-                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.class}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.section}</TableCell>
+                <TableCell className="px-4 py-3 text-xs text-gray-600">{s.parentPhone}</TableCell>
+                <TableCell className="px-4 py-3"><StatusBadge status={s.status} /></TableCell>
+                <TableCell className="px-4 py-3"><FeeBadge status={s.feeStatus} /></TableCell>
+                <TableCell className="px-4 py-3" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
                       onClick={() => navigate(`/school-admin/students/${s.id}`)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                      variant="ghost"
+                      size="sm"
                       title="View"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </button>
-                    <button
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       title="Edit"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
+                    </Button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

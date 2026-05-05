@@ -1,4 +1,5 @@
 import { useWorkflows } from "../hooks/useConfig";
+import type { N8nWorkflow } from "../types/config.types";
 
 const statusStyles = {
   active:   "bg-emerald-50 text-emerald-600",
@@ -9,9 +10,7 @@ const statusStyles = {
 const N8nWorkflowsTab = () => {
   const { data: workflowsData, isLoading } = useWorkflows();
 
-  const workflows = Array.isArray(workflowsData)
-    ? workflowsData
-    : workflowsData?.data ?? [];
+  const workflows: N8nWorkflow[] = workflowsData ?? [];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

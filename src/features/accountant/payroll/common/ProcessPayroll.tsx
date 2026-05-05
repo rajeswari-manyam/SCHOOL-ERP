@@ -230,6 +230,8 @@ export default function Demo() {
     totalGross: 384000,
     totalDeductions: 36720,
     totalNet: 347280,
+    month: "Apr",
+    year: 2025,
     processingDueDate: "30 April 2025",
   };
 

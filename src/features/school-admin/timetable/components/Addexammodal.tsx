@@ -1,189 +1,196 @@
-import { useState, useEffect } from "react";
-import type { AddExamPayload } from "../types/timetable.types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import type { ExamEntry } from "../types/timetable.types";
+
+const addExamSchema = z.object({
+  subject: z.string().min(1, "Subject is required"),
+  className: z.string().min(1, "Class is required"),
+  date: z.string().min(1, "Date is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+  venue: z.string().min(1, "Venue is required"),
+});
+
+type AddExamFormData = z.infer<typeof addExamSchema>;
 
 interface AddExamModalProps {
   open: boolean;
+  classOptions: { id: string; label: string }[];
+  defaultClass: string;
+  isSaving?: boolean;
   onClose: () => void;
-  onSave: (payload: AddExamPayload) => void;
-  isSaving: boolean;
-  classId: string;
-  className: string;
+  onSave: (data: Omit<ExamEntry, "id" | "notifyStatus">) => void;
 }
 
-const AddExamModal = ({
-  open, onClose, onSave, isSaving, classId, className,
-}: AddExamModalProps) => {
-  const [subject, setSubject] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("12:00");
-  const [venue, setVenue] = useState(`Room ${className}`);
-  const [notifyParents, setNotifyParents] = useState(true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+const AddExamModal: React.FC<AddExamModalProps> = ({
+  open,
+  classOptions,
+  defaultClass,
+  isSaving,
+  onClose,
+  onSave,
+}) => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<AddExamFormData>({
+    resolver: zodResolver(addExamSchema),
+    defaultValues: {
+      subject: "",
+      className: defaultClass,
+      date: "",
+      startTime: "",
+      endTime: "",
+      venue: "",
+    },
+  });
 
-  useEffect(() => {
-    if (open) {
-      setSubject(""); setDate(""); setStartTime("09:00");
-      setEndTime("12:00"); setVenue(`Room ${className}`);
-      setNotifyParents(true); setErrors({});
-    }
-  }, [open, className]);
+  const handleFormSubmit = (data: AddExamFormData) => {
+    onSave(data);
+  };
 
   if (!open) return null;
 
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!subject.trim()) e.subject = "Subject is required.";
-    if (!date) e.date = "Date is required.";
-    if (!startTime) e.startTime = "Start time is required.";
-    if (!endTime) e.endTime = "End time is required.";
-    if (startTime && endTime && startTime >= endTime)
-      e.endTime = "End time must be after start time.";
-    if (!venue.trim()) e.venue = "Venue is required.";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSave = () => {
-    if (!validate()) return;
-    const dateObj = new Date(date);
-    const day = dateObj.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    const fmt = (t: string) => {
-      const [h, m] = t.split(":").map(Number);
-      const period = h >= 12 ? "PM" : "AM";
-      const h12 = h % 12 || 12;
-      return `${h12}${m ? `:${String(m).padStart(2,"0")}` : ""} ${period}`;
-    };
-    onSave({
-      subject,
-      classId,
-      date: day,
-      startTime: fmt(startTime),
-      endTime: fmt(endTime),
-      venue,
-      notifyParents,
-    });
-  };
-
-  const Field = ({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) => (
-    <div>
-      <label className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5 block">{label}</label>
-      {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
-
-  const inputCls = (err?: string) =>
-    `w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-      err ? "border-red-300 bg-red-50" : "border-gray-200"
-    }`;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between p-6 pb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-400/40">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Add Exam</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Class {className} — Exam Schedule</p>
+            <h2 className="text-2xl font-black text-slate-900">Add Exam Schedule</h2>
+            <p className="text-sm text-slate-500 mt-1">Create a new exam entry for the selected class.</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100 mt-0.5">
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="4" y1="4" x2="14" y2="14" /><line x1="14" y1="4" x2="4" y2="14" />
-            </svg>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Close add exam modal"
+          >
+            <X size={20} />
           </button>
         </div>
 
-        <div className="px-6 pb-6 flex flex-col gap-4">
-          <Field label="Subject" error={errors.subject}>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. Mathematics"
-              className={inputCls(errors.subject)}
-            />
-          </Field>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <div className="p-6 space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label className="mb-2 block text-sm font-bold text-slate-700">
+                  Subject <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Physics"
+                  {...register("subject")}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                />
+                {errors.subject && (
+                  <p className="mt-1 text-xs text-red-600">{errors.subject.message}</p>
+                )}
+              </div>
 
-          <Field label="Date" error={errors.date}>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={inputCls(errors.date)}
-            />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Start Time" error={errors.startTime}>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className={inputCls(errors.startTime)}
-              />
-            </Field>
-            <Field label="End Time" error={errors.endTime}>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className={inputCls(errors.endTime)}
-              />
-            </Field>
-          </div>
-
-          <Field label="Venue" error={errors.venue}>
-            <input
-              type="text"
-              value={venue}
-              onChange={(e) => setVenue(e.target.value)}
-              placeholder="e.g. Room 10A"
-              className={inputCls(errors.venue)}
-            />
-          </Field>
-
-          {/* Notify Parents toggle */}
-          <label className="flex items-center justify-between cursor-pointer select-none bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Notify Parents</p>
-              <p className="text-xs text-gray-400 mt-0.5">Send WhatsApp message to class parents</p>
+              <div>
+                <Label className="mb-2 block text-sm font-bold text-slate-700">
+                  Class <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={watch("className")}
+                  onValueChange={(value) => setValue("className", value)}
+                  options={classOptions.map((option) => ({
+                    label: option.label,
+                    value: option.label,
+                  }))}
+                  placeholder="Select class"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                />
+                {errors.className && (
+                  <p className="mt-1 text-xs text-red-600">{errors.className.message}</p>
+                )}
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setNotifyParents((v) => !v)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifyParents ? "bg-green-500" : "bg-gray-300"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                  notifyParents ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </label>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60 min-w-[110px] flex items-center justify-center gap-2"
-            >
-              {isSaving ? (
-                <>
-                  <svg className="animate-spin" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M21 12a9 9 0 11-6.219-8.56" strokeLinecap="round" />
-                  </svg>
-                  Saving…
-                </>
-              ) : "Add Exam"}
-            </button>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <Label className="mb-2 block text-sm font-bold text-slate-700">
+                  Date <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="date"
+                  {...register("date")}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                />
+                {errors.date && (
+                  <p className="mt-1 text-xs text-red-600">{errors.date.message}</p>
+                )}
+              </div>
+              <div>
+                <Label className="mb-2 block text-sm font-bold text-slate-700">
+                  Start time <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="time"
+                  {...register("startTime")}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                />
+                {errors.startTime && (
+                  <p className="mt-1 text-xs text-red-600">{errors.startTime.message}</p>
+                )}
+              </div>
+              <div>
+                <Label className="mb-2 block text-sm font-bold text-slate-700">
+                  End time <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="time"
+                  {...register("endTime")}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                />
+                {errors.endTime && (
+                  <p className="mt-1 text-xs text-red-600">{errors.endTime.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label className="mb-2 block text-sm font-bold text-slate-700">
+                Venue <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="text"
+                placeholder="e.g. Room 10A"
+                {...register("venue")}
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+              />
+              {errors.venue && (
+                <p className="mt-1 text-xs text-red-600">{errors.venue.message}</p>
+              )}
+            </div>
           </div>
-        </div>
+
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="outline"
+              className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-xl bg-indigo-600 px-7 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+            >
+              {isSaving ? "Saving…" : "Save Exam"}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

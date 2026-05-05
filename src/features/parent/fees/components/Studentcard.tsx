@@ -1,72 +1,62 @@
+import { UserRound, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import typography from "@/styles/typography";
 import { cn } from "@/utils/cn";
 
-export function StudentCard() {
+import type { StudentCardProps } from "../types/fee.types";
+import { studentCardData } from "../data/fee.data";
+
+// Change status default to use `as const` or cast it
+export function StudentCard({
+  name = studentCardData.name,
+  className = studentCardData.className,
+  rollNo = studentCardData.rollNo,
+  status = studentCardData.status as "good" | "warning" | "blocked",
+}: StudentCardProps) {
+  const isGood = status === "good";
+
   return (
-    <Card
-      className={cn(
-        "group w-[320px] h-[233px]",
-        "flex flex-col items-center justify-center gap-3",
-        "bg-white border border-[#C7C4D833] rounded-[24px]",
-        "transition-all duration-300",
-        "hover:border-[#3525CD] hover:shadow-sm"
-      )}
-    >
+    <Card className={cn(
+      "group w-[320px] h-[233px]",
+      "flex flex-col items-center justify-center gap-3",
+      "bg-white border border-[#C7C4D833] rounded-[24px]",
+      "transition-all duration-300",
+      "hover:border-[#3525CD] hover:shadow-sm"
+    )}>
+
       <CardContent className="flex flex-col items-center justify-center gap-3 p-0">
 
         {/* Avatar */}
-        <div className="w-16 h-16 rounded-full bg-[#b2dfdb] overflow-hidden flex items-center justify-center shrink-0">
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <ellipse cx="32" cy="58" rx="20" ry="12" fill="#2d6a4f" />
-            <rect x="27" y="38" width="10" height="8" fill="#f5c87a" />
-            <circle cx="32" cy="30" r="13" fill="#f5c87a" />
-            <path d="M19 28 Q20 16 32 15 Q44 16 45 28 Q42 20 32 20 Q22 20 19 28Z" fill="#2c1a0e" />
-            <circle cx="27.5" cy="29" r="1.5" fill="#2c1a0e" />
-            <circle cx="36.5" cy="29" r="1.5" fill="#2c1a0e" />
-            <path d="M27 34 Q32 38 37 34" stroke="#c8845a" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-            <path d="M22 46 Q32 42 42 46" stroke="#1a4a3a" strokeWidth="2" fill="none" />
-          </svg>
+        <div className="w-16 h-16 rounded-full bg-[#b2dfdb] flex items-center justify-center">
+          <UserRound size={32} className="text-[#2d6a4f]" />
         </div>
 
-        {/* Info */}
+        {/* INFO */}
         <div className="text-center">
-          <p
-            className={cn(
-              typography.body.base,
-              "font-semibold text-[#0B1C30] transition-colors group-hover:text-[#3525CD]"
-            )}
-          >
-            Ravi Kumar
+          <p className={cn(
+            typography.body.base,
+            "font-semibold text-[#0B1C30] group-hover:text-[#3525CD]"
+          )}>
+            {name}
           </p>
 
-          <p
-            className={cn(
-              typography.body.xs,
-              "text-gray-400 mt-0.5 transition-colors group-hover:text-gray-600"
-            )}
-          >
-            Class 10A · Roll No. 24
+          <p className={cn(
+            typography.body.xs,
+            "text-gray-400 mt-0.5 group-hover:text-gray-600"
+          )}>
+            {className} · Roll No. {rollNo}
           </p>
         </div>
 
-        {/* Status */}
-        <span
-          className="
-            text-[10px]
-            font-semibold
-            px-4 py-1.5
-            rounded-full
-            border border-[#E8EBF2]
-            tracking-widest uppercase
-            text-[#006C49]
-            bg-[#006C49]/20
-            transition-all
-            group-hover:border-[#3525CD]
-            group-hover:text-[#3525CD]
-          "
-        >
-          Good Standing
+        {/* STATUS */}
+        <span className={cn(
+          "flex items-center gap-1.5 text-[10px] font-semibold px-4 py-1.5 rounded-full border tracking-widest uppercase transition-all",
+          isGood
+            ? "text-[#006C49] bg-[#006C49]/20 border-[#E8EBF2]"
+            : "text-amber-600 bg-amber-100 border-amber-200"
+        )}>
+          <ShieldCheck size={12} />
+          {isGood ? "Good Standing" : "Attention Required"}
         </span>
 
       </CardContent>

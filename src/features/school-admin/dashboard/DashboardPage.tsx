@@ -1,5 +1,6 @@
 import { useRealtimeDashboard } from "./hooks/useRealtimeDashboard";
 import { joinClassNames } from "./utils/formatters.ts";
+import { Button } from "@/components/ui/button";
 
 import {
   AbsentCountCard,
@@ -54,18 +55,20 @@ export default function DashboardPage() {
             {joinClassNames(alertBannerClasses)}
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
               onClick={triggerAttendanceReminder}
-              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition"
+              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold"
             >
               Send WhatsApp Reminders
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={dismissAlert}
               className="text-gray-400 hover:text-gray-600 text-lg font-bold"
             >
               ×
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -83,12 +86,12 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl transition">
+          <Button variant="outline" className="flex items-center gap-2">
             <span>⬇</span> Download Report
-          </button>
-          <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+          </Button>
+          <Button className="flex items-center gap-2">
             <span>📣</span> Send Broadcast
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -119,9 +122,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Floating Chat Bubble ─────────────────────────────────────────────── */}
-      <button className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white text-xl shadow-lg flex items-center justify-center transition">
+      <Button className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white text-xl shadow-lg flex items-center justify-center transition p-0">
         💬
-      </button>
+      </Button>
     </div>
   );
 }

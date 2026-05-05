@@ -9,7 +9,7 @@ export interface SelectOption {
 
 export interface SelectProps
   extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  options: SelectOption[];
+  options?: SelectOption[];
   placeholder?: string;
   onValueChange?: (value: string) => void;
   className?: string;
@@ -18,7 +18,7 @@ export interface SelectProps
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
-      options,
+      options = [],
       placeholder = "Select an option",
       className,
       onValueChange,

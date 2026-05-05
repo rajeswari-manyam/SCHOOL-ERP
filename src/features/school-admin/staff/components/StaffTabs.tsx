@@ -1,4 +1,5 @@
 import type { TabKey } from "../types/staff.types";
+import { Button } from "../../../../components/ui/button";
 
 interface Tab {
   key: TabKey;
@@ -18,10 +19,12 @@ export const StaffTabs = ({ activeTab, tabs, onChange }: StaffTabsProps) => {
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
-          <button
+          <Button
             key={tab.key}
             onClick={() => onChange(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+            variant={isActive ? "default" : "ghost"}
+            size="sm"
+            className={`px-4 py-2 flex items-center gap-2 ${
               isActive
                 ? "bg-white text-indigo-600 shadow-sm border border-slate-200"
                 : "text-slate-600 hover:text-slate-800 hover:bg-white/50"
@@ -39,7 +42,7 @@ export const StaffTabs = ({ activeTab, tabs, onChange }: StaffTabsProps) => {
                 {tab.count}
               </span>
             )}
-          </button>
+          </Button>
         );
       })}
     </div>

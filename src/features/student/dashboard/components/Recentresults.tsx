@@ -1,5 +1,6 @@
 import type { ExamResult } from "../types/Student dashboard.types";
 import { RESULT_STATUS_STYLES } from "../utils/Student dashboard.utils";
+import { Button } from "@/components/ui/button";
 
 interface RecentResultsProps {
   results: ExamResult[];
@@ -53,8 +54,9 @@ const RecentResults = ({ results, onViewDetailedReport }: RecentResultsProps) =>
 
       {/* View report button */}
       {latest.reportUrl && (
-        <button
+        <Button
           onClick={() => onViewDetailedReport?.(latest)}
+          variant="outline"
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:border-indigo-200 hover:text-indigo-600 transition-all"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -62,7 +64,7 @@ const RecentResults = ({ results, onViewDetailedReport }: RecentResultsProps) =>
             <polyline points="14 2 14 8 20 8" />
           </svg>
           View Detailed Report
-        </button>
+        </Button>
       )}
     </div>
   );

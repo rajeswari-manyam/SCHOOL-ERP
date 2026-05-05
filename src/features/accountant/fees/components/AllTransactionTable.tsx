@@ -136,7 +136,7 @@ export const AllTransactionsTable = ({ data }: AllTransactionsTableProps) => {
       col.display({
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => (
+        cell: ({ }) => (
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <button className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-1.5 py-1 rounded transition-colors">
               <Eye className="w-3.5 h-3.5 flex-shrink-0" />

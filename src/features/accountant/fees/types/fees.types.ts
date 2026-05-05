@@ -20,8 +20,38 @@ export type FeeTransaction = Transaction & {
   status?: string;
 };
 
+export type Fee = {
+  id: string;
+  studentId: string;  
+  studentName: string;
+  studentInitials: string;
+  studentAdmissionId: string;
+  class: string;
+  feeHead: string;
+  amount: number;
+  dueDate: string;
+  daysOverdue: number;
+  reminders: number;
+  status: FeeStatus;
+  overdueSeverity: OverdueSeverity;
+  billingCycle: BillingCycle;
+};
+
+export type FeeCreateInput = {
+  studentId: string;
+  feeHead: string;
+  amount: number;
+  dueDate: string;
+  billingCycle: BillingCycle;
+};
 
 
+export type FeeUpdateInput = {
+  feeHead?: string;
+  amount?: number;
+  dueDate?: string;
+  billingCycle?: BillingCycle;
+};
 export type FeeStatus =
   | "overdue"
   | "due-today"

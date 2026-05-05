@@ -2,63 +2,26 @@ import type { NotificationPref } from "../types/profile.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import typography from "@/styles/typography";
+import { CalendarCheck, CreditCard, BookMarked, Monitor, MessageCircle } from "lucide-react";
 
-const ICONS: Record<string, { icon: React.ReactNode; bg: string }> = {
+const ICONS: { [key: string]: { icon: React.ReactNode; bg: string } } = {
   attendance: {
     bg: "#EFF4FF",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="4" width="18" height="18" rx="3" stroke="#3525CD" strokeWidth="1.6" />
-        <path d="M16 2v4M8 2v4M3 10h18" stroke="#3525CD" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M8 14l2.5 2.5L16 13" stroke="#3525CD" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    icon: <CalendarCheck size={20} strokeWidth={1.6} color="#3525CD" />,
   },
   fees: {
     bg: "#FFF4ED",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="5" width="18" height="14" rx="3" stroke="#F97316" strokeWidth="1.6" />
-        <path d="M3 10h18" stroke="#F97316" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M7 15h4M7 12.5h6" stroke="#F97316" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <CreditCard size={20} strokeWidth={1.6} color="#F97316" />,
   },
   homework: {
     bg: "#F0FDF4",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M6 4a2 2 0 012-2h8a2 2 0 012 2v16l-6-3-6 3V4z" stroke="#16A34A" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M9 8h6M9 11h4" stroke="#16A34A" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <BookMarked size={20} strokeWidth={1.6} color="#16A34A" />,
   },
   browser: {
     bg: "#F5F3FF",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="4" width="18" height="14" rx="3" stroke="#6366F1" strokeWidth="1.6" />
-        <path d="M3 9h18" stroke="#6366F1" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="7" cy="6.5" r="1" fill="#6366F1" />
-        <circle cx="10.5" cy="6.5" r="1" fill="#6366F1" />
-      </svg>
-    ),
+    icon: <Monitor size={20} strokeWidth={1.6} color="#6366F1" />,
   },
 };
-
-// Small message/bell icon for subtitle prefix
-function SubIcon({ color }: { color: string }) {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ display: "block", flexShrink: 0 }}>
-      <path
-        d="M2 5a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H5l-3 2V5z"
-        stroke={color}
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 interface Props {
   notifications: NotificationPref[];
@@ -109,15 +72,15 @@ export function NotificationPreferences({ notifications, onToggle, onSave }: Pro
                       {n.label}
                     </p>
                     <div className="flex items-center gap-1 mt-0.5">
-                      <SubIcon color="#006C49" />
-                    <p className="text-[11px] text-[#006C49]/80 leading-snug">
-  {n.description}
-</p>
+                      <MessageCircle size={11} strokeWidth={1.3} color="#006C49" style={{ flexShrink: 0 }} />
+                      <p className="text-[11px] text-[#006C49]/80 leading-snug">
+                        {n.description}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* TOGGLE — 44×24px matching Figma */}
+                {/* TOGGLE */}
                 <button
                   onClick={() => onToggle(n.id)}
                   className={`

@@ -1,6 +1,7 @@
 import type { HomeworkItem } from "../types/Student dashboard.types";
 import { formatDueDate } from "../utils/Student dashboard.utils";
 import { useDownloadHomeworkBrief } from "../hooks/Usestudentdashboard";
+import { Button } from "@/components/ui/button";
 
 // Subject icon map (emoji fallback, swap for Lucide icons if available)
 const SUBJECT_ICONS: Record<string, string> = {
@@ -53,9 +54,10 @@ const HomeworkList = ({ items }: HomeworkListProps) => {
 
             {/* Download button */}
             {hw.briefUrl && (
-              <button
+              <Button
                 onClick={() => download(hw.id, hw.subject, hw.title)}
                 disabled={loadingId === hw.id}
+                variant="ghost"
                 className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors disabled:opacity-50"
               >
                 {loadingId === hw.id ? (
@@ -68,7 +70,7 @@ const HomeworkList = ({ items }: HomeworkListProps) => {
                   </svg>
                 )}
                 Download Brief
-              </button>
+              </Button>
             )}
           </div>
         ))}

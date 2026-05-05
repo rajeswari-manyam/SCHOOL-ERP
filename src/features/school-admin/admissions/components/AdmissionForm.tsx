@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const admissionFormSchema = z.object({
   studentName: z.string().min(1),
@@ -31,44 +33,37 @@ export const AdmissionForm = ({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <input
+      <Input
         {...form.register("studentName")}
         placeholder="Student Name"
-        className="border rounded px-2 py-1 w-full"
       />
-      <input
+      <Input
         {...form.register("dob")}
         type="date"
         placeholder="DOB"
-        className="border rounded px-2 py-1 w-full"
       />
-      <input
+      <Input
         {...form.register("class")}
         placeholder="Class"
-        className="border rounded px-2 py-1 w-full"
       />
-      <input
+      <Input
         {...form.register("parentName")}
         placeholder="Parent Name"
-        className="border rounded px-2 py-1 w-full"
       />
-      <input
+      <Input
         {...form.register("phone")}
         placeholder="Phone"
-        className="border rounded px-2 py-1 w-full"
       />
-      <input
+      <Input
         {...form.register("email")}
         placeholder="Email"
-        className="border rounded px-2 py-1 w-full"
       />
-      <button
+      <Button
         type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded"
         disabled={loading}
       >
         {loading ? "Saving..." : "Submit"}
-      </button>
+      </Button>
     </form>
   );
 };

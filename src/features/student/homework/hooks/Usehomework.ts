@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { homeworkApi } from "../api/Homework.api";
 import type {
   HomeworkPageState,
-  SubmitPayload,
   Assignment,
 } from "../types/Homework.types";
 
@@ -44,7 +43,7 @@ export const useStudyMaterials = (query = "") =>
 export const useSubmitAssignment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: SubmitPayload) => homeworkApi.submitAssignment(payload),
+    mutationFn: () => homeworkApi.submitAssignment(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.all });
     },

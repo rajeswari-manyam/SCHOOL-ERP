@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { PendingFee } from "../types/fees.types";
 import { getStatusLabel } from "../utils/Fee.utils";
 

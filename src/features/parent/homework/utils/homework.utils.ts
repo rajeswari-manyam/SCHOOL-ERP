@@ -1,4 +1,4 @@
-import type { Homework } from "../types/types";
+import type { Homework } from "../types/homework.types";
 
 export function filterHomeworkByDay(data: Homework[], day: number | null) {
     if (!day) return data;

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useComplaintsStore } from "../hooks/useComplaintsStore";
 import type { Complaint } from "../types/complaints.types";
+import { CheckCircle2 } from "lucide-react";
 
 interface Props {
   complaint: Complaint;
@@ -32,15 +33,7 @@ export function ComplaintSubmittedCard({ complaint, onClose }: Props) {
 
       {/* SUCCESS ICON */}
       <div className="w-20 h-20 rounded-full bg-[#1D9E75] flex items-center justify-center mt-2">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M5 12l5 5L20 7"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <CheckCircle2 size={36} strokeWidth={2.5} color="white" />
       </div>
 
       {/* TITLE */}
@@ -52,9 +45,11 @@ export function ComplaintSubmittedCard({ complaint, onClose }: Props) {
           Expected response within 48 hours
         </p>
       </div>
-<p className="text-[12px] text-gray-400">
-  Submitted on {submittedDate}
-</p>
+
+      <p className="text-[12px] text-gray-400">
+        Submitted on {submittedDate}
+      </p>
+
       {/* REFERENCE */}
       <div className="bg-[#EEF2FF] rounded-xl px-6 py-3">
         <p className="text-[14px] font-bold text-[#3525CD]">

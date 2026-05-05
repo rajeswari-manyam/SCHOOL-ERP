@@ -49,3 +49,11 @@ export interface ReportCard {
   attentionSubject: string;
   attentionNote: string;
 }
+export interface ExamBannerProps {
+  name: string;
+  date: string;
+  time: string;
+  venue: string;
+  daysLeft: number;
+  hoursLeft: number;
+}

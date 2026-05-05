@@ -1,15 +1,15 @@
-import { stats } from "../data/dashboard.data"; // ✅ ADD THIS
-import {
-  attendanceData,
-  feeData,
-  categoryData,
-} from "../data/chart.data";
+// import { stats } from "../data/dashboard.data"; 
+// import {
+//   attendanceData,
+//   feeData,
+//   categoryData,
+// } from "../data/chart.data";
 
-export const useDashboard = () => {
-  return {
-    stats, // ✅ NOW WORKS
-    attendanceData,
-    feeData,
-    categoryData,
-  };
-};
+// export const useDashboard = () => {
+//   return {
+//     stats, 
+//     attendanceData,
+//     feeData,
+//     categoryData,
+//   };
+// };

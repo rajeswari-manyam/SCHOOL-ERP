@@ -1,86 +1,70 @@
-// attendance/api/attendance.api.ts
-import axios from "@/config/axios";
-import type {
-  ClassAttendanceRow, TodaySummary, ClassAttendanceDetail,
-  AttendanceTrendPoint, ChronicAbsentee, Holiday, WebFormStudent,
-} from "../types/attendance.types";
+import type { AttendanceDay, AttendanceHistory, HolidayCalendar, MarkAttendanceForm } from "../types/attendance.types";
+import {
+  mockAttendanceToday,
+  mockAttendanceHistory,
+  mockHolidayCalendar,
+} from "../store/mockData";
 
+// ─── Simulate async API delay ───────────────────────────────────────────────
+const delay = (ms = 400) => new Promise((res) => setTimeout(res, ms));
+
+// ─── Attendance API ──────────────────────────────────────────────────────────
 export const attendanceApi = {
-  // ── Today ──────────────────────────────────────────────────────────────────
-  getTodaySummary: async (): Promise<TodaySummary> => {
-    const { data } = await axios.get("/attendance/today/summary");
-    return data;
+  /** Fetch today's attendance summary + class list */
+  getToday: async (): Promise<AttendanceDay> => {
+    await delay();
+    return mockAttendanceToday;
   },
 
-  getTodayClasses: async (date: string): Promise<ClassAttendanceRow[]> => {
-    const { data } = await axios.get("/attendance/today/classes", { params: { date } });
-    return data;
+  /** Fetch attendance history with trend data + chronic absentees */
+  getHistory: async (_params: {
+    dateFrom: string;
+    dateTo: string;
+    classFilter: string;
+  }): Promise<AttendanceHistory> => {
+    await delay(600);
+    return mockAttendanceHistory;
   },
 
-  getClassDetail: async (classId: string, date: string): Promise<ClassAttendanceDetail> => {
-    const { data } = await axios.get(`/attendance/class/${classId}`, { params: { date } });
-    return data;
+  /** Fetch holiday calendar for a given month/year */
+  getHolidayCalendar: async (): Promise<HolidayCalendar> => {
+    await delay(300);
+    return mockHolidayCalendar;
   },
 
-  sendRemindersToUnmarked: async (date: string): Promise<{ sent: number }> => {
-    const { data } = await axios.post("/attendance/remind-unmarked", { date });
-    return data;
+  /** Submit attendance via web form */
+  submitAttendance: async (form: MarkAttendanceForm): Promise<{ success: boolean; message: string }> => {
+    await delay(800);
+    const absentCount = form.students.filter((s) => !s.isPresent).length;
+    return {
+      success: true,
+      message: `Attendance submitted. ${absentCount} parent alert(s) will be sent via WhatsApp.`,
+    };
   },
 
-  resendFailedAlerts: async (classId: string, date: string): Promise<void> => {
-    await axios.post("/attendance/resend-alerts", { classId, date });
-  },
-
-  // ── Web Form ───────────────────────────────────────────────────────────────
-  getClassStudents: async (classId: string): Promise<WebFormStudent[]> => {
-    const { data } = await axios.get(`/attendance/class/${classId}/students`);
-    return data;
-  },
-
-  submitWebForm: async (payload: {
-    classId: string;
-    section: string;
+  /** Add a new holiday */
+  addHoliday: async (_holiday: {
+    name: string;
     date: string;
-    records: { studentId: string; present: boolean }[];
-  }): Promise<void> => {
-    await axios.post("/attendance/mark/web", payload);
+    type: string;
+    repeatAnnually: boolean;
+    notes?: string;
+    notifyTeachers: boolean;
+  }): Promise<{ success: boolean }> => {
+    await delay(500);
+    return { success: true };
   },
 
-  // ── History ────────────────────────────────────────────────────────────────
-  getAttendanceTrend: async (params: {
-    from: string; to: string; classFilter?: string;
-  }): Promise<AttendanceTrendPoint[]> => {
-    const { data } = await axios.get("/attendance/history/trend", { params });
-    return data;
+  /** Send reminder to all unmarked classes */
+  sendReminders: async (): Promise<{ success: boolean; remindersSent: number }> => {
+    await delay(600);
+    return { success: true, remindersSent: 3 };
   },
 
-  getChronicAbsentees: async (params: {
-    from: string; to: string; classFilter?: string;
-  }): Promise<ChronicAbsentee[]> => {
-    const { data } = await axios.get("/attendance/chronic-absentees", { params });
-    return data;
-  },
-
-  exportCsv: async (date: string): Promise<Blob> => {
-    const { data } = await axios.get("/attendance/export", {
-      params: { date },
-      responseType: "blob",
-    });
-    return data;
-  },
-
-  // ── Holiday Calendar ───────────────────────────────────────────────────────
-  getHolidays: async (year: number, month: number): Promise<Holiday[]> => {
-    const { data } = await axios.get("/attendance/holidays", { params: { year, month } });
-    return data;
-  },
-
-  addHoliday: async (payload: Omit<Holiday, "id">): Promise<Holiday> => {
-    const { data } = await axios.post("/attendance/holidays", payload);
-    return data;
-  },
-
-  deleteHoliday: async (id: string): Promise<void> => {
-    await axios.delete(`/attendance/holidays/${id}`);
+  /** Export attendance CSV */
+  exportCSV: async (): Promise<Blob> => {
+    await delay(500);
+    const csv = "Class,Present,Absent,Method\n6A,32,2,WhatsApp\n6B,30,2,Web Form\n7A,28,2,WhatsApp\n";
+    return new Blob([csv], { type: "text/csv" });
   },
 };

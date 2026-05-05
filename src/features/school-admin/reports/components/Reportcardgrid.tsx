@@ -1,7 +1,9 @@
-import { useState, type JSX } from "react";
+import { useState, type ChangeEventHandler, type JSX } from "react";
 import type { ReportCard, ReportType } from "../types/reports.types";
 import { REPORT_CARDS } from "../utils/Report config";
 import { AutoBadge, PeriodPill } from "./Reportbadges";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Icon component
 const Icon = ({ name }: { name: string }) => {
@@ -69,14 +71,13 @@ const FormatCheckbox = ({
 }: {
   label: string;
   checked: boolean;
-  onChange: () => void;
+  onChange: ChangeEventHandler<HTMLInputElement>;
 }) => (
-  <label className="flex items-center gap-1.5 cursor-pointer">
-    <input
-      type="checkbox"
+  <label className="flex items-center gap-2 cursor-pointer">
+    <Checkbox
       checked={checked}
       onChange={onChange}
-      className="w-3.5 h-3.5 accent-indigo-600 rounded"
+      className="accent-indigo-600"
     />
     <span className="text-[11px] font-semibold text-gray-600">{label}</span>
   </label>
@@ -139,12 +140,12 @@ const ReportCardItem = ({ card, onGenerate }: ReportCardItemProps) => {
       </div>
 
       {/* Generate button */}
-      <button
+      <Button
         onClick={() => onGenerate(card.id)}
-        className="mt-auto w-full py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+        className="mt-auto w-full"
       >
         Generate Report
-      </button>
+      </Button>
     </div>
   );
 };

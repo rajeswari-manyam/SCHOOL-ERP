@@ -1,4 +1,3 @@
-import React from "react";
 import type { FeeStats } from "../types/fees.types";
 import { formatCurrency } from "../utils/Fee.utils";
 

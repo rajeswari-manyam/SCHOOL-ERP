@@ -1,5 +1,5 @@
 import { Search, ChevronDown } from "lucide-react";
-import { useState } from "react";
+// import { useState } from "react";
 import type { TicketFilters, TicketPriority, TicketStatus } from "../types/support.types";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";

@@ -7,7 +7,6 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
 
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -15,22 +14,17 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "ignoreDeprecations": "6.0",
 
-    /* Required for paths */
     "baseUrl": ".",
 
-    /* Path alias */
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
 
-    /* Optional (remove warning) */
     "ignoreDeprecations": "6.0"
   },
   "include": ["src"]

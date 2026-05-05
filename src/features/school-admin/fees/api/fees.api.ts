@@ -195,7 +195,7 @@ export const MOCK_PERIOD_SUMMARY: PeriodSummary = {
   breakdown: { cash: 84000, upi: 120000, cheque: 30000, bankTransfer: 0 },
 };
 
-let receiptCounter = 848;
+
 
 export const feeApi = {
   getStats: async (): Promise<FeeStats> => {
@@ -233,10 +233,15 @@ export const feeApi = {
     return MOCK_CLASS_FEE_STRUCTURES[className] || MOCK_CLASS_FEE_STRUCTURES["Class 10"];
   },
 
-  recordPayment: async (form: RecordPaymentForm): Promise<{ receiptNo: string; success: boolean }> => {
-    await new Promise(r => setTimeout(r, 600));
-    const receiptNo = `RCP-2025-${String(receiptCounter++).padStart(4, "0")}`;
-    return { receiptNo, success: true };
+  recordPayment: async (form: RecordPaymentForm): Promise<{
+    success: boolean;
+    receiptNo: string;
+  }> => {
+    await new Promise((r) => setTimeout(r, 400));
+    return {
+      success: true,
+      receiptNo: `RCP-${new Date().getFullYear()}-${form.studentId}-${Math.floor(Math.random() * 9000) + 1000}`,
+    };
   },
 
   sendReminder: async (studentIds: string[]): Promise<{ sent: number }> => {

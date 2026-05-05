@@ -1,204 +1,152 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { X } from "lucide-react";
+import { useState } from "react";
+import { useAttendanceStore } from "../store";
 
-type HolidayType = "National Holiday" | "Public Holiday" | "School Event" | "School Day";
+const AddHolidayModal = () => {
+  const { showAddHolidayModal, closeAddHoliday } = useAttendanceStore();
+  const [holidayName, setHolidayName] = useState("");
+  const [date, setDate] = useState("");
+  const [holidayType, setHolidayType] = useState("National Holiday");
+  const [repeatAnnually, setRepeatAnnually] = useState(true);
+  const [notes, setNotes] = useState("");
+  const [notifyTeachers, setNotifyTeachers] = useState(true);
 
-const addHolidaySchema = z.object({
-  name: z.string().min(1, "Holiday name is required").min(2, "Holiday name must be at least 2 characters"),
-  date: z.string().min(1, "Date is required").regex(/^\d{2}\/\d{2}\/\d{4}$/, "Date must be in MM/DD/YYYY format"),
-  type: z.enum(["National Holiday", "Public Holiday", "School Event", "School Day"], {
-    required_error: "Please select a holiday type",
-  }),
-  repeatAnnually: z.boolean(),
-  notes: z.string().default(""),
-  notifyWhatsApp: z.boolean(),
-});
-
-type AddHolidayFormData = z.infer<typeof addHolidaySchema>;
-
-export interface AddHolidayFormState {
-  name: string;
-  date: string;
-  type: HolidayType;
-  repeatAnnually: boolean;
-  notes: string;
-  notifyWhatsApp: boolean;
-}
-
-interface AddHolidayModalProps {
-  onClose?: () => void;
-  onSave?: (data: AddHolidayFormState) => void;
-}
-
-export default function AddHolidayModal({ onClose, onSave }: AddHolidayModalProps) {
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<AddHolidayFormData>({
-    resolver: zodResolver(addHolidaySchema),
-    defaultValues: {
-      name: "",
-      date: "",
-      type: "National Holiday",
-      repeatAnnually: true,
-      notes: "",
-      notifyWhatsApp: true,
-    },
-  });
-
-  const repeatAnnually = watch("repeatAnnually");
-  const notifyWhatsApp = watch("notifyWhatsApp");
-
-  const handleFormSubmit = (data: AddHolidayFormData) => {
-    onSave?.({
-      ...data,
-      notes: data.notes ?? "",
-    });
-  };
+  if (!showAddHolidayModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-400/40">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900">Add Holiday</h2>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900">Add Holiday</h2>
           <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            onClick={closeAddHoliday}
+            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
           >
-            <X size={20} />
+            &times;
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className="p-6 space-y-5">
+        {/* Form */}
+        <div className="p-6 space-y-4">
+          {/* Holiday Name */}
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
+            <label className="text-xs font-semibold text-gray-700 block mb-1">
               Holiday Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
+              value={holidayName}
+              onChange={(e) => setHolidayName(e.target.value)}
               placeholder="e.g. Independence Day"
-              {...register("name")}
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
             />
-            {errors.name && (
-              <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
-            )}
           </div>
 
+          {/* Date */}
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
+            <label className="text-xs font-semibold text-gray-700 block mb-1">
               Date <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              placeholder="mm/dd/yyyy"
-              {...register("date")}
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
             />
-            {errors.date && (
-              <p className="mt-1 text-xs text-red-600">{errors.date.message}</p>
-            )}
           </div>
 
+          {/* Holiday Type + Repeat */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">Holiday Type</label>
-              <div className="relative">
-                <select
-                  {...register("type")}
-                  className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                >
-                  <option value="National Holiday">National Holiday</option>
-                  <option value="Public Holiday">Public Holiday</option>
-                  <option value="School Event">School Event</option>
-                  <option value="School Day">School Day</option>
-                </select>
-                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">▾</div>
-              </div>
-              {errors.type && (
-                <p className="mt-1 text-xs text-red-600">{errors.type.message}</p>
-              )}
+              <label className="text-xs font-semibold text-gray-700 block mb-1">
+                Holiday Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={holidayType}
+                onChange={(e) => setHolidayType(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              >
+                <option>National Holiday</option>
+                <option>Public Holiday</option>
+                <option>School Event</option>
+                <option>School Day</option>
+              </select>
             </div>
-
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">Repeat Annually?</label>
-              <div className="flex items-center gap-3 mt-3">
+              <label className="text-xs font-semibold text-gray-700 block mb-1">
+                Repeat Annually?
+              </label>
+              <div className="flex items-center gap-3 mt-2.5">
                 <button
-                  type="button"
-                  onClick={() => setValue("repeatAnnually", !repeatAnnually)}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                    repeatAnnually ? "bg-indigo-600" : "bg-gray-300"
+                  onClick={() => setRepeatAnnually(!repeatAnnually)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${
+                    repeatAnnually ? "bg-indigo-600" : "bg-gray-200"
                   }`}
                 >
                   <span
-                    className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      repeatAnnually ? "translate-x-6" : "translate-x-1"
+                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                      repeatAnnually ? "translate-x-5.5 left-0.5" : "left-0.5"
                     }`}
+                    style={{ transform: repeatAnnually ? "translateX(20px)" : "translateX(0)" }}
                   />
                 </button>
-                <span className="text-sm font-bold text-slate-700">{repeatAnnually ? "On" : "Off"}</span>
+                <span className="text-sm text-gray-700 font-medium">
+                  {repeatAnnually ? "On" : "Off"}
+                </span>
               </div>
             </div>
           </div>
 
+          {/* Notes */}
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">Notes</label>
+            <label className="text-xs font-semibold text-gray-700 block mb-1">Notes</label>
             <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional: any additional notes for staff"
-              {...register("notes")}
               rows={3}
-              className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setValue("notifyWhatsApp", !notifyWhatsApp)}
-              className={`inline-flex h-6 w-6 items-center justify-center rounded-md border-2 transition ${
-                notifyWhatsApp ? "bg-indigo-600 border-indigo-600" : "bg-white border-gray-300"
-              }`}
-            >
-              {notifyWhatsApp && (
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2 6L5 9L10 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </button>
-            <span className="text-sm font-bold text-slate-700 flex items-center gap-2">
-              Notify all teachers via WhatsApp
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20.52 3.48A11.93 11.93 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.57A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.23-3.48-8.52z" />
-              </svg>
-            </span>
+          {/* Info Banner */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600">
+            This holiday will appear on the calendar and attendance will not be expected on this day.
           </div>
+
+          {/* Notify Toggle */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={notifyTeachers}
+              onChange={(e) => setNotifyTeachers(e.target.checked)}
+              className="w-4 h-4 rounded accent-indigo-600"
+            />
+            <span className="text-sm text-gray-700">
+              Notify all teachers via WhatsApp{" "}
+              <span className="text-green-600">📱</span>
+            </span>
+          </label>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 pb-6">
           <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition"
+            onClick={closeAddHoliday}
+            className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
           >
             Cancel
           </button>
           <button
-            type="submit"
-            className="rounded-xl bg-indigo-600 px-7 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition"
+            onClick={closeAddHoliday}
+            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Save Holiday
           </button>
         </div>
-        </form>
       </div>
     </div>
   );
-}
+};
+
+export default AddHolidayModal;

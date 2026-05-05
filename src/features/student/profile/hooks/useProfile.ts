@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { profileApi } from "../api/profile.api";
-import type { ProfileData, StudentProfile } from "../types/profile.types";
+import type {  StudentProfile } from "../types/profile.types";
 
 // Query keys
 export const PROFILE_KEYS = {

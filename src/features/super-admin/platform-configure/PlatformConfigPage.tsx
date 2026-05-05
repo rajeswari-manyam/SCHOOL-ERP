@@ -2,7 +2,7 @@
 
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { Save } from "lucide-react";
 import ConfigTabs from "./components/ConfigTabs";
 import DialogConfigCard from "./components/DialogConfigCard";
@@ -16,7 +16,7 @@ import type { ConfigTab } from "./types/config.types";
 import { Button } from "@/components/ui/button";
 
 const PlatformConfigPage = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ConfigTab>("integrations");
   const { data: config } = useConfig();
   const { resetConfig, saveAll } = useConfigMutations();

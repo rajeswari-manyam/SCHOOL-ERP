@@ -7,6 +7,7 @@ import type { NavItem } from "@/types/NavItem.types";
 import { useNavigate } from "react-router-dom";
 import { FaSignOutAlt, FaCog } from "react-icons/fa";
 import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 interface SidebarProps {
   items: NavItem[];
   className?: string;
@@ -51,14 +52,15 @@ const handleLogout = () => {
 };
   return (
     <>
-      <button
+      <Button
+        variant="ghost"
         type="button"
         className="md:hidden fixed top-4 left-4 z-50 h-11 w-11 rounded-2xl bg-white text-slate-900 shadow-lg flex items-center justify-center transition-colors duration-200"
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Toggle sidebar"
       >
         <Menu className="w-5 h-5" />
-      </button>
+      </Button>
 
       <div
         className={cn(
@@ -84,14 +86,15 @@ const handleLogout = () => {
               {/* <div className="text-xs text-[#b0b8c1]">ACADEMIC MANAGEMENT</div> */}
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             type="button"
             className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
        
 
@@ -141,22 +144,24 @@ const handleLogout = () => {
     <div className="absolute bottom-16 left-6 right-6 bg-white text-black rounded-xl shadow-lg overflow-hidden z-50">
 
       {/* Settings */}
-      <button
+      <Button
+        variant="ghost"
         onClick={() => navigate("/accountant/settings")}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100"
       >
         <FaCog />
         Settings
-      </button>
+      </Button>
 
       {/* Logout */}
-      <button
+      <Button
+        variant="ghost"
         onClick={handleLogout}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 text-red-600"
       >
         <FaSignOutAlt />
         Logout
-      </button>
+      </Button>
 
     </div>
   )}

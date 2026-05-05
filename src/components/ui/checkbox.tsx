@@ -4,10 +4,11 @@ import { cn } from "../../utils/cn";
 export interface CheckboxProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   indeterminate?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, indeterminate = false, ...props }, ref) => {
+  ({ className, indeterminate = false, onCheckedChange, onChange, ...props }, ref) => {
     const innerRef = React.useRef<HTMLInputElement | null>(null);
 
     React.useImperativeHandle(ref, () => innerRef.current as HTMLInputElement);
@@ -17,6 +18,11 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         innerRef.current.indeterminate = indeterminate;
       }
     }, [indeterminate]);
+
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      onCheckedChange?.(event.target.checked);
+      onChange?.(event);
+    };
 
     return (
       <input
@@ -28,6 +34,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           "disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
+        onChange={handleChange}
         {...props}
       />
     );

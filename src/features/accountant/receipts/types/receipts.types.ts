@@ -18,6 +18,9 @@ export type Receipt = {
   waStatus: "Sent" | "Not Sent";
 };
 
+export type CreateReceiptInput = Omit<Receipt, "id" | "receiptNo">;
+export type UpdateReceiptInput = Partial<CreateReceiptInput>;
+
 export type ReceiptDetail = Receipt & {
   fatherName: string;
   admissionNo: string;

@@ -1,6 +1,6 @@
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  super_admin: ["*"],
-  school_admin: [
+  superadmin: ["*"],
+  schooladmin: [
     "dashboard.view",
     "attendance.manage",
     "fees.manage",

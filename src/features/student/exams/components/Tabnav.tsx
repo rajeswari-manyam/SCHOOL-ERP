@@ -1,4 +1,5 @@
 import type { TabId } from "../types/Exam.types";
+import { Button } from "@/components/ui/button";
 
 interface Tab { id: TabId; label: string; }
 
@@ -18,10 +19,11 @@ export default function TabNav({ active, onChange }: TabNavProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-slate-100 p-2 shadow-sm">
       {TABS.map((tab) => (
-        <button
+        <Button
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
+          variant={active === tab.id ? "default" : "ghost"}
           className={`rounded-2xl px-4 py-2 text-sm font-medium transition ${
             active === tab.id
               ? "bg-white shadow-sm text-slate-950"
@@ -29,7 +31,7 @@ export default function TabNav({ active, onChange }: TabNavProps) {
           }`}
         >
           {tab.label}
-        </button>
+        </Button>
       ))}
     </div>
   );

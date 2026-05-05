@@ -1,5 +1,5 @@
 import { axios } from "@/config/axios";
-import {
+import type {
   Receipt,
   CreateReceiptInput,
   UpdateReceiptInput,

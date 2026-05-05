@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import type { KeyboardEvent, ClipboardEvent } from "react";
 import { Shield } from "lucide-react";
 import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import typography, { combineTypography } from "@/styles/typography";
 
@@ -50,8 +51,7 @@ const OtpBoxes = ({
   return (
     <div className="flex justify-between gap-2 sm:gap-3" onPaste={handlePaste}>
       {Array.from({ length: 6 }, (_, i) => (
-        <input
-          key={i}
+        <Input
           ref={(el) => { inputs.current[i] = el; }}
           type="text"
           inputMode="numeric"

@@ -9,6 +9,8 @@ interface PaginationProps {
   itemLabel?: string;
   showPageNumbers?: boolean;
 }
+export const PlanBadge = () => {};
+export const StatusBadge = () => {};
 
 const Pagination = ({
   page,

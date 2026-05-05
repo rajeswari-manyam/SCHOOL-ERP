@@ -13,16 +13,16 @@ const schema = z.object({
   subscriptionPlan: z.enum(["basic", "premium", "enterprise"]),
 });
 
-type CreateSchoolInput = z.infer<typeof schema>;
+type SchoolFormValues = z.infer<typeof schema>;
 
 type SchoolFormProps = {
-  defaultValues?: Partial<CreateSchoolInput>;
-  onSubmit: (values: CreateSchoolInput) => void;
+  defaultValues?: Partial<SchoolFormValues>;
+  onSubmit: (values: SchoolFormValues) => void;
   loading?: boolean;
 };
 
 export const SchoolForm = ({ defaultValues = {}, onSubmit, loading }: SchoolFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateSchoolInput>({
+  const { register, handleSubmit, formState: { errors } } = useForm<SchoolFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   });

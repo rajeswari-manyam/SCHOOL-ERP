@@ -1,5 +1,5 @@
-import React from "react";
 import { formatCurrency } from "../utils/Fee.utils";
+import { Button } from "@/components/ui/button";
 
 interface PaymentSuccessModalProps {
   receipt: {
@@ -33,15 +33,26 @@ export function PaymentSuccessModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
         {/* Success header */}
-        <div className="flex flex-col items-center pt-8 pb-4 px-6">
-          <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-3">
-            <span className="text-green-500 text-2xl">✓</span>
+        <div className="flex items-center justify-between pt-8 pb-4 px-6">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+              <span className="text-green-500 text-2xl">✓</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Payment Recorded Successfully!</h2>
+              <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-500">
+                <span>Receipt sent to parent via WhatsApp</span>
+                <span className="text-green-500">💬</span>
+              </div>
+            </div>
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Payment Recorded Successfully!</h2>
-          <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-500">
-            <span>Receipt sent to parent via WhatsApp</span>
-            <span className="text-green-500">💬</span>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 rounded-full p-2"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
 
         {/* Receipt card */}
@@ -72,18 +83,16 @@ export function PaymentSuccessModal({
 
         {/* Actions */}
         <div className="px-6 pb-6 space-y-2">
-          <button
-            onClick={onRecordAnother}
-            className="w-full py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors"
-          >
+          <Button onClick={onRecordAnother} className="w-full py-2.5 text-sm font-semibold">
             Record Another Payment
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleDownloadPDF}
-            className="w-full py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
           >
             <span>📄</span> Download PDF
-          </button>
+          </Button>
         </div>
       </div>
     </div>

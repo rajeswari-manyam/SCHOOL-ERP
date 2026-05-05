@@ -1,4 +1,4 @@
-export * from "./StatCard";
+export * from "../ui/statcard";
 export * from "./Sidebar";
 export * from "./Topbar";
 export * from "./MobileNav";

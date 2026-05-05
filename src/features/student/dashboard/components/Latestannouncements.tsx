@@ -1,5 +1,6 @@
 import type { Announcement } from "../types/Student dashboard.types";
 import { getTimeAgo, ANNOUNCEMENT_ICON_CONFIG } from "../utils/Student dashboard.utils";
+import { Button } from "@/components/ui/button";
 
 interface LatestAnnouncementsProps {
   announcements: Announcement[];
@@ -38,12 +39,13 @@ const LatestAnnouncements = ({ announcements, onViewAll }: LatestAnnouncementsPr
     </div>
 
     {onViewAll && (
-      <button
+      <Button
         onClick={onViewAll}
+        variant="ghost"
         className="mt-1 w-full text-center text-xs font-bold uppercase tracking-wider text-indigo-500 hover:text-indigo-700 transition-colors"
       >
         View All Announcements
-      </button>
+      </Button>
     )}
   </div>
 );

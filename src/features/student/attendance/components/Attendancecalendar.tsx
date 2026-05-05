@@ -29,8 +29,7 @@ const DOT_COLORS: Record<AttendanceStatus, string> = {
 
 const AttendanceCalendar = ({
   data,
-  onPrev,
-  onNext,
+  
   label,
 }: AttendanceCalendarProps) => {
   const statusMap = new Map<number, AttendanceStatus>();

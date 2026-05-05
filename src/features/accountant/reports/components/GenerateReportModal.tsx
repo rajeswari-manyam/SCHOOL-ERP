@@ -1,6 +1,6 @@
-import { X, Download, Info } from "lucide-react";
+import { X, Download, Info, Check } from "lucide-react";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -11,19 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Controller } from "react-hook-form";
 const generateReportSchema = z.object({
   asOfDate: z.string().min(1, "Date is required"),
-
   classFilter: z.string().min(1, "Class filter is required"),
-
- minOverdue: z.enum(["7+ Days", "15+ Days", "30+ Days"], {
-  error: "Select overdue range",
-}),
+  minOverdue: z.enum(["7+ Days", "15+ Days", "30+ Days"], {
+    error: "Select overdue range",
+  }),
   format: z.enum(["PDF", "Excel"], {
     error: "Select format",
   }),
-
   includeColumns: z.object({
     studentName: z.boolean(),
     parentContact: z.boolean(),
@@ -32,16 +28,14 @@ const generateReportSchema = z.object({
     feeBreakdown: z.boolean(),
   }).refine(
     (data) => Object.values(data).some(Boolean),
-    {
-      message: "Select at least one column",
-    }
+    { message: "Select at least one column" }
   ),
-
   sendTo: z.object({
     myEmail: z.boolean(),
     principal: z.boolean(),
   }),
 });
+
 type GenerateReportForm = z.infer<typeof generateReportSchema>;
 
 interface GenerateReportModalProps {
@@ -51,7 +45,7 @@ interface GenerateReportModalProps {
   onSubmit: (data: GenerateReportInput) => void;
 }
 
-const columnLabels: Record<string, string> = {
+const columnLabels: { [key: string]: string } = {
   studentName: "Student Name",
   parentContact: "Parent Contact",
   overdueAmount: "Overdue Amount",
@@ -76,15 +70,7 @@ const FigmaCheckbox = ({
       }`}
   >
     {checked && (
-      <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
-        <path
-          d="M2 6l3 3 5-5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <Check size={10} strokeWidth={2.5} className="text-white" />
     )}
   </button>
 );
@@ -95,33 +81,33 @@ export const GenerateReportModal = ({
   onClose,
   onSubmit,
 }: GenerateReportModalProps) => {
- const {
-  register,
-  setValue,
-  watch,
+  const {
+    register,
+    setValue,
+    watch,
     control,
-  handleSubmit,
-  formState: { errors },   
-} = useForm<GenerateReportForm>({
-      resolver: zodResolver(generateReportSchema),
-      defaultValues: {
-        asOfDate: "2025-04-07",
-        classFilter: "all",
-        minOverdue: "15+ Days",
-        format: "PDF",
-        includeColumns: {
-          studentName: true,
-          parentContact: true,
-          overdueAmount: true,
-          daysOverdue: true,
-          feeBreakdown: false,
-        },
-        sendTo: {
-          myEmail: true,
-          principal: false,
-        },
+    handleSubmit,
+    formState: { errors },
+  } = useForm<GenerateReportForm>({
+    resolver: zodResolver(generateReportSchema),
+    defaultValues: {
+      asOfDate: "2025-04-07",
+      classFilter: "all",
+      minOverdue: "15+ Days",
+      format: "PDF",
+      includeColumns: {
+        studentName: true,
+        parentContact: true,
+        overdueAmount: true,
+        daysOverdue: true,
+        feeBreakdown: false,
       },
-    });
+      sendTo: {
+        myEmail: true,
+        principal: false,
+      },
+    },
+  });
 
   const values = watch();
 
@@ -131,19 +117,19 @@ export const GenerateReportModal = ({
       document.body.style.overflow = "";
     };
   }, []);
-const submitHandler = (data: GenerateReportForm) => {
-  onSubmit({
-    reportType,
-    asOfDate: data.asOfDate,
-    classFilter: data.classFilter,
-    minOverdue: data.minOverdue,
-    includeColumns: data.includeColumns,
-    format: data.format,
-    sendTo: data.sendTo,
-  });
 
-  onClose(); 
-};
+  const submitHandler = (data: GenerateReportForm) => {
+    onSubmit({
+      reportType,
+      asOfDate: data.asOfDate,
+      classFilter: data.classFilter,
+      minOverdue: data.minOverdue,
+      includeColumns: data.includeColumns,
+      format: data.format,
+      sendTo: data.sendTo,
+    });
+    onClose();
+  };
 
   const overdueOptions: GenerateReportForm["minOverdue"][] = [
     "7+ Days",
@@ -192,29 +178,28 @@ const submitHandler = (data: GenerateReportForm) => {
               <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 As of Date
               </Label>
-             <Input
-  type="date"
-  {...register("asOfDate")}
-  className={`mt-1.5 h-10 rounded-lg ${
-    errors.asOfDate ? "border border-red-500" : "bg-[#EFF4FF] border-none"
-  }`}
-/>
-
-{errors.asOfDate && (
-  <p className="text-xs text-red-500 mt-1">Date is required</p>
-)}
+              <Input
+                type="date"
+                {...register("asOfDate")}
+                className={`mt-1.5 h-10 rounded-lg ${
+                  errors.asOfDate ? "border border-red-500" : "bg-[#EFF4FF] border-none"
+                }`}
+              />
+              {errors.asOfDate && (
+                <p className="text-xs text-red-500 mt-1">Date is required</p>
+              )}
             </div>
 
             <div>
               <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 Class Filter
               </Label>
-          <select
-  {...register("classFilter")}
-  className={`mt-1.5 w-full h-10 px-3 rounded-lg text-sm ${
-    errors.classFilter ? "border border-red-500" : "bg-[#EFF4FF]"
-  }`}
->
+              <select
+                {...register("classFilter")}
+                className={`mt-1.5 w-full h-10 px-3 rounded-lg text-sm ${
+                  errors.classFilter ? "border border-red-500" : "bg-[#EFF4FF]"
+                }`}
+              >
                 <option value="all">All Classes</option>
                 <option value="1-5">Primary (1-5)</option>
                 <option value="6-8">Middle (6-8)</option>
@@ -223,40 +208,39 @@ const submitHandler = (data: GenerateReportForm) => {
               </select>
             </div>
           </div>
-<Controller
-  name="minOverdue"
-  control={control}
-  render={({ field }) => (
-    <div>
-      <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
-        Min Overdue
-      </Label>
 
-      <div className="flex gap-2 mt-2">
-        {overdueOptions.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => field.onChange(opt)}
-            className={`px-4 py-1.5 text-sm rounded-full border-2 transition font-medium
-              ${field.value === opt
-                ? "bg-indigo-600 text-white border-indigo-600"
-                : "bg-white border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600"
-              }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      {errors.minOverdue && (
-        <p className="text-xs text-red-500 mt-1">
-          {errors.minOverdue.message}
-        </p>
-      )}
-    </div>
-  )}
-/>
+          <Controller
+            name="minOverdue"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                  Min Overdue
+                </Label>
+                <div className="flex gap-2 mt-2">
+                  {overdueOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => field.onChange(opt)}
+                      className={`px-4 py-1.5 text-sm rounded-full border-2 transition font-medium
+                        ${field.value === opt
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-white border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600"
+                        }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                {errors.minOverdue && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.minOverdue.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
 
           <div>
             <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
@@ -267,9 +251,7 @@ const submitHandler = (data: GenerateReportForm) => {
                 <label key={key} className="flex items-center gap-2.5 cursor-pointer">
                   <FigmaCheckbox
                     checked={val}
-                    onChange={(v) =>
-                      setValue(`includeColumns.${key}` as any, v)
-                    }
+                    onChange={(v) => setValue(`includeColumns.${key}` as any, v)}
                   />
                   <span className="text-sm text-gray-700">
                     {columnLabels[key]}
@@ -280,36 +262,33 @@ const submitHandler = (data: GenerateReportForm) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                Format
+              </Label>
+              <div className="flex gap-2 mt-2">
+                {(["PDF", "Excel"] as ReportFormat[]).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setValue("format", f)}
+                    className={`px-5 py-1.5 text-sm rounded-full border-2 font-medium transition
+                      ${values.format === f
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white border-gray-200 text-gray-500"
+                      }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              {errors.format && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.format.message}
+                </p>
+              )}
+            </div>
 
-           <div>
-  <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
-    Format
-  </Label>
-
-  <div className="flex gap-2 mt-2">
-    {(["PDF", "Excel"] as ReportFormat[]).map((f) => (
-      <button
-        key={f}
-        type="button"
-        onClick={() => setValue("format", f)}
-        className={`px-5 py-1.5 text-sm rounded-full border-2 font-medium transition
-          ${values.format === f
-            ? "bg-indigo-600 text-white border-indigo-600"
-            : "bg-white border-gray-200 text-gray-500"
-          }`}
-      >
-        {f}
-      </button>
-    ))}
-  </div>
-
-  {errors.format && (
-    <p className="text-xs text-red-500 mt-1">
-      {errors.format.message}
-    </p>
-  )}
-</div>
-           
             <div>
               <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 Send To
@@ -322,7 +301,6 @@ const submitHandler = (data: GenerateReportForm) => {
                   />
                   <span className="text-sm text-gray-700">My email</span>
                 </label>
-
                 <label className="flex items-center gap-2.5 cursor-pointer">
                   <FigmaCheckbox
                     checked={values.sendTo.principal}
@@ -352,7 +330,6 @@ const submitHandler = (data: GenerateReportForm) => {
           >
             Cancel
           </Button>
-
           <Button
             onClick={handleSubmit(submitHandler)}
             className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium gap-2"

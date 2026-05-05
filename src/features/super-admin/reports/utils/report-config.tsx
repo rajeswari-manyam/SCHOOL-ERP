@@ -1,5 +1,6 @@
-import { BarChart2, LayoutGrid, Megaphone, MessageSquare, CreditCard, Shield, MessageSquareText, Building2,MenuSquare } from "lucide-react";
+import { BarChart2,  CreditCard, Shield, MessageSquareText, Building2,MenuSquare } from "lucide-react";
 import type { ReportType } from "../types/reports.types";
+import type { JSX } from "react";
 
 export const ReportIcons: Record<ReportType, (props: { size?: number }) => JSX.Element> = {
   REVENUE: ({ size = 20 }) => <BarChart2 size={size} />,
