@@ -9,6 +9,6 @@ export { default as AddRepModal } from "./components/AddRepModal";
 export { RepAvatar, StatusBadge, PayoutBadge, AchievementBadge } from "./components/RepBadges";
 export { useReps, useAttendance, useMarketingStats, useMarketingMutations } from "./hooks/useMarketing";
 export type {
-  MarketingRep, MarketingStats, TicketFilters as RepFilters,
-  AttendanceRecord, RepStatus, PayoutStatus, MarketingTab,
+  MarketingRep, MarketingStats, 
+  AttendanceRecord, RepStatus, PayoutStatus, 
 } from "./types/marketing.types";

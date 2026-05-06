@@ -1,22 +1,22 @@
 import { lazy } from "react";
 import type { ReactNode } from "react";
 
-const TeacherMarks = lazy(() => import("@/features/teacher/marks/pages/MarksPage"));
-const TeacherLeave = lazy(() => import("@/features/teacher/leave/pages/LeavePage"));
-const TeacherHomework = lazy(() => import("@/features/teacher/homework/pages/HomeworkPage"));
-const TeacherTimetable = lazy(() => import("@/features/teacher/timetable/pages/TimetablePage"));
+
+const TeacherLeave = lazy(() => import("@/features/teacher/leave/LeavePage"));
+const TeacherHomework = lazy(() => import("@/features/teacher/homework/HomeworkPage"));
+const TeacherTimetable = lazy(() => import("@/features/teacher/timetable/TimetablePage"));
 const TeacherAttendance = lazy(() => import("@/features/teacher/attendance/Myattendancepage"));
-const TeacherDashboard = lazy(() => import("@/features/teacher/dashboard/pages/DashboardPage"));
-const AccountantFees = lazy(() => import("@/features/accountant/fees").then(m => ({ default: m.FeesPage })));
-const AccountantDashboard = lazy(() => import("@/features/accountant/dashboard").then(m => ({ default: m.DashboardPage })));
+const TeacherDashboard = lazy(() => import("@/features/teacher/dashboard/TeacherDashboardPage"));
+const AccountantFees = lazy(() => import("@/features/accountant/fees/pages/FeeManagementPage"));
+const AccountantDashboard = lazy(() => import("@/features/accountant/dashboard/pages/DashboardPage"));
 const AccountantReports = lazy(() => import("@/features/accountant/reports/pages/ReportsPage"));
-const AccountantSettings = lazy(() => import("@/features/accountant/settings/pages/SettingsPage"));
+
 const AccountantReceipts = lazy(() => import("@/features/accountant/receipts/pages/ReceiptsPage"));
 const AccountantPayroll = lazy(() => import("@/features/accountant/payroll/pages/PayrollPage"));
 const SchoolAdminSettings = lazy(() => import("@/features/school-admin/settings").then(m => ({ default: m.SettingsPage })));
 const SchoolAdminReports = lazy(() => import("@/features/school-admin/reports").then(m => ({ default: m.ReportsPage })));
-const SchoolAdminTimetable = lazy(() => import("@/features/school-admin/timetable").then(m => ({ default: m.TimetablePage })));
-const SchoolAdminStaff = lazy(() => import("@/features/school-admin/staff").then(m => ({ default: m.StaffPage })));
+const SchoolAdminTimetable = lazy(() => import("@/features/school-admin/timetable/TimetablePage"));
+const SchoolAdminStaff = lazy(() => import("@/features/school-admin/staff/pages/StaffPage"));
 
 
 const SchoolAdminDashboard = lazy(() => import("@/features/school-admin/dashboard").then(m => ({ default: m.DashboardPage })));
@@ -35,11 +35,7 @@ export interface RouteConfig {
 
 
 export const ROUTES: RouteConfig[] = [
-  {
-    path: "/teacher/marks",
-    element: <TeacherMarks />,
-    roles: ["teacher"],
-  },
+
   {
     path: "/teacher/leave",
     element: <TeacherLeave />,
@@ -80,11 +76,7 @@ export const ROUTES: RouteConfig[] = [
     element: <AccountantReports />,
     roles: ["accountant"],
   },
-  {
-    path: "/accountant/settings",
-    element: <AccountantSettings />,
-    roles: ["accountant"],
-  },
+
   {
     path: "/accountant/receipts",
     element: <AccountantReceipts />,

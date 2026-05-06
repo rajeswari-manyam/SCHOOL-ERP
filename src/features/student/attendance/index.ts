@@ -1,5 +1,5 @@
 // Page
-export { default as AttendanceDashboardPage } from "../dashboard/components/Attendancecalendar";
+export { default as AttendanceDashboardPage } from "../dashboard/components/AttendanceCalendar";
 
 // Components
 export { default as StatCards } from "./components/Statcards";

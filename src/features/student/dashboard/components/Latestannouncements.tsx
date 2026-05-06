@@ -1,53 +1,44 @@
-import type { Announcement } from "../types/Student dashboard.types";
-import { getTimeAgo, ANNOUNCEMENT_ICON_CONFIG } from "../utils/Student dashboard.utils";
-import { Button } from "@/components/ui/button";
+import type { Announcement } from "../types/dashboard.types";
 
-interface LatestAnnouncementsProps {
-  announcements: Announcement[];
-  onViewAll?: () => void;
+interface Props {
+  data: Announcement[];
 }
 
-const LatestAnnouncements = ({ announcements, onViewAll }: LatestAnnouncementsProps) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-    <h2 className="text-lg font-bold text-gray-900">Latest Announcements</h2>
+export const LatestAnnouncements = ({ data }: Props) => {
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-900">Latest Announcements</h3>
+      </div>
 
-    <div className="flex flex-col divide-y divide-gray-50">
-      {announcements.map((ann) => {
-        const { bg, emoji } = ANNOUNCEMENT_ICON_CONFIG[ann.iconType];
-        return (
-          <div key={ann.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+      <div className="space-y-0">
+        {data.map((ann, idx) => (
+          <div
+            key={ann.id}
+            className={`flex items-start gap-3 py-3 ${
+              idx < data.length - 1 ? "border-b border-gray-50" : ""
+            }`}
+          >
             <div
-              className={`w-9 h-9 flex items-center justify-center rounded-xl ${bg} flex-shrink-0 text-base`}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 mt-0.5 ${
+                ann.type === "info"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-red-100 text-red-700"
+              }`}
             >
-              {emoji}
+              {ann.type === "info" ? "📢" : "📅"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-800 leading-snug">
-                {ann.title}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Published {getTimeAgo(ann.publishedAt)}
-              </p>
+              <p className="text-[12px] font-medium text-gray-800 leading-snug">{ann.title}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{ann.timeAgo}</p>
             </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
 
-      {announcements.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-6">No announcements</p>
-      )}
-    </div>
-
-    {onViewAll && (
-      <Button
-        onClick={onViewAll}
-        variant="ghost"
-        className="mt-1 w-full text-center text-xs font-bold uppercase tracking-wider text-indigo-500 hover:text-indigo-700 transition-colors"
-      >
+      <button className="w-full mt-2 text-center text-xs text-blue-600 hover:text-blue-700 transition-colors">
         View All Announcements
-      </Button>
-    )}
-  </div>
-);
-
-export default LatestAnnouncements;
+      </button>
+    </div>
+  );
+};

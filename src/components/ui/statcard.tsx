@@ -1,6 +1,7 @@
 import { cn } from "@/utils/cn";
 
 type BadgeVariant = "green" | "red" | "blue" | "amber";
+type StatType = "attendance" | "fees" | "default";
 
 interface StatCardProps {
   label: React.ReactNode;
@@ -10,6 +11,7 @@ interface StatCardProps {
   icon?: React.ReactNode;
   className?: string;
   suffixLabel?: string;
+  type?: StatType;
 }
 
 const badgeStyles: Record<BadgeVariant, string> = {

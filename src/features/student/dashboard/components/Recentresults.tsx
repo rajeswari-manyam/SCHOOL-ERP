@@ -1,73 +1,39 @@
-import type { ExamResult } from "../types/Student dashboard.types";
-import { RESULT_STATUS_STYLES } from "../utils/Student dashboard.utils";
-import { Button } from "@/components/ui/button";
+import type { RecentResult } from "../types/dashboard.types";
 
-interface RecentResultsProps {
-  results: ExamResult[];
-  onViewDetailedReport?: (result: ExamResult) => void;
+interface Props {
+  data: RecentResult;
 }
 
-const RecentResults = ({ results, onViewDetailedReport }: RecentResultsProps) => {
-  const latest = results[0];
-
-  if (!latest) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Results</h2>
-        <p className="text-sm text-gray-400 text-center py-6">No results yet</p>
-      </div>
-    );
-  }
-
+export const RecentResults = ({ data }: Props) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-      <h2 className="text-lg font-bold text-gray-900">Recent Results</h2>
+    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-900">Recent Results</h3>
+      </div>
 
-      {/* Latest exam highlight */}
-      <div className="flex flex-col items-center gap-3 py-4">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-          {latest.examName} • {latest.month.toUpperCase()} {latest.year}
-        </span>
-
-        <div className="flex items-baseline gap-1">
-          <span className="text-5xl font-extrabold text-gray-900">
-            {latest.marksObtained}
-          </span>
-          <span className="text-xl text-gray-400 font-semibold">
-            /{latest.totalMarks}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span
-            className={`text-xs font-bold px-3 py-1 rounded-full ${
-              RESULT_STATUS_STYLES[latest.status]
-            }`}
-          >
-            {latest.status}
-          </span>
-          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            Rank {latest.rank}
+      <div className="bg-gray-50 rounded-lg p-4 text-center">
+        <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">
+          {data.testName} · {data.date}
+        </p>
+        <p className="text-3xl font-bold text-gray-900 leading-tight">
+          {data.score}
+          <span className="text-sm font-normal text-gray-400">/{data.total}</span>
+        </p>
+        <div className="flex items-center justify-center gap-2 mt-2">
+          {data.passed && (
+            <span className="text-[11px] font-medium bg-green-100 text-green-700 px-2.5 py-0.5 rounded">
+              Pass
+            </span>
+          )}
+          <span className="text-[11px] font-medium bg-purple-100 text-purple-700 px-2.5 py-0.5 rounded">
+            Rank {data.rank}
           </span>
         </div>
       </div>
 
-      {/* View report button */}
-      {latest.reportUrl && (
-        <Button
-          onClick={() => onViewDetailedReport?.(latest)}
-          variant="outline"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:border-indigo-200 hover:text-indigo-600 transition-all"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
-          View Detailed Report
-        </Button>
-      )}
+      <button className="w-full mt-3 flex items-center justify-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 transition-colors">
+        📄 View Detailed Report
+      </button>
     </div>
   );
 };
-
-export default RecentResults;

@@ -16,7 +16,7 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 );
 
 const TicketDetailDrawer = ({ ticket, onClose }: TicketDetailDrawerProps) => {
-  const { updateStatus, assignTicket, resolveTicket } = useTicketMutations();
+  const { updateStatus, resolveTicket } = useTicketMutations();
   if (!ticket) return null;
 
   return (

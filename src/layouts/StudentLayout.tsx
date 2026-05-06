@@ -10,61 +10,86 @@ const navItems = [
   { label: "Profile", to: "/student/profile" },
 ];
 
-const StudentLayout = memo(() => (
-  <div className="min-h-screen flex flex-col bg-[#F4F6FA]">
-    <header className="w-full bg-white border-b border-slate-200 shadow-sm">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6">
-          <span className="text-xl font-semibold text-indigo-600">SchoolERP</span>
-          <nav className="hidden items-center gap-6 md:flex">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  `text-sm font-medium transition ${
-                    isActive
-                      ? "text-slate-900 border-b-2 border-indigo-600 pb-2"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+const StudentLayout = memo(() => {
+  const student = {
+    name: "Ravi Kumar",
+    class: "10A",
+  };
 
-        <div className="flex items-center gap-4">
-          <button className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200">
-            <span className="h-2.5 w-2.5 rounded-full bg-red-500 absolute right-2 top-2 shadow" />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z" />
-              <path d="M9 18a2 2 0 104 0H9z" />
-            </svg>
-          </button>
-          <div className="flex items-center gap-3 rounded-full bg-slate-100 px-4 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
-              RK
+  const initials = student.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="min-h-screen bg-[#F4F6FA] flex flex-col">
+
+      {/* ── Top Navbar ── */}
+      <header className="bg-white border-b border-[#E8EBF2] shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+
+          {/* Left */}
+          <div className="flex items-center gap-6">
+            <span className="text-lg font-semibold text-indigo-600">
+              SchoolERP
+            </span>
+
+            {/* Nav Links */}
+            <nav className="hidden md:flex items-center gap-6">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `text-sm font-medium transition ${
+                      isActive
+                        ? "text-[#3525CD] border-b-2 border-[#3525CD] pb-1"
+                        : "text-[#6B7280] hover:text-[#0B1C30]"
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          {/* Right */}
+          <div className="flex items-center gap-3">
+
+            {/* Notification */}
+            <button className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-[#F4F6FA] hover:bg-[#E8EBF2]">
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+              🔔
+            </button>
+
+            {/* Profile */}
+            <div className="flex items-center gap-3 bg-[#F4F6FA] px-3 py-2 rounded-xl">
+              <div className="w-9 h-9 rounded-full bg-[#3525CD] text-white flex items-center justify-center text-sm font-semibold">
+                {initials}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#0B1C30]">
+                  {student.name}
+                </p>
+                <p className="text-xs text-[#9CA3AF]">
+                  Class {student.class}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900">Ravi Kumar</p>
-              <p className="text-xs text-slate-500">Logout</p>
-            </div>
+
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-      <Outlet />
-    </main>
-  </div>
-));
+      {/* ── Page Content ── */}
+      <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <Outlet />
+      </main>
+    </div>
+  );
+});
 
 export default StudentLayout;

@@ -15,7 +15,7 @@ import type { DayOfWeek, ExamEntry } from "./types/";
 import ClassTabs from "./components/Classtabs";
 import WeeklyTimetableGrid from "./components/Weeklytimetablegrid";
 import ExamTimetableTable from "./components/Examtimetabletable";
-import AddExamModal from "./components/AddExamModal";
+import AddExamModal from "./components/Addexammodal";
 import EditPeriodModal from "./components/Editperiodmodal";
 
 const TimetablePage: React.FC = () => {

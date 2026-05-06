@@ -4,10 +4,19 @@ export type SchoolStatus = "ACTIVE" | "TRIAL" | "SUSPENDED" | "EXPIRED";
 export interface School {
   id: string;
   name: string;
+  email:string;
   city: string;
+ 
+  phone: string;
+  address: string;
+  state: string;
   plan: Plan;
   status: SchoolStatus;
   students: number;
+  subscriptionExpiry: string; // ISO date string
+  teacherCount: number;
+  subscriptionPlan: Plan;
+  studentCount: number;
   subscriptionEnd: string; // ISO date string
   lastActive: string;      // relative string e.g. "2 hours ago"
   initials: string;

@@ -1,7 +1,8 @@
-import { BarChart2, LayoutGrid, Megaphone, MessageSquare, CreditCard, Shield, MessageSquareText, Building2,MenuSquare } from "lucide-react";
+import { BarChart2, CreditCard, Shield, MessageSquareText, Building2,MenuSquare } from "lucide-react";
 import type { ReportType } from "../types/reports.types";
+import type { ReactElement } from "react";
 
-export const ReportIcons: Record<ReportType, (props: { size?: number }) => JSX.Element> = {
+export const ReportIcons: Record<ReportType, (props: { size?: number }) => ReactElement> = {
   REVENUE: ({ size = 20 }) => <BarChart2 size={size} />,
   SCHOOLS: ({ size = 20 }) => <Building2 size={size} />,
   MARKETING: ({ size = 20 }) => <MenuSquare size={size} />,

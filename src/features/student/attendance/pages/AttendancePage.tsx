@@ -1,5 +1,5 @@
-import AttendanceCalendar from "../../dashboard/components/Attendancecalendar";
-import { useAttendance } from "../../dashboard/hooks/Usestudentdashboard";
+import AttendanceCalendar from "../../dashboard/components/AttendanceCalendar";
+import { useAttendance } from "../../dashboard/hooks/useDashboard";
 
 const AttendancePage = () => {
   const { data: attendance, isLoading, isError } = useAttendance();

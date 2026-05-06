@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Camera, Images, Send, CheckCircle } from "lucide-react";
+import { Camera, Images, Send, CheckCircle, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,15 +148,15 @@ export function RaiseComplaintCard({
             <Camera size={14} />
             Take Photo
           </Button>
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8EBF2] text-[12px] font-semibold text-[#0B1C30] hover:bg-[#F4F6FB]"
-          >
-            <UploadIcon />
-            Upload File
-          </Button>
+        <Button
+  onClick={() => fileInputRef.current?.click()}
+  variant="outline"
+  size="sm"
+  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8EBF2] text-[12px] font-semibold text-[#0B1C30] hover:bg-[#F4F6FB]"
+>
+  <Upload />
+  Upload File
+</Button>
           <Button
             onClick={() => fileInputRef.current?.click()}
             variant="outline"

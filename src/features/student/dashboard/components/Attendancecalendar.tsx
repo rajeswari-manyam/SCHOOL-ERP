@@ -1,92 +1,83 @@
-import type { AttendanceMonth } from "../types/Student dashboard.types";
-import {
-  ATTENDANCE_COLORS,
-  WEEK_DAYS,
-  getMonthStartOffset,
-} from "../utils/Student dashboard.utils";
+import type { AttendanceDay } from "../types/dashboard.types";
 
-interface AttendanceCalendarProps {
-  attendance: AttendanceMonth;
+interface Props {
+  data: AttendanceDay[];
+  today?: number;
+  monthLabel?: string;
 }
 
-const AttendanceCalendar = ({ attendance }: AttendanceCalendarProps) => {
-  const { month, year, days, percentage, changeFromLastMonth } = attendance;
-  const offset = getMonthStartOffset(year, new Date(`${month} 1, ${year}`).getMonth() + 1);
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Build grid cells: leading blanks + actual days
-  const cells: Array<{ day: number | null; status?: typeof days[number]["status"]; isToday?: boolean }> = [
-    ...Array(offset).fill({ day: null }),
-    ...days.map((d) => ({ day: d.date, status: d.status, isToday: d.isToday })),
-  ];
-
+export const AttendanceCalendar = ({ data, today = 24, monthLabel = "My Attendance – April" }: Props) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-900">
-          My Attendance – {month}
-        </h2>
-        <span className="text-sm font-semibold text-indigo-500">
-          {percentage}%
-          <span className="ml-1 text-xs text-green-500 font-medium">
-            ({changeFromLastMonth >= 0 ? "+" : ""}
-            {changeFromLastMonth}%)
-          </span>
-        </span>
+    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-gray-900">{monthLabel}</h3>
       </div>
 
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1">
-        {WEEK_DAYS.map((d) => (
-          <div
-            key={d}
-            className="text-center text-xs font-semibold text-gray-400 pb-1"
-          >
+      {/* Day name headers */}
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {DAY_NAMES.map((d) => (
+          <div key={d} className="text-center text-[10px] text-gray-400 font-medium py-0.5">
             {d}
           </div>
         ))}
+      </div>
 
-        {/* Day cells */}
-        {cells.map((cell, i) => {
-          if (!cell.day) {
-            return <div key={`blank-${i}`} />;
+      {/* Day cells */}
+      <div className="grid grid-cols-7 gap-1">
+        {data.map((entry, idx) => {
+          const isToday = entry.day === today;
+
+          if (entry.status === "empty") {
+            return (
+              <div key={idx} className="aspect-square flex items-center justify-center" />
+            );
           }
 
-          const colorClass = cell.status
-            ? ATTENDANCE_COLORS[cell.status]
-            : "text-gray-300";
+          const baseClasses = "aspect-square rounded-full flex items-center justify-center text-[11px] font-medium transition-all";
+          const todayRing = isToday ? "ring-2 ring-blue-500 ring-offset-1" : "";
 
+          if (entry.status === "present") {
+            return (
+              <div key={idx} className={`${baseClasses} bg-blue-500 text-white ${todayRing}`}>
+                {entry.day}
+              </div>
+            );
+          }
+
+          if (entry.status === "absent") {
+            return (
+              <div key={idx} className={`${baseClasses} bg-red-500 text-white ${todayRing}`}>
+                {entry.day}
+              </div>
+            );
+          }
+
+          // holiday
           return (
-            <div
-              key={cell.day}
-              className={`
-                w-8 h-8 mx-auto flex items-center justify-center rounded-full text-xs font-semibold
-                ${colorClass}
-                ${cell.isToday ? "ring-2 ring-indigo-400 ring-offset-1" : ""}
-              `}
-            >
-              {cell.day}
+            <div key={idx} className={`${baseClasses} border border-gray-200 text-gray-400 ${todayRing}`}>
+              {entry.day}
             </div>
           );
         })}
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-indigo-700 inline-block" />
-          Present
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-red-500 inline-block" />
-          Absent
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-gray-200 inline-block" />
-          Holiday
-        </span>
+      <div className="flex items-center gap-4 mt-3">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+          <span className="text-[11px] text-gray-400">Present</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+          <span className="text-[11px] text-gray-400">Absent</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full border border-gray-300" />
+          <span className="text-[11px] text-gray-400">Holiday</span>
+        </div>
       </div>
     </div>
   );
 };
-
-export default AttendanceCalendar;
