@@ -1,8 +1,13 @@
 import React, { useState } from "react";
-import type { UserAccount, AddUserFormData, UserRole, ModulePermission } from "../types/settings.types";
+import type { UserAccount, AddUserFormData, UserRole } from "../types/settings.types";
 import {
   PERMISSION_LABELS, DEFAULT_ROLE_PERMISSIONS, ROLE_OPTIONS, ALL_PERMISSIONS,
 } from "../utils/Settings.utils";
+import { Button } from "@/components/ui/button";
+import { Form, FormField } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const AVATAR_COLORS = [
   "bg-indigo-500", "bg-purple-500", "bg-emerald-500", "bg-sky-500",
@@ -44,15 +49,6 @@ const AddUserModal: React.FC<{ onClose: () => void; onAdd: (data: AddUserFormDat
     }));
   };
 
-  const togglePermission = (perm: ModulePermission) => {
-    setForm(prev => ({
-      ...prev,
-      permissions: prev.permissions.includes(perm)
-        ? prev.permissions.filter(p => p !== perm)
-        : [...prev.permissions, perm],
-    }));
-  };
-
   const leftPerms = ALL_PERMISSIONS.slice(0, Math.ceil(ALL_PERMISSIONS.length / 2));
   const rightPerms = ALL_PERMISSIONS.slice(Math.ceil(ALL_PERMISSIONS.length / 2));
 
@@ -65,91 +61,96 @@ const AddUserModal: React.FC<{ onClose: () => void; onAdd: (data: AddUserFormDat
         </div>
         <p className="text-sm text-gray-600 mb-6 font-medium">Grant a staff member login access to this school's portal</p>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-blue-600 mb-2 uppercase tracking-widest">Full Name <span className="text-red-500">*</span></label>
-            <input
+        <Form
+          onSubmit={e => {
+            e.preventDefault();
+            onAdd(form);
+          }}
+          className="space-y-5"
+        >
+          <FormField label="Full Name" description="Required for staff profile creation">
+            <Input
               value={form.fullName}
               onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))}
               placeholder="Kiran Kumar"
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-bold text-blue-600 mb-2 uppercase tracking-widest">Mobile Number <span className="text-red-500">*</span></label>
-            <div className="flex">
-              <span className="px-4 py-3 border-2 border-r-0 border-blue-200 rounded-l-lg text-sm text-gray-600 bg-blue-50 font-medium">+91</span>
-              <input
+          <FormField label="Mobile Number" description="This number is used for OTP login.">
+            <div className="flex items-center gap-0">
+              <span className="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-gray-300 bg-slate-100 text-sm text-slate-600">
+                +91
+              </span>
+              <Input
                 value={form.mobileNumber}
                 onChange={e => setForm(p => ({ ...p, mobileNumber: e.target.value }))}
                 placeholder="98765 43210"
-                className="flex-1 border-2 border-blue-200 rounded-r-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="rounded-l-none"
               />
             </div>
-            <p className="text-xs text-gray-600 mt-2 font-medium">This number is used for OTP login. Must be a registered staff member's number.</p>
-          </div>
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-bold text-blue-600 mb-2 uppercase tracking-widest">Role <span className="text-red-500">*</span></label>
-            <select
+          <FormField label="Role">
+            <Select
               value={form.role}
-              onChange={e => handleRoleChange(e.target.value as UserRole)}
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            >
-              <option value="">Select a role</option>
-              {ROLE_OPTIONS.map(r => <option key={r}>{r}</option>)}
-            </select>
-          </div>
+              onValueChange={value => handleRoleChange(value as UserRole)}
+              options={ROLE_OPTIONS.map(role => ({ label: role, value: role }))}
+              placeholder="Select a role"
+            />
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-bold text-blue-600 mb-2 uppercase tracking-widest">Email</label>
-            <input
+          <FormField label="Email" description="Optional, used for report delivery">
+            <Input
+              type="email"
               value={form.email}
               onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-              placeholder="optional, for report delivery"
-              className="w-full border-2 border-blue-200 bg-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              placeholder="staff@example.com"
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label className="block text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">Module Permissions</label>
-            <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-              {[leftPerms, rightPerms].map((col, ci) => (
-                <div key={ci} className="space-y-2">
-                  {col.map(perm => (
-                    <label key={perm} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
+          <FormField label="Module Permissions" description="Preset permissions load automatically when a role is selected.">
+            <div className="grid grid-cols-2 gap-3">
+              {[leftPerms, rightPerms].map((column, columnIndex) => (
+                <div key={columnIndex} className="space-y-2">
+                  {column.map(perm => (
+                    <label key={perm} className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
                         checked={form.permissions.includes(perm)}
-                        onChange={() => togglePermission(perm)}
-                        className="w-5 h-5 text-blue-600 rounded accent-blue-600"
+                        onCheckedChange={checked => {
+                          if (checked) {
+                            setForm(prev => ({
+                              ...prev,
+                              permissions: [...prev.permissions, perm],
+                            }));
+                          } else {
+                            setForm(prev => ({
+                              ...prev,
+                              permissions: prev.permissions.filter(p => p !== perm),
+                            }));
+                          }
+                        }}
                       />
-                      <span className="text-sm font-medium text-gray-700">{PERMISSION_LABELS[perm]}</span>
+                      <span className="text-sm font-medium text-slate-700">{PERMISSION_LABELS[perm]}</span>
                     </label>
                   ))}
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-600 mt-2 italic font-medium">Preset permissions for selected role load automatically when role is chosen</p>
-          </div>
-        </div>
+          </FormField>
 
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-3 border-2 border-blue-300 bg-white rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onAdd(form)}
-            disabled={!form.fullName || !form.mobileNumber || !form.role}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg text-sm font-bold hover:shadow-lg hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Add User
-          </button>
-        </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={!form.fullName || !form.mobileNumber || !form.role}
+            >
+              Add User
+            </Button>
+          </div>
+        </Form>
       </div>
     </div>
   );

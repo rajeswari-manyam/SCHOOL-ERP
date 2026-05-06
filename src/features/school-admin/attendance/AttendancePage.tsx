@@ -4,6 +4,9 @@ import AttendanceHistory from "./components/AttendanceHistory";
 import HolidayCalendar from "./components/HolidayCalendar";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import AddHolidayModal from "./components/AddHolidayModal";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Badge } from "../../../components/ui/badge";
 import type { AttendanceTab } from "./types/attendance.types";
 
 const TABS: { key: AttendanceTab; label: string }[] = [
@@ -24,34 +27,37 @@ const AttendancePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Page Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
-            <div className="flex items-center gap-2 mt-1">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Attendance</h1>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 sm:mt-1">
               <span className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-700">
                 📅 {todayLabel}
               </span>
               {activeTab !== "today" && (
-                <input
+                <Input
                   type="date"
                   placeholder="mm/dd/yyyy"
-                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                  className="w-full max-w-[170px] border-gray-200 bg-white text-xs text-gray-500"
                 />
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-              ↓ Export CSV
-            </button>
-            <button
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg"
+            >
+              ↓ <span className="hidden sm:inline">Export CSV</span><span className="sm:hidden">Export</span>
+            </Button>
+            <Button
               onClick={openMarkAttendance}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
             >
               ✓ Mark Attendance
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -69,9 +75,9 @@ const AttendancePage = () => {
             >
               {tab.label}
               {tab.key === "today" && (
-                <span className="ml-2 w-4 h-4 bg-indigo-600 text-white text-[10px] font-bold rounded-full inline-flex items-center justify-center">
+                <Badge variant="blue" className="ml-2 px-2 py-0.5 text-[10px] font-bold">
                   3
-                </span>
+                </Badge>
               )}
             </button>
           ))}

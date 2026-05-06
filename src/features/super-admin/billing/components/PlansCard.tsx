@@ -1,5 +1,7 @@
 
 
+import { Edit3 } from "lucide-react";
+
 export type Plan = {
   name: string;
   annualPrice: string;
@@ -32,7 +34,7 @@ export function PlansCard({ plan, onFeatureToggle, onFieldChange }: PlansCardPro
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
         <button className="ml-2 text-gray-400 hover:text-indigo-600" aria-label="Edit plan">
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1-3 3l-9 9a2.121 2.121 0 0 0 0 3l.5.5a2.121 2.121 0 0 0 3 0l9-9a2.121 2.121 0 0 1 3-3Z"/></svg>
+          <Edit3 className="h-4 w-4" />
         </button>
       </div>
       <div className="space-y-2 mb-4">

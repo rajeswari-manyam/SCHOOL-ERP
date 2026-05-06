@@ -1,130 +1,101 @@
-import { useRealtimeDashboard } from "./hooks/useRealtimeDashboard";
-import { joinClassNames } from "./utils/formatters.ts";
-import { Button } from "@/components/ui/button";
+import { motion } from 'framer-motion';
+import { Download, Radio } from 'lucide-react';
+import { toast } from 'sonner';
+import { useDashboard, useSendReminders } from './hooks/index';
+import { AlertBanner } from './components/AlertBanner';
+import { StatsGrid } from './components/StatsGrid';
+import { AttendanceTable } from './components/AttendanceTable';
+import { FeesDueSummary } from './components/FeesDueSummary';
+import { WhatsAppActivityFeed } from './components/WhatsAppActivity';
+import { AdmissionsPipeline } from './components/AdmissionsPipeline';
+import { DashboardSkeleton } from './components/DashboardSkeleton';
+import type { AttendanceClass } from './types/index';
+import {Button} from '../../../components/ui/button';
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
-import {
-  AbsentCountCard,
-  ClassesMarkedCard,
-  FeeCollectionCard,
-  AdmissionsThisWeekCard,
-} from "./components/AbsentCountCard.tsx";
-import { AttendanceSummaryCard } from "./components/AttendanceSummaryCard.tsx";
-import { FeeDuesCard } from "./components/FeeDuesCard.tsx";
-import { WeeklySummaryStrip } from "./components/WeeklySummaryStrip.tsx";
-import { AlertsFeed } from "./components/AlertsFeed.tsx";
+function formatDate(): string {
+  return new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
 
-export default function DashboardPage() {
-  const {
-    data,
-    isLoading,
-    error,
-    alertVisible,
-    dismissAlert,
-    triggerAttendanceReminder,
-  } = useRealtimeDashboard();
+export function DashboardPage() {
+  const { data, isLoading, isError } = useDashboard();
+  const { mutate: sendReminders, isPending: isSending } = useSendReminders();
 
-  // ── Loading / error states ──────────────────────────────────────────────────
-  if (isLoading) {
+  if (isLoading) return <DashboardSkeleton />;
+
+  if (isError || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
-        Loading dashboard…
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <p className="text-red-400 font-semibold">Failed to load dashboard data.</p>
+        <button onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm font-semibold hover:bg-brand-500/20 transition-colors">
+          Retry
+        </button>
       </div>
     );
   }
 
-  if (error || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500 text-sm">
-        {error ?? "Something went wrong."}
-      </div>
-    );
-  }
+  const unmarkedClasses = data.attendanceClasses
+    .filter((c: AttendanceClass) => c.status === 'not_marked')
+    .map((c: AttendanceClass) => c.className);
 
-  const { attendance, fees, admissions, whatsappActivity, alertBannerClasses } = data;
+  const handleSendReminders = () => {
+    sendReminders(unmarkedClasses, {
+      onSuccess: () => toast.success('WhatsApp reminders sent!', { description: `Sent to teachers of ${unmarkedClasses.join(', ')}` }),
+      onError: ()  => toast.error('Failed to send reminders'),
+    });
+  };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-800 p-4">
-
-      {/* ── Alert Banner ────────────────────────────────────────────────────── */}
-      {alertVisible && alertBannerClasses.length > 0 && (
-        <div className="flex items-center justify-between bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-5">
-          <div className="flex items-center gap-2 text-amber-700 font-medium text-sm">
-            <span className="text-amber-500 text-lg">⚠</span>
-            {alertBannerClasses.length} classes haven't marked attendance yet:{" "}
-            {joinClassNames(alertBannerClasses)}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={triggerAttendanceReminder}
-              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold"
-            >
-              Send WhatsApp Reminders
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={dismissAlert}
-              className="text-gray-400 hover:text-gray-600 text-lg font-bold"
-            >
-              ×
-            </Button>
-          </div>
-        </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-4 sm:space-y-5 pb-8">
+      {unmarkedClasses.length > 0 && (
+        <AlertBanner classes={unmarkedClasses} onSendReminder={handleSendReminders} sending={isSending} />
       )}
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Good morning, {data.principalName} sir
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
+            {getGreeting()},{' '}
+            <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">Ramesh sir</span>
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Here's what's happening at{" "}
-            <span className="text-blue-600 font-medium">{data.schoolName}</span>{" "}
-            today — {data.todayDate}
+          <p className="text-subtle text-xs sm:text-sm mt-1 sm:mt-0.5 line-clamp-2">
+            Here's what's happening at{' '}
+            <span className="text-brand-400 font-medium">Hanamkonda Public School</span>
+            {' '}today — {formatDate()}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex items-center gap-2">
-            <span>⬇</span> Download Report
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 w-full sm:w-auto">
+          <Button className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm disabled:opacity-60">
+            <Download size={14} className="sm:w-4 sm:h-4 w-3 h-3" /> <span className="hidden sm:inline">Download Report</span><span className="sm:hidden">Download</span>
           </Button>
-          <Button className="flex items-center gap-2">
-            <span>📣</span> Send Broadcast
+          <Button className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+            <Radio size={14} className="sm:w-4 sm:h-4 w-3 h-3" /> <span className="hidden sm:inline">Send Broadcast</span><span className="sm:hidden">Broadcast</span>
           </Button>
         </div>
       </div>
 
-      {/* ── Top Stat Cards ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <AbsentCountCard attendance={attendance} />
-        <ClassesMarkedCard
-          attendance={attendance}
-          onSendReminder={triggerAttendanceReminder}
-        />
-        <FeeCollectionCard fees={fees} />
-        <AdmissionsThisWeekCard admissions={admissions} />
+      <StatsGrid stats={data.stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="lg:col-span-3">
+          <AttendanceTable classes={data.attendanceClasses} onSendReminder={handleSendReminders} />
+        </div>
+        <div className="lg:col-span-2">
+          <FeesDueSummary totalOutstanding={data.feeTotalOutstanding} paidPercent={data.feePaidPercent} defaulters={data.feeDefaulters} />
+        </div>
       </div>
 
-      {/* ── Middle Row ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <AttendanceSummaryCard
-          attendance={attendance}
-          onSendReminder={triggerAttendanceReminder}
-        />
-        <FeeDuesCard fees={fees} onViewDefaulters={() => {}} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <WhatsAppActivityFeed activities={data.whatsappActivity} />
+        <AdmissionsPipeline pipeline={data.admissionPipeline} />
       </div>
-
-      {/* ── Bottom Row ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4">
-        <AlertsFeed activities={whatsappActivity} />
-        <WeeklySummaryStrip admissions={admissions} />
-      </div>
-
-      {/* ── Floating Chat Bubble ─────────────────────────────────────────────── */}
-      <Button className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white text-xl shadow-lg flex items-center justify-center transition p-0">
-        💬
-      </Button>
-    </div>
+    </motion.div>
   );
 }

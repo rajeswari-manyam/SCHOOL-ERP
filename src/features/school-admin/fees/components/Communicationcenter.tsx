@@ -1,3 +1,4 @@
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CommunicationCenterProps {
@@ -30,7 +31,7 @@ export function CommunicationCenter({
             onClick={onSendReminderToDueToday}
             className="w-full flex items-center justify-center gap-2 border-orange-300 text-orange-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-orange-50 transition-colors"
           >
-            🔔 Send Reminder to Due Today
+            <Bell className="w-4 h-4" /> Send Reminder to Due Today
           </Button>
         </div>
       </div>

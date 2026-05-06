@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -19,9 +20,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         disabled={currentPage === 1}
         className="w-8 h-8 rounded-lg p-0"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
+        <ChevronLeft className="h-4 w-4" />
       </Button>
 
       {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -45,9 +44,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
         disabled={currentPage === totalPages}
         className="w-8 h-8 rounded-lg p-0"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
+        <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   );

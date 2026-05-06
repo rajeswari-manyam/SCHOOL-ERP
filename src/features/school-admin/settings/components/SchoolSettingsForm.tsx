@@ -5,6 +5,9 @@ import type {
   UpdateSchoolSettingsInput,
 } from "../types/settings.types";
 import { z } from "zod";
+import { Form, FormField } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const settingsSchema = z.object({
   name: z.string().min(1),
@@ -36,52 +39,36 @@ export const SchoolSettingsForm = ({
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label>School Name</label>
-        <input {...register("name")} className="input" />
-        {errors.name && (
-          <span className="text-red-600">{errors.name.message}</span>
-        )}
+    <Form onSubmit={handleSubmit(onSubmit)}>
+      <FormField label="School Name" error={errors.name?.message as string | undefined}>
+        <Input {...register("name")} placeholder="Enter school name" />
+      </FormField>
+
+      <FormField label="Address" error={errors.address?.message as string | undefined}>
+        <Input {...register("address")} placeholder="Enter school address" />
+      </FormField>
+
+      <FormField label="Phone" error={errors.phone?.message as string | undefined}>
+        <Input {...register("phone")} placeholder="Enter phone number" />
+      </FormField>
+
+      <FormField label="Email" error={errors.email?.message as string | undefined}>
+        <Input {...register("email")} placeholder="Enter contact email" />
+      </FormField>
+
+      <FormField label="Academic Year" error={errors.academicYear?.message as string | undefined}>
+        <Input {...register("academicYear")} placeholder="Enter academic year" />
+      </FormField>
+
+      <FormField label="Logo URL" error={errors.logoUrl?.message as string | undefined}>
+        <Input {...register("logoUrl")} placeholder="Enter logo URL (optional)" />
+      </FormField>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={loading}>
+          Save
+        </Button>
       </div>
-      <div>
-        <label>Address</label>
-        <input {...register("address")} className="input" />
-        {errors.address && (
-          <span className="text-red-600">{errors.address.message}</span>
-        )}
-      </div>
-      <div>
-        <label>Phone</label>
-        <input {...register("phone")} className="input" />
-        {errors.phone && (
-          <span className="text-red-600">{errors.phone.message}</span>
-        )}
-      </div>
-      <div>
-        <label>Email</label>
-        <input {...register("email")} className="input" />
-        {errors.email && (
-          <span className="text-red-600">{errors.email.message}</span>
-        )}
-      </div>
-      <div>
-        <label>Academic Year</label>
-        <input {...register("academicYear")} className="input" />
-        {errors.academicYear && (
-          <span className="text-red-600">{errors.academicYear.message}</span>
-        )}
-      </div>
-      <div>
-        <label>Logo URL</label>
-        <input {...register("logoUrl")} className="input" />
-        {errors.logoUrl && (
-          <span className="text-red-600">{errors.logoUrl.message}</span>
-        )}
-      </div>
-      <button type="submit" className="btn btn-primary" disabled={loading}>
-        Save
-      </button>
-    </form>
+    </Form>
   );
 };

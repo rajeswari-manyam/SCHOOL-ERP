@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 // import DashboardPage from "./dashboard/DashboardPage";
 import SchoolAdminLayout from "../../layouts/SchoolAdminLayout";
-import DashboardPage from "../school-admin/dashboard/DashboardPage";
+import{ DashboardPage }from "../school-admin/dashboard/DashboardPage";
 import AttendancePage from "../school-admin/attendance/AttendancePage";
 import StaffManagementPage from "../school-admin/staff/pages/StaffPage";
 import StudentsPage from "../school-admin/students/StudentsPage";
-import AdmissionsPage from "../school-admin/admissions/AdmissionsPage";
+import {AdmissionsPage} from "../school-admin/admissions/AdmissionsPage";
 import { FeesPage as FeeCollectionPage } from "../school-admin/fees";
 import { ReportsPage } from "../school-admin/reports";
 import { SettingsPage } from "./settings";

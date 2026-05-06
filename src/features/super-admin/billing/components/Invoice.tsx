@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow } from "@/components/ui/table";
-import {Pagination }from "./Pagination";
+import { Pagination } from "./Pagination";
+import { Download, Info, ArrowDownCircle } from "lucide-react";
 
 const invoices = [
   { id: "INV-0055", school: "Hanamkonda Public", sub: "District Sec.", description: "Growth Annual", date: "15 Mar 2025", amount: 15000, status: "Paid", action: "Download" },
@@ -52,7 +53,7 @@ export default function InvoiceTable() {
         </select>
         <Input type="text" className="w-56" placeholder="01 Jan 2025 — 07 Apr 2025" readOnly />
         <Button className="ml-auto flex items-center gap-2 shadow" variant="ghost">
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <Download className="h-4 w-4" />
           Export All
         </Button>
       </div>
@@ -90,13 +91,13 @@ export default function InvoiceTable() {
                   )}
                   {inv.action === "Send Reminder" && (
                     <Button variant="outline" size="sm" className="flex items-center gap-1 text-yellow-700 border-yellow-300">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01"/><circle cx="12" cy="12" r="10"/></svg>
+                      <Info className="h-4 w-4" />
                       Send Reminder
                     </Button>
                   )}
                   {inv.action === "Collect" && (
                     <Button variant="destructive" size="sm" className="flex items-center gap-1">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+                      <ArrowDownCircle className="h-4 w-4" />
                       Collect
                     </Button>
                   )}

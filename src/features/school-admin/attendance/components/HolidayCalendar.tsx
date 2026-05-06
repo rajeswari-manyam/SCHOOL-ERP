@@ -1,4 +1,7 @@
 import { useAttendanceStore } from "../store";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
+import { Badge } from "../../../../components/ui/badge";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -42,36 +45,25 @@ const HolidayCalendar = () => {
   return (
     <div className="space-y-6">
       {/* Calendar Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        {/* Month nav */}
-        <div className="flex items-center justify-between mb-5">
+      <Card>
+        <CardHeader className="flex items-center justify-between gap-3 p-5">
           <div className="flex items-center gap-3">
-            <button
-              onClick={goToPrevMonth}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
-            >
+            <Button onClick={goToPrevMonth} variant="outline" size="sm" className="w-8 h-8 p-0">
               ‹
-            </button>
-            <h2 className="text-base font-bold text-gray-900">
-              {MONTHS[calendarMonth]} {calendarYear}
-            </h2>
-            <button
-              onClick={goToNextMonth}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
-            >
+            </Button>
+            <CardTitle className="text-base">{MONTHS[calendarMonth]} {calendarYear}</CardTitle>
+            <Button onClick={goToNextMonth} variant="outline" size="sm" className="w-8 h-8 p-0">
               ›
-            </button>
+            </Button>
           </div>
-          <button
-            onClick={openAddHoliday}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-          >
+          <Button onClick={openAddHoliday} size="sm" className="px-4">
             + Add Holiday
-          </button>
-        </div>
+          </Button>
+        </CardHeader>
 
-        {/* Day headers */}
-        <div className="grid grid-cols-7 mb-2">
+        <CardContent className="p-5">
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-2">
           {DAYS_OF_WEEK.map((d) => (
             <div key={d} className="text-center text-xs font-semibold text-gray-400 py-2">
               {d}
@@ -127,35 +119,35 @@ const HolidayCalendar = () => {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100">
-          {Object.entries(holidayTypeColors).map(([key, val]) => (
-            <div key={key} className="flex items-center gap-1.5">
-              <div className={`w-2.5 h-2.5 rounded-full ${val.dot}`} />
-              <span className="text-xs text-gray-500 font-medium">{val.label}</span>
+          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100">
+            {Object.entries(holidayTypeColors).map(([key, val]) => (
+              <div key={key} className="flex items-center gap-1.5">
+                <div className={`w-2.5 h-2.5 rounded-full ${val.dot}`} />
+                <span className="text-xs text-gray-500 font-medium">{val.label}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+              <span className="text-xs text-gray-500 font-medium">SUNDAY/WEEKEND</span>
             </div>
-          ))}
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-            <span className="text-xs text-gray-500 font-medium">SUNDAY/WEEKEND</span>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Holidays This Academic Year */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="flex items-center justify-between mb-4">
+      <Card>
+        <CardHeader className="flex items-center justify-between mb-0 p-5">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Holidays This Academic Year</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {calendarData.totalHolidaysThisYear} holidays scheduled for{" "}
-              {calendarData.academicYear}
-            </p>
+            <CardTitle>Holidays This Academic Year</CardTitle>
+            <CardDescription className="mt-0.5">
+              {calendarData.totalHolidaysThisYear} holidays scheduled for {calendarData.academicYear}
+            </CardDescription>
           </div>
-          <button className="text-xs font-semibold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors uppercase tracking-wide">
+          <Button variant="outline" size="sm" className="uppercase tracking-wide">
             Academic Year Plan
-          </button>
-        </div>
-        <div className="space-y-2">
+          </Button>
+        </CardHeader>
+        <CardContent className="p-5 space-y-2">
           {calendarData.holidays.map((h) => {
             const style = holidayTypeColors[h.type];
             const dateObj = new Date(h.date);
@@ -164,9 +156,9 @@ const HolidayCalendar = () => {
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${style.dot}`} />
                   <span className="text-sm text-gray-800 font-medium">{h.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${style.bg} ${style.text}`}>
+                  <Badge className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${style.bg} ${style.text}`}>
                     {style.label}
-                  </span>
+                  </Badge>
                 </div>
                 <span className="text-xs text-gray-500">
                   {dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
@@ -174,8 +166,8 @@ const HolidayCalendar = () => {
               </div>
             );
           })}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

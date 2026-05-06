@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Filter } from "lucide-react";
 
 interface StudentFilterBarProps {
   search: string;
@@ -21,56 +22,85 @@ const CLASSES = [
   { value: "9", label: "9" },
   { value: "10", label: "10" },
 ];
+
 const SECTIONS = [
   { value: "All", label: "All Sections" },
   { value: "A", label: "A" },
   { value: "B", label: "B" },
   { value: "C", label: "C" },
 ];
+
 const STATUSES = [
   { value: "All", label: "All Status" },
   { value: "Active", label: "Active" },
   { value: "Transferred", label: "Transferred" },
 ];
 
-const StudentFilterBar = ({ search, setSearch, classFilter, setClassFilter, sectionFilter, setSectionFilter, statusFilter, setStatusFilter }: StudentFilterBarProps) => (
-  <div className="flex flex-wrap gap-3 items-center">
-    <div className="flex-1 min-w-[200px]">
-      <Input
-        placeholder="Search by name or admission no."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-      />
+const StudentFilterBar = ({
+  search,
+  setSearch,
+  classFilter,
+  setClassFilter,
+  sectionFilter,
+  setSectionFilter,
+  statusFilter,
+  setStatusFilter,
+}: StudentFilterBarProps) => (
+  <div className="w-full overflow-x-auto">
+    <div className="flex items-center gap-3 min-w-max">
+
+      {/* Search */}
+      <div className="w-[260px] flex-shrink-0">
+        <Input
+          placeholder="Search by name or admission no."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Class */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="text-xs text-gray-400 font-medium">Class</span>
+        <div className="w-[110px]">
+          <Select
+            value={classFilter}
+            onValueChange={setClassFilter}
+            options={CLASSES}
+          />
+        </div>
+      </div>
+
+      {/* Section */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="text-xs text-gray-400 font-medium">Section</span>
+        <div className="w-[110px]">
+          <Select
+            value={sectionFilter}
+            onValueChange={setSectionFilter}
+            options={SECTIONS}
+          />
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className="w-[140px] flex-shrink-0">
+        <Select
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+          options={STATUSES}
+        />
+      </div>
+
+      {/* Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-xs text-indigo-600 font-semibold flex items-center gap-1 whitespace-nowrap flex-shrink-0"
+      >
+        <Filter className="h-3 w-3" />
+        Advanced Filters
+      </Button>
     </div>
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-400 font-medium">Class</span>
-      <Select 
-        value={classFilter} 
-        onValueChange={setClassFilter} 
-        options={CLASSES}
-      />
-    </div>
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-400 font-medium">Section</span>
-      <Select 
-        value={sectionFilter} 
-        onValueChange={setSectionFilter} 
-        options={SECTIONS}
-      />
-    </div>
-    <Select 
-      value={statusFilter} 
-      onValueChange={setStatusFilter} 
-      options={STATUSES}
-    />
-    <Button 
-      variant="outline" 
-      size="sm"
-      className="text-xs text-indigo-600 font-semibold flex items-center gap-1"
-    >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-      Advanced Filters
-    </Button>
   </div>
 );
 

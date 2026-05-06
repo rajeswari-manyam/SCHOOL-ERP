@@ -16,7 +16,7 @@ const Card = ({ label, value, sub, accent }: { label: string; value: string | nu
 );
 
 const StudentStatCards = ({ stats }: { stats: StudentStats }) => (
-  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
     <Card label="Total Active" value={stats.totalActive} sub="+4%" accent="text-emerald-600" />
     <Card label="Transferred Out" value={stats.transferredOut} sub="this year" accent="text-gray-400" />
     <Card label="New This Month" value={stats.newThisMonth} sub="+2" accent="text-indigo-500" />

@@ -36,31 +36,40 @@ export function PendingFeesFilterBar({
   return (
     <div className="space-y-3 mb-4">
       {/* Search + dropdowns */}
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-48">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-          <Input
-            placeholder="Search student/adm no."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9"
-          />
-        </div>
-        <Select
-          value={classFilter}
-          onChange={(e) => onClassChange(e.target.value)}
-          className="text-sm"
-        >
-          {CLASSES.map((c) => <option key={c}>{c}</option>)}
-        </Select>
-        <Select
-          value={sectionFilter}
-          onChange={(e) => onSectionChange(e.target.value)}
-          className="text-sm"
-        >
-          {SECTIONS.map((s) => <option key={s}>{s}</option>)}
-        </Select>
-      </div>
+      <div className="flex items-center gap-3 w-full">
+  
+  {/* Search */}
+  <div className="relative flex-1 min-w-0">
+    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+      🔍
+    </span>
+    <Input
+      placeholder="Search student/adm no."
+      value={searchQuery}
+      onChange={(e) => onSearchChange(e.target.value)}
+      className="pl-10 h-11 rounded-xl bg-white shadow-sm border-none w-full"
+    />
+  </div>
+
+  {/* Class */}
+  <Select
+    value={classFilter}
+    onChange={(e) => onClassChange(e.target.value)}
+    className="w-[180px] h-11 rounded-xl bg-white shadow-sm border-none"
+  >
+    {CLASSES.map((c) => <option key={c}>{c}</option>)}
+  </Select>
+
+  {/* Section */}
+  <Select
+    value={sectionFilter}
+    onChange={(e) => onSectionChange(e.target.value)}
+    className="w-[180px] h-11 rounded-xl bg-white shadow-sm border-none"
+  >
+    {SECTIONS.map((s) => <option key={s}>{s}</option>)}
+  </Select>
+
+</div>
 
       {/* Status tabs */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -83,25 +92,33 @@ export function PendingFeesFilterBar({
       </div>
 
       {/* Fee head + sort */}
-      <div className="flex gap-2 flex-wrap">
-        <Select
-          value={feeHeadFilter}
-          onChange={(e) => onFeeHeadChange(e.target.value)}
-          className="text-sm"
-        >
-          {FEE_HEADS.map((f) => <option key={f}>{f}</option>)}
-        </Select>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">SORT:</span>
-          <Select
-            value={sortOption}
-            onChange={(e) => onSortChange(e.target.value as SortOption)}
-            className="text-sm"
-          >
-            {SORT_OPTIONS.map((o) => <option key={o}>{o}</option>)}
-          </Select>
-        </div>
-      </div>
+     <div className="flex items-center gap-3 w-full">
+  
+  {/* Fee Heads */}
+  <Select
+    value={feeHeadFilter}
+    onChange={(e) => onFeeHeadChange(e.target.value)}
+    className="w-[220px] h-11 rounded-xl bg-white shadow-sm border-none text-sm"
+  >
+    {FEE_HEADS.map((f) => <option key={f}>{f}</option>)}
+  </Select>
+
+  {/* Sort Section */}
+  <div className="flex items-center gap-2">
+    <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
+      SORT:
+    </span>
+
+    <Select
+      value={sortOption}
+      onChange={(e) => onSortChange(e.target.value as SortOption)}
+      className="w-[180px] h-11 rounded-xl bg-white shadow-sm border-none text-sm"
+    >
+      {SORT_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+    </Select>
+  </div>
+
+</div>
     </div>
   );
 }
