@@ -21,7 +21,7 @@ const DEFAULT_FILTERS: SchoolFilters = {
 const CITIES = ["Hanamkonda", "Warangal", "Kazipet", "Khammam"];
 
 const SchoolsPage = () => {
- 
+  // const navigate = useNavigate();
   const csvInputRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState<SchoolFilters>(DEFAULT_FILTERS);
 

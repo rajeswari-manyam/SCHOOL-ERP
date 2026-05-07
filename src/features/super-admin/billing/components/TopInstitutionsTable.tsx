@@ -40,13 +40,13 @@ function SkeletonRow() {
       <TableCell className="py-3.5 pl-3">
         <div className="h-4 w-40 animate-pulse rounded bg-gray-100 dark:bg-white/10" />
       </TableCell>
-      <TableCell className="py-3.5">
+      <TableCell className="hidden sm:table-cell py-3.5">
         <div className="h-5 w-16 animate-pulse rounded-full bg-gray-100 dark:bg-white/10" />
       </TableCell>
       <TableCell className="py-3.5">
         <div className="h-4 w-20 animate-pulse rounded bg-gray-100 dark:bg-white/10" />
       </TableCell>
-      <TableCell className="py-3.5 pr-4">
+      <TableCell className="hidden sm:table-cell py-3.5 pr-4">
         <div className="h-4 w-10 animate-pulse rounded bg-gray-100 dark:bg-white/10" />
       </TableCell>
     </TableRow>
@@ -94,14 +94,21 @@ export const TopInstitutionsTable: React.FC<TopInstitutionsTableProps> = ({
         <Table className="w-full">
           <TableHeader>
             <TableRow className="bg-gray-50/60 dark:bg-white/5">
-              {['Rank', 'School', 'Plan', 'Monthly Value', '% of MRR'].map((heading) => (
-                <TableHead
-                  key={heading}
-                  className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
-                >
-                  {heading}
-                </TableHead>
-              ))}
+              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Rank
+              </TableHead>
+              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                School
+              </TableHead>
+              <TableHead className="hidden sm:table-cell text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Plan
+              </TableHead>
+              <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Monthly Value
+              </TableHead>
+              <TableHead className="hidden sm:table-cell text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                % of MRR
+              </TableHead>
             </TableRow>
           </TableHeader>
 
@@ -136,13 +143,13 @@ export const TopInstitutionsTable: React.FC<TopInstitutionsTableProps> = ({
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-3.5 px-4">
+                      <TableCell className="hidden sm:table-cell py-3.5 px-4">
                         <PlanBadge plan={inst.plan} />
                       </TableCell>
                       <TableCell className="py-3.5 px-4 text-sm font-semibold text-gray-900 dark:text-white">
                         ₹{inst.monthlyValue.toLocaleString('en-IN')}
                       </TableCell>
-                      <TableCell className="py-3.5 px-4 pr-5 text-sm text-gray-500 dark:text-gray-400">
+                      <TableCell className="hidden sm:table-cell py-3.5 px-4 pr-5 text-sm text-gray-500 dark:text-gray-400">
                         {inst.mrrPercent.toFixed(1)}%
                       </TableCell>
                     </TableRow>

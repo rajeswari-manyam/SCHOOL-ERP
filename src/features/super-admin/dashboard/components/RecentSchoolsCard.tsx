@@ -26,7 +26,7 @@ const RecentSchoolsCard = ({ schools }: RecentSchoolsCardProps) => {
       </div>
       <div className="divide-y divide-gray-50">
         {schools.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors">
+          <div key={s.id} className="flex flex-col gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors sm:flex-row sm:items-center">
             <Avatar initials={s.initials} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{s.name}</p>

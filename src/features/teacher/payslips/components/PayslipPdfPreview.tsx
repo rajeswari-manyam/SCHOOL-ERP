@@ -27,7 +27,7 @@ const PayslipPdfPreview = ({ payslip }: Props) => {
         </div>
 
         {/* Employee info grid */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 px-5 py-4 bg-gray-50 border-b border-gray-200">
           {[
             ["Employee ID",  payslip.employeeId],
             ["Name",         payslip.employeeName],
@@ -44,7 +44,7 @@ const PayslipPdfPreview = ({ payslip }: Props) => {
         </div>
 
         {/* Earnings | Deductions two-column table */}
-        <div className="grid grid-cols-2 divide-x divide-gray-200 border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-x divide-gray-200 border-b border-gray-200">
           {/* Earnings */}
           <div className="px-4 py-3">
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 mb-2">Earnings</p>

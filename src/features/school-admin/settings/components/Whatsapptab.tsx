@@ -137,8 +137,8 @@ export const WhatsAppTab: React.FC<Props> = ({
                 <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
               </div>
               <Toggle
-                pressed={notifications[item.key]}
-                onPressedChange={(pressed) => onToggleNotification(item.key, pressed)}
+                checked={notifications[item.key]}
+                onCheckedChange={(checked) => onToggleNotification(item.key, checked)}
               />
             </div>
           ))}

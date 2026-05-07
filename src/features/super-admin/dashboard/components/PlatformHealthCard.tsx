@@ -45,7 +45,7 @@ const PlatformHealthCard = ({ healthItems, cronJobs }: PlatformHealthCardProps) 
     {/* Cron jobs */}
     <div>
       <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Cron Jobs Status</p>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {cronJobs.map((job) => (
           <span key={job.label} className="flex items-center gap-1.5 text-xs text-gray-600">
             <span className={`w-2 h-2 rounded-full ${cronDot[job.status]}`} />

@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
@@ -13,15 +12,17 @@ const schema = z.object({
   country: z.string().min(1, "Country is required"),
   subscriptionPlan: z.enum(["basic", "premium", "enterprise"]),
 });
-type CreateSchoolInput= z.infer<typeof schema>;
+
+type SchoolFormValues = z.infer<typeof schema>;
+
 type SchoolFormProps = {
-  defaultValues?: Partial<CreateSchoolInput>;
-  onSubmit: (values: CreateSchoolInput) => void;
+  defaultValues?: Partial<SchoolFormValues>;
+  onSubmit: (values: SchoolFormValues) => void;
   loading?: boolean;
 };
 
 export const SchoolForm = ({ defaultValues = {}, onSubmit, loading }: SchoolFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateSchoolInput>({
+  const { register, handleSubmit, formState: { errors } } = useForm<SchoolFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   });

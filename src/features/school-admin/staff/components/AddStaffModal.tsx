@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { Form, FormField } from "../../../../components/ui/form";
 import { Input } from "../../../../components/ui/input";
@@ -37,7 +38,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
             onClick={onClose}
             className="w-8 h-8 p-0 text-slate-400"
           >
-            ✕
+            <X className="h-5 w-5" />
           </Button>
         </div>
 

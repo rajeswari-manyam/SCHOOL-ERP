@@ -1,153 +1,187 @@
-import {FeeStatCards}from "../fees/components/Feestatcards";
-import {PendingFeesFilterBar} from "../fees/components/Pendingfeesfilterbar";
-import {PendingFeesTable} from "../fees/components/Pendingfeestable";
-import {RecordPaymentModal} from "../fees/components/Recordpaymentmodal";
-import {PaymentSuccessModal} from "../fees/components/Paymentsuccessmodal";
-import {AllTransactionsTab} from "../fees/components/Alltransactionstab";
-import {FeeStructureTab} from "../fees/components/Feestructuretab";
-import {CommunicationCenter} from "./components/Communicationcenter";
-import { Button } from "@/components/ui/button";
+import { FeeStatCards } from "../fees/components/Feestatcards";
+import { PendingFeesFilterBar } from "../fees/components/Pendingfeesfilterbar";
+import { PendingFeesTable } from "../fees/components/Pendingfeestable";
+import { RecordPaymentModal } from "../fees/components/Recordpaymentmodal";
+import { PaymentSuccessModal } from "../fees/components/Paymentsuccessmodal";
+import { AllTransactionsTab } from "../fees/components/Alltransactionstab";
+import { FeeStructureTab } from "../fees/components/Feestructuretab";
+import { CommunicationCenter } from "./components/Communicationcenter";
 
 import { useFeeCollection } from "./hooks/Usefeecollection";
 
+// ─── Tab definitions ──────────────────────────────────────────────────────────
+const TABS = [
+  { key: "pending",      label: "Pending Fees",  icon: "⏳" },
+  { key: "transactions", label: "Transactions",  icon: "💳" },
+  { key: "structure",    label: "Fee Structure", icon: "🏗️" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
+// ─── FeeCollectionPage ────────────────────────────────────────────────────────
 const FeeCollectionPage = () => {
   const {
-    // Tab
-    activeTab,
-    setActiveTab,
-
-    // Data
+    activeTab, setActiveTab,
     stats,
-    filteredFees,
-    filteredTransactions,
-    feeHeads,
-    transportSlabs,
-    classFeeStructure,
+    filteredFees, filteredTransactions,
+    feeHeads, transportSlabs, classFeeStructure,
     loading,
-
-    // Filters
-    searchQuery,
-    setSearchQuery,
-    classFilter,
-    setClassFilter,
-    sectionFilter,
-    setSectionFilter,
-    statusFilter,
-    setStatusFilter,
-    feeHeadFilter,
-    setFeeHeadFilter,
-    sortOption,
-    setSortOption,
-
-    // Selection
-    selectedIds,
-    toggleSelect,
-    toggleSelectAll,
-
-    // Structure
-    selectedClass,
-    setSelectedClass,
-
-    // Modals
-    showRecordPayment,
-    recordPaymentStudent,
-    openRecordPayment,
-    closeRecordPayment,
-    submitPayment,
-    lastReceipt,
-    showSuccessModal,
-    setShowSuccessModal,
-
-    // Actions
+    searchQuery, setSearchQuery,
+    classFilter, setClassFilter,
+    sectionFilter, setSectionFilter,
+    statusFilter, setStatusFilter,
+    feeHeadFilter, setFeeHeadFilter,
+    sortOption, setSortOption,
+    selectedIds, toggleSelect, toggleSelectAll,
+    selectedClass, setSelectedClass,
+    showRecordPayment, recordPaymentStudent,
+    openRecordPayment, closeRecordPayment, submitPayment,
+    lastReceipt, showSuccessModal, setShowSuccessModal,
     sendReminders,
   } = useFeeCollection();
 
   if (loading || !stats) {
     return (
-      <div className="p-6 text-sm text-gray-500">Loading fee collection...</div>
+      <div className="flex min-h-[200px] items-center justify-center p-6">
+        <p className="text-sm text-gray-400 animate-pulse">
+          Loading fee collection…
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* ─── Header ───────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 p-4 sm:p-6">
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-extrabold text-gray-900">
+          <h1 className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white leading-tight">
             Fee Collection
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="mt-0.5 text-xs text-gray-400 dark:text-slate-500">
             Manage pending dues, payments, and fee structure
           </p>
         </div>
       </div>
 
-      {/* ─── Stats ───────────────────────────────────────── */}
+      {/* ── Stats ────────────────────────────────────────────────────────── */}
       <FeeStatCards stats={stats} />
 
-      {/* ─── Tabs ───────────────────────────────────────── */}
-      <div className="flex gap-2 border-b border-gray-200">
-        {[
-          { key: "pending", label: "Pending Fees" },
-          { key: "transactions", label: "Transactions" },
-          { key: "structure", label: "Fee Structure" },
-        ].map((tab) => (
-          <Button
-            key={tab.key}
-            variant={activeTab === tab.key ? "default" : "ghost"}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition ${
-              activeTab === tab.key
-                ? "border-b-0 border-gray-200 text-indigo-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {tab.label}
-          </Button>
-        ))}
+      {/* ── Tabs ─────────────────────────────────────────────────────────── */}
+      {/*
+        On mobile: horizontally scrollable strip — tabs never wrap or overflow
+        On desktop: normal inline row against the border
+      */}
+      <div className="relative">
+        {/* Fade-right hint so users know it scrolls on mobile */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white dark:from-slate-950 to-transparent sm:hidden"
+        />
+
+        <div
+          role="tablist"
+          aria-label="Fee collection sections"
+          className={[
+            "flex gap-0 overflow-x-auto border-b border-gray-200 dark:border-slate-700",
+            // hide scrollbar visually but keep it functional
+            "scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+          ].join(" ")}
+        >
+          {TABS.map((tab) => {
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                role="tab"
+                aria-selected={active}
+                aria-controls={`tabpanel-${tab.key}`}
+                id={`tab-${tab.key}`}
+                type="button"
+                onClick={() => setActiveTab(tab.key as TabKey)}
+                className={[
+                  // layout
+                  "relative shrink-0 flex items-center gap-1.5 px-4 py-2.5",
+                  "text-sm font-semibold whitespace-nowrap",
+                  "transition-colors duration-150 outline-none",
+                  // focus ring
+                  "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500",
+                  // active state
+                  active
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200",
+                ].join(" ")}
+              >
+                {/* Icon — hidden on very small screens to save space */}
+                <span aria-hidden="true" className="hidden min-[360px]:inline">
+                  {tab.icon}
+                </span>
+                {tab.label}
+
+                {/* Active underline */}
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute bottom-0 left-0 h-0.5 w-full rounded-t-full bg-indigo-600 dark:bg-indigo-400"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ─── TAB CONTENT ───────────────────────────────────────── */}
+      {/* ── Tab panels ───────────────────────────────────────────────────── */}
 
       {/* 1️⃣ Pending Fees */}
-      {activeTab === "pending" && (
-        <>
-          <PendingFeesFilterBar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            classFilter={classFilter}
-            onClassChange={setClassFilter}
-            sectionFilter={sectionFilter}
-            onSectionChange={setSectionFilter}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            feeHeadFilter={feeHeadFilter}
-            onFeeHeadChange={setFeeHeadFilter}
-            sortOption={sortOption}
-            onSortChange={setSortOption}
-          />
+      <div
+        role="tabpanel"
+        id="tabpanel-pending"
+        aria-labelledby="tab-pending"
+        hidden={activeTab !== "pending"}
+        className="space-y-4"
+      >
+        <PendingFeesFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          classFilter={classFilter}
+          onClassChange={setClassFilter}
+          sectionFilter={sectionFilter}
+          onSectionChange={setSectionFilter}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          feeHeadFilter={feeHeadFilter}
+          onFeeHeadChange={setFeeHeadFilter}
+          sortOption={sortOption}
+          onSortChange={setSortOption}
+        />
 
-          <PendingFeesTable
-            fees={filteredFees}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onToggleSelectAll={toggleSelectAll}
-            onMarkPaid={openRecordPayment}
-            onSendReminder={() => {}}
-            totalRecords={filteredFees.length}
-          />
+        <PendingFeesTable
+          fees={filteredFees}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          onMarkPaid={openRecordPayment}
+          onSendReminder={() => {}}
+          totalRecords={filteredFees.length}
+        />
 
-          <CommunicationCenter
-            onSendReminderToAll={() => sendReminders()}
-            onSendReminderToDueToday={() => {}}
-            onExportDefaultersPDF={() => {}}
-            onExportCSV={() => {}}
-          />
-        </>
-      )}
+        <CommunicationCenter
+          onSendReminderToAll={() => sendReminders()}
+          onSendReminderToDueToday={() => {}}
+          onExportDefaultersPDF={() => {}}
+          onExportCSV={() => {}}
+        />
+      </div>
 
       {/* 2️⃣ Transactions */}
-      {activeTab === "transactions" && (
+      <div
+        role="tabpanel"
+        id="tabpanel-transactions"
+        aria-labelledby="tab-transactions"
+        hidden={activeTab !== "transactions"}
+      >
         <AllTransactionsTab
           transactions={filteredTransactions}
           periodSummary={null}
@@ -159,10 +193,15 @@ const FeeCollectionPage = () => {
           onTxModeChange={() => {}}
           txDateRange=""
         />
-      )}
+      </div>
 
       {/* 3️⃣ Fee Structure */}
-      {activeTab === "structure" && (
+      <div
+        role="tabpanel"
+        id="tabpanel-structure"
+        aria-labelledby="tab-structure"
+        hidden={activeTab !== "structure"}
+      >
         <FeeStructureTab
           feeHeads={feeHeads}
           transportSlabs={transportSlabs}
@@ -170,11 +209,9 @@ const FeeCollectionPage = () => {
           selectedClass={selectedClass}
           onClassChange={setSelectedClass}
         />
-      )}
+      </div>
 
-      {/* ─── MODALS ───────────────────────────────────────── */}
-
-      {/* Record Payment */}
+      {/* ── Modals ───────────────────────────────────────────────────────── */}
       {showRecordPayment && recordPaymentStudent && (
         <RecordPaymentModal
           fee={recordPaymentStudent}
@@ -183,7 +220,6 @@ const FeeCollectionPage = () => {
         />
       )}
 
-      {/* Success Modal */}
       {showSuccessModal && lastReceipt && (
         <PaymentSuccessModal
           receipt={lastReceipt}

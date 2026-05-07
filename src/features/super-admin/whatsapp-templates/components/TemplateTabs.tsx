@@ -14,7 +14,7 @@ const TABS: { value: TemplateTab; label: string }[] = [
 ];
 
 const TemplateTabs = ({ activeTab, onChange }: TemplateTabsProps) => (
-  <div className="flex items-center gap-0 border-b border-gray-200">
+  <div className="flex items-center gap-0 border-b border-gray-200 overflow-x-auto flex-nowrap">
     {TABS.map((tab) => (
       <button
         key={tab.value}

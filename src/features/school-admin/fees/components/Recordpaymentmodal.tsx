@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import type { PendingFee, PaymentMode, RecordPaymentForm } from "../types/fees.types";
 import { formatCurrency, generateReceiptNumber, getTodayDate } from "../utils/Fee.utils";
 import { Input } from "@/components/ui/input";
@@ -57,7 +57,7 @@ export function RecordPaymentModal({ fee, onClose, onSubmit }: RecordPaymentModa
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">Record Fee Payment</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none p-0">
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none p-0">
             ×
           </Button>
         </div>

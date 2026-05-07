@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow } from "@/components/ui/table";
-import {Pagination }from "./Pagination";
+import { Pagination } from "./Pagination";
+import { Download, Info, ArrowDownCircle } from "lucide-react";
 
 const invoices = [
   { id: "INV-0055", school: "Hanamkonda Public", sub: "District Sec.", description: "Growth Annual", date: "15 Mar 2025", amount: 15000, status: "Paid", action: "Download" },
@@ -35,24 +36,24 @@ export default function InvoiceTable() {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-2 flex flex-col items-center mr-50">
+    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       {/* Filter Bar */}
-      <div className="w-full max-w-5xl mb-6 rounded-2xl shadow-xl border border-[#23263a]/30 bg-white/60 backdrop-blur-md flex flex-nowrap items-center gap-3 px-6 py-4">
+      <div className="w-full max-w-5xl mb-6 rounded-2xl shadow-xl border border-[#23263a]/30 bg-white/60 backdrop-blur-md flex flex-wrap items-center gap-3 px-4 sm:px-6 py-4">
         <Input
-          className="w-64"
+          className="flex-1 min-w-0 sm:w-64"
           placeholder="Search invoices..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <select className="rounded-full border border-gray-200 px-4 py-2 text-sm border-b bg-[#f6f8fc] focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400">
+        <select className="rounded-full border border-gray-200 px-4 py-2 text-sm border-b bg-[#f6f8fc] focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 min-w-0 flex-shrink-0">
           <option>All Schools</option>
         </select>
-        <select className="rounded-full border border-gray-200 px-4 py-2 text-sm border-b bg-[#f6f8fc] focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400">
+        <select className="rounded-full border border-gray-200 px-4 py-2 text-sm border-b bg-[#f6f8fc] focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 min-w-0 flex-shrink-0">
           <option>All Status</option>
         </select>
-        <Input type="text" className="w-56" placeholder="01 Jan 2025 — 07 Apr 2025" readOnly />
+        <Input type="text" className="flex-1 min-w-0 sm:w-56" placeholder="01 Jan 2025 — 07 Apr 2025" readOnly />
         <Button className="ml-auto flex items-center gap-2 shadow" variant="ghost">
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <Download className="h-4 w-4" />
           Export All
         </Button>
       </div>
@@ -63,7 +64,7 @@ export default function InvoiceTable() {
             <tr>
               <th className="py-3 px-4 text-left font-bold tracking-widest uppercase">INVOICE #</th>
               <th className="py-3 px-4 text-left font-bold tracking-widest uppercase">SCHOOL</th>
-              <th className="py-3 px-4 text-left font-bold tracking-widest uppercase">DESCRIPTION</th>
+              <th className="hidden sm:table-cell py-3 px-4 text-left font-bold tracking-widest uppercase">DESCRIPTION</th>
               <th className="py-3 px-4 text-left font-bold tracking-widest uppercase">DATE</th>
               <th className="py-3 px-4 text-left font-bold tracking-widest uppercase">AMOUNT</th>
               <th className="py-3 px-4 text-left font-bold tracking-widest uppercase">STATUS</th>
@@ -78,7 +79,7 @@ export default function InvoiceTable() {
                   <div className="font-semibold text-gray-900">{inv.school}</div>
                   {inv.sub && <div className="text-xs text-gray-400">{inv.sub}</div>}
                 </td>
-                <td className="py-3 px-4">{inv.description}</td>
+                <td className="hidden sm:table-cell py-3 px-4">{inv.description}</td>
                 <td className="py-3 px-4">{inv.date}</td>
                 <td className="py-3 px-4 font-semibold">₹{inv.amount.toLocaleString()}</td>
                 <td className="py-3 px-4">
@@ -90,13 +91,13 @@ export default function InvoiceTable() {
                   )}
                   {inv.action === "Send Reminder" && (
                     <Button variant="outline" size="sm" className="flex items-center gap-1 text-yellow-700 border-yellow-300">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01"/><circle cx="12" cy="12" r="10"/></svg>
+                      <Info className="h-4 w-4" />
                       Send Reminder
                     </Button>
                   )}
                   {inv.action === "Collect" && (
                     <Button variant="destructive" size="sm" className="flex items-center gap-1">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+                      <ArrowDownCircle className="h-4 w-4" />
                       Collect
                     </Button>
                   )}

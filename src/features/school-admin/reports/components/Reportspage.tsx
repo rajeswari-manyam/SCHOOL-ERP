@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Calendar, ChevronRight, ChevronLeft, Search } from "lucide-react";
 import { useReports, useGenerateReport } from "../hooks/useReports";
 import ReportStatCards from "../components/Reportstatcards";
 import ReportCardGrid from "../components/Reportcardgrid";
@@ -43,9 +44,7 @@ const ReportsPage = () => {
         <div>
           <nav className="flex items-center gap-1 text-xs text-gray-400 mb-1">
             <span className="font-semibold uppercase tracking-wider">Admin</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <ChevronRight className="w-3.5 h-3.5" />
             <span className="font-semibold uppercase tracking-wider text-indigo-600">Reports</span>
           </nav>
           <h1 className="text-2xl font-extrabold text-gray-900">Reports</h1>
@@ -54,12 +53,7 @@ const ReportsPage = () => {
 
         {/* Academic Year Picker */}
         <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm">
-          <svg width="14" height="14" className="text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+          <Calendar className="w-4 h-4 text-indigo-500" />
           <span className="text-xs font-bold text-gray-700">Academic Year {academicYear}</span>
           <div className="flex gap-1">
             <Button
@@ -72,9 +66,7 @@ const ReportsPage = () => {
               }}
               className="w-8 h-8 p-0"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
+              <ChevronRight className="w-4 h-4" />
             </Button>
             <Button
               type="button"
@@ -86,9 +78,7 @@ const ReportsPage = () => {
               }}
               className="w-8 h-8 p-0"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              <ChevronLeft className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -107,18 +97,7 @@ const ReportsPage = () => {
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
               <Input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}

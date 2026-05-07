@@ -9,7 +9,7 @@ import {
   createColumnHelper,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { TableVirtuoso } from "react-virtuoso";
+// import { TableVirtuoso } from "react-virtuoso";
 import { TrendingUp, BookOpen, AlertCircle, Download, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -193,12 +193,10 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
       <Card className="rounded-2xl overflow-hidden hover:shadow-md transition-shadow border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            {/* TableVirtuoso handles virtualised rows; fixedHeaderContent pins the <thead> */}
-            <TableVirtuoso
-              data={tableRows}
-              style={{ height: Math.min(rows.length * 48 + 44, 340), minWidth: 900 }}
-              fixedHeaderContent={() =>
-                headerGroups.map((hg) => (
+            {/* Simple table instead of TableVirtuoso */}
+            <table className="min-w-[900px] border-collapse">
+              <thead>
+                {headerGroups.map((hg) => (
                   <tr key={hg.id} className="bg-[#F8FAFC] border-0">
                     {hg.headers.map((header) => (
                       <th
@@ -212,39 +210,24 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
                       </th>
                     ))}
                   </tr>
-                ))
-              }
-              itemContent={(_, row) => (
-                <>
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      style={{ width: cell.column.getSize() }}
-                      className="px-4 py-3 text-[13px] border-0 border-b border-gray-50"
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </>
-              )}
-              components={{
-                // Renders the wrapping <table> so Virtuoso works inside our scroll container
-                Table: ({ style, ...props }) => (
-                  <table
-                    {...props}
-                    style={{ ...style, tableLayout: "fixed", width: "100%" }}
-                    className="min-w-[900px]"
-                  />
-                ),
-                TableRow: ({ style, ...props }) => (
-                  <tr
-                    {...props}
-                    style={style}
-                    className="border-0 hover:bg-[#F8FAFC] transition-colors"
-                  />
-                ),
-              }}
-            />
+                ))}
+              </thead>
+              <tbody>
+                {tableRows.map((row) => (
+                  <tr key={row.id} className="border-0 hover:bg-[#F8FAFC] transition-colors">
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        style={{ width: cell.column.getSize() }}
+                        className="px-4 py-3 text-[13px] border-0 border-b border-gray-50"
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

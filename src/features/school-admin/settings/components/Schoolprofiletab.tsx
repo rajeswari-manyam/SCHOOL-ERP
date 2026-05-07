@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { SchoolProfile } from "../types/settings.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,138 +12,253 @@ interface Props {
   onSave: (data: Partial<SchoolProfile>) => void;
 }
 
-const BOARD_SELECT_OPTIONS = BOARD_OPTIONS.map((value) => ({ label: value, value }));
-const SCHOOL_TYPE_SELECT_OPTIONS = SCHOOL_TYPE_OPTIONS.map((value) => ({ label: value, value }));
+const BOARD_SELECT_OPTIONS = BOARD_OPTIONS.map((v) => ({ label: v, value: v }));
+const SCHOOL_TYPE_SELECT_OPTIONS = SCHOOL_TYPE_OPTIONS.map((v) => ({ label: v, value: v }));
 
-export const SchoolProfileTab: React.FC<Props> = ({
-  profile, saving, onSave,
-}) => {
+// ─── Reusable field wrapper ───────────────────────────────────────────────────
+function Field({
+  label,
+  htmlFor,
+  children,
+  fullWidth = false,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div className={fullWidth ? "col-span-1 sm:col-span-2" : "col-span-1"}>
+      <label
+        htmlFor={htmlFor}
+        className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400"
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+// ─── SchoolProfileTab ─────────────────────────────────────────────────────────
+export const SchoolProfileTab: React.FC<Props> = ({ profile, saving, onSave }) => {
   const [form, setForm] = useState<SchoolProfile>(profile);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setForm(profile); }, [profile]);
+  useEffect(() => {
+    setForm(profile);
+  }, [profile]);
 
   const handleChange = (key: keyof SchoolProfile, value: string | number) =>
-    setForm(prev => ({ ...prev, [key]: value } as SchoolProfile));
+    setForm((prev) => ({ ...prev, [key]: value } as SchoolProfile));
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setForm((prev) => ({ ...prev, logoUrl: url }));
+  };
+
+  const initials = form.schoolName
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 3)
+    .join("");
 
   return (
-    <div className="space-y-6">
-      {/* School Information Card */}
-      <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-2xl border border-blue-200 p-8 shadow-lg shadow-blue-100/50">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">School Information</h2>
-            <p className="text-sm text-gray-600 mt-1">Manage your school's core details and branding</p>
+    <div className="space-y-4 sm:space-y-6">
+
+      {/* ── School Information ─────────────────────────────────────────────── */}
+      <section
+        aria-labelledby="school-info-heading"
+        className="rounded-2xl border border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/40 p-5 sm:p-8 shadow-sm"
+      >
+        {/* Header row */}
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <h2
+              id="school-info-heading"
+              className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight"
+            >
+              School Information
+            </h2>
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+              Manage your school's core details and branding
+            </p>
           </div>
+
           <Button
             onClick={() => onSave(form)}
             disabled={saving}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-blue-500/40 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
+            className={[
+              "w-full sm:w-auto shrink-0",
+              "px-5 py-2.5 rounded-xl text-sm font-bold text-white",
+              "bg-gradient-to-r from-blue-600 to-indigo-600",
+              "hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200",
+              "disabled:opacity-60 disabled:cursor-not-allowed active:scale-95",
+            ].join(" ")}
           >
-            {saving ? "Saving…" : "Save School Profile"}
+            {saving ? "Saving…" : "Save school profile"}
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">School Name</label>
+        {/* Grid: 1 col on mobile, 2 col on sm+ */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="School name" htmlFor="schoolName">
             <Input
+              id="schoolName"
               value={form.schoolName}
               onChange={(e) => handleChange("schoolName", e.target.value)}
               className="w-full"
+              autoComplete="organization"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Board</label>
+          </Field>
+
+          <Field label="Board" htmlFor="board">
             <Select
+              
               value={form.board}
-              onValueChange={(value) => handleChange("board", value)}
+              onValueChange={(v) => handleChange("board", v)}
               options={BOARD_SELECT_OPTIONS}
               placeholder="Select board"
               className="w-full"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Principal Name</label>
+          </Field>
+
+          <Field label="Principal name" htmlFor="principalName">
             <Input
+              id="principalName"
               value={form.principalName}
               onChange={(e) => handleChange("principalName", e.target.value)}
               className="w-full"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Established Year</label>
+          </Field>
+
+          <Field label="Established year" htmlFor="establishedYear">
             <Input
+              id="establishedYear"
               value={String(form.establishedYear)}
               onChange={(e) => handleChange("establishedYear", e.target.value)}
               className="w-full"
+              inputMode="numeric"
+              maxLength={4}
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Phone</label>
+          </Field>
+
+          <Field label="Phone" htmlFor="phone">
             <Input
+              id="phone"
               value={form.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
               className="w-full"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Total Student Capacity</label>
+          </Field>
+
+          <Field label="Total student capacity" htmlFor="totalStudentCapacity">
             <Input
+              id="totalStudentCapacity"
               value={String(form.totalStudentCapacity)}
               onChange={(e) => handleChange("totalStudentCapacity", e.target.value)}
               className="w-full"
+              inputMode="numeric"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Email</label>
+          </Field>
+
+          <Field label="Email" htmlFor="email">
             <Input
+              id="email"
               value={form.email}
               onChange={(e) => handleChange("email", e.target.value)}
               className="w-full"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">School Type</label>
+          </Field>
+
+          <Field label="School type" htmlFor="schoolType">
             <Select
+             
               value={form.schoolType}
-              onValueChange={(value) => handleChange("schoolType", value)}
+              onValueChange={(v) => handleChange("schoolType", v)}
               options={SCHOOL_TYPE_SELECT_OPTIONS}
               placeholder="Select school type"
               className="w-full"
             />
-          </div>
-          <div className="col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-widest text-indigo-600 mb-2">Address</label>
+          </Field>
+
+          {/* Address spans both columns */}
+          <Field label="Address" htmlFor="address" fullWidth>
             <Textarea
+              id="address"
               value={form.address}
               onChange={(e) => handleChange("address", e.target.value)}
-              className="resize-none"
+              className="w-full resize-none"
+              rows={3}
+              autoComplete="street-address"
             />
-          </div>
+          </Field>
         </div>
-      </div>
+      </section>
 
-      {/* School Logo Card */}
-      <div className="bg-gradient-to-br from-indigo-50 via-white to-blue-50 rounded-2xl border border-indigo-200 p-8 shadow-lg shadow-indigo-100/50">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-6">School Logo</h2>
-        <div className="flex items-center gap-6">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center border-2 border-blue-200 shadow-lg">
-            {form.logoUrl
-              ? <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-xl" />
-              : <span className="text-indigo-700 font-bold text-2xl">
-                  {form.schoolName.split(" ").map(w => w[0]).slice(0, 3).join("")}
-                </span>
-            }
+      {/* ── School Logo ────────────────────────────────────────────────────── */}
+      <section
+        aria-labelledby="logo-heading"
+        className="rounded-2xl border border-indigo-200 dark:border-indigo-900 bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-indigo-950/40 dark:via-slate-900 dark:to-blue-950/40 p-5 sm:p-8 shadow-sm"
+      >
+        <h2
+          id="logo-heading"
+          className="mb-5 text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent"
+        >
+          School Logo
+        </h2>
+
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+          {/* Avatar */}
+          <div
+            aria-hidden="true"
+            className="mx-auto sm:mx-0 h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 flex items-center justify-center shadow-md overflow-hidden"
+          >
+            {form.logoUrl ? (
+              <img
+                src={form.logoUrl}
+                alt={`${form.schoolName} logo`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-xl sm:text-2xl font-bold text-indigo-700 dark:text-indigo-300 select-none">
+                {initials}
+              </span>
+            )}
           </div>
-          <div>
-            <Button variant="outline" className="px-5 py-3 rounded-xl text-sm font-bold text-blue-600">
-              Upload New Logo
+
+          {/* Upload */}
+          <div className="flex flex-col items-center sm:items-start gap-2 text-center sm:text-left">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-bold text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-150"
+            >
+              Upload new logo
             </Button>
-        
-            <p className="text-xs text-gray-600 mt-2 font-medium">Recommended: 512×512px. Supports PNG, JPG (Max 2MB).</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
+              aria-label="Upload school logo"
+              onChange={handleLogoChange}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium max-w-[260px] sm:max-w-none">
+              Recommended: 512×512 px. PNG, JPG or WebP — max 2 MB.
+            </p>
           </div>
         </div>
-      </div>
+      </section>
 
     </div>
   );

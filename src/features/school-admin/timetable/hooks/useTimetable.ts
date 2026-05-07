@@ -25,7 +25,7 @@ export const useTimetablePage = (classId = "class-10") =>
 export const useClassTimetable = (classId: string) =>
   useQuery({
     queryKey: TIMETABLE_KEYS.classTt(classId),
-    queryFn: () => timetableApi.getClassTimetable(classId),
+    queryFn: () => timetableApi.getClassTimetable(),
     staleTime: 1000 * 60 * 5,
   });
 

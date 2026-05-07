@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { X, ImagePlus } from "lucide-react";
 import type { AddStudentFormData } from "../types/student.types";
 
 interface AddStudentModalProps {
@@ -111,7 +112,7 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
             size="sm"
             className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
@@ -177,7 +178,7 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
               <div className="col-span-2">
                 <Field label="Student Photo">
                   <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-indigo-300 transition-colors cursor-pointer">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <ImagePlus className="h-6 w-6 text-gray-300" />
                     <p className="text-xs text-gray-400">Upload Photo (JPG/PNG)</p>
                   </div>
                 </Field>

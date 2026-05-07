@@ -23,6 +23,7 @@ export interface School {
   avatarColor: string;
 }
 
+
 export interface SchoolFilters {
   search: string;
   plan: Plan | "ALL";

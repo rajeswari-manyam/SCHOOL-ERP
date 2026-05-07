@@ -1,11 +1,12 @@
 // src/store/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { Role } from "@/types/api.types";
 
 interface User {
   id: string;
   name: string;
-  role: string;
+  role: Role;
   email?: string;
   phone?: string;
   tenantId?: string;

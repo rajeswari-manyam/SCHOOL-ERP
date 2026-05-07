@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { PendingFee } from "../types/fees.types";
 import { formatCurrency, getInitialsColor } from "../utils/Fee.utils";
 import { StatusBadge, ReminderDots } from "./Feebadges";
@@ -47,7 +47,7 @@ export function PendingFeesTable({
             <span className="text-xs text-indigo-500">READY FOR BULK ACTIONS</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" className="flex items-center gap-1.5">
+            <Button variant="ghost" size="sm" className="flex items-center gap-1.5">
               📤 Send Reminder
             </Button>
             <Button variant="outline" size="sm" className="flex items-center gap-1.5">
@@ -118,7 +118,7 @@ export function PendingFeesTable({
                     <Button variant="default" size="sm" className="whitespace-nowrap" onClick={() => onMarkPaid(fee)}>
                       Mark Paid
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
+                    <Button variant="ghost" size="sm" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
                       💬
                     </Button>
                   </div>
@@ -137,7 +137,7 @@ export function PendingFeesTable({
             <Button
               key={p}
               variant={p === 1 ? "default" : "outline"}
-              size="icon"
+              size="sm"
               className={`w-8 h-8 rounded text-xs font-medium ${
                 p === 1 ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"
               }`}

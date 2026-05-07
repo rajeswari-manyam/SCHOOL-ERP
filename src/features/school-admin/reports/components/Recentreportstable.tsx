@@ -1,4 +1,5 @@
 import type { GeneratedReport } from "../types/reports.types";
+import { FileText, Download } from "lucide-react";
 import { FormatBadge } from "./Reportbadges";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,13 +23,7 @@ const ReportIcon = ({ type }: { type: GeneratedReport["type"] }) => {
   };
   return (
     <div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-gray-50 ${color[type]}`}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-        <polyline points="10 9 9 9 8 9" />
-      </svg>
+      <FileText className="h-4 w-4" />
     </div>
   );
 };
@@ -97,11 +92,7 @@ const RecentReportsTable = ({ reports, onDownload }: RecentReportsTableProps) =>
                   onClick={() => onDownload(report.id)}
                   className="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-colors p-0"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <Download className="h-4 w-4" />
                 </Button>
               </TableCell>
             </TableRow>

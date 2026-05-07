@@ -23,7 +23,11 @@ const buildPayslip = (
   const hra = 12000;
   const conveyance = 1600;
   const gross = basic + hra + conveyance + specialAllowance;
+<<<<<<< HEAD
 
+=======
+  // const pfEmployer = 1800;
+>>>>>>> b2322df0c36881311796dd895aa45e054008ba98
   const professionalTax = 200;
   const totalDed = pfEmployee + tax + professionalTax;
   const net = gross - totalDed;

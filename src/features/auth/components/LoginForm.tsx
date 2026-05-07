@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import type { Role } from "@/types/api.types";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +26,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 /* ─── dummy credentials ─────────────────────────── */
-const DUMMY_USERS = [
+const DUMMY_USERS: Array<{ email: string; password: string; role: Role }> = [
   { email: "superadmin@manyam.in", password: "Super@123", role: "superadmin" },
   { email: "schooladmin@demo.school", password: "School@123", role: "schooladmin" },
   { email: "ravi.kumar@demo.school", password: "Teacher@123", role: "teacher" },
@@ -34,7 +35,7 @@ const DUMMY_USERS = [
   { email: "anjali.reddy@student.in", password: "Student@123", role: "student" },
 ];
 
-const roleRedirect = (role?: string): string => {
+const roleRedirect = (role?: Role): string => {
   switch (role) {
     case "superadmin": return "/superadmin/dashboard";
     case "schooladmin": return "/schooladmin/dashboard";

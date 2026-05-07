@@ -21,7 +21,7 @@ const SCHOOLS = [
 const MOCK_STATS = { open: 12, inProgress: 4, resolvedToday: 7 };
 
 const SupportPage = () => {
-  
+  // const navigate = useNavigate();
   const [filters, setFilters]         = useState<TicketFilters>(DEFAULT_FILTERS);
   const [pendingFilters, setPending]  = useState<TicketFilters>(DEFAULT_FILTERS);
   const [selectedTicket, setSelected] = useState<SupportTicket | null>(null);

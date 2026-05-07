@@ -7,8 +7,8 @@ export interface User {
 }
 
 export type Role =
-  | "super_admin"
-  | "school_admin"
+  | "superadmin"
+  | "schooladmin"
   | "teacher"
   | "accountant"
   | "parent"

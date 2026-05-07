@@ -25,7 +25,7 @@ const AnnualSummaryCard = ({ onDownload }: Props) => {
       </div>
 
       {/* Three stat cards */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         <div className="bg-gray-50 rounded-xl p-3 text-center">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Earned</p>
           <p className="text-base font-extrabold text-gray-900">{inr(s.totalEarned)}</p>
@@ -48,7 +48,7 @@ const AnnualSummaryCard = ({ onDownload }: Props) => {
         style={{ height: 40 }}
       >
         <Download size={14} className="text-current" strokeWidth={2} />
-        Download Annual Statement
+        <span className="hidden sm:inline"> Annual Statement</span>Download
       </Button>
     </div>
   );

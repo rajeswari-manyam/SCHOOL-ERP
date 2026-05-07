@@ -3,7 +3,11 @@ import { useEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FaThLarge, FaSchool, FaCreditCard, FaCog, FaComment, FaTicketAlt, FaUsers, FaFileAlt, FaChartBar } from "react-icons/fa";
 import Sidebar from "../components/common/Sidebar";
+<<<<<<< HEAD
 import Topbar from "../components/common/superAdminTopbar";
+=======
+import Topbar from "../components/common/Topbar";
+>>>>>>> b2322df0c36881311796dd895aa45e054008ba98
 
 const BreadcrumbLabels: Record<string, string> = {
   "/superadmin/dashboard": "Dashboard",
@@ -50,7 +54,7 @@ export const SuperAdminLayout = () => {
     }
 
     return [
-      { label: "Dashboard", href: "/superadmin/dashboard" },
+      // { label: "Dashboard", href: "/superadmin/dashboard" },
       { label: current },
     ];
   }, [location.pathname]);
@@ -60,15 +64,18 @@ export const SuperAdminLayout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#F4F6FA]">
+    <div className="min-h-screen w-full bg-[#F4F6FA]">
       <Sidebar items={NavItem} />
+      <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
       
-      <div className="flex-1 flex flex-col min-h-0 md:pl-72 ">
-        <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+      <main 
+        ref={mainRef} 
+        className="overflow-y-auto bg-[#F4F6FA] pt-16 sm:pt-20 md:pt-20 md:ml-[280px]"
+      >
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 min-h-screen">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

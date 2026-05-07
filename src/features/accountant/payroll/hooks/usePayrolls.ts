@@ -13,11 +13,14 @@ export const usePayroll = () => {
   } = usePayrollStore();
 
   const summary = useMemo(() => {
+    const now = new Date();
     return {
       totalStaff: staffData.length,
       totalGross: staffData.reduce((sum, s) => sum + s.gross, 0),
       totalDeductions: staffData.reduce((sum, s) => sum + s.deductions, 0),
       totalNet: staffData.reduce((sum, s) => sum + s.net, 0),
+      month: now.toLocaleString("default", { month: "short" }),
+      year: now.getFullYear(),
       processingDueDate: "1 May 2025",
     };
   }, [staffData]);
