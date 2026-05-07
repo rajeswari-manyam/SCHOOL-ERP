@@ -28,11 +28,7 @@ const DialogConfigCard = ({ config }: DialogConfigCardProps) => {
   const { saveDialog, testDialog } = useConfigMutations();
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
-<<<<<<< HEAD
-  const { register, handleSubmit, formState: {  } } = useForm<FormValues>({
-=======
   const { register, handleSubmit, formState: { } } = useForm<FormValues>({
->>>>>>> b2322df0c36881311796dd895aa45e054008ba98
     defaultValues: {
       apiKey: config?.apiKey ?? "",
       partnerId: config?.partnerId ?? "MANYAM-001",

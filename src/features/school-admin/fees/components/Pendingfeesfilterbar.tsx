@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> b2322df0c36881311796dd895aa45e054008ba98
 import type { FeeStatusFilter, SortOption } from "../types/fees.types";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";

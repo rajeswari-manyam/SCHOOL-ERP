@@ -4,10 +4,6 @@ import {FaMoneyBills} from "react-icons/fa6";
 import { FaRegCheckCircle} from "react-icons/fa";
 import{BsClockHistory} from "react-icons/bs";
 import { Wrench } from "lucide-react";
-<<<<<<< HEAD
-// const formatCurrency = (n: number) => `₹${(n / 100000).toFixed(2)}L`.replace(".00L", "L");
-=======
->>>>>>> b2322df0c36881311796dd895aa45e054008ba98
 
 interface CardProps {
   icon: React.ReactNode;
