@@ -1,5 +1,5 @@
 // modules/exams/ExamsPage.tsx
-import { useExamData } from "../hooks/useExamData";
+import { useExamData } from "../hooks/Useexamdata";
 import { UpcomingSection } from "../components/UpcomingSection";
 import { ResultsSection } from "../components/ResultSection";
 import { ReportCardSection } from "../components/ReportCardSection";
