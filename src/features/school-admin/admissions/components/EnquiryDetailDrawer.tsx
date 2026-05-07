@@ -8,7 +8,7 @@ import { Badge } from '../../../../components/ui/badge';
 const stageBadgeVariants: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
   enquiry: 'default',
   interview: 'warning',
-  docs_verified: 'blue',
+  docs_verified: 'default',
   confirmed: 'success',
   declined: 'error',
 };

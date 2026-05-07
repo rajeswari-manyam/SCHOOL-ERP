@@ -48,7 +48,7 @@ export default function ExamsPage() {
         </p>
       </div>
 
-      <div className="flex border-b border-[#E8EBF2] mb-7">
+      <div className="flex border-b border-[#E8EBF2] mb-7 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <button
             key={t.id}

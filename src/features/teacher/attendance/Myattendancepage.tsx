@@ -65,8 +65,8 @@ const MyAttendancePage = () => {
   const today = todayData ?? MOCK_TODAY_MARKED; // swap to MOCK_TODAY for not-marked state
   const history = Array.isArray(historyData)
     ? historyData
-    : typeof historyData === "object" && historyData !== null && Array.isArray((historyData as any).data)
-    ? (historyData as any).data
+    : typeof historyData === "object" && historyData !== null && Array.isArray((historyData as { data: AttendanceHistoryEntry[] }).data)
+    ? (historyData as { data: AttendanceHistoryEntry[] }).data
     : MOCK_HISTORY;
 
   const [activeTab, setActiveTab] = useState<TabKey>("today");
@@ -84,7 +84,7 @@ const MyAttendancePage = () => {
     setCorrectionOpen(true);
   };
 
-  const openCorrectionFromHistory = (_entry: AttendanceHistoryEntry) => {
+  const openCorrectionFromHistory = () => {
     setCorrectionOpen(true);
     setCorrectionPrefill(undefined);
   };
@@ -125,7 +125,7 @@ const MyAttendancePage = () => {
       <WAMethodCard onMarkViaWA={handleMarkViaWA} />
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-100">
+      <div className="flex gap-1 border-b border-gray-100 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <button
             key={t.key}

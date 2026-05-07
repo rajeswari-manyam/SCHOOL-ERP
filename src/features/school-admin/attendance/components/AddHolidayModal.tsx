@@ -57,7 +57,7 @@ const AddHolidayModal = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label required className="block mb-1">Holiday Type</Label>
               <Select
@@ -104,11 +104,11 @@ const AddHolidayModal = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 pb-6">
-          <Button onClick={closeAddHoliday} variant="outline">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 px-6 pb-6">
+          <Button onClick={closeAddHoliday} variant="outline" className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={closeAddHoliday}>
+          <Button onClick={closeAddHoliday} className="w-full sm:w-auto">
             Save Holiday
           </Button>
         </div>

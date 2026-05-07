@@ -4,6 +4,8 @@ const FeatureFlagsTab = () => {
   const { data: flags, isLoading } = useFeatureFlags();
   const { toggleFlag } = useConfigMutations();
 
+  const featureFlags = Array.isArray(flags) ? flags : [];
+
   if (isLoading) return <div className="text-sm text-gray-400 animate-pulse">Loading flags…</div>;
 
   return (
@@ -13,7 +15,7 @@ const FeatureFlagsTab = () => {
         <p className="text-sm text-gray-400 mt-0.5">Toggle platform features globally or per school</p>
       </div>
       <div className="divide-y divide-gray-50">
-        {(flags ?? []).map((flag: any) => (
+        {featureFlags.map((flag: { id: string; name: string; description: string; scope: string; enabled: boolean }) => (
           <div key={flag.id} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 transition-colors">
             <div>
               <p className="text-sm font-semibold text-gray-900">{flag.name}</p>
@@ -28,7 +30,7 @@ const FeatureFlagsTab = () => {
             </button>
           </div>
         ))}
-        {!flags?.length && (
+        {!featureFlags.length && (
           <p className="px-5 py-8 text-sm text-gray-400 text-center">No feature flags configured</p>
         )}
       </div>

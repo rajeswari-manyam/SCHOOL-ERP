@@ -28,7 +28,7 @@ interface SchoolActivityTableProps {
 
 const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTableProps) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="flex items-center justify-between px-4 py-4 border-b border-gray-50">
+    <div className="flex flex-col gap-3 px-4 py-4 border-b border-gray-50 sm:flex-row sm:items-center sm:justify-between">
       <h2 className="text-sm font-extrabold text-gray-900">Schools Activity Today</h2>
       <Button onClick={onViewAll} variant="link" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
         View Detailed Stats
@@ -44,7 +44,8 @@ const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTable
         </div>
       ))}</div>
     ) : (
-      <table className="w-full">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-full table-auto">
         <thead>
           <tr className="bg-gray-50/60 border-b border-gray-50">
             <th className={COL}>School Name</th>
@@ -68,6 +69,7 @@ const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTable
           ))}
         </tbody>
       </table>
+      </div>
     )}
   </div>
 );

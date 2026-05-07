@@ -64,7 +64,7 @@ const ExamMarksPage = () => {
       </div>
 
       {/* 3-Tab navigation */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 w-fit">
+      <div className="flex gap-0.5 border-b border-gray-200 mb-6 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <Button
             key={t.key}
@@ -72,7 +72,11 @@ const ExamMarksPage = () => {
             onClick={() => setActiveTab(t.key)}
             variant={activeTab === t.key ? "default" : "outline"}
             size="sm"
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold transition-all border-b-2 -mb-px ${
+              activeTab === t.key
+                ? "text-gray-900 border-indigo-600"
+                : "text-gray-400 border-transparent hover:text-gray-700"
+            }`}
           >
             {t.label}
             {t.key === "submitted" && submittedExams.length > 0 && (

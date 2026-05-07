@@ -9,7 +9,7 @@ const UpcomingExamsTable = ({ exams }: Props) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
     {/* Card header */}
-    <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <div>
         <h3 className="text-sm font-extrabold text-gray-900">Upcoming Examinations</h3>
         <p className="text-xs text-gray-400 mt-0.5">Scheduled exams for your classes</p>
@@ -30,7 +30,7 @@ const UpcomingExamsTable = ({ exams }: Props) => (
             <tr className="border-b border-gray-100 bg-gray-50">
               {["Exam", "Subject", "Class", "Date", "Time", "Venue", "Hall Ticket"].map(h => (
                 <th key={h}
-                  className="px-5 py-3 text-left text-[11px] font-extrabold uppercase tracking-widest text-gray-400 whitespace-nowrap">
+                  className={`px-5 py-3 text-left text-[11px] font-extrabold uppercase tracking-widest text-gray-400 whitespace-nowrap ${["Time", "Venue"].includes(h) ? "hidden sm:table-cell" : ""}`}>
                   {h}
                 </th>
               ))}
@@ -55,10 +55,10 @@ const UpcomingExamsTable = ({ exams }: Props) => (
                 <td className="px-5 py-3.5">
                   <p className="text-sm font-semibold text-gray-800">{formatExamDate(exam.date)}</p>
                 </td>
-                <td className="px-5 py-3.5">
+                <td className="px-5 py-3.5 hidden sm:table-cell">
                   <p className="text-sm text-gray-600">{exam.time}</p>
                 </td>
-                <td className="px-5 py-3.5">
+                <td className="px-5 py-3.5 hidden sm:table-cell">
                   <p className="text-sm text-gray-600">{exam.venue}</p>
                 </td>
                 <td className="px-5 py-3.5">

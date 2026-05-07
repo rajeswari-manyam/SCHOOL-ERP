@@ -30,7 +30,7 @@ const WAMethodCard = ({ onMarkViaWA, isPending }: WAMethodCardProps) => {
   return (
     <div className="border-2 border-[#25d366] rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-[#25d366]/10 px-5 py-4 flex items-center justify-between border-b border-[#25d366]/20">
+      <div className="bg-[#25d366]/10 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#25d366]/20">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-full bg-[#25d366] flex items-center justify-center text-white flex-shrink-0">
             <Wallet size={18} />
@@ -43,7 +43,7 @@ const WAMethodCard = ({ onMarkViaWA, isPending }: WAMethodCardProps) => {
         <Button
           onClick={onMarkViaWA}
           disabled={isPending}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25d366] text-white text-sm font-bold hover:bg-[#1ebe5a] disabled:opacity-60 transition-colors shadow-sm"
+          className="flex items-center justify-center gap-1.5 w-full sm:w-auto px-4 py-2 rounded-xl bg-[#25d366] text-white text-xs sm:text-sm font-bold hover:bg-[#1ebe5a] disabled:opacity-60 transition-colors shadow-sm"
         >
           <Wallet size={18} />
           {isPending ? "Sending…" : "Open WhatsApp"}

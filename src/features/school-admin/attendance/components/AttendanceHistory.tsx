@@ -54,24 +54,24 @@ const AttendanceHistory = () => {
     <div className="space-y-6">
       {/* Filters */}
       <Card className="p-5">
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
+        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+          <div className="w-full lg:w-auto">
             <label className="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">
               Date Range
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2">
               <Input
                 type="date"
                 value={historyDateFrom}
                 onChange={(e) => setHistoryDateFrom(e.target.value)}
-                className="max-w-[180px]"
+                className="w-full sm:w-[180px] min-w-0"
               />
               <span className="text-gray-400 text-sm">to</span>
               <Input
                 type="date"
                 value={historyDateTo}
                 onChange={(e) => setHistoryDateTo(e.target.value)}
-                className="max-w-[180px]"
+                className="w-full sm:w-[180px] min-w-0"
               />
             </div>
           </div>
@@ -179,14 +179,15 @@ const AttendanceHistory = () => {
           <p className="text-xs text-gray-500 mt-0.5">Students absent more than 5 days this month</p>
         </div>
 
-        <Table>
+      <div className="overflow-x-auto">
+        <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
               <TableHead>Student</TableHead>
               <TableHead>Class</TableHead>
               <TableHead>Absent Days</TableHead>
               <TableHead>Last Absent</TableHead>
-              <TableHead>Parent Contact</TableHead>
+              <TableHead className="hidden sm:table-cell">Parent Contact</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -211,7 +212,7 @@ const AttendanceHistory = () => {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-gray-600">{student.lastAbsent}</TableCell>
-                <TableCell className="text-gray-600 font-mono text-xs">{student.parentPhone}</TableCell>
+                <TableCell className="hidden sm:table-cell text-gray-600 font-mono text-xs">{student.parentPhone}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="w-8 h-8 p-0">
@@ -226,6 +227,7 @@ const AttendanceHistory = () => {
             ))}
           </TableBody>
         </Table>
+      </div>
 
         <div className="p-4 text-center border-t border-gray-100">
           <Button variant="link" className="text-indigo-600 hover:text-indigo-700">

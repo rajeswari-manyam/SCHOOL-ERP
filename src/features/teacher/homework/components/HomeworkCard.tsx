@@ -51,9 +51,10 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
             <WABadge status={hw.waNotifyStatus} notifiedAt={hw.waNotifiedAt} />
           </div>
           <h3 className="text-sm font-extrabold text-gray-900 leading-snug">{hw.title}</h3>
+          <DueBadge dateStr={hw.dueDate} isPast={isHwPast} />
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <DueBadge dateStr={hw.dueDate} isPast={isHwPast} />
+          
           {/* Menu */}
           {!isHwPast && (
             <div className="flex items-center gap-1 ml-1">

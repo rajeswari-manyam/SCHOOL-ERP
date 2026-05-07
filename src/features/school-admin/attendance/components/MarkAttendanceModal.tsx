@@ -24,9 +24,9 @@ const MarkAttendanceModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <Card className="w-full max-w-lg mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+      <Card className="w-full max-w-xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <CardHeader className="flex items-start justify-between gap-4 p-6 border-b border-gray-100">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-100">
           <div>
             <CardTitle className="text-lg">Mark Attendance — Web Form</CardTitle>
             <CardDescription>Backup method when WhatsApp is unavailable</CardDescription>
@@ -91,7 +91,7 @@ const MarkAttendanceModal = () => {
 
         <CardContent className="flex-1 overflow-y-auto">
           <div className="px-6 py-3 border-b border-gray-100">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col gap-3">
               <div>
                 <p className="text-sm font-semibold text-gray-900">Student Attendance</p>
                 <p className="text-xs text-gray-500">All marked Present by default — uncheck to mark Absent</p>
@@ -110,20 +110,22 @@ const MarkAttendanceModal = () => {
                   !student.isPresent ? "bg-red-50" : ""
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={student.isPresent}
-                    onCheckedChange={() => toggleStudentPresent(student.rollNo)}
-                    className="cursor-pointer"
-                  />
-                  <span className="text-xs text-gray-400 w-5 font-mono">{student.rollNo}</span>
-                  <span className={`text-sm font-medium ${!student.isPresent ? "text-red-600" : "text-gray-800"}`}>
-                    {student.name}
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={student.isPresent}
+                      onCheckedChange={() => toggleStudentPresent(student.rollNo)}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-xs text-gray-400 w-5 font-mono">{student.rollNo}</span>
+                    <span className={`text-sm font-medium ${!student.isPresent ? "text-red-600" : "text-gray-800"}`}>
+                      {student.name}
+                    </span>
+                  </div>
+                  <Badge variant={student.isPresent ? "success" : "error"} className="uppercase text-[10px] px-2 py-1">
+                    {student.isPresent ? "PRESENT" : "ABSENT"}
+                  </Badge>
                 </div>
-                <Badge variant={student.isPresent ? "success" : "error"} className="uppercase text-[10px] px-2 py-1">
-                  {student.isPresent ? "PRESENT" : "ABSENT"}
-                </Badge>
               </div>
             ))}
           </div>
@@ -139,11 +141,11 @@ const MarkAttendanceModal = () => {
           </div>
         </CardContent>
 
-        <CardFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-          <Button variant="ghost" onClick={closeMarkAttendance}>
+        <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 p-6 border-t border-gray-100">
+          <Button variant="ghost" onClick={closeMarkAttendance} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={closeMarkAttendance}>
+          <Button onClick={closeMarkAttendance} className="w-full sm:w-auto">
             Submit Attendance
           </Button>
         </CardFooter>

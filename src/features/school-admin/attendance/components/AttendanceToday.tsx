@@ -38,7 +38,7 @@ const AttendanceToday = () => {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Present</p>
           <p className="text-3xl font-bold text-green-600 mt-2">{summary.totalPresent}</p>
@@ -82,7 +82,7 @@ const AttendanceToday = () => {
 
       {/* Class-wise Attendance Table */}
       <Card className="overflow-hidden">
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-base font-bold text-gray-900">Class-wise Attendance — Today</h2>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -105,7 +105,8 @@ const AttendanceToday = () => {
           </div>
         </div>
 
-        <Table>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
               <TableHead>Class / Sec</TableHead>
@@ -178,11 +179,12 @@ const AttendanceToday = () => {
             ))}
           </TableBody>
         </Table>
+      </div>
 
         {/* Send Reminder Button */}
         <div className="p-4">
-          <Button className="w-full gap-2 bg-orange-500 hover:bg-orange-600 text-white">
-            <Bell className="w-4 h-4" />
+          <Button className="w-full flex flex-wrap items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm sm:text-base whitespace-normal">
+            <Bell className="w-4 h-4 flex-shrink-0" />
             Send Reminder to All Unmarked Classes
           </Button>
         </div>

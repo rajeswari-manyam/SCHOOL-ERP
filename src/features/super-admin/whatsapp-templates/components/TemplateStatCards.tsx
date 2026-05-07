@@ -31,7 +31,7 @@ const StatCard = ({ icon, label, value, badge }: StatCardProps) => (
 );
 
 const TemplateStatCards = ({ stats }: { stats: TemplateStats }) => (
-  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
     <StatCard
       icon="✅"
       label="Approved"

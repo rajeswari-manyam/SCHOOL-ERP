@@ -40,8 +40,8 @@ const CurrentSalaryCard = ({ payslip, onDownload, onWhatsApp }: Props) => {
         <StatusBadge status={payslip.status} />
       </div>
 
-      {/* Gross / Deductions / Net — two-column layout */}
-      <div className="grid grid-cols-2 gap-4 mb-5">
+      {/* Gross / Deductions / Net — responsive layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         {/* Left column */}
         <div className="flex flex-col gap-3">
           <div className="bg-gray-50 rounded-xl p-3.5">
@@ -84,7 +84,7 @@ const CurrentSalaryCard = ({ payslip, onDownload, onWhatsApp }: Props) => {
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button
           onClick={onDownload}
           className="gap-2 flex-1 justify-center bg-indigo-600 text-white hover:bg-indigo-700"

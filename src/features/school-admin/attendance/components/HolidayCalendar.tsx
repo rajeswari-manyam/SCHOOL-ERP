@@ -46,8 +46,8 @@ const HolidayCalendar = () => {
     <div className="space-y-6">
       {/* Calendar Card */}
       <Card>
-        <CardHeader className="flex items-center justify-between gap-3 p-5">
-          <div className="flex items-center gap-3">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button onClick={goToPrevMonth} variant="outline" size="sm" className="w-8 h-8 p-0">
               ‹
             </Button>
@@ -61,9 +61,9 @@ const HolidayCalendar = () => {
           </Button>
         </CardHeader>
 
-        <CardContent className="p-5">
+        <CardContent className="p-5 overflow-x-auto">
           {/* Day headers */}
-          <div className="grid grid-cols-7 mb-2">
+          <div className="min-w-[560px] grid grid-cols-7 mb-2">
           {DAYS_OF_WEEK.map((d) => (
             <div key={d} className="text-center text-xs font-semibold text-gray-400 py-2">
               {d}
@@ -136,14 +136,14 @@ const HolidayCalendar = () => {
 
       {/* Holidays This Academic Year */}
       <Card>
-        <CardHeader className="flex items-center justify-between mb-0 p-5">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between mb-0 p-5 gap-3">
           <div>
             <CardTitle>Holidays This Academic Year</CardTitle>
             <CardDescription className="mt-0.5">
               {calendarData.totalHolidaysThisYear} holidays scheduled for {calendarData.academicYear}
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" className="uppercase tracking-wide">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto uppercase tracking-wide">
             Academic Year Plan
           </Button>
         </CardHeader>
@@ -152,8 +152,8 @@ const HolidayCalendar = () => {
             const style = holidayTypeColors[h.type];
             const dateObj = new Date(h.date);
             return (
-              <div key={h.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <div className="flex items-center gap-3">
+              <div key={h.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-gray-50 last:border-0 gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${style.dot}`} />
                   <span className="text-sm text-gray-800 font-medium">{h.name}</span>
                   <Badge className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${style.bg} ${style.text}`}>

@@ -83,7 +83,7 @@ const StudentQuickViewDrawer = ({ student, open, onClose, studentIndex = 0 }: Pr
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1">
+          <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1 overflow-x-auto flex-nowrap">
             {tabs.map((t) => (
               <button
                 key={t.id}

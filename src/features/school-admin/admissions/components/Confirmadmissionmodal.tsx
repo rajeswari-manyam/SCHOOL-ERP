@@ -104,7 +104,7 @@ export function ConfirmAdmissionModal() {
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold tracking-wider text-gray-400">ADMISSION NO</p>
-                  <Badge variant="indigo" className="mt-0.5">
+                  <Badge variant="default" className="mt-0.5">
                     {ADM_NO_PREFIX}
                   </Badge>
                 </div>

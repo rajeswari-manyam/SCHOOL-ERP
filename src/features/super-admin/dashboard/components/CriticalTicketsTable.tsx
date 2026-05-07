@@ -26,10 +26,10 @@ const CriticalTicketsTable = ({ tickets, requiresAction, isLoading }: CriticalTi
   const navigate = useNavigate();
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-gray-50">
         <h2 className="text-sm font-extrabold text-gray-900">Critical Support Tickets</h2>
         {requiresAction > 0 && (
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-100">
+          <span className="self-start sm:self-auto px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-100">
             {requiresAction} REQUIRES ACTION
           </span>
         )}
@@ -38,7 +38,8 @@ const CriticalTicketsTable = ({ tickets, requiresAction, isLoading }: CriticalTi
       {isLoading ? (
         <div className="p-6 text-center text-sm text-gray-400 animate-pulse">Loading…</div>
       ) : (
-        <table className="w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-full table-auto">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-50">
               <th className={COL}>Ticket ID</th>
@@ -81,6 +82,7 @@ const CriticalTicketsTable = ({ tickets, requiresAction, isLoading }: CriticalTi
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

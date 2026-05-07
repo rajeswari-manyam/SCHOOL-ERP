@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
+
   
 
 const FILE_TYPE_CONFIG = {
@@ -136,7 +137,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
       }
     >
       <Form id="upload-material-form" onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FormField label="Class">
             <Select
               options={["Class 7-A", "Class 8-A", "Class 9-A", "Class 10-A"].map((value) => ({ label: value, value }))}
@@ -172,7 +173,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
                 type="button"
                 variant={materialType === type ? "default" : "outline"}
                 className="justify-center gap-2"
-                onClick={() => register("materialType").onChange({ target: { value: type } } as any)}
+                onClick={() => register("materialType").onChange({ target: { value: type } } as React.ChangeEvent<HTMLInputElement>)}
               >
                 {type === "FILE" ? "📎 File" : "🔗 Link"}
               </Button>

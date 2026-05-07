@@ -32,7 +32,7 @@ const Chip = ({ text, color }: { text: string; color: string }) => (
 );
 
 const PlatformStatCards = ({ stats }: { stats: PlatformStats }) => (
-  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <Card
       icon={<Wrench size={18} />}
       badge={<Chip text={`+${stats.totalSchoolsDelta} THIS MONTH`} color="text-emerald-600 bg-emerald-50" />}

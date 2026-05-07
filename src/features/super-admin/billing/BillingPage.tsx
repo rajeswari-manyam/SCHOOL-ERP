@@ -37,22 +37,22 @@ export const BillingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="mx-auto max-w-6xl px-6 py-6">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
 
         
 
         {/* Page header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Billing & Plans
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <Button className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
               Edit Plans
             </Button>
             <Button
               onClick={() => setShowPaymentModal(true)}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-indigo-700"
+              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-indigo-700"
             >
               <CreditCard size={14} />
               Record Payment
@@ -66,14 +66,14 @@ export const BillingPage: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex border-b border-gray-200 dark:border-white/10">
+        <div className="mb-6 flex gap-0.5 border-b border-gray-200 dark:border-white/10 overflow-x-auto flex-nowrap scrollbar-none">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => { setTab(key); setShowAllInstitutions(false); }}
-              className={`relative px-4 py-2.5 text-[13px] font-medium transition-colors ${
+              className={`relative shrink-0 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${
                 tab === key
-                  ? 'text-indigo-600 dark:text-indigo-400'
+                  ? 'text-black dark:text-white'
                   : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
             >
@@ -90,13 +90,13 @@ export const BillingPage: React.FC = () => {
           <div className="space-y-5">
             {showAllInstitutions ? (
               <>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                     All Institutions
                   </h2>
                   <button
                     onClick={() => setShowAllInstitutions(false)}
-                    className="text-[13px] font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                    className="w-full sm:w-auto text-[13px] font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 text-left"
                   >
                     ← Back to overview
                   </button>
@@ -124,21 +124,23 @@ export const BillingPage: React.FC = () => {
 
         {tab === 'subscriptions' && (
           <div className="space-y-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg sm:text-base font-semibold text-gray-900 dark:text-white">
               Subscriptions
             </h2>
-            <InstitutionsTable />
+            <div className="overflow-x-auto">
+              <InstitutionsTable />
+            </div>
           </div>
         )}
 
         {tab === 'invoices' && (
-         <div className="space-y-4">
+         <div className="space-y-4 overflow-x-auto">
        <Invoice/>
           </div>
         )}
 
         {tab === 'plan-config' && (
-          <div className="space-y-4 flex gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {plans.map((plan) => (
       <PlansCard
         key={plan.name}

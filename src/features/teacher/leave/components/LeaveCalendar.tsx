@@ -31,7 +31,7 @@ const LeaveCalendar = ({ days, monthLabel, onPrev, onNext }: Props) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <h3 className="text-sm font-extrabold text-gray-900">Leave Calendar</h3>
         <div className="flex items-center gap-2">
           <button onClick={onPrev}

@@ -59,7 +59,7 @@ export function PipelineBoard() {
               <span className="text-xs font-bold tracking-wider text-gray-900">
                 {col.label}
               </span>
-              <Badge variant={col.badgeVariant}>
+              <Badge variant="default" className="mt-0.5">
                 {columnEnquiries.length}
               </Badge>
             </div>

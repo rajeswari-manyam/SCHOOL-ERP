@@ -25,7 +25,7 @@ export function PlansCard({ plan, onFeatureToggle, onFieldChange }: PlansCardPro
   }
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex-1 min-w-[300px] max-w-[350px] relative"
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
       aria-label={`Plan card for ${plan.name}`}
     >
       {plan.mostPopular && (

@@ -17,7 +17,7 @@ const HomeworkPage = () => {
   } = useHomework();
 
   const [pendingAssign, ] =
-    [null as AssignHomeworkFormValues | null, (_: AssignHomeworkFormValues | null) => {}];
+    [null as AssignHomeworkFormValues | null, () => {}];
 
   const TABS = [
     { id: "active"    as const, label: "Active Homework",  count: activeHomework.length },
@@ -48,7 +48,7 @@ const HomeworkPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0.5 border-b border-gray-200 mb-6">
+      <div className="flex gap-0.5 border-b border-gray-200 mb-6 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <button
             key={t.id}
