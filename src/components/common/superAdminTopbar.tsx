@@ -1,11 +1,8 @@
-// TopBar.jsx
-// Production-level topbar matching the Management Portal design
-// Features: breadcrumb, notification bell with badge + dropdown,
-//           help icon, divider, avatar with user dropdown
+
 
 import { useState, useRef, useEffect, type RefObject } from "react";
 
-// ─── Lucide React Icons ─────────────────────────────────────────────────────
+
 import {
   Bell,
   HelpCircle,
