@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { useUIStore } from "@/store/uiStore";
 import {
   FaThLarge,
   FaMoneyBill,
@@ -10,10 +11,9 @@ import {
 
 import Sidebar from "@/components/common/Sidebar";
 import Topbar from "@/components/common/Topbar";
-import WhatsAppFAB from "@/components/ui/whatsappfab"; // ✅ ADD THIS
+import WhatsAppFAB from "@/components/ui/whatsappfab";
 
-
-const NavItem = [
+const NavItems = [
   {
     label: "Dashboard",
     to: "/accountant/dashboard",
@@ -46,28 +46,31 @@ const NavItem = [
   },
 ];
 
-
 export const AccountantLayout = () => {
+  const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#F4F6FA]">
-      
-      {/* Sidebar */}
-      <Sidebar items={NavItem} />
+    <div className="min-h-screen flex bg-[#F4F6FA] overflow-hidden">
+
+      {/* Single Sidebar — manages its own mobile open/close via uiStore */}
+      <Sidebar items={NavItems} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 md:pl-72">
-        
-        {/* Topbar */}
-        <Topbar />
+      <div className="flex-1 flex flex-col min-h-screen md:pl-72 w-full">
+
+        {/* Topbar — hamburger opens sidebar via uiStore */}
+        <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 md:px-6 lg:px-8 pb-20 md:pb-6">
           <Outlet />
         </main>
       </div>
 
-      {/* ── WhatsApp FAB (same as ParentLayout) ── */}
-      <WhatsAppFAB />
+      {/* WhatsApp FAB */}
+      <div className="fixed bottom-4 right-4 z-50 md:bottom-6 md:right-6">
+        <WhatsAppFAB />
+      </div>
     </div>
   );
 };

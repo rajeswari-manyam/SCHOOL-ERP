@@ -218,7 +218,65 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
 
   return (
     <div className="overflow-auto no-scrollbar scroll-smooth max-h-[520px] rounded-md border border-gray-200">
-      <table className="min-w-[960px] w-full border-collapse text-sm">
+      {/* ── Mobile View ── */}
+<div className="md:hidden space-y-3 p-3">
+  {rows.map((row) => (
+    <div
+      key={row.id}
+      className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-2">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${getAvatarSoftColor(row.index)}`}>
+            {getInitials(row.original.student)}
+          </div>
+
+          <div>
+            <p className="text-sm font-medium">{row.original.student}</p>
+            <p className="text-[11px] text-gray-400">{row.original.admissionNo}</p>
+          </div>
+        </div>
+
+        <DaysOverdueBadge days={row.original.daysOverdue} />
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600">
+        <div>
+          <span className="text-gray-400">Class:</span> {row.original.className}
+        </div>
+        <div>
+          <span className="text-gray-400">Fee:</span> {row.original.feeHead}
+        </div>
+        <div>
+          <span className="text-gray-400">Amount:</span>{" "}
+          {formatCurrency(row.original.amount)}
+        </div>
+        <div>
+          <span className="text-gray-400">Due:</span> {row.original.dueDate}
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-between items-center">
+        <span className="text-xs text-gray-500 flex items-center gap-1">
+          <BellRing className="w-3 h-3" />
+          {row.original.reminders} Sent
+        </span>
+
+        <Button
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => {
+            setSelectedRow(row.original);
+            setShowReminder(true);
+          }}
+        >
+          Send Reminder
+        </Button>
+      </div>
+    </div>
+  ))}
+</div>
+      <table className="hidden md:table min-w-[960px] w-full border-collapse text-sm">
 
         {/* ── Header ── */}
         <thead className="sticky top-0 z-10 bg-[#EFF4FF]">

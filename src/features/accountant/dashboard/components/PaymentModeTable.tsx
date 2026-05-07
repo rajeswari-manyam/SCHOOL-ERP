@@ -42,7 +42,7 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
           return (
             <span className="flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${colors.dot}`} />
-              <span className="text-xs text-slate-600 truncate">{mode}</span>
+              <span className="text-sm sm:text-xs text-slate-600 truncate">{mode}</span>
             </span>
           );
         },
@@ -79,10 +79,10 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
   }));
 
   return (
-   <div className="flex flex-col items-center gap-4 w-full p-4">
+   <div className="flex flex-col sm:flex-row sm:items-center gap-5 w-full p-3 sm:p-4">
 
    
-    <div className="relative w-28 h-28 flex-shrink-0">  
+    <div className="relative w-32 h-32 sm:w-28 sm:h-28 flex-shrink-0"> 
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -91,8 +91,8 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
               nameKey="name"
               cx="50%"
               cy="50%"
-              innerRadius={40}
-              outerRadius={55}
+             innerRadius={42}
+outerRadius={60}
               paddingAngle={3}
             >
               {chartData.map((entry, idx) => (
@@ -111,10 +111,10 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
         </ResponsiveContainer>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+       <span className="text-[11px] sm:text-[10px] font-semibold uppercase text-slate-400">   
             Total
           </span>
-          <span className="text-sm font-bold text-slate-900 tabular-nums">
+         <span className="text-base sm:text-sm font-bold text-slate-900 tabular-nums"> 
             ₹{total.toLocaleString("en-IN")}
           </span>
         </div>
@@ -122,7 +122,7 @@ export const PaymentModeTable = ({ data }: { data: PaymentModeSummary[] }) => {
 
   
       <div className="flex-1 w-full min-w-0">
-       <table className="w-full table-fixed">
+      <table className="w-full table-fixed text-sm sm:text-xs"> 
           <thead>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} className="border-b border-slate-100">

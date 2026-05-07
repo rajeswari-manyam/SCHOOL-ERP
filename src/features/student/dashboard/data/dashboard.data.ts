@@ -109,4 +109,10 @@ export const announcements: Announcement[] = [
     timeAgo: "Published Yesterday",
     type: "alert",
   },
+  {
+    id: "3",
+    title: "Parent-Teacher Meeting scheduled for April 30",
+    timeAgo: "Published 2 days ago",
+    type: "info",
+  }
 ];

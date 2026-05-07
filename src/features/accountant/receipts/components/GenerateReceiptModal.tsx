@@ -55,31 +55,31 @@ export const GenerateReceiptModal = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[95vh]">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
+        <div className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[95vh] overflow-hidden">
 
           {/* INFO BANNER */}
-          <div className="bg-blue-50 border-b border-blue-100 px-5 py-2.5 rounded-t-2xl flex items-center gap-2">
-            <span className="text-blue-500 text-xs">ℹ️</span>
-            <p className="text-[11px] text-blue-600">
+          <div className="bg-blue-50 border-b border-blue-100 px-4 sm:px-5 py-2 sm:py-2.5 sm:rounded-t-2xl flex items-start gap-2 flex-shrink-0">
+            <span className="text-blue-500 text-xs flex-shrink-0 mt-0.5">ℹ️</span>
+            <p className="text-[10px] sm:text-[11px] text-blue-600 leading-relaxed">
               Use this form to generate a receipt for a payment that was collected but not yet recorded in the system.
             </p>
           </div>
 
           {/* HEADER */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900">Generate Fee Receipt</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-100 flex-shrink-0">
+            <h2 className="text-sm sm:text-base font-bold text-gray-900">Generate Fee Receipt</h2>
+            <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
               <X className="w-4 h-4 text-gray-400" />
             </button>
           </div>
 
           {/* BODY */}
-          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+          <div className="overflow-y-auto flex-1 px-4 sm:px-5 py-3 sm:py-4 space-y-4">
 
-        
+            {/* Step 1 — Find Student */}
             <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+              <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
                 Step 1 — Find Student
               </p>
 
@@ -102,8 +102,8 @@ export const GenerateReceiptModal = ({
                         <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
                           {s.avatar}
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-gray-900">{s.name}</p>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-900 truncate">{s.name}</p>
                           <p className="text-[10px] text-gray-400">Class {s.className}{s.section} · {s.admissionNo}</p>
                         </div>
                       </div>
@@ -120,25 +120,25 @@ export const GenerateReceiptModal = ({
                     <div className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">
                       {selectedStudent.avatar}
                     </div>
-                    <span className="text-xs font-semibold text-indigo-800">{selectedStudent.name}</span>
-                    <span className="text-[10px] text-indigo-400">
+                    <span className="text-xs font-semibold text-indigo-800 truncate">{selectedStudent.name}</span>
+                    <span className="text-[10px] text-indigo-400 hidden sm:inline">
                       Class {selectedStudent.className}{selectedStudent.section} — {selectedStudent.admissionNo}
                     </span>
                     <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 ml-auto flex-shrink-0" />
                   </div>
 
                   {/* Expanded card */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-white">
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-white">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                       <span className="text-indigo-700 text-xs font-bold">{selectedStudent.avatar}</span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-900">{selectedStudent.name}</p>
                       <p className="text-[10px] text-gray-400">
-                        · Class {selectedStudent.className}{selectedStudent.section} &nbsp;·&nbsp; {selectedStudent.admissionNo}
+                        Class {selectedStudent.className}{selectedStudent.section} · {selectedStudent.admissionNo}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right hidden sm:block">
                       <p className="text-[9px] text-gray-400 uppercase mb-0.5">Parent Contact</p>
                       <div className="flex items-center gap-1 justify-end">
                         <Phone className="w-3 h-3 text-gray-400" />
@@ -150,14 +150,14 @@ export const GenerateReceiptModal = ({
               )}
             </div>
 
-        
+            {/* Step 2 — Fee Details */}
             <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+              <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
                 Step 2 — Fee Details
               </p>
 
-     
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Fee Head & Payment Mode */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="text-[10px] font-semibold text-gray-500 block mb-1">Fee Head</label>
                   <select
@@ -174,12 +174,12 @@ export const GenerateReceiptModal = ({
 
                 <div>
                   <label className="text-[10px] font-semibold text-gray-500 block mb-1">Payment Mode</label>
-                  <div className="flex gap-1.5">
-                  {PAYMENT_OPTIONS.map((m) => (
+                  <div className="flex gap-1.5 flex-wrap">
+                    {PAYMENT_OPTIONS.map((m) => (
                       <button
                         key={m.value}
                         onClick={() => setPaymentMode(m.value)}
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-all ${
+                        className={`flex-1 min-w-[60px] py-1.5 rounded-lg text-[10px] font-semibold border transition-all ${
                           paymentMode === m.value
                             ? "bg-indigo-600 text-white border-indigo-600"
                             : "border-gray-200 text-gray-600 hover:border-indigo-300"
@@ -192,8 +192,8 @@ export const GenerateReceiptModal = ({
                 </div>
               </div>
 
-          
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Period & Amount */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="text-[10px] font-semibold text-gray-500 block mb-1">Period</label>
                   <input
@@ -218,8 +218,8 @@ export const GenerateReceiptModal = ({
                 </div>
               </div>
 
-        
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Payment Date & Receipt Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="text-[10px] font-semibold text-gray-500 block mb-1">Payment Date</label>
                   <input
@@ -240,7 +240,7 @@ export const GenerateReceiptModal = ({
                     />
                     <button
                       onClick={() => setReceiptNo(`RCP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`)}
-                      className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 flex-shrink-0"
                     >
                       <RefreshCw className="w-3 h-3 text-gray-400" />
                     </button>
@@ -259,93 +259,93 @@ export const GenerateReceiptModal = ({
               </div>
             </div>
 
-            {/* ── RECEIPT PREVIEW ── */}
+            {/* RECEIPT PREVIEW */}
             {showPreview && (
               <div id="receipt-preview">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
                   Receipt Preview
                 </p>
 
-                <div className="flex gap-3 items-start">
+                <div className="flex flex-col sm:flex-row gap-3 items-start">
 
                   {/* Left: Receipt card */}
-                  <div className="flex-1 border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden">
 
                     {/* School header */}
                     <div className="flex items-center justify-between px-3 py-2.5 bg-[#1a237e]">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                          <span className="text-[#1a237e] text-[10px] font-black">H</span>
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                          <span className="text-[#1a237e] text-[9px] sm:text-[10px] font-black">H</span>
                         </div>
                         <div>
-                          <p className="text-white text-[10px] font-bold leading-tight">HANAMKONDA PUBLIC SCHOOL</p>
-                          <p className="text-blue-200 text-[8px]">Recognised by Govt of Telangana</p>
+                          <p className="text-white text-[9px] sm:text-[10px] font-bold leading-tight">HANAMKONDA PUBLIC SCHOOL</p>
+                          <p className="text-blue-200 text-[7px] sm:text-[8px]">Recognised by Govt of Telangana</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-blue-300 text-[8px] uppercase">Office Copy</p>
-                        <p className="text-white text-[10px] font-bold">{receiptNo || "—"}</p>
+                        <p className="text-blue-300 text-[7px] sm:text-[8px] uppercase">Office Copy</p>
+                        <p className="text-white text-[9px] sm:text-[10px] font-bold">{receiptNo || "—"}</p>
                       </div>
                     </div>
 
                     {/* Receipt details */}
-                    <div className="p-3 space-y-2">
+                    <div className="p-2.5 sm:p-3 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <p className="text-[8px] text-gray-400 uppercase">Student Name</p>
-                          <p className="text-[10px] font-semibold text-gray-900">{selectedStudent!.name}</p>
+                          <p className="text-[7px] sm:text-[8px] text-gray-400 uppercase">Student Name</p>
+                          <p className="text-[9px] sm:text-[10px] font-semibold text-gray-900">{selectedStudent!.name}</p>
                         </div>
                         <div>
-                          <p className="text-[8px] text-gray-400 uppercase">Class & Section</p>
-                          <p className="text-[10px] font-semibold text-gray-900">
+                          <p className="text-[7px] sm:text-[8px] text-gray-400 uppercase">Class & Section</p>
+                          <p className="text-[9px] sm:text-[10px] font-semibold text-gray-900">
                             {selectedStudent!.className}{selectedStudent!.section}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[8px] text-gray-400 uppercase">Date of Payment</p>
-                          <p className="text-[10px] font-semibold text-gray-900">
+                          <p className="text-[7px] sm:text-[8px] text-gray-400 uppercase">Date of Payment</p>
+                          <p className="text-[9px] sm:text-[10px] font-semibold text-gray-900">
                             {paymentDate
                               ? new Date(paymentDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
                               : "—"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[8px] text-gray-400 uppercase">Payment Mode</p>
-                          <p className="text-[10px] font-semibold text-gray-900">{paymentMode || "—"}</p>
+                          <p className="text-[7px] sm:text-[8px] text-gray-400 uppercase">Payment Mode</p>
+                          <p className="text-[9px] sm:text-[10px] font-semibold text-gray-900">{paymentMode || "—"}</p>
                         </div>
                       </div>
 
                       <div className="border-t border-gray-100 pt-2 flex items-end justify-between">
                         <div>
-                          <p className="text-[8px] text-gray-400 uppercase">Grand Total</p>
-                          <p className="text-[8px] text-gray-400 italic">
+                          <p className="text-[7px] sm:text-[8px] text-gray-400 uppercase">Grand Total</p>
+                          <p className="text-[7px] sm:text-[8px] text-gray-400 italic">
                             {numAmount > 0 ? numberToWords(numAmount) : "—"}
                           </p>
                         </div>
-                        <p className="text-base font-extrabold text-indigo-700">
+                        <p className="text-sm sm:text-base font-extrabold text-indigo-700">
                           {numAmount > 0 ? formatCurrency(numAmount) : "₹0"}
                         </p>
                       </div>
 
                       <div className="flex justify-between items-center pt-1">
-                        <p className="text-[7px] text-gray-300">Computer Generated Receipt — Signature Not Required</p>
-                        <p className="text-[7px] text-gray-400 font-medium">AUTHORIZED SIGNATORY</p>
+                        <p className="text-[6px] sm:text-[7px] text-gray-300">Computer Generated Receipt — Signature Not Required</p>
+                        <p className="text-[6px] sm:text-[7px] text-gray-400 font-medium">AUTHORIZED SIGNATORY</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Action buttons */}
-                  <div className="flex flex-col gap-2 w-40 flex-shrink-0">
+                  <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-40 flex-shrink-0 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 no-scrollbar">
 
                     {/* WhatsApp Receipt */}
-                    <button className="flex items-start gap-2 px-3 py-2.5 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition-colors">
+                    <button className="flex items-start gap-2 px-3 py-2.5 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition-colors min-w-[140px] sm:min-w-0 flex-1 sm:flex-none">
                       <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                         <MessageCircle className="w-2.5 h-2.5 text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="text-[10px] font-semibold text-green-700">WhatsApp Receipt</p>
-                        <p className="text-[8px] text-green-500 leading-tight">
-                          Send receipt to parent via WhatsApp (+91 {selectedStudent!.parentContact})
+                        <p className="text-[10px] font-semibold text-green-700">WhatsApp</p>
+                        <p className="text-[8px] text-green-500 leading-tight hidden sm:block">
+                          Send to +91 {selectedStudent!.parentContact}
                         </p>
                       </div>
                     </button>
@@ -354,7 +354,7 @@ export const GenerateReceiptModal = ({
                     <button
                       onClick={handleGenerate}
                       disabled={!canGenerate}
-                      className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors ${
+                      className={`flex items-center gap-2 px-3 py-2.5 border rounded-xl transition-colors min-w-[120px] sm:min-w-0 flex-1 sm:flex-none ${
                         canGenerate
                           ? "bg-white border-gray-200 hover:bg-gray-50"
                           : "bg-gray-50 border-gray-100 cursor-not-allowed"
@@ -362,7 +362,7 @@ export const GenerateReceiptModal = ({
                     >
                       <Save className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
                       <p className="text-[10px] font-semibold text-gray-700">
-                        {isSubmitting ? "Saving..." : isSuccess ? "✓ Saved" : "Save to Records"}
+                        {isSubmitting ? "Saving..." : isSuccess ? "✓ Saved" : "Save"}
                       </p>
                     </button>
 
@@ -370,20 +370,20 @@ export const GenerateReceiptModal = ({
                     <button
                       onClick={() => receiptDetailData && setShowReceiptDetail(true)}
                       disabled={!receiptDetailData}
-                      className="flex items-center gap-2 px-3 py-2.5 bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] sm:min-w-0 flex-1 sm:flex-none"
                     >
                       <Download className="w-3.5 h-3.5 text-white flex-shrink-0" />
-                      <p className="text-[10px] font-semibold text-white leading-tight">Generate & Download PDF</p>
+                      <p className="text-[10px] font-semibold text-white leading-tight">Download PDF</p>
                     </button>
 
                     {/* Generate & Send WhatsApp */}
                     <button
                       onClick={() => receiptDetailData && setShowReceiptDetail(true)}
                       disabled={!receiptDetailData}
-                      className="flex items-center gap-2 px-3 py-2.5 bg-green-600 rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-green-600 rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] sm:min-w-0 flex-1 sm:flex-none"
                     >
                       <MessageCircle className="w-3.5 h-3.5 text-white flex-shrink-0" />
-                      <p className="text-[10px] font-semibold text-white leading-tight">Generate & Send WhatsApp</p>
+                      <p className="text-[10px] font-semibold text-white leading-tight">Send WhatsApp</p>
                     </button>
                   </div>
                 </div>
@@ -391,8 +391,8 @@ export const GenerateReceiptModal = ({
             )}
           </div>
 
-          {/* ── FOOTER ── */}
-          <div className="px-5 py-3 border-t border-gray-100 flex gap-2">
+          {/* FOOTER */}
+          <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex gap-2 flex-shrink-0 bg-white sm:bg-transparent">
             <button
               onClick={onClose}
               className="flex-1 border border-gray-200 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
@@ -414,7 +414,7 @@ export const GenerateReceiptModal = ({
         </div>
       </div>
 
-      {/* Receipt Detail Popup — opens on PDF/WhatsApp button click */}
+      {/* Receipt Detail Popup */}
       {showReceiptDetail && receiptDetailData && (
         <ReceiptDetailModal
           receipt={receiptDetailData}

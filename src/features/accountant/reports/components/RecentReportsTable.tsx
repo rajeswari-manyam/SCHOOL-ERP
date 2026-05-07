@@ -15,8 +15,6 @@ import { Download, FileText, FileSpreadsheet, ChevronDown, ChevronUp } from "luc
 import type { Report, RecentReportsTableProps } from "../types/reports.types";
 import { formatDateTime } from "../../../../utils/date";
 
-
-
 const columnHelper = createColumnHelper<Report>();
 
 const columns = [
@@ -83,8 +81,6 @@ const columns = [
   }),
 ];
 
-
-
 interface VirtualTableProps {
   data: Report[];
   height: number;
@@ -141,27 +137,27 @@ const VirtualTable = ({ data, height }: VirtualTableProps) => {
   );
 };
 
-
-
 const MobileReportRow = ({ report }: { report: Report }) => (
-  <div className="p-4 space-y-2">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
+  <div className="p-3 sm:p-4 space-y-2">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         {report.format === "PDF" ? (
           <FileText className="w-4 h-4 text-rose-400 flex-shrink-0" />
         ) : (
           <FileSpreadsheet className="w-4 h-4 text-emerald-500 flex-shrink-0" />
         )}
-        <span className="text-sm font-medium text-gray-900">{report.name}</span>
+        <span className="text-sm font-medium text-gray-900 truncate">{report.name}</span>
       </div>
-      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-[#3525CD] hover:bg-indigo-50">
+      <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-8 sm:w-8 p-0 text-[#3525CD] hover:bg-indigo-50 flex-shrink-0">
         <Download className="w-4 h-4" />
       </Button>
     </div>
-    <div className="text-xs text-gray-500 space-y-1">
-      <div>📅 {formatDateTime(report.generatedAt)}</div>
-      <div>📊 {report.period}</div>
-      <div>👤 {report.generatedBy}</div>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+      <span>{formatDateTime(report.generatedAt)}</span>
+      <span className="text-gray-300">·</span>
+      <span>{report.period}</span>
+      <span className="text-gray-300">·</span>
+      <span>{report.generatedBy}</span>
     </div>
     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
       report.format === "PDF"
@@ -173,8 +169,6 @@ const MobileReportRow = ({ report }: { report: Report }) => (
   </div>
 );
 
-
-
 const ROW_HEIGHT = 53;
 const HEADER_HEIGHT = 44;
 const PREVIEW_COUNT = 5;
@@ -185,14 +179,13 @@ export const RecentReportsTable = ({ data }: RecentReportsTableProps) => {
   const visibleData = showAll ? data : data.slice(0, PREVIEW_COUNT);
   const hasMore = data.length > PREVIEW_COUNT;
 
-
   const tableHeight = visibleData.length * ROW_HEIGHT + HEADER_HEIGHT;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
 
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
         <h3 className="font-semibold text-gray-800 text-sm">Recently Generated Reports</h3>
         {hasMore && (
           <span className="text-xs text-gray-400">
@@ -201,25 +194,25 @@ export const RecentReportsTable = ({ data }: RecentReportsTableProps) => {
         )}
       </div>
 
-  
+      {/* Mobile Card View */}
       <div className="md:hidden divide-y divide-gray-100">
         {visibleData.map((report) => (
           <MobileReportRow key={report.id} report={report} />
         ))}
       </div>
 
-
+      {/* Desktop Virtual Table */}
       <div className="hidden md:block">
         <VirtualTable data={visibleData} height={tableHeight} />
       </div>
 
-
+      {/* Show More / Less */}
       {hasMore && (
-        <div className="border-t border-gray-100 px-5 py-3 flex items-center justify-center bg-gray-50/30">
+        <div className="border-t border-gray-100 px-4 sm:px-5 py-2.5 sm:py-3 flex items-center justify-center bg-gray-50/30">
           <Button
             variant="ghost"
             size="sm"
-            className="text-[#3525CD] text-xs h-8 hover:text-[#2a1eb0] hover:bg-indigo-50 gap-1.5"
+            className="text-[#3525CD] text-xs h-9 sm:h-8 hover:text-[#2a1eb0] hover:bg-indigo-50 gap-1.5 w-full sm:w-auto"
             onClick={() => setShowAll((prev) => !prev)}
           >
             {showAll ? (
@@ -230,7 +223,8 @@ export const RecentReportsTable = ({ data }: RecentReportsTableProps) => {
             ) : (
               <>
                 <ChevronDown className="w-3.5 h-3.5" />
-                View All History ({data.length - PREVIEW_COUNT} more)
+                <span className="hidden sm:inline">View All History ({data.length - PREVIEW_COUNT} more)</span>
+                <span className="sm:hidden">View All ({data.length - PREVIEW_COUNT} more)</span>
               </>
             )}
           </Button>

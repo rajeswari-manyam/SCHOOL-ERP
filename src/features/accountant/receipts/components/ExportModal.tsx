@@ -4,7 +4,6 @@ import { z } from "zod";
 import { X, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-
 const exportSchema = z.object({
   fromDate:    z.string().min(1, "From date is required"),
   toDate:      z.string().min(1, "To date is required"),
@@ -16,7 +15,6 @@ const exportSchema = z.object({
 });
 
 type ExportForm = z.infer<typeof exportSchema>;
-
 
 const PAYMENT_MODES = ["All", "Cash", "UPI", "Cheque", "Bank Transfer"] as const;
 
@@ -33,15 +31,12 @@ const INCLUDE_OPTIONS = [
   "Cheque only",
 ] as const;
 
-
 interface ExportModalProps {
   onClose: () => void;
-
   receiptCount?: number;
   totalAmount?: number;
   month?: string;
 }
-
 
 export const ExportModal = ({
   onClose,
@@ -58,8 +53,8 @@ export const ExportModal = ({
   } = useForm<ExportForm>({
     resolver: zodResolver(exportSchema),
     defaultValues: {
-      fromDate:    "01 Apr 2025",
-      toDate:      "07 Apr 2025",
+      fromDate:    "2025-04-01",
+      toDate:      "2025-04-07",
       classFilter: "All Classes",
       paymentMode: "All",
       format:      "PDF",
@@ -76,12 +71,12 @@ export const ExportModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4">
+      <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="text-sm sm:text-base font-semibold text-gray-900">
             Export Transaction History
           </h2>
           <button
@@ -93,32 +88,32 @@ export const ExportModal = ({
         </div>
 
         {/* ── Body ── */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
+        <div className="overflow-y-auto flex-1 px-4 sm:px-5 py-4 space-y-4 sm:space-y-5">
 
           {/* Date Range */}
           <div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Date Range
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">From Date</label>
-                 <input
-        type="date"
-        {...register("fromDate")}
-        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#3525CD] focus:bg-white transition-colors"
-      />
+                <input
+                  type="date"
+                  {...register("fromDate")}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#3525CD] focus:bg-white transition-colors"
+                />
                 {errors.fromDate && (
                   <p className="text-xs text-red-500 mt-1">{errors.fromDate.message}</p>
                 )}
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">To Date</label>
-                 <input
-        type="date"
-        {...register("toDate")}
-        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#3525CD] focus:bg-white transition-colors"
-      />
+                <input
+                  type="date"
+                  {...register("toDate")}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-[#3525CD] focus:bg-white transition-colors"
+                />
                 {errors.toDate && (
                   <p className="text-xs text-red-500 mt-1">{errors.toDate.message}</p>
                 )}
@@ -178,14 +173,14 @@ export const ExportModal = ({
                   key={value}
                   type="button"
                   onClick={() => setValue("format", value)}
-                  className={`py-2.5 px-2 border rounded-lg text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+                  className={`py-2 sm:py-2.5 px-2 border rounded-lg text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
                     values.format === value
                       ? "border-[#3525CD] bg-indigo-50 text-[#3525CD]"
                       : "border-gray-200 bg-gray-50 text-gray-600 hover:border-indigo-300"
                   }`}
                 >
                   <span className="text-base">{icon}</span>
-                  {label}
+                  <span className="text-[10px] sm:text-xs">{label}</span>
                 </button>
               ))}
             </div>
@@ -214,7 +209,7 @@ export const ExportModal = ({
                     onChange={() => setValue("include", opt)}
                     className="accent-[#3525CD] w-3.5 h-3.5 flex-shrink-0"
                   />
-                  {opt}
+                  <span className="text-[11px] sm:text-xs">{opt}</span>
                 </label>
               ))}
             </div>
@@ -257,14 +252,14 @@ export const ExportModal = ({
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0 flex flex-col gap-2">
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-100 flex-shrink-0 flex flex-col gap-2 bg-white sm:bg-transparent sm:rounded-b-xl">
           <Button
             type="button"
             onClick={handleSubmit(onSubmit)}
-            className="w-full flex items-center justify-center gap-2 bg-[#3525CD] hover:bg-[#2a1eb0] text-white"
+            className="w-full flex items-center justify-center gap-2 bg-[#3525CD] hover:bg-[#2a1eb0] text-white h-10 sm:h-9"
           >
             <Download className="w-4 h-4" />
-            Export Transaction History
+            <span className="text-sm">Export Transaction History</span>
           </Button>
           <button
             type="button"

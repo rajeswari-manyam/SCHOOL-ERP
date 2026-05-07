@@ -1,104 +1,124 @@
-import type { MonthAttendance, AttendanceStatus } from "../types/Attendance.types";
-import {
-  getMonthStartOffset,
-  getDaysInMonth,
-  ATTENDANCE_CELL_STYLES,
-} from "../utils/Attendance.utils";
+import type { AttendanceDay, AttendanceStatus } from "../types/attendance.types";
 
-interface AttendanceCalendarProps {
-  data: MonthAttendance;
-  onPrev: () => void;
-  onNext: () => void;
-  label: string;
+interface Props {
+  days: AttendanceDay[];
+  month?: number;
+  year?: number;
 }
 
-const WEEK_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
-const LEGEND: { status: AttendanceStatus; label: string }[] = [
-  { status: "PRESENT", label: "Present" },
-  { status: "ABSENT",  label: "Absent"  },
-  { status: "HOLIDAY", label: "Holiday" },
-];
-
-const DOT_COLORS: Record<AttendanceStatus, string> = {
-  PRESENT: "bg-indigo-600",
-  ABSENT:  "bg-red-500",
-  HOLIDAY: "bg-gray-300",
-  NONE:    "bg-transparent",
+const dayClasses: Record<AttendanceStatus | "empty", string> = {
+  present: "bg-indigo-700 text-white font-semibold",
+  absent: "bg-red-500 text-white font-semibold",
+  holiday: "bg-gray-200 text-gray-500",
+  empty: "bg-transparent",
 };
 
-const AttendanceCalendar = ({
-  data,
-  onPrev,
-  onNext,
-  label,
-}: AttendanceCalendarProps) => {
-  const statusMap = new Map<number, AttendanceStatus>();
-  data.days.forEach((d) => statusMap.set(d.date, d.status as AttendanceStatus));
+export const AttendanceCalendar: React.FC<Props> = ({
+  days,
+  month = 3,
+  year = 2025,
+}) => {
+  const statusMap: Partial<Record<string, AttendanceStatus>> = {};
 
-  const offset = getMonthStartOffset(data.year, new Date(`${data.month} 1, ${data.year}`).getMonth() + 1);
-  const totalDays = getDaysInMonth(data.year, new Date(`${data.month} 1, ${data.year}`).getMonth() + 1);
+  days.forEach((d) => {
+    statusMap[d.date] = d.status;
+  });
 
-  const cells: (number | null)[] = [
-    ...Array(offset).fill(null),
-    ...Array.from({ length: totalDays }, (_, i) => i + 1),
-  ];
+  const firstDow = new Date(year, month, 1).getDay();
+  const startOffset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  type Cell = { day: number | null; date: string | null };
+
+  const cells: Cell[] = [];
+
+  for (let i = 0; i < startOffset; i++) {
+    cells.push({ day: null, date: null });
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(month + 1).padStart(2, "0");
+    const dd = String(d).padStart(2, "0");
+    cells.push({ day: d, date: `${year}-${mm}-${dd}` });
+  }
 
   return (
-    <div className="bg-white rounded-xl border p-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold text-gray-900">
-          Monthly Attendance Calendar — {label}
-        </h2>
-        {/* Legend */}
-        <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
-          {LEGEND.map((l) => (
-            <span key={l.status} className="flex items-center gap-1.5">
-              <span className={`w-2.5 h-2.5 rounded-full ${DOT_COLORS[l.status]}`} />
-              {l.label}
-            </span>
-          ))}
-        </div>
-      </div>
+    <div className="w-full">
 
-      {/* Week-day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {WEEK_DAYS.map((d) => (
-          <div key={d} className="text-center text-[10px] font-semibold text-gray-400 py-1">
-            {d}
+      {/* LEGEND */}
+      <div className="flex flex-wrap gap-3 mb-3">
+        {[
+          { label: "Present", cls: "bg-indigo-700" },
+          { label: "Absent", cls: "bg-red-500" },
+          { label: "Holiday", cls: "bg-gray-300" },
+        ].map(({ label, cls }) => (
+          <div key={label} className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${cls}`} />
+            <span className="text-[11px] text-gray-500">{label}</span>
           </div>
         ))}
       </div>
 
-      {/* Day cells */}
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          if (!day) return <div key={`empty-${i}`} />;
-          const status: AttendanceStatus = statusMap.get(day) ?? "NONE";
+      {/* WEEKDAYS */}
+      <div className="grid grid-cols-7 mb-2">
+        {WEEKDAYS.map((wd) => (
+          <div
+            key={wd}
+            className="text-center text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase py-1"
+          >
+            {wd}
+          </div>
+        ))}
+      </div>
+
+      {/* DAYS GRID */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+
+        {cells.map((cell, i) => {
+          if (!cell.day || !cell.date) {
+            return (
+              <div
+                key={`e-${i}`}
+                className="aspect-square"
+              />
+            );
+          }
+
+          const status = statusMap[cell.date] ?? "empty";
+          const isActive = status !== "empty";
+
           return (
             <div
-              key={day}
-              className={`flex items-center justify-center rounded-full w-9 h-9 mx-auto text-sm font-semibold
-                ${ATTENDANCE_CELL_STYLES[status]}`}
+              key={cell.date}
+              title={status}
+              className={`
+                aspect-square
+                flex items-center justify-center
+                rounded-full
+                text-[11px] sm:text-[12px]
+
+                /* RESPONSIVE SIZE */
+                w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10
+
+                mx-auto
+
+                transition-all duration-200
+
+                ${dayClasses[status]}
+
+                ${isActive ? "cursor-pointer" : ""}
+
+                /* hover only on desktop */
+                ${isActive ? "md:hover:scale-105 md:hover:shadow-md" : ""}
+              `}
             >
-              {day}
+              {cell.day}
             </div>
           );
         })}
       </div>
-
-      {/* Mobile legend */}
-      <div className="flex sm:hidden items-center gap-4 text-xs text-gray-500 mt-3 pt-3 border-t">
-        {LEGEND.map((l) => (
-          <span key={l.status} className="flex items-center gap-1.5">
-            <span className={`w-2.5 h-2.5 rounded-full ${DOT_COLORS[l.status]}`} />
-            {l.label}
-          </span>
-        ))}
-      </div>
     </div>
   );
 };
-
-export default AttendanceCalendar;

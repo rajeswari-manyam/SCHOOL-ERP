@@ -27,18 +27,26 @@ export function SendFeeReminderModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+   <div className="fixed inset-0 z-[60] flex items-center justify-center sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
       {/* Modal */}
-      <Card className="relative z-10 w-[440px] max-w-[95vw] bg-white rounded-2xl shadow-2xl overflow-hidden">
+     <Card className="
+  relative z-10 
+  w-full sm:w-[440px] 
+  h-full sm:h-auto 
+  max-w-full sm:max-w-[95vw] 
+  rounded-none sm:rounded-2xl 
+  bg-white shadow-2xl 
+  flex flex-col 
+  overflow-hidden
+"> 
 
         {/* ── Header ── */}
-        <div className="px-5 py-4 flex items-start justify-between border-b border-slate-100">
+       <div className="sticky top-0 z-10 bg-white px-4 sm:px-5 py-4 flex items-start justify-between border-b border-slate-100"> 
           <div>
             <h2 className="text-sm font-bold text-slate-800">Send Fee Reminder</h2>
             <p className={`${typography.body.small} text-slate-500 mt-0.5`}>
@@ -54,7 +62,7 @@ export function SendFeeReminderModal({
         </div>
 
         {/* ── Body ── */}
-        <div className="px-5 py-4 space-y-4">
+     <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
 
           {/* Overdue summary pills */}
           <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
@@ -78,7 +86,7 @@ export function SendFeeReminderModal({
                 Message Preview
               </span>
             </div>
-            <div className="px-4 py-3">
+           <div className="px-4 py-3 text-sm sm:text-xs"> 
               <p className="text-xs text-slate-700 leading-relaxed">{messagePreview}</p>
               <p className="text-[10px] text-slate-400 text-right mt-2">10:45 AM</p>
             </div>
@@ -96,7 +104,7 @@ export function SendFeeReminderModal({
                   type="checkbox"
                   checked={sendToFather}
                   onChange={() => setSendToFather((v) => !v)}
-                  className="w-4 h-4 accent-green-600 rounded"
+                 className="w-5 h-5 accent-green-600 rounded"
                 />
                 <span className="text-xs text-slate-700">
                   <span className="font-semibold">{fatherPhone}</span>
@@ -120,7 +128,7 @@ export function SendFeeReminderModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-1">
+         <div className="sticky bottom-0 bg-white pt-3 flex gap-3"> 
             <button
               onClick={onClose}
               className={`flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 ${typography.body.small} font-semibold hover:bg-slate-50 transition-colors`}

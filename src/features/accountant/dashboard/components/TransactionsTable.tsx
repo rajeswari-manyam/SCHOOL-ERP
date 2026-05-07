@@ -167,43 +167,51 @@ export const TransactionsTable = ({
       </div>
 
      
-      <div className="md:hidden divide-y divide-slate-100">
-        {table.getRowModel().rows.map((row) => {
-          const t = row.original;
+    <div className="md:hidden divide-y divide-slate-100 space-y-1">
+  {table.getRowModel().rows.map((row) => {
+    const t = row.original;
 
-          return (
-            <div key={row.id} className="py-3 px-1">
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-slate-400 font-mono">
-                  {t.time}
-                </p>
+    return (
+      <div key={row.id} className="py-3.5 px-3 space-y-2 bg-white rounded-lg">
 
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${getBadge(
-                    t.mode
-                  )}`}
-                >
-                  {t.mode}
-                </span>
-              </div>
+        {/* Top Row */}
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-slate-400 font-mono">
+            {t.time}
+          </p>
 
-              <p className={`${typography.body.small} font-semibold text-slate-800 mt-1`}>
-                {t.student}
-              </p>
+          <span
+            className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${getBadge(
+              t.mode
+            )}`}
+          >
+            {t.mode}
+          </span>
+        </div>
 
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs text-slate-400">{t.className}</span>
-                <span className="text-xs text-slate-300">·</span>
-                <span className="text-xs text-slate-400">{t.feeHead}</span>
-                <span className="text-xs text-slate-300">·</span>
-                <span className="text-xs font-semibold text-slate-700">
-                  ₹{t.amount}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        {/* Student */}
+        <p className="text-sm font-semibold text-slate-900 leading-tight">
+          {t.student}
+        </p>
+
+        {/* Meta Info */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+            <span>{t.className}</span>
+            <span>•</span>
+            <span>{t.feeHead}</span>
+          </div>
+
+          {/* Amount (highlighted) */}
+          <span className="text-sm font-bold text-slate-900">
+            ₹{t.amount}
+          </span>
+        </div>
+
       </div>
+    );
+  })}
+</div>
     </>
   );
 };

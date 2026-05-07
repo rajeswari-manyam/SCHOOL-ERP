@@ -1,53 +1,54 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { profileApi } from "../api/profile.api";
-import type { ProfileData, StudentProfile } from "../types/profile.types";
+import { useState, useCallback } from 'react';
+import type { Student, NavItem } from "../types/profile.types";
+import { STUDENT_DATA, NAV_ITEMS } from "../data/profile.mock";
 
-// Query keys
-export const PROFILE_KEYS = {
-  all: ["profile"] as const,
-  profile: () => [...PROFILE_KEYS.all, "data"] as const,
-};
+// ─── useStudent ──────────────────────────────────────────────────────────────
 
-// Get student profile
-export const useProfile = () => {
-  return useQuery({
-    queryKey: PROFILE_KEYS.profile(),
-    queryFn: profileApi.getProfile,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
+export function useStudent() {
+  const [student] = useState<Student>(STUDENT_DATA);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
 
-// Update profile mutation
-export const useUpdateProfile = () => {
-  const queryClient = useQueryClient();
+  return { student, loading, error };
+}
 
-  return useMutation({
-    mutationFn: (updates: Partial<StudentProfile>) => profileApi.updateProfile(updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.all });
-    },
-  });
-};
+// ─── useNavigation ───────────────────────────────────────────────────────────
 
-// Download document hook
-export const useDownloadDocument = () => {
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+export function useNavigation(initialActive = 'profile') {
+  const [activeNav, setActiveNav] = useState<string>(initialActive);
+  const navItems: NavItem[] = NAV_ITEMS;
 
-  const download = async (documentId: string, fileName: string) => {
-    setDownloadingId(documentId);
-    try {
-      const blob = await profileApi.downloadDocument(documentId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setDownloadingId(null);
-    }
-  };
+  const navigate = useCallback((id: string) => {
+    setActiveNav(id);
+  }, []);
 
-  return { download, downloadingId };
-};
+  return { navItems, activeNav, navigate };
+}
+
+// ─── useDownload ─────────────────────────────────────────────────────────────
+
+export function useDownload() {
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const handleDownload = useCallback((id: string, title: string) => {
+    setDownloading(id);
+    // Simulate download delay
+    setTimeout(() => {
+      setDownloading(null);
+      console.log(`Downloaded: ${title}`);
+    }, 1500);
+  }, []);
+
+  return { downloading, handleDownload };
+}
+
+// ─── useNotifications ────────────────────────────────────────────────────────
+
+export function useNotifications() {
+  const [count] = useState(3);
+  const [open, setOpen] = useState(false);
+
+  const toggle = useCallback(() => setOpen((prev) => !prev), []);
+
+  return { count, open, toggle };
+}

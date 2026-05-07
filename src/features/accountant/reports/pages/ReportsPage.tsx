@@ -103,17 +103,17 @@ export default function ReportsPage() {
   return (
     <div className="flex min-h-screen bg-gray-50/50">
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-3 py-4 sm:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-6">  
 
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-xs flex items-center gap-1.5 text-gray-400 mb-1">
                 <span>Dashboard</span>
                 <ChevronRight className="w-3 h-3" />
                 <span className="text-gray-600 font-medium">Reports</span>
               </div>
-              <h1 className="text-xl font-bold text-gray-900">Financial Reports</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">Financial Reports</h1>
               <p className="text-sm text-gray-500">Generate and download financial reports</p>
             </div>
 

@@ -153,22 +153,27 @@ export function Concessions({ onAddConcession }: { onAddConcession: () => void }
       </div>
 
       {/* ── ACTIONS ── */}
-      <div className="px-5 flex items-center justify-between gap-2">
+      <div className="px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <p className="text-sm text-slate-500">
           Showing <span className="font-semibold text-slate-700">{concessionsData.length}</span> concessions
         </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-slate-600 border-slate-200">
-            <Download className="w-3.5 h-3.5" /> Export
-          </Button>
-          <Button
-            onClick={onAddConcession}
-            size="sm"
-            className="bg-[#3525CD] hover:bg-[#2d1fb5] text-white gap-1.5 shadow-sm shadow-blue-200"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add Concession
-          </Button>
-        </div>
+       <div className="flex gap-2 w-full sm:w-auto">
+  <Button
+    variant="outline"
+    size="sm"
+    className="flex-1 sm:flex-none gap-1.5 text-slate-600 border-slate-200"
+  >
+    <Download className="w-3.5 h-3.5" /> Export
+  </Button>
+           <Button
+    onClick={onAddConcession}
+    size="sm"
+    className="flex-1 sm:flex-none bg-[#3525CD] hover:bg-[#2d1fb5] text-white gap-1.5"
+  >
+    <Plus className="w-3.5 h-3.5" /> Add Concession
+  </Button>
+</div>
+       
       </div>
 
       {/* ── TABLE ── */}

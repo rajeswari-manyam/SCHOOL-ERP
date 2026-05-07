@@ -63,14 +63,14 @@ const FigmaCheckbox = ({
   <button
     type="button"
     onClick={() => onChange(!checked)}
-    className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 shrink-0 transition-colors
+    className={`w-5 h-5 sm:w-[18px] sm:h-[18px] rounded flex items-center justify-center border-2 shrink-0 transition-colors
       ${checked
         ? "bg-indigo-600 border-indigo-600"
         : "bg-white border-gray-300 hover:border-indigo-400"
       }`}
   >
     {checked && (
-      <Check size={10} strokeWidth={2.5} className="text-white" />
+      <Check size={11} strokeWidth={2.5} className="text-white" />
     )}
   </button>
 );
@@ -141,47 +141,47 @@ export const GenerateReportModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-0 sm:p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full sm:max-w-lg bg-white shadow-2xl flex flex-col sm:rounded-2xl rounded-none h-full sm:h-auto sm:max-h-[90vh]">
+      <div className="w-full sm:max-w-lg bg-white shadow-2xl flex flex-col rounded-t-2xl sm:rounded-2xl h-[92vh] sm:h-auto sm:max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-[15px] font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 shrink-0">
+          <h2 className="text-sm sm:text-[15px] font-semibold text-gray-900">
             Generate {title}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition rounded-full p-0.5"
+            className="text-gray-400 hover:text-gray-600 transition rounded-full p-1"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+        <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
 
           <div>
-            <Label className="text-[11px] font-semibold text-gray-900 uppercase tracking-widest">
+            <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-900 uppercase tracking-widest">
               Report Type
             </Label>
             <Input
               value={title}
               disabled
-              className="mt-1.5 bg-[#EFF4FF] border-none text-gray-700 font-medium h-10 rounded-lg"
+              className="mt-1.5 bg-[#EFF4FF] border-none text-gray-700 font-medium h-11 sm:h-10 rounded-lg text-sm"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+              <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 As of Date
               </Label>
               <Input
                 type="date"
                 {...register("asOfDate")}
-                className={`mt-1.5 h-10 rounded-lg ${
+                className={`mt-1.5 h-11 sm:h-10 rounded-lg text-sm ${
                   errors.asOfDate ? "border border-red-500" : "bg-[#EFF4FF] border-none"
                 }`}
               />
@@ -191,12 +191,12 @@ export const GenerateReportModal = ({
             </div>
 
             <div>
-              <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+              <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 Class Filter
               </Label>
               <select
                 {...register("classFilter")}
-                className={`mt-1.5 w-full h-10 px-3 rounded-lg text-sm ${
+                className={`mt-1.5 w-full h-11 sm:h-10 px-3 rounded-lg text-sm ${
                   errors.classFilter ? "border border-red-500" : "bg-[#EFF4FF]"
                 }`}
               >
@@ -214,16 +214,16 @@ export const GenerateReportModal = ({
             control={control}
             render={({ field }) => (
               <div>
-                <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                   Min Overdue
                 </Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 overflow-x-auto no-scrollbar pb-1">
                   {overdueOptions.map((opt) => (
                     <button
                       key={opt}
                       type="button"
                       onClick={() => field.onChange(opt)}
-                      className={`px-4 py-1.5 text-sm rounded-full border-2 transition font-medium
+                      className={`flex-1 sm:flex-none px-4 py-2 sm:py-1.5 text-sm rounded-full border-2 transition font-medium whitespace-nowrap
                         ${field.value === opt
                           ? "bg-indigo-600 text-white border-indigo-600"
                           : "bg-white border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600"
@@ -243,12 +243,12 @@ export const GenerateReportModal = ({
           />
 
           <div>
-            <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+            <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
               Include Columns
             </Label>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-3 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 sm:gap-y-3 mt-3">
               {columnEntries.map(([key, val]) => (
-                <label key={key} className="flex items-center gap-2.5 cursor-pointer">
+                <label key={key} className="flex items-center gap-3 sm:gap-2.5 cursor-pointer">
                   <FigmaCheckbox
                     checked={val}
                     onChange={(v) => setValue(`includeColumns.${key}` as any, v)}
@@ -261,9 +261,9 @@ export const GenerateReportModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+              <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 Format
               </Label>
               <div className="flex gap-2 mt-2">
@@ -272,7 +272,7 @@ export const GenerateReportModal = ({
                     key={f}
                     type="button"
                     onClick={() => setValue("format", f)}
-                    className={`px-5 py-1.5 text-sm rounded-full border-2 font-medium transition
+                    className={`flex-1 sm:flex-none px-5 py-2 sm:py-1.5 text-sm rounded-full border-2 font-medium transition
                       ${values.format === f
                         ? "bg-indigo-600 text-white border-indigo-600"
                         : "bg-white border-gray-200 text-gray-500"
@@ -290,18 +290,18 @@ export const GenerateReportModal = ({
             </div>
 
             <div>
-              <Label className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+              <Label className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 Send To
               </Label>
               <div className="flex flex-col gap-2.5 mt-2">
-                <label className="flex items-center gap-2.5 cursor-pointer">
+                <label className="flex items-center gap-3 sm:gap-2.5 cursor-pointer">
                   <FigmaCheckbox
                     checked={values.sendTo.myEmail}
                     onChange={(v) => setValue("sendTo.myEmail", v)}
                   />
                   <span className="text-sm text-gray-700">My email</span>
                 </label>
-                <label className="flex items-center gap-2.5 cursor-pointer">
+                <label className="flex items-center gap-3 sm:gap-2.5 cursor-pointer">
                   <FigmaCheckbox
                     checked={values.sendTo.principal}
                     onChange={(v) => setValue("sendTo.principal", v)}
@@ -312,9 +312,9 @@ export const GenerateReportModal = ({
             </div>
           </div>
 
-          <div className="flex items-start gap-2.5 bg-indigo-50 rounded-xl px-4 py-3 text-sm text-indigo-600">
+          <div className="flex items-start gap-2.5 bg-indigo-50 rounded-xl px-3 sm:px-4 py-3 text-sm text-indigo-600">
             <Info className="w-4 h-4 mt-0.5 shrink-0" />
-            <p className="leading-snug">
+            <p className="leading-snug text-xs sm:text-sm">
               Report will include students with dues based on selected filters.
             </p>
           </div>
@@ -322,20 +322,21 @@ export const GenerateReportModal = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex gap-2 sm:gap-3 shrink-0">
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 h-11 rounded-xl border-gray-200 text-gray-700 font-medium hover:bg-gray-50"
+            className="flex-1 h-12 sm:h-11 rounded-xl border-gray-200 text-gray-700 font-medium hover:bg-gray-50 text-sm"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit(submitHandler)}
-            className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium gap-2"
+            className="flex-1 h-12 sm:h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium gap-2 text-sm"
           >
             <Download className="w-4 h-4" />
-            Generate Report
+            <span className="hidden sm:inline">Generate Report</span>
+            <span className="sm:hidden">Generate</span>
           </Button>
         </div>
 

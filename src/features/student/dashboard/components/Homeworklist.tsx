@@ -1,49 +1,85 @@
 import type { HomeworkItem } from "../types/dashboard.types";
+import { BookOpen, Calculator, FlaskConical, Download } from "lucide-react";
 
 interface Props {
   data: HomeworkItem[];
 }
 
-const iconMap: Record<HomeworkItem["colorType"], { icon: string; bg: string; text: string }> = {
-  blue: { icon: "📄", bg: "bg-blue-100", text: "text-blue-700" },
-  green: { icon: "📐", bg: "bg-green-100", text: "text-green-700" },
-  amber: { icon: "🔬", bg: "bg-amber-100", text: "text-amber-700" },
+const BRAND = "#3525CD";
+const CARD_BG = "#EEF0FF";
+const ICON_BG = "#DDE0FF";
+
+const subjectIconMap: Record<HomeworkItem["colorType"], React.ReactNode> = {
+  blue: <BookOpen size={20} color={BRAND} strokeWidth={2} />,
+  green: <Calculator size={20} color={BRAND} strokeWidth={2} />,
+  amber: <FlaskConical size={20} color={BRAND} strokeWidth={2} />,
 };
 
 export const HomeworkList = ({ data }: Props) => {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-900">Homework Due This Week</h3>
-      </div>
+    <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 transition-all duration-200 md:hover:border-[#3525CD] md:hover:shadow-md">
+      
+      {/* Title */}
+      <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
+        Homework Due This Week
+      </h3>
 
-      <div className="space-y-0">
-        {data.map((hw, idx) => {
-          const style = iconMap[hw.colorType];
-          return (
+      {/* List */}
+      <div className="flex flex-col gap-2 sm:gap-3">
+        {data.map((hw) => (
+          <div
+            key={hw.id}
+            className="
+              flex flex-col sm:flex-row sm:items-center
+              gap-3 sm:gap-4
+              rounded-xl p-3 sm:px-4 sm:py-4
+              transition-all duration-200
+              md:hover:shadow-sm md:hover:-translate-y-[2px]
+              cursor-pointer
+            "
+            style={{ backgroundColor: CARD_BG }}
+          >
+            {/* Icon */}
             <div
-              key={hw.id}
-              className={`flex items-center gap-3 py-3 ${
-                idx < data.length - 1 ? "border-b border-gray-50" : ""
-              }`}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: ICON_BG }}
             >
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${style.bg}`}
-              >
-                {style.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800">
-                  {hw.subject}: {hw.title}
-                </p>
-                <p className="text-[11px] text-gray-400">{hw.dueDate}</p>
-              </div>
-              <button className="flex items-center gap-1 text-[11px] text-blue-600 border border-blue-200 rounded-md px-2.5 py-1 hover:bg-blue-50 transition-colors whitespace-nowrap">
-                ⬇ Download Brief
-              </button>
+              {subjectIconMap[hw.colorType]}
             </div>
-          );
-        })}
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
+                {hw.subject}: {hw.title}
+              </p>
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
+                Due: {hw.dueDate}
+              </p>
+            </div>
+
+            {/* Button */}
+            <button
+              className="
+                flex items-center justify-center gap-1.5
+                text-xs font-semibold
+                rounded-lg sm:rounded-xl
+                px-3 py-2 sm:px-4 sm:py-2.5
+                w-full sm:w-auto
+                whitespace-nowrap
+                transition-all duration-200
+                md:hover:bg-[#3525CD] md:hover:text-white
+              "
+              style={{
+                color: BRAND,
+                backgroundColor: "white",
+                border: `1.5px solid ${BRAND}`,
+              }}
+            >
+              <Download size={14} strokeWidth={2.5} />
+              Download Brief
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );

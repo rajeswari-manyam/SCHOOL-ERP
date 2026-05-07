@@ -10,7 +10,7 @@ import {
 import type {
   AttendanceDashboardResponse,
   MonthAttendance,
-} from "../types/Attendance.types";
+} from "../types/attendance.types";
 
 // Simulated delay for realistic loading
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

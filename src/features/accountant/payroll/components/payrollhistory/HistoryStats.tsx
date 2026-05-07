@@ -1,10 +1,8 @@
-
 import { TrendingUp, Users, Wallet } from "lucide-react";
 import { formatCurrency } from "../../../../../utils/formatters";
 import { StatCard } from "@/components/ui/statcard";
 import { Avatar } from "@/components/ui/avatar";
 import type { HistoryStatsProps } from "../../types/payroll.types";
-
 
 const MAX_SHOWN = 4;
 
@@ -63,22 +61,22 @@ export const HistoryStats = ({
   avatars = [],
 }: HistoryStatsProps) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 
       {/* TOTAL PAYROLL */}
-    <StatCard
-  label={`Total Payroll ${fyLabel}`}
-  icon={<TrendingUp className="w-4 h-4 text-[#3525CD]" />}
-  value={
-    <span className="text-[#3525CD]">
-      {formatCurrency(totalPayrollFY)}
-    </span>
-  }
-  badge={{
-    text: `+${growthPercent}% vs last FY`,
-    variant: "green",
-  }}
-/>
+      <StatCard
+        label={`Total Payroll ${fyLabel}`}
+        icon={<TrendingUp className="w-4 h-4 text-[#3525CD]" />}
+        value={
+          <span className="text-[#3525CD]">
+            {formatCurrency(totalPayrollFY)}
+          </span>
+        }
+        badge={{
+          text: `+${growthPercent}% vs last FY`,
+          variant: "green",
+        }}
+      />
 
       {/* STAFF COUNT */}
       <StatCard

@@ -1,45 +1,40 @@
-// Profile types for student profile management
+// ─── Student & Profile Types ────────────────────────────────────────────────
 
-export type StudentStatus = "ACTIVE" | "INACTIVE" | "TRANSFERRED";
-export type DocumentCategory = "ACADEMIC" | "IDENTITY" | "FINANCIAL" | "MEDICAL" | "OTHER";
-
-export interface StudentProfile {
+export interface Student {
   id: string;
-  name: string;
   admissionNo: string;
   rollNo: string;
+  name: string;
+  avatarInitials: string;
+  avatarColor: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   class: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-  gender: "male" | "female" | "other";
-  address: string;
-  status: StudentStatus;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  avatar?: string;
+  section: string;
+  classTeacher: Teacher;
+  academic: AcademicInfo;
+  personal: PersonalInfo;
+  quickDownloads: QuickDownload[];
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  title: string;
+  avatarInitials: string;
 }
 
 export interface AcademicInfo {
-  class: string;
-  section: string;
-  rollNumber: string;
-  admissionNumber: string;
   academicYear: string;
   board: string;
-  classRoom: string;
-  stream?: string;
-  subjects: string[];
+  section: string;
+  classroom: string;
 }
 
 export interface PersonalInfo {
   dateOfBirth: string;
-  gender: string;
+  gender: 'Male' | 'Female' | 'Other';
   bloodGroup: string;
-  age: string;
+  age: number;
   fatherName: string;
   fatherPhone: string;
   motherName: string;
@@ -50,15 +45,35 @@ export interface PersonalInfo {
 export interface QuickDownload {
   id: string;
   title: string;
-  size: string;
-  type: "report_card" | "certificate" | "timetable" | "id_card";
-  downloadUrl: string;
-  lastUpdated: string;
+  subtitle: string;
+  type: 'ACADEMIC' | 'IDENTITY' | 'FINANCIAL';
+  fileSize: string;
+  documentCode?: string;
 }
 
-export interface ProfileData {
-  student: StudentProfile;
-  academic: AcademicInfo;
-  personal: PersonalInfo;
-  downloads: QuickDownload[];
+// ─── Navigation Types ────────────────────────────────────────────────────────
+
+export type NavItem = {
+  id: string;
+  label: string;
+  path: string;
+  icon?: string;
+};
+
+// ─── UI Component Types ──────────────────────────────────────────────────────
+
+export type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral';
+
+export type DocumentType = 'ACADEMIC' | 'IDENTITY' | 'FINANCIAL';
+
+export interface InfoFieldProps {
+  label: string;
+  value: string;
+  fullWidth?: boolean;
+}
+
+export interface SectionHeaderProps {
+  title: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
