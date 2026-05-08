@@ -44,13 +44,13 @@ export const ReportCard = ({
     <Card className="bg-white border border-gray-200 hover:border-[#3525CD] transition-all duration-200 overflow-hidden rounded-xl">
       <CardContent className="p-4 sm:p-5">
 
-        <div className="flex items-start justify-between mb-3">
-          <div className={`p-2.5 rounded-lg ${iconBg}`}>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className={`p-2.5 rounded-lg ${iconBg} flex-shrink-0`}>
             <Icon className="w-5 h-5" />
           </div>
 
           {autoSend && (
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-[#3525CD] bg-[#EEF2FF] px-2 py-1 rounded-full">
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-[#3525CD] bg-[#EEF2FF] px-2 py-1 rounded-full flex-shrink-0">
               <Check className="w-3 h-3 flex-shrink-0" />
               <span className="hidden sm:inline">Auto-sent to Principal on 1st</span>
               <span className="sm:hidden">Auto-sent</span>
@@ -70,7 +70,7 @@ export const ReportCard = ({
           <Button
             size="sm"
             onClick={onGenerate}
-            className="text-white text-xs sm:text-sm h-8 px-3 sm:px-4 bg-[#3525CD] hover:bg-[#2a1eb0] transition-colors"
+            className="text-white text-xs sm:text-sm h-9 sm:h-8 px-4 sm:px-3 bg-[#3525CD] hover:bg-[#2a1eb0] transition-colors flex-1 sm:flex-none justify-center"
           >
             Generate
           </Button>
@@ -78,7 +78,7 @@ export const ReportCard = ({
           <Button
             size="sm"
             variant="outline"
-            className="text-xs sm:text-sm h-8 px-3 sm:px-4 border-gray-200 text-gray-600 hover:border-[#3525CD] hover:text-[#3525CD] transition-colors"
+            className="text-xs sm:text-sm h-9 sm:h-8 px-4 sm:px-3 border-gray-200 text-gray-600 hover:border-[#3525CD] hover:text-[#3525CD] transition-colors flex-1 sm:flex-none justify-center"
           >
             PDF
           </Button>
@@ -86,7 +86,7 @@ export const ReportCard = ({
           <Button
             size="sm"
             variant="outline"
-            className="text-xs sm:text-sm h-8 px-3 sm:px-4 border-gray-200 text-gray-600 hover:border-[#3525CD] hover:text-[#3525CD] transition-colors"
+            className="text-xs sm:text-sm h-9 sm:h-8 px-4 sm:px-3 border-gray-200 text-gray-600 hover:border-[#3525CD] hover:text-[#3525CD] transition-colors flex-1 sm:flex-none justify-center"
           >
             Excel
           </Button>

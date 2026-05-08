@@ -16,8 +16,6 @@ import type {
   PayrollFormData,
 } from "../types/payroll.types";
 
-
-
 /* ---------------- SCHEMA ---------------- */
 const schema = z.object({
   paymentMode: z.enum(["Bank Transfer", "Cash", "UPI", "Cheque"]),
@@ -32,9 +30,6 @@ const schema = z.object({
 });
 
 type PayrollSchemaData = z.infer<typeof schema>;
-
-
-
 
 export const ProcessPayrollModal = ({
   month = "April 2025",
@@ -70,20 +65,19 @@ export const ProcessPayrollModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-[480px] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white w-full sm:max-w-[480px] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden">
 
         {/* HEADER */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-start justify-between px-4 py-3 border-b border-gray-100">
           <div>
-            <h2 className="text-[15px] font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-gray-900">
               Process {month} Payroll
             </h2>
-            <p className="text-[12px] text-gray-400">
-              Review and confirm before processing
+            <p className="text-xs text-gray-400">
+              Review before processing
             </p>
           </div>
-
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-4 h-4" />
           </button>
@@ -129,13 +123,11 @@ export const ProcessPayrollModal = ({
             <label className="text-[12px] font-medium text-gray-500 mb-1.5 block">
               Payment Date
             </label>
-
             <input
               type="date"
               {...register("paymentDate")}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
             />
-
             {errors.paymentDate && (
               <p className="text-[11px] text-red-500 mt-1">
                 {errors.paymentDate.message}
@@ -148,7 +140,6 @@ export const ProcessPayrollModal = ({
             <label className="text-[12px] font-medium text-gray-500 mb-1.5 block">
               Approval Note
             </label>
-
             <textarea
               {...register("approvalNote")}
               rows={3}
@@ -165,12 +156,10 @@ export const ProcessPayrollModal = ({
                   {attendanceDeductions.length} staff have deductions
                 </p>
               </div>
-
               <ul className="pl-6 space-y-1">
                 {attendanceDeductions.map((d, i) => (
                   <li key={i} className="text-[12px] text-amber-700">
-                    {d.staffName}: {d.daysAbsent} day(s) —{" "}
-                    {formatCurrency(d.amountDeducted)}
+                    {d.staffName}: {d.daysAbsent} day(s) — {formatCurrency(d.amountDeducted)}
                   </li>
                 ))}
               </ul>
@@ -184,7 +173,6 @@ export const ProcessPayrollModal = ({
               error={errors.confirmAttendance?.message}
               {...register("confirmAttendance")}
             />
-
             <CheckboxField
               label="I confirm salary configuration"
               error={errors.confirmSalary?.message}
@@ -193,12 +181,12 @@ export const ProcessPayrollModal = ({
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="flex gap-2.5 px-5 py-4 border-t bg-gray-50">
+        {/* FOOTER - Border removed from buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 px-4 py-3 border-t border-gray-100 bg-white">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 border rounded-xl py-2.5 text-sm"
+            className="w-full sm:flex-1 rounded-xl py-2.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
           >
             Cancel
           </button>
@@ -207,19 +195,17 @@ export const ProcessPayrollModal = ({
             type="button"
             onClick={handleSubmit(handleFormSubmit)}
             disabled={!isValid}
-            className={`flex-[2] rounded-xl py-2.5 text-sm font-semibold text-white ${
-              isValid ? "bg-[#3525CD]" : "bg-[#C7C2F0]"
+            className={`w-full sm:flex-[2] rounded-xl py-2.5 text-sm font-semibold text-white ${
+              isValid ? "bg-[#3525CD] hover:bg-[#2a1fb5]" : "bg-[#C7C2F0]"
             }`}
           >
-            Process Payroll — {formatCurrency(summary.totalNet)}
+            Process — {formatCurrency(summary.totalNet)}
           </Button>
         </div>
       </div>
     </div>
   );
 };
-
-
 
 /* ---------------- DEMO ---------------- */
 export default function Demo() {

@@ -69,28 +69,28 @@ const cardConfig = [
 
 export const StatCardsSection = ({ data }: { data: StatItem[] }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
       {data.map((item, i) => {
         const config = cardConfig[i];
 
         return (
           <div
             key={item.label}
-            className="bg-white rounded-xl border border-slate-200 px-3 py-3 sm:px-4 sm:py-3.5 flex items-start gap-3 hover:border-indigo-300 transition-colors"
+            className="bg-white rounded-xl border border-slate-200 px-2.5 py-2.5 sm:px-4 sm:py-3.5 flex items-start gap-2 hover:border-indigo-300 transition-colors"
           >
             {/* Icon */}
             <div
-              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${config.accent} ${config.iconColor} flex items-center justify-center flex-shrink-0`}
+              className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg ${config.accent} ${config.iconColor} flex items-center justify-center flex-shrink-0`}
             >
               <span className="scale-90 sm:scale-100">{config.icon}</span>
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              <p className="text-[10px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
                 {config.label}
               </p>
 
-              <p className="text-[15px] sm:text-[17px] font-bold text-slate-900 leading-tight truncate">
+              <p className="text-[16px] sm:text-[17px] font-bold text-slate-900 leading-tight truncate leading-tight">
                 {typeof item.value === "number"
                   ? formatCurrency(item.value)
                   : item.value}
@@ -98,7 +98,7 @@ export const StatCardsSection = ({ data }: { data: StatItem[] }) => {
 
               {config.sub1 && (
                 <p
-                  className={`text-[10px] sm:text-[11px] mt-1 ${config.sub1Color ?? "text-slate-500"
+                  className={`text-[11px] sm:text-[11px] mt-1 ${config.sub1Color ?? "text-slate-500"
                     }`}
                 >
                   {config.sub1}
@@ -115,7 +115,7 @@ export const StatCardsSection = ({ data }: { data: StatItem[] }) => {
               )}
 
               {config.progress !== undefined && (
-                <div className="mt-1.5 h-1 bg-slate-100 rounded-full">
+                <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full">
                   <div
                     className="h-full bg-indigo-500 rounded-full"
                     style={{ width: `${config.progress}%` }}

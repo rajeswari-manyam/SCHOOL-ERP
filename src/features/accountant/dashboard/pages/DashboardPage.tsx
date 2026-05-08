@@ -19,18 +19,18 @@ const [viewAllTransactions, setViewAllTransactions] = useState(false);
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
    
-<div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+<div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-slate-800">Finance Dashboard</h1>
+          <h1 className="text-base sm:text-lg font-semibold text-slate-800">Finance Dashboard</h1>
           <p className="text-xs text-slate-400 mt-0.5">
             Monday, 7 April 2025 · April 2025 Session
           </p>
         </div>
-      <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <Button
-            variant="outline"
-            className="text-sm h-8 px-4 border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
-          >
+     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"> 
+        <Button
+  variant="outline"
+  className="text-sm h-8 px-4 whitespace-nowrap border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
+>
             Generate Report
           </Button>
           <Button className="text-sm h-8 px-4 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -39,25 +39,25 @@ const [viewAllTransactions, setViewAllTransactions] = useState(false);
         </div>
       </div>
 
-     <div className="p-4 md:p-6 space-y-5">
+   <div className="p-2 sm:p-4 md:p-6 space-y-4">
     
         <StatCardsSection data={stats} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 items-start w-full">  
 
           <Card className="lg:col-span-2 border border-slate-200 shadow-none rounded-xl hover:border-indigo-300 transition-colors">
-            <CardHeader className="px-5 py-4 border-b border-slate-100 flex flex-row items-center justify-between">
+            <CardHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
               <CardTitle className="text-sm font-semibold text-slate-800">
                 Recent Transactions — Today
               </CardTitle>
             <button
   onClick={() => setViewAllTransactions((prev) => !prev)}
-  className="text-xs text-indigo-600 font-medium hover:underline"
+className="text-xs text-indigo-600 font-medium hover:underline whitespace-nowrap"
 >
   {viewAllTransactions ? "Show Less" : "View All Transactions"}
 </button>
             </CardHeader>
-   <CardContent className="p-0 overflow-x-auto">
+   <CardContent className="p-0 overflow-x-auto w-full">
   {transactions.length > 0 ? (
     <TransactionsTable
       data={transactions}
@@ -98,7 +98,7 @@ const [viewAllTransactions, setViewAllTransactions] = useState(false);
         <MonthlyCollectionTrend />
 
     
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">   
           <TopPayingClasses />
           <PaymentModeBreakdown />
         </div>

@@ -1,45 +1,30 @@
-// Profile types for student profile management
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type StudentStatus = "ACTIVE" | "INACTIVE" | "TRANSFERRED";
-export type DocumentCategory = "ACADEMIC" | "IDENTITY" | "FINANCIAL" | "MEDICAL" | "OTHER";
+export type StudentStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+export type DocumentType = "ACADEMIC" | "IDENTITY" | "FINANCIAL";
+export type Gender = "Male" | "Female" | "Other";
 
-export interface StudentProfile {
+// ─── Entities ─────────────────────────────────────────────────────────────────
+
+export interface Teacher {
   id: string;
   name: string;
-  admissionNo: string;
-  rollNo: string;
-  class: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-  gender: "male" | "female" | "other";
-  address: string;
-  status: StudentStatus;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  avatar?: string;
+  title: string;
+  avatarInitials: string;
 }
 
 export interface AcademicInfo {
-  class: string;
-  section: string;
-  rollNumber: string;
-  admissionNumber: string;
   academicYear: string;
   board: string;
-  classRoom: string;
-  stream?: string;
-  subjects: string[];
+  section: string;
+  classroom: string;
 }
 
 export interface PersonalInfo {
   dateOfBirth: string;
-  gender: string;
+  gender: Gender;
   bloodGroup: string;
-  age: string;
+  age: number;
   fatherName: string;
   fatherPhone: string;
   motherName: string;
@@ -50,15 +35,38 @@ export interface PersonalInfo {
 export interface QuickDownload {
   id: string;
   title: string;
-  size: string;
-  type: "report_card" | "certificate" | "timetable" | "id_card";
-  downloadUrl: string;
-  lastUpdated: string;
+  subtitle: string;
+  type: DocumentType;
+  fileSize: string;
+  documentCode?: string;
 }
 
-export interface ProfileData {
-  student: StudentProfile;
+export interface Student {
+  id: string;
+  admissionNo: string;
+  rollNo: string;
+  name: string;
+  avatarInitials: string;
+  avatarColor: string;
+  status: StudentStatus;
+  className: string;
+  section: string;
+  classTeacher: Teacher;
   academic: AcademicInfo;
   personal: PersonalInfo;
-  downloads: QuickDownload[];
+  quickDownloads: QuickDownload[];
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+
+export interface NavItem {
+  id: string;
+  label: string;
+  path: string;
+}
+
+export interface FieldConfig {
+  key: string;
+  label: string;
+  span?: number;
 }

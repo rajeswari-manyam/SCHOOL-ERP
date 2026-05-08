@@ -10,7 +10,8 @@ import {
 
 import Sidebar from "@/components/common/Sidebar";
 import Topbar from "@/components/common/Topbar";
-import WhatsAppFAB from "@/components/ui/whatsappfab"; // ✅ ADD THIS
+import WhatsAppFAB from "@/components/ui/whatsappfab";
+import { useUIStore } from "@/store/uiStore";
 
 
 const NavItem = [
@@ -48,25 +49,23 @@ const NavItem = [
 
 
 export const AccountantLayout = () => {
+  const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const collapsed = useUIStore((s) => s.collapsed);
+
+  // Responsive left padding for main content
+  let mainPadding = "md:pl-72";
+  if (!sidebarOpen) mainPadding = "md:pl-0";
+  else if (collapsed) mainPadding = "md:pl-16";
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F4F6FA]">
-      
-      {/* Sidebar */}
       <Sidebar items={NavItem} />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 md:pl-72">
-        
-        {/* Topbar */}
+      <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-20">
           <Outlet />
         </main>
       </div>
-
-      {/* ── WhatsApp FAB (same as ParentLayout) ── */}
       <WhatsAppFAB />
     </div>
   );

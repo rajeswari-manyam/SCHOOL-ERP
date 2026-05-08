@@ -1,1 +1,0 @@
-export { mockTimetable, mockExaminations } from "./ClassTimetableMockdata";

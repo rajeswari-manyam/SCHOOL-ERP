@@ -125,7 +125,7 @@ export const PettyCash = ({ entries }: PettyCashProps) => {
     <div className="space-y-6">
 
       {/* Balance Cards */}
-      <div className="grid grid-cols-3 gap-4">
+     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className="bg-indigo-50/50 border-indigo-100">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-indigo-600 uppercase mb-1">Opening Balance (April 1)</p>
@@ -151,11 +151,65 @@ export const PettyCash = ({ entries }: PettyCashProps) => {
           </CardContent>
         </Card>
       </div>
+<div className="sm:hidden space-y-3">
 
+  {table.getRowModel().rows.map((row) => {
+    const d = row.original;
+
+    return (
+      <div
+        key={row.id}
+        className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm space-y-2"
+      >
+
+        {/* Top row */}
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm font-medium text-gray-800">
+              {d.description}
+            </p>
+
+            <p className="text-xs text-gray-500 mt-1">
+              {formatDate(d.date)} • {d.category}
+            </p>
+          </div>
+
+          <span
+            className={`text-sm font-semibold ${
+              d.amount >= 0 ? "text-emerald-600" : "text-rose-600"
+            }`}
+          >
+            {d.amount >= 0 ? "+" : ""}
+            {formatCurrency(d.amount)}
+          </span>
+        </div>
+
+        {/* Balance */}
+        <p className="text-xs text-gray-500">
+          Balance: {formatCurrency(d.balanceAfter)}
+        </p>
+
+        {/* Receipt + Author */}
+        <p className="text-[11px] text-gray-400">
+          {d.authorizedBy} • {d.receipt}
+        </p>
+
+        {/* Action */}
+        <div className="flex justify-end">
+          <Button size="sm" variant="ghost" className="h-9 w-9 p-0">
+            <Pencil className="w-4 h-4" />
+          </Button>
+        </div>
+
+      </div>
+    );
+  })}
+
+</div>
       {/* TanStack Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="hidden sm:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="w-full overflow-x-auto">
-          <table className="min-w-[900px] sm:min-w-full w-full text-sm">
+          <table className=" w-full text-sm">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id} className="bg-gray-50/50 border-b border-gray-100">
@@ -190,7 +244,7 @@ export const PettyCash = ({ entries }: PettyCashProps) => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50 text-xs text-gray-500 flex justify-between items-center">
+       <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50 text-xs text-gray-500 flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center">
           <span>
             Showing {table.getRowModel().rows.length} of {entries.length} entries
           </span>

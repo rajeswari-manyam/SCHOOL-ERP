@@ -81,66 +81,71 @@ export default function LedgerPage() {
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <span>Accounts</span>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-700 font-medium">Ledger</span>
-          </div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-            Income & Expense Ledger
-          </h1>
-          <p className="text-xs md:text-sm text-gray-500">
-            Financial records — Hanamkonda Public School
-          </p>
-        </div>
+ <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
-        {/* Income / Expenses header actions */}
-        {(activeTab === "income" || activeTab === "expenses") && (
-          <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
-            <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm flex-1 md:flex-none justify-between md:justify-start">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handlePrevMonth}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="px-3 text-sm font-medium text-gray-700">
-                {formatMonth(currentDate)}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleNextMonth}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              className="flex-1 md:flex-none gap-2 text-xs md:text-sm text-gray-600 border-gray-200"
-              onClick={() => setShowExportModal(true)}
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
-            <Button
-              className="flex-1 md:flex-none gap-2 text-xs md:text-sm bg-indigo-600 hover:bg-indigo-700 text-white"
-              onClick={() => setShowAddModal(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Add Entry
-            </Button>
-          </div>
-        )}
+  {/* Breadcrumb + Title */}
+  <div>
+    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+      <span>Accounts</span>
+      <ChevronRight className="w-3 h-3" />
+      <span className="text-gray-700 font-medium">Ledger</span>
+    </div>
+
+    <h1 className="text-lg md:text-2xl font-bold text-gray-900">
+      Income & Expense Ledger
+    </h1>
+
+    <p className="text-xs md:text-sm text-gray-500">
+      Financial records — Hanamkonda Public School
+    </p>
+  </div>
+
+  {/* Actions */}
+  {(activeTab === "income" || activeTab === "expenses") && (
+    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+
+      {/* Month Selector */}
+      <div className="flex items-center justify-between bg-white border rounded-lg px-2 py-1 shadow-sm w-full sm:w-auto">
+        <button onClick={handlePrevMonth}>
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        <span className="px-2 text-xs md:text-sm whitespace-nowrap">
+          {formatMonth(currentDate)}
+        </span>
+
+        <button onClick={handleNextMonth}>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-2 w-full sm:w-auto">
+        <Button
+          variant="outline"
+          className="flex-1 sm:flex-none text-xs"
+          onClick={() => setShowExportModal(true)}
+        >
+          <Download className="w-4 h-4" />
+          Export
+        </Button>
+
+        <Button
+          className="flex-1 sm:flex-none bg-indigo-600 text-white text-xs"
+          onClick={() => setShowAddModal(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Add Entry
+        </Button>
+      </div>
+
+    </div>
+  )}
+
 
         {/* Petty Cash header actions */}
         {activeTab === "petty" && (
-          <div className="flex items-center gap-3">
+         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
             <Button
               variant="outline"
               className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
@@ -161,7 +166,7 @@ export default function LedgerPage() {
       <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} />
 
       {/* Tab Panels */}
-      <div className="mt-6">
+    <div className="mt-4 md:mt-6">  
         {activeTab === "income" && (
           <>
             <IncomeExpenseCards

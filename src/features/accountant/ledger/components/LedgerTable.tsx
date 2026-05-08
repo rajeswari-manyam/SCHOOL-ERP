@@ -157,7 +157,7 @@ const table = useReactTable({
         </h3>
 
         {/* SEARCH */}
-       <div className="relative w-full sm:w-64">
+<div className="relative w-full sm:w-64">
   <input
     type="text"
     value={globalFilter}
@@ -168,10 +168,62 @@ const table = useReactTable({
   <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
 </div>
       </div>
+<div className="sm:hidden space-y-3 p-3">
+  {rows.map((row) => {
+    const data = row.original;
 
+    return (
+      <div
+        key={row.id}
+        className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+      >
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm font-medium text-gray-800">
+              {data.description}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {formatDate(data.date)} • {data.category}
+            </p>
+          </div>
+
+          <span
+            className={`text-sm font-semibold ${
+              data.type === "Income"
+                ? "text-emerald-600"
+                : "text-rose-600"
+            }`}
+          >
+            {formatCurrency(data.amount)}
+          </span>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-3">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onEdit(data)}
+            className="h-8 w-8 p-0"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onDelete?.(data)}
+            className="h-8 w-8 p-0 text-rose-500"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  })}
+</div>
       {/* TABLE */}
-      <div className="w-full overflow-x-auto">
-        <table className="min-w-[900px] sm:min-w-full w-full text-sm">
+     <div className="hidden sm:block w-full">
+        <table className="w-full  text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="bg-gray-50/50 border-b border-gray-100">

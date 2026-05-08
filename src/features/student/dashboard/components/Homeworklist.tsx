@@ -1,88 +1,86 @@
-import type { HomeworkItem } from "../types/Student dashboard.types";
-import { formatDueDate } from "../utils/Student dashboard.utils";
-import { useDownloadHomeworkBrief } from "../hooks/Usestudentdashboard";
-import { Button } from "@/components/ui/button";
+import type { HomeworkItem } from "../types/dashboard.types";
+import { BookOpen, Calculator, FlaskConical, Download } from "lucide-react";
 
-// Subject icon map (emoji fallback, swap for Lucide icons if available)
-const SUBJECT_ICONS: Record<string, string> = {
-  English: "📖",
-  Mathematics: "📐",
-  Science: "🔬",
-  "Social Studies": "🌍",
-  Hindi: "📝",
-  "Computer Science": "💻",
-};
-
-const getSubjectIcon = (subject: string): string => {
-  const key = Object.keys(SUBJECT_ICONS).find((k) =>
-    subject.toLowerCase().includes(k.toLowerCase())
-  );
-  return key ? SUBJECT_ICONS[key] : "📋";
-};
-
-interface HomeworkListProps {
-  items: HomeworkItem[];
+interface Props {
+  data: HomeworkItem[];
 }
 
-const HomeworkList = ({ items }: HomeworkListProps) => {
-  const { download, loadingId } = useDownloadHomeworkBrief();
+const BRAND = "#3525CD";
+const CARD_BG = "#EEF0FF";
+const ICON_BG = "#DDE0FF";
 
+const subjectIconMap: Record<HomeworkItem["colorType"], React.ReactNode> = {
+  blue: <BookOpen size={20} color={BRAND} strokeWidth={2} />,
+  green: <Calculator size={20} color={BRAND} strokeWidth={2} />,
+  amber: <FlaskConical size={20} color={BRAND} strokeWidth={2} />,
+};
+
+export const HomeworkList = ({ data }: Props) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-      <h2 className="text-lg font-bold text-gray-900">Homework Due This Week</h2>
+    <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 transition-all duration-200 md:hover:border-[#3525CD] md:hover:shadow-md">
+      
+      {/* Title */}
+      <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
+        Homework Due This Week
+      </h3>
 
-      <div className="flex flex-col gap-3">
-        {items.map((hw) => (
+      {/* List */}
+      <div className="flex flex-col gap-2 sm:gap-3">
+        {data.map((hw) => (
           <div
             key={hw.id}
-            className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-indigo-100 hover:shadow-sm transition-all"
+            className="
+              flex flex-col sm:flex-row sm:items-center
+              gap-3 sm:gap-4
+              rounded-xl p-3 sm:px-4 sm:py-4
+              transition-all duration-200
+              md:hover:shadow-sm md:hover:-translate-y-[2px]
+              cursor-pointer
+            "
+            style={{ backgroundColor: CARD_BG }}
           >
             {/* Icon */}
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 text-lg flex-shrink-0">
-              {getSubjectIcon(hw.subject)}
+            <div
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: ICON_BG }}
+            >
+              {subjectIconMap[hw.colorType]}
             </div>
 
-            {/* Info */}
+            {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">
+              <p className="text-sm font-semibold text-gray-900 leading-snug truncate">
                 {hw.subject}: {hw.title}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Due: {formatDueDate(hw.dueDate)}
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
+                Due: {hw.dueDate}
               </p>
             </div>
 
-            {/* Download button */}
-            {hw.briefUrl && (
-              <Button
-                onClick={() => download(hw.id, hw.subject, hw.title)}
-                disabled={loadingId === hw.id}
-                variant="ghost"
-                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors disabled:opacity-50"
-              >
-                {loadingId === hw.id ? (
-                  <span className="animate-spin inline-block w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full" />
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                )}
-                Download Brief
-              </Button>
-            )}
+            {/* Button */}
+            <button
+              className="
+                flex items-center justify-center gap-1.5
+                text-xs font-semibold
+                rounded-lg sm:rounded-xl
+                px-3 py-2 sm:px-4 sm:py-2.5
+                w-full sm:w-auto
+                whitespace-nowrap
+                transition-all duration-200
+                md:hover:bg-[#3525CD] md:hover:text-white
+              "
+              style={{
+                color: BRAND,
+                backgroundColor: "white",
+                border: `1.5px solid ${BRAND}`,
+              }}
+            >
+              <Download size={14} strokeWidth={2.5} />
+              Download Brief
+            </button>
           </div>
         ))}
-
-        {items.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-6">
-            No homework due this week 🎉
-          </p>
-        )}
       </div>
     </div>
   );
 };
-
-export default HomeworkList;

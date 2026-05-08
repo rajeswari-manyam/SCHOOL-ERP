@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import type { TransportStudent, StudentSlabAssignmentProps } from "../types/fees.types";
 
-
-
 const initials = (name: string) =>
   name
     .split(" ")
@@ -22,8 +20,6 @@ const initials = (name: string) =>
 
 const columnHelper = createColumnHelper<TransportStudent>();
 
-
-
 export function StudentSlabAssignment({
   students,
   slabs,
@@ -33,7 +29,6 @@ export function StudentSlabAssignment({
   onSlabChange,
   onSaveStudentSlab,
 }: StudentSlabAssignmentProps) {
- 
   const filtered = useMemo(
     () =>
       students.filter(
@@ -48,6 +43,7 @@ export function StudentSlabAssignment({
     () => [
       columnHelper.accessor("name", {
         header: "Student",
+        meta: { label: "Student" },
         cell: (info) => {
           const st = info.row.original;
           return (
@@ -65,12 +61,14 @@ export function StudentSlabAssignment({
       }),
       columnHelper.accessor("cls", {
         header: "Class",
+        meta: { label: "Class" },
         cell: (info) => (
           <span className="text-xs text-gray-700">{info.getValue()}</span>
         ),
       }),
       columnHelper.accessor("distance", {
         header: "Distance",
+        meta: { label: "Distance" },
         cell: (info) => (
           <span className="text-xs text-gray-700">{info.getValue()} km</span>
         ),
@@ -78,6 +76,7 @@ export function StudentSlabAssignment({
       columnHelper.display({
         id: "currentSlab",
         header: "Current Slab",
+        meta: { label: "Current Slab" },
         cell: ({ row }) => {
           const currentSlab = slabs.find((s) => s.id === row.original.slabId);
           return (
@@ -90,6 +89,7 @@ export function StudentSlabAssignment({
       columnHelper.display({
         id: "changeSlab",
         header: "Change Slab",
+        meta: { label: "Change Slab" },
         cell: ({ row }) => {
           const st = row.original;
           const selectedSlabId = pendingSlabs[st.id] ?? st.slabId;
@@ -111,6 +111,7 @@ export function StudentSlabAssignment({
       columnHelper.display({
         id: "action",
         header: "Action",
+        meta: { label: "Action" },
         cell: ({ row }) => (
           <Button
             size="sm"
@@ -126,7 +127,6 @@ export function StudentSlabAssignment({
     [slabs, pendingSlabs, onSlabChange, onSaveStudentSlab]
   );
 
-
   const table = useReactTable({
     data: filtered,
     columns,
@@ -136,7 +136,6 @@ export function StudentSlabAssignment({
   const { rows } = table.getRowModel();
   const headerGroups = table.getHeaderGroups();
 
- 
   const thClass =
     "text-xs font-bold uppercase text-gray-400 tracking-wider px-4 py-3 text-left";
   const tdClass = "px-4 py-3";
@@ -155,7 +154,7 @@ export function StudentSlabAssignment({
 
       {/* Search */}
       <div className="px-5 mb-3">
-        <div className="relative w-64">
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input
             value={search}
@@ -166,48 +165,119 @@ export function StudentSlabAssignment({
         </div>
       </div>
 
-      {/* Virtualised students table */}
-      <TableVirtuoso
-        style={{ height: Math.min(rows.length * 56 + 44, 480) }}
-        totalCount={rows.length}
-        fixedHeaderContent={() =>
-          headerGroups.map((hg) => (
-            <tr key={hg.id} className="bg-white border-b border-gray-100">
-              {hg.headers.map((header) => (
-                <th key={header.id} className={thClass}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
-              ))}
-            </tr>
-          ))
-        }
-        itemContent={(index) => {
-          const row = rows[index];
-          return row.getVisibleCells().map((cell) => (
-            <td key={cell.id} className={tdClass}>
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </td>
-          ));
-        }}
-        components={{
-          Table: ({ style, ...props }) => (
-            <table
-              {...props}
-              style={{ ...style, minWidth: 700, borderCollapse: "collapse" }}
-              className="w-full"
-            />
-          ),
-          TableRow: ({ style, ...props }) => (
-            <tr
-              {...props}
-              style={style}
-              className="hover:bg-gray-50/50 border-b border-gray-50 last:border-0"
-            />
-          ),
-        }}
-      />
+      {/* DESKTOP: Virtualised table */}
+      <div className="hidden md:block">
+        <TableVirtuoso
+          style={{ height: Math.min(rows.length * 56 + 44, 480) }}
+          totalCount={rows.length}
+          fixedHeaderContent={() =>
+            headerGroups.map((hg) => (
+              <tr key={hg.id} className="bg-white border-b border-gray-100">
+                {hg.headers.map((header) => (
+                  <th key={header.id} className={thClass}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                ))}
+              </tr>
+            ))
+          }
+          itemContent={(index) => {
+            const row = rows[index];
+            return row.getVisibleCells().map((cell) => (
+              <td key={cell.id} className={tdClass}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ));
+          }}
+          components={{
+            Table: ({ style, ...props }) => (
+              <table
+                {...props}
+                style={{ ...style, minWidth: 700, borderCollapse: "collapse" }}
+                className="w-full"
+              />
+            ),
+            TableRow: ({ style, ...props }) => (
+              <tr
+                {...props}
+                style={style}
+                className="hover:bg-gray-50/50 border-b border-gray-50 last:border-0"
+              />
+            ),
+          }}
+        />
+      </div>
+
+      {/* MOBILE: Card layout */}
+      <div className="md:hidden px-3 pb-4 space-y-3">
+        {rows.map((row) => {
+          const cells = row.getVisibleCells();
+          const nameCell = cells.find((c) => c.column.id === "name");
+          const actionCell = cells.find((c) => c.column.id === "action");
+          const dataCells = cells.filter(
+            (c) => c.column.id !== "name" && c.column.id !== "action"
+          );
+
+          return (
+            <div
+              key={row.id}
+              className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
+            >
+              {/* Card Header: Avatar + Name */}
+              <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-50">
+                <div className="flex-1 min-w-0">
+                  {nameCell && (
+                    <div className="truncate">
+                      {flexRender(
+                        nameCell.column.columnDef.cell,
+                        nameCell.getContext()
+                      )}
+                    </div>
+                  )}
+                </div>
+                {actionCell && (
+                  <div className="ml-3 flex-shrink-0">
+                    {flexRender(
+                      actionCell.column.columnDef.cell,
+                      actionCell.getContext()
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body: Key-Value pairs */}
+              <div className="space-y-2.5">
+                {dataCells.map((cell) => {
+                  const label =
+                    (cell.column.columnDef.meta as { label?: string })?.label ??
+                    cell.column.columnDef.header;
+                  return (
+                    <div key={cell.id} className="flex items-start justify-between gap-3">
+                      <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide flex-shrink-0">
+                        {typeof label === "string" ? label : ""}
+                      </span>
+                      <div className="text-right min-w-0">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {rows.length === 0 && (
+          <div className="text-center py-10 text-xs text-gray-400">
+            No students found.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

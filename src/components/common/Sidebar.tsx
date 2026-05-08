@@ -142,7 +142,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                     M
                   </div>
                   <div className="whitespace-nowrap">
-                    <p className="text-[13px] font-bold tracking-wide leading-tight">Manyam ERP</p>
+                    <p className="text-[13px] font-bold tracking-wide leading-tight">SCHOOL ERP</p>
                     <p className="text-[10px] text-slate-400 leading-tight">School Management</p>
                   </div>
                 </Link>
@@ -166,9 +166,9 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
             <Link
               to="/dashboard"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#6C63FF] text-sm font-bold shadow-lg shadow-[#6C63FF]/30 outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]"
-              title="Manyam ERP"
+              title="School ERP"
             >
-              M
+              S
             </Link>
           )}
         </div>

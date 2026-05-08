@@ -1,73 +1,81 @@
-import type { ExamResult } from "../types/Student dashboard.types";
-import { RESULT_STATUS_STYLES } from "../utils/Student dashboard.utils";
-import { Button } from "@/components/ui/button";
+import type { RecentResult } from "../types/dashboard.types";
+import { FileText } from "lucide-react";
 
-interface RecentResultsProps {
-  results: ExamResult[];
-  onViewDetailedReport?: (result: ExamResult) => void;
+interface Props {
+  data: RecentResult;
 }
 
-const RecentResults = ({ results, onViewDetailedReport }: RecentResultsProps) => {
-  const latest = results[0];
+const BRAND = "#3525CD";
 
-  if (!latest) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Results</h2>
-        <p className="text-sm text-gray-400 text-center py-6">No results yet</p>
-      </div>
-    );
-  }
-
+export const RecentResults = ({ data }: Props) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-      <h2 className="text-lg font-bold text-gray-900">Recent Results</h2>
+    <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 shadow-sm transition-all duration-200 md:hover:border-[#3525CD] md:hover:shadow-md">
+      
+      {/* Title */}
+      <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4">
+        Recent Results
+      </h3>
 
-      {/* Latest exam highlight */}
-      <div className="flex flex-col items-center gap-3 py-4">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-          {latest.examName} • {latest.month.toUpperCase()} {latest.year}
-        </span>
+      {/* Score Card */}
+      <div
+        className="
+          text-center
+          py-5 sm:py-6
+          px-3 sm:px-4
+          rounded-xl
+          mb-3 sm:mb-4
+          bg-[#EEF0FF]
+          transition-all duration-200
+          md:hover:shadow-sm md:hover:-translate-y-[2px]
+        "
+      >
+        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-2 sm:mb-3">
+          {data.testName} • {data.date}
+        </p>
 
-        <div className="flex items-baseline gap-1">
-          <span className="text-5xl font-extrabold text-gray-900">
-            {latest.marksObtained}
+        <p className="leading-none mb-3 sm:mb-4">
+          <span className="text-4xl sm:text-6xl font-black text-gray-900">
+            {data.score}
           </span>
-          <span className="text-xl text-gray-400 font-semibold">
-            /{latest.totalMarks}
+          <span className="text-base sm:text-xl font-medium text-gray-400">
+            /{data.total}
           </span>
-        </div>
+        </p>
 
-        <div className="flex items-center gap-2">
+        {/* Status badges */}
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          {data.passed && (
+            <span className="text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-1.5 rounded-full bg-[#D1FAE5] text-[#065F46]">
+              PASS
+            </span>
+          )}
+
           <span
-            className={`text-xs font-bold px-3 py-1 rounded-full ${
-              RESULT_STATUS_STYLES[latest.status]
-            }`}
+            className="text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-1.5 rounded-full text-white"
+            style={{ backgroundColor: BRAND }}
           >
-            {latest.status}
-          </span>
-          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            Rank {latest.rank}
+            Rank {data.rank}
           </span>
         </div>
       </div>
 
-      {/* View report button */}
-      {latest.reportUrl && (
-        <Button
-          onClick={() => onViewDetailedReport?.(latest)}
-          variant="outline"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:border-indigo-200 hover:text-indigo-600 transition-all"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
-          View Detailed Report
-        </Button>
-      )}
+      {/* Button */}
+      <button
+        className="
+          w-full
+          flex items-center justify-center gap-2
+          py-2.5 sm:py-3
+          rounded-xl
+          text-xs sm:text-sm font-semibold
+          bg-[#EEF0FF]
+          transition-all duration-200
+          md:hover:bg-[#3525CD] md:hover:text-white
+        "
+        style={{ color: BRAND }}
+      >
+        <FileText size={16} strokeWidth={2.5} />
+        View Detailed Report
+      </button>
     </div>
   );
 };
-
-export default RecentResults;

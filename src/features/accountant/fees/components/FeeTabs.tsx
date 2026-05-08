@@ -16,20 +16,45 @@ export const FeeTabs = ({
   setActive: (t: string) => void;
 }) => {
   return (
-    <div className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth">
-      {tabs.map((tab) => (
-        <button
-          key={tab}
-          onClick={() => setActive(tab)}
-          className={`pb-2 ${typography.body.small} whitespace-nowrap transition-all flex-shrink-0 ${
-            active === tab
-              ? "border-b-2 border-blue-600 text-blue-600 font-medium"
-              : "border-b-2 border-transparent text-gray-500 hover:text-gray-800"
-          }`}
-        >
-          {tab}
-        </button>
-      ))}
+    <div className="w-full overflow-x-auto scrollbar-hide">
+      <div className="flex gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 min-w-max">
+        {tabs.map((tab) => {
+          const isActive = active === tab;
+
+          return (
+            <button
+              key={tab}
+              onClick={() => setActive(tab)}
+              className={`
+                ${typography.body.small}
+                whitespace-nowrap
+                flex-shrink-0
+                snap-start
+
+                /* Mobile-first sizing */
+                px-3 py-1.5
+                sm:px-4 sm:py-2
+
+                /* Shape */
+                rounded-full
+                transition-all duration-200
+
+                /* Font size */
+                text-[11px] sm:text-[13px]
+
+                /* Active vs Inactive */
+                ${
+                  isActive
+                    ? "bg-[#3525CD] text-white shadow-sm font-semibold"
+                    : "bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 font-medium"
+                }
+              `}
+            >
+              {tab}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -55,15 +55,15 @@ export const StatCard = ({
         rounded-xl
       `}
     >
-      <CardContent className="p-4 sm:p-6">
+     <CardContent className="p-3 sm:p-6">
         {/* Top section */}
-        <div className="flex items-start justify-between gap-3">
+       <div className="flex flex-col xs:flex-row items-start justify-between gap-3">
           <div className="min-w-0">
             <p className={combineTypography(typography.form.label, "text-gray-500 uppercase tracking-wide mb-1")}>
               {title}
             </p>
 
-            <h3 className={`text-lg sm:text-2xl font-bold ${textStyles[variant]} truncate`}>
+           <h3 className={`text-base sm:text-2xl font-bold ${textStyles[variant]} break-words`}>
               {formatCurrency(amount)}
             </h3>
 
@@ -84,7 +84,7 @@ export const StatCard = ({
           </div>
 
           <div className={`p-2 sm:p-3 rounded-lg ${textStyles[variant]} shrink-0`}>
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+           <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 

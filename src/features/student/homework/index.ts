@@ -1,1 +1,0 @@
-export { default as HomeworkPage } from "./HomeWorkPage";

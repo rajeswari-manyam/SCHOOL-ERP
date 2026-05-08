@@ -47,7 +47,7 @@ export const AddFeeHeadModal = ({ onClose }: { onClose: () => void }) => {
   };
 
   const inputClass = (hasError: boolean) =>
-    `w-full px-3 h-10 ${typography.body.xs} rounded-lg border outline-none transition-all
+    `w-full px-3 h-11 text-sm ${typography.body.xs} rounded-lg border outline-none transition-all
      bg-[#EFF4FF] placeholder:text-gray-400 text-gray-800
      ${hasError
        ? "border-red-400 focus:ring-2 focus:ring-red-200"
@@ -56,10 +56,10 @@ export const AddFeeHeadModal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full h-[92vh] sm:h-auto sm:max-h-[90vh] sm:w-[520px] rounded-t-2xl sm:rounded-2xl shadow-xl p-4 sm:p-6 overflow-y-auto">
+      <div className="bg-white w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:w-[520px] rounded-t-2xl sm:rounded-2xl shadow-xl p-4 sm:p-6 overflow-y-auto pb-6">
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
+       <div className="flex justify-between items-center mb-3 sm:mb-4"> 
           <h3 className="text-base font-semibold text-gray-900">Add New Fee Head</h3>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5 text-gray-500" />
@@ -108,7 +108,7 @@ export const AddFeeHeadModal = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           {/* Mandatory + Taxable */}
-          <div className="flex gap-8">
+        <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-4">
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-900">Mandatory for all students?</span>
               <button
@@ -168,7 +168,7 @@ export const AddFeeHeadModal = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-white pt-3 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">
+        <div className="sticky bottom-0 bg-white pt-3 pb-2 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">  
             <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>
               Cancel
             </Button>

@@ -28,7 +28,7 @@ export const MonthlyCollectionTrend = () => {
         <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD]">
 
         
-            <CardHeader className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+           <CardHeader className="px-4 py-3 border-b border-slate-100 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"> 
 
                 <div>
                     <CardTitle className="text-sm font-semibold text-slate-800">
@@ -53,27 +53,32 @@ export const MonthlyCollectionTrend = () => {
 
      
             <CardContent className="px-3 sm:px-5 py-3 sm:py-4">
-                <div className="w-full h-[180px] sm:h-[220px] md:h-[260px]">
+             <div className="w-full h-[220px] sm:h-[260px] md:h-[300px]">   
                     <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={data} barSize={18} margin={{ left: 5, right: 10 }}>
+                      <ComposedChart data={data} barSize={16} margin={{ left: 0, right: 10 }}>  
 
                             <CartesianGrid vertical={false} stroke="#f1f5f9" />
 
                             <XAxis
                                 dataKey="month"
-                                tick={{ fontSize: 10, fill: "#94a3b8" }}
+                                tick={{ fontSize: 11, fill: "#94a3b8" }}
                                 axisLine={false}
                                 tickLine={false}
                             />
 
                             <YAxis
                                 tickFormatter={formatY}
-                                tick={{ fontSize: 10, fill: "#94a3b8" }}
+                              tick={{ fontSize: 11, fill: "#94a3b8" }}
                                 axisLine={false}
                                 tickLine={false}
-                                width={42}
+                              width={50}  
                             />
 <Tooltip
+  contentStyle={{
+    borderRadius: "8px",
+    fontSize: "12px",
+    padding: "8px",
+  }}
   formatter={(val: any, name: any) => {
     const value = Number(val ?? 0);
     return [
@@ -81,8 +86,7 @@ export const MonthlyCollectionTrend = () => {
       name === "actual" ? "Actual" : "Target",
     ];
   }}
-/>
-                            <Bar dataKey="actual" fill="#4F46E5" radius={[4, 4, 0, 0]} />
+/>                         <Bar dataKey="actual" fill="#4F46E5" radius={[4, 4, 0, 0]} />
 
                             <Line
                                 type="monotone"

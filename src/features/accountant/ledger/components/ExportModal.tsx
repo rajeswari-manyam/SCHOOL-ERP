@@ -29,7 +29,7 @@ const chipCls = (active: boolean, dark = false) =>
   }`;
 
 const inputDateCls =
-  "w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#EFF4FF] text-gray-700 h-8";
+  "w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-[#EFF4FF] text-gray-700 h-10";
 
 export const ExportModal = ({ onClose }: ExportModalProps) => {
   const [period, setPeriod] = useState<"thisMonth" | "lastMonth" | "custom">("thisMonth");
@@ -39,16 +39,18 @@ export const ExportModal = ({ onClose }: ExportModalProps) => {
   const [emailReport, setEmailReport] = useState(true);
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+<div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-2 sm:p-4">
       {/* White card, fixed max-height, flex column */}
-      <Card
-        className="w-full max-w-md bg-white shadow-xl flex flex-col overflow-hidden"
+     <Card className="w-full max-w-md sm:max-w-md bg-white shadow-xl flex flex-col overflow-hidden"
         style={{ maxHeight: "85vh" }}
       >
         {/* ── Sticky Header ── */}
         <CardHeader className="flex flex-row items-center justify-between py-3 px-5 border-b border-gray-100 shrink-0 bg-white">
           <div>
-            <CardTitle className={combineTypography(typography.heading.h6, "text-gray-800")}>Export Ledger</CardTitle>
+           <CardTitle className={combineTypography(
+  typography.heading.h6,
+  "text-gray-800 text-base sm:text-lg"
+)}>Export Ledger</CardTitle>
             <p className={combineTypography(typography.body.xs, "text-gray-400 mt-0.5")}>
               Download financial records for the selected period
             </p>
@@ -69,7 +71,7 @@ export const ExportModal = ({ onClose }: ExportModalProps) => {
           {/* Period */}
           <div>
             <SectionLabel>Period</SectionLabel>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button onClick={() => setPeriod("thisMonth")} className={chipCls(period === "thisMonth")}>
                 This Month
               </button>
@@ -122,7 +124,7 @@ export const ExportModal = ({ onClose }: ExportModalProps) => {
           {/* Format */}
           <div>
             <SectionLabel>Format *</SectionLabel>
-            <div className="flex gap-2">
+           <div className="flex gap-2 flex-wrap">
               <button onClick={() => setFormat("pdf")} className={chipCls(format === "pdf")}>
                 PDF Report
               </button>
@@ -138,7 +140,7 @@ export const ExportModal = ({ onClose }: ExportModalProps) => {
           {/* Group By */}
           <div>
             <SectionLabel>Group By</SectionLabel>
-            <div className="flex gap-2">
+           <div className="flex gap-2 flex-wrap"> 
               <button onClick={() => setGroupBy("date")} className={chipCls(groupBy === "date", true)}>
                 Date
               </button>

@@ -94,13 +94,13 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm px-2 sm:px-4">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white rounded-xl shadow-2xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto"
+     className="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full max-w-[480px] h-[95vh] md:h-auto md:max-h-[90vh] overflow-y-auto"
       >
         {/* ── Header ── */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-start justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
           <div>
             <h2 className={typography.heading.h6}>Add fee concession</h2>
             <p className={`${typography.body.xs} text-gray-500 mt-0.5`}>
@@ -116,7 +116,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-3 sm:px-5 py-3 sm:py-4 space-y-4">
           {/* ── Student ── */}
           <div>
             <label className={`${typography.form.label} text-gray-700`}>
@@ -189,7 +189,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* ── Amount Type + Amount ── */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={`${typography.form.label} text-gray-700`}>
                 Amount type <span className="text-red-500">*</span>
@@ -241,7 +241,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
             <label className={`${typography.form.label} text-gray-700`}>
               Applicable on <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2.5 gap-x-4 mt-2">
               {FEE_TYPES.map((fee) => (
                 <label
                   key={fee.id}
@@ -282,7 +282,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* ── Dates ── */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={`${typography.form.label} text-gray-700`}>
                 Effective from <span className="text-red-500">*</span>
@@ -304,7 +304,7 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex justify-end gap-2.5 px-5 py-4 border-t border-gray-100">
+       <div className="flex flex-col sm:flex-row gap-2 px-3 sm:px-5 py-3 sm:py-4 border-t border-gray-100"> 
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
