@@ -1,4 +1,4 @@
-import type { Homework, StudyMaterial } from "../types/homework.types";
+import type { Homework, StudyMaterial } from "../types/Homework.types";
 
 export const homeworkMock: Homework[] = [
   {

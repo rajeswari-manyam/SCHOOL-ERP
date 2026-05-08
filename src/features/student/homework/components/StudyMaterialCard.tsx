@@ -1,4 +1,4 @@
-import type { StudyMaterial } from "../types/homework.types";
+import type { StudyMaterial } from "../types/Homework.types";
 import {
   FileText,
   Image,
