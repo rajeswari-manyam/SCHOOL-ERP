@@ -1,5 +1,5 @@
 import type { ReportCard, ReportCardEntry } from "../types/exam.types";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import typography, { combineTypography } from "@/styles/typography";
 import {
@@ -9,10 +9,27 @@ import {
   createColumnHelper,
   type ColumnDef,
 } from "@tanstack/react-table";
-// import { TableVirtuoso } from "react-virtuoso";
 import { TrendingUp, BookOpen, AlertCircle, Download, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+
+// ─── Responsive hook ──────────────────────────────────────────────────────────
+
+function useIsMobile(breakpoint = 768): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(
+    () => typeof window !== "undefined" && window.innerWidth < breakpoint
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mql.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,7 +44,7 @@ type TableRow = ReportCardEntry & {
 
 function computeGrade(total?: number | null): string | null {
   if (total == null) return null;
-  const pct = (total / 350) * 100; // 50+50+100+50+100 = 350 max
+  const pct = (total / 350) * 100;
   if (pct >= 90) return "A+";
   if (pct >= 80) return "A";
   if (pct >= 70) return "B+";
@@ -126,18 +143,74 @@ const columns: ColumnDef<TableRow, any>[] = [
   }),
 ];
 
+// ─── Mobile subject card ──────────────────────────────────────────────────────
+
+function MobileSubjectCard({ row }: { row: TableRow }) {
+  const scoreItems = [
+    { label: "UT1", max: 50, value: row.ut1 },
+    { label: "UT2", max: 50, value: row.ut2 },
+    { label: "Midterm", max: 100, value: row.midterm },
+    { label: "UT3", max: 50, value: row.ut3 },
+    { label: "Final", max: 100, value: row.final },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[14px] font-semibold text-[#0B1C30]">{row.subject}</span>
+        {row.grade ? (
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+              GRADE_STYLES[row.grade] ?? "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {row.grade}
+          </span>
+        ) : (
+          <span className="text-[11px] text-gray-300">No grade yet</span>
+        )}
+      </div>
+
+      {/* Score grid */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {scoreItems.map(({ label, max, value }) => (
+          <div key={label} className="bg-[#F8FAFC] rounded-xl p-2.5 text-center">
+            <p className="text-[10px] text-gray-400 mb-0.5">
+              {label}
+              <span className="text-gray-300"> /{max}</span>
+            </p>
+            <p className="text-[13px] font-semibold text-[#0B1C30]">
+              {value != null ? value : <span className="text-gray-300 font-normal">—</span>}
+            </p>
+          </div>
+        ))}
+
+        {/* Total spanning last slot */}
+        <div className="bg-[#EFF4FF] rounded-xl p-2.5 text-center">
+          <p className="text-[10px] text-[#3525CD]/60 mb-0.5">Total /350</p>
+          <p className="text-[13px] font-bold text-[#3525CD]">
+            {row.total != null ? row.total : <span className="text-gray-300 font-normal">—</span>}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ReportCardTable({ data }: { data: ReportCard }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const isMobile = useIsMobile();
 
   async function handleDownload() {
     if (!cardRef.current) return;
     setDownloading(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
-        scale: 2,           // retina quality
+        scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
@@ -157,19 +230,12 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
     }
   }
 
-  // Enrich entries with computed total & grade
   const rows: TableRow[] = useMemo(
     () =>
       data.entries.map((e) => {
         const known = [e.ut1, e.ut2, e.midterm].filter((v) => v != null);
         const total = known.length === 3 ? known.reduce((a, b) => a! + b!, 0) : null;
-        return {
-          ...e,
-          ut3: null,
-          final: null,
-          total,
-          grade: computeGrade(total),
-        };
+        return { ...e, ut3: null, final: null, total, grade: computeGrade(total) };
       }),
     [data.entries]
   );
@@ -186,53 +252,61 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── CAPTURE ZONE (ref wraps everything printed to PDF) ──────────── */}
+      {/* ── CAPTURE ZONE ────────────────────────────────────────────────── */}
       <div ref={cardRef} className="flex flex-col gap-4 bg-white p-4 rounded-2xl">
 
-      {/* ── TABLE CARD ──────────────────────────────────────────────────── */}
-      <Card className="rounded-2xl overflow-hidden hover:shadow-md transition-shadow border-0 shadow-sm">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            {/* Simple table instead of TableVirtuoso */}
-            <table className="min-w-[900px] border-collapse">
-              <thead>
-                {headerGroups.map((hg) => (
-                  <tr key={hg.id} className="bg-[#F8FAFC] border-0">
-                    {hg.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        style={{ width: header.getSize() }}
-                        className="px-4 py-3 text-left text-[12px] font-medium text-gray-400 border-0 whitespace-nowrap"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {tableRows.map((row) => (
-                  <tr key={row.id} className="border-0 hover:bg-[#F8FAFC] transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        style={{ width: cell.column.getSize() }}
-                        className="px-4 py-3 text-[13px] border-0 border-b border-gray-50"
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {isMobile ? (
+          /* ── MOBILE: stacked subject cards ───────────────────────────── */
+          <div className="flex flex-col gap-3">
+            {rows.map((row, i) => (
+              <MobileSubjectCard key={i} row={row} />
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        ) : (
+          /* ── DESKTOP: full table ──────────────────────────────────────── */
+          <Card className="rounded-2xl overflow-hidden hover:shadow-md transition-shadow border-0 shadow-sm">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="min-w-[900px] border-collapse">
+                  <thead>
+                    {headerGroups.map((hg) => (
+                      <tr key={hg.id} className="bg-[#F8FAFC] border-0">
+                        {hg.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            style={{ width: header.getSize() }}
+                            className="px-4 py-3 text-left text-[12px] font-medium text-gray-400 border-0 whitespace-nowrap"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody>
+                    {tableRows.map((row) => (
+                      <tr key={row.id} className="border-0 hover:bg-[#F8FAFC] transition-colors">
+                        {row.getVisibleCells().map((cell) => (
+                          <td
+                            key={cell.id}
+                            style={{ width: cell.column.getSize() }}
+                            className="px-4 py-3 text-[13px] border-0 border-b border-gray-50"
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      </div>{/* end cardRef capture zone */}
+      </div>{/* end cardRef */}
 
       {/* ── NOTE + DOWNLOAD ─────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -256,7 +330,6 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
       {/* ── STAT CARDS ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-        {/* Class Percentile */}
         <Card className="rounded-2xl border-0 shadow-sm bg-[#EFF4FF] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
           <CardContent className="p-5">
             <div className="w-8 h-8 rounded-full bg-[#DBEAFE] flex items-center justify-center mb-3">
@@ -273,7 +346,6 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
           </CardContent>
         </Card>
 
-        {/* Strongest Subject */}
         <Card className="rounded-2xl border-0 shadow-sm bg-[#EFF4FF] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
           <CardContent className="p-5">
             <div className="w-8 h-8 rounded-full bg-[#DBEAFE] flex items-center justify-center mb-3">
@@ -289,7 +361,6 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
           </CardContent>
         </Card>
 
-        {/* Attention Required */}
         <Card className="rounded-2xl border-0 shadow-sm bg-[#EFF4FF] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
           <CardContent className="p-5">
             <div className="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center mb-3">
@@ -306,7 +377,6 @@ export function ReportCardTable({ data }: { data: ReportCard }) {
         </Card>
 
       </div>
-
     </div>
   );
 }
