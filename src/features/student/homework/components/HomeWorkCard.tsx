@@ -1,5 +1,5 @@
 import { Paperclip, FileText } from "lucide-react";
-import type { Homework } from "../types/Homework.types";
+import type { Homework } from "../types/homework.types";
 
 interface Props {
   item: Homework;

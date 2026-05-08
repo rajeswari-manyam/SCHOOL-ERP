@@ -1,60 +1,47 @@
-import { create } from "zustand";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { STUDENT_DATA } from "../data/profile.mock";
+import { useState, useCallback } from "react";
 import type { Student } from "../types/profile.types";
+import { STUDENT_DATA } from "../data/profile.mock";
 
-// ─── Zustand store for download UI state ─────────────────────────────────────
-interface ProfileUIState {
-  downloading: string | null;
-  downloaded: string | null;
-  setDownloading: (id: string | null) => void;
-  setDownloaded: (id: string | null) => void;
+// ─── useStudent ───────────────────────────────────────────────────────────────
+
+export function useStudent(): {
+  student: Student;
+  loading: boolean;
+  error: string | null;
+} {
+  const [student] = useState<Student>(STUDENT_DATA);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
+
+  return { student, loading, error };
 }
 
-export const useProfileStore = create<ProfileUIState>((set) => ({
-  downloading: null,
-  downloaded: null,
-  setDownloading: (id) => set({ downloading: id }),
-  setDownloaded: (id) => set({ downloaded: id }),
-}));
+// ─── useDownload ──────────────────────────────────────────────────────────────
 
-// ─── TanStack Query fetch ─────────────────────────────────────────────────────
-const fetchStudent = async (): Promise<Student> => {
-  await new Promise((r) => setTimeout(r, 500));
-  return STUDENT_DATA;
-};
+export function useDownload(): {
+  downloading: string | null;
+  downloaded: string | null;
+  handleDownload: (id: string, title: string) => void;
+} {
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloaded, setDownloaded]   = useState<string | null>(null);
 
-export const useStudent = () => {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["profile"],
-    queryFn: fetchStudent,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  return {
-    student: data ?? null,
-    loading: isLoading,
-    error: isError ? "Failed to load profile." : null,
-  };
-};
-
-// ─── Download hook ────────────────────────────────────────────────────────────
-export const useDownload = () => {
-  const { downloading, downloaded, setDownloading, setDownloaded } =
-    useProfileStore();
-
-  const handleDownload = async (id: string, fileName?: string) => {
+  const handleDownload = useCallback((id: string, title: string) => {
     if (downloading) return;
+
     setDownloading(id);
-    await new Promise((r) => setTimeout(r, 1200));
-    setDownloading(null);
-    setDownloaded(id);
-    toast.success(`Downloaded: ${fileName ?? "document"}`, {
-      description: "Your file is ready.",
-    });
-    setTimeout(() => setDownloaded(null), 3000);
-  };
+    setDownloaded(null);
+
+    // Simulated async download — replace with real API call
+    setTimeout(() => {
+      setDownloading(null);
+      setDownloaded(id);
+      console.info(`[Download] ${title}`);
+
+      // Reset "done" state after 2.5 s
+      setTimeout(() => setDownloaded(null), 2500);
+    }, 1400);
+  }, [downloading]);
 
   return { downloading, downloaded, handleDownload };
-};
+}

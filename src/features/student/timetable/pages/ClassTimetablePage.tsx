@@ -1,4 +1,3 @@
-import { motion,easeOut } from "framer-motion";
 import {
   useClassTimetable,
   useUpcomingExaminations,
@@ -9,22 +8,11 @@ import TimetableGrid from "../components/Timetablegrid";
 import SubjectLegend from "../components/Subjectlegend";
 import ExaminationTable from "../components/Examinationtable";
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
-};
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: easeOut },
-  },
-};
-
 const ClassTimetablePage = () => {
   const { data: timetable, isLoading, isError } = useClassTimetable();
+
   const { data: examinations } = useUpcomingExaminations();
+
   const { addAll } = useAddExamsToCalendar();
 
   if (isLoading) {
@@ -53,61 +41,77 @@ const ClassTimetablePage = () => {
   };
 
   return (
-    <motion.div
-      className="flex flex-col gap-5 sm:gap-6 min-h-full px-3 sm:px-5 lg:px-6 py-4 sm:py-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* HEADER */}
-      <motion.div variants={itemVariants} className="flex flex-col gap-2">
+    <div className="
+      flex flex-col gap-5 sm:gap-6
+      min-h-full
+      px-3 sm:px-5 lg:px-6
+      py-4 sm:py-6
+    ">
+
+      {/* ================= HEADER ================= */}
+      <div className="flex flex-col gap-2">
+
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
           My Class Timetable
         </h1>
+
         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+
           <p className="text-sm font-semibold text-indigo-600">
             {timetable.className}
           </p>
+
           <span className="hidden sm:block text-gray-300">•</span>
+
           <p className="text-xs sm:text-sm text-gray-400">
             Academic Year {timetable.academicYear}
           </p>
-        </div>
-      </motion.div>
 
-      {/* TIMETABLE */}
-      <motion.div
-        variants={itemVariants}
-        className="w-full overflow-hidden rounded-2xl border border-gray-100 transition-all duration-200 hover:border-indigo-200 hover:shadow-sm"
-      >
+        </div>
+
+      </div>
+
+      {/* ================= TIMETABLE ================= */}
+      <div className="
+        w-full overflow-hidden
+        rounded-2xl border border-gray-100
+        transition-all duration-200
+        hover:border-indigo-200 hover:shadow-sm
+      ">
         <TimetableGrid
           rows={timetable.rows}
           todayDay={timetable.todayDay}
           onPrint={() => window.print()}
         />
-      </motion.div>
+      </div>
 
-      {/* LEGEND */}
-      <motion.div
-        variants={itemVariants}
-        className="w-full overflow-hidden rounded-xl border border-gray-100 transition-all duration-200 hover:border-indigo-200 hover:shadow-sm hover:-translate-y-0.5"
-      >
+      {/* ================= LEGEND ================= */}
+      <div className="
+        w-full overflow-hidden
+        rounded-xl border border-gray-100
+        transition-all duration-200
+        hover:border-indigo-200 hover:shadow-sm
+        hover:-translate-y-0.5
+      ">
         <SubjectLegend subjects={timetable.subjects} />
-      </motion.div>
+      </div>
 
-      {/* EXAMS */}
+      {/* ================= EXAMS ================= */}
       {examinations && (
-        <motion.div
-          variants={itemVariants}
-          className="w-full overflow-hidden rounded-2xl border border-gray-100 transition-all duration-200 hover:border-indigo-200 hover:shadow-sm"
-        >
+        <div className="
+          w-full overflow-hidden
+          rounded-2xl border border-gray-100
+          transition-all duration-200
+          hover:border-indigo-200 hover:shadow-sm
+        ">
           <ExaminationTable
             examinations={examinations}
             onAddToCalendar={handleAddToCalendar}
           />
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+
+    </div>
   );
 };
 
