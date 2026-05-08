@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertCircle, Check, Send, MessageCircle } from "lucide-react";
-import { ProgressRing } from "@/components/ui/progress-ring";
+import  ProgressRing  from "@/components/ui/progress-ring";
 import type { AttendanceBanner as AttendanceBannerType } from "../types/teacher-dashboard.types";
 import { useMarkAttendanceViaWA } from "../hooks/useTeacherDashboard";
 import MarkAttendanceModal from "./MarkAttendanceModal";
