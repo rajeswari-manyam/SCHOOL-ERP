@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { PipelineStats } from './components/PipelineStats';
 import { PipelineBoard } from './components/PipelineBoard';
 import { EnquiryDetailDrawer } from './components/EnquiryDetailDrawer';
-import { AddEnquiryModal } from './components/AddEnquiryModal';
-import { ConfirmAdmissionModal } from './components/ConfirmAdmissionModal';
+import { AddEnquiryModal } from "./components/Addenquirymodal";
+import { ConfirmAdmissionModal } from "./components/Confirmadmissionmodal";
 import { useAdmissionsStore } from './hooks/useAdmissionsStore';
 
 export function AdmissionsPage() {

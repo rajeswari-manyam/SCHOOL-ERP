@@ -28,6 +28,7 @@ const schema = z.object({
 
 const classes = ['Nursery', 'LKG', 'UKG', ...Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`)];
 const classOptions = classes.map(c => ({ label: c, value: c }));
+
 const sourceOptions = [
   { label: 'Walk-in', value: 'walk-in' },
   { label: 'Social Media', value: 'social_media' },
@@ -36,11 +37,18 @@ const sourceOptions = [
   { label: 'Website', value: 'website' },
   { label: 'Other', value: 'other' },
 ];
+
 export function AddEnquiryModal() {
   const { isAddEnquiryOpen, closeAddEnquiry } = useAdmissionsStore();
   const addEnquiry = useAddEnquiry();
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<NewEnquiryFormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<NewEnquiryFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       enquiryDate: new Date().toISOString().split('T')[0],
@@ -60,7 +68,8 @@ export function AddEnquiryModal() {
   return (
     <AnimatePresence>
       {isAddEnquiryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -68,21 +77,41 @@ export function AddEnquiryModal() {
             onClick={closeAddEnquiry}
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           />
+
+          {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 10 }}
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, y: 40, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            className="
+              relative bg-white w-full
+              rounded-t-2xl sm:rounded-2xl
+              shadow-2xl
+              max-h-[92vh] sm:max-h-[90vh]
+              overflow-y-auto
+              sm:max-w-2xl
+            "
           >
-            <div className="p-6">
+            {/* Drag handle — mobile only */}
+            <div className="flex justify-center pt-3 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
+
+            <div className="p-4 sm:p-6">
               {/* Header */}
-              <div className="flex items-start justify-between mb-1">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">New Admission Enquiry</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-gray-500">A thank-you WhatsApp will be sent to the parent automatically</p>
-                    <Badge variant="green" className="flex items-center gap-1">
-                      <MessageCircle size={10} /> WHATSAPP ACTIVE
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">
+                    New Admission Enquiry
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      A thank-you WhatsApp will be sent automatically
+                    </p>
+                    <Badge variant="green" className="flex items-center gap-1 shrink-0">
+                      <MessageCircle size={10} />
+                      WHATSAPP ACTIVE
                     </Badge>
                   </div>
                 </div>
@@ -90,14 +119,17 @@ export function AddEnquiryModal() {
                   onClick={closeAddEnquiry}
                   variant="ghost"
                   size="sm"
-                  className="p-1.5"
+                  className="p-1.5 shrink-0"
                 >
                   <X size={20} />
                 </Button>
               </div>
 
+              {/* Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="mt-5">
-                <div className="grid grid-cols-2 gap-4">
+                {/* Responsive 2-col grid → 1-col on mobile */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
                   {/* Parent Name */}
                   <div>
                     <Label className="mb-1">PARENT'S NAME *</Label>
@@ -106,7 +138,9 @@ export function AddEnquiryModal() {
                       placeholder="Father or Mother name"
                       variant={errors.parentName ? 'error' : 'default'}
                     />
-                    {errors.parentName && <p className="text-red-500 text-xs mt-1">{errors.parentName.message}</p>}
+                    {errors.parentName && (
+                      <p className="text-red-500 text-xs mt-1">{errors.parentName.message}</p>
+                    )}
                   </div>
 
                   {/* Class */}
@@ -120,7 +154,9 @@ export function AddEnquiryModal() {
                         register('classApplyingFor').onChange({ target: { value } });
                       }}
                     />
-                    {errors.classApplyingFor && <p className="text-red-500 text-xs mt-1">{errors.classApplyingFor.message}</p>}
+                    {errors.classApplyingFor && (
+                      <p className="text-red-500 text-xs mt-1">{errors.classApplyingFor.message}</p>
+                    )}
                   </div>
 
                   {/* Phone */}
@@ -134,21 +170,22 @@ export function AddEnquiryModal() {
                         {...register('parentPhone')}
                         placeholder="98765 43210"
                         variant={errors.parentPhone ? 'error' : 'default'}
+                        className="min-w-0"
                       />
                     </div>
                     <p className="text-[11px] text-green-600 mt-1 flex items-center gap-1">
-                      <MessageCircle size={10} /> WhatsApp message will be sent to this number
+                      <MessageCircle size={10} />
+                      WhatsApp message will be sent to this number
                     </p>
-                    {errors.parentPhone && <p className="text-red-500 text-xs">{errors.parentPhone.message}</p>}
+                    {errors.parentPhone && (
+                      <p className="text-red-500 text-xs">{errors.parentPhone.message}</p>
+                    )}
                   </div>
 
                   {/* Enquiry Date */}
                   <div>
                     <Label className="mb-1">ENQUIRY DATE *</Label>
-                    <Input
-                      type="date"
-                      {...register('enquiryDate')}
-                    />
+                    <Input type="date" {...register('enquiryDate')} />
                   </div>
 
                   {/* Email */}
@@ -181,7 +218,9 @@ export function AddEnquiryModal() {
                       placeholder="Child's full name"
                       variant={errors.studentName ? 'error' : 'default'}
                     />
-                    {errors.studentName && <p className="text-red-500 text-xs mt-1">{errors.studentName.message}</p>}
+                    {errors.studentName && (
+                      <p className="text-red-500 text-xs mt-1">{errors.studentName.message}</p>
+                    )}
                   </div>
 
                   {/* Referred By */}
@@ -196,10 +235,7 @@ export function AddEnquiryModal() {
                   {/* DOB */}
                   <div>
                     <Label className="mb-1">DATE OF BIRTH</Label>
-                    <Input
-                      type="date"
-                      {...register('dateOfBirth')}
-                    />
+                    <Input type="date" {...register('dateOfBirth')} />
                   </div>
 
                   {/* Notes */}
@@ -214,33 +250,46 @@ export function AddEnquiryModal() {
                 </div>
 
                 {/* WhatsApp Preview */}
-                <div className="mt-5 rounded-xl bg-green-50 border border-green-100 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-green-700 tracking-wider">WHATSAPP PREVIEW</span>
-                    <span className="text-xs text-green-600">Auto-sent immediately after adding</span>
+                <div className="mt-5 rounded-xl bg-green-50 border border-green-100 p-3 sm:p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <span className="text-xs font-bold text-green-700 tracking-wider">
+                      WHATSAPP PREVIEW
+                    </span>
+                    <span className="text-xs text-green-600">
+                      Auto-sent immediately after adding
+                    </span>
                   </div>
                   <div className="bg-white rounded-xl p-3 shadow-sm max-w-xs ml-auto">
                     <p className="text-sm text-gray-800 leading-relaxed">
-                      Dear <span className="font-medium">{parentName || 'Parent'} garu</span>,<br />
+                      Dear{' '}
+                      <span className="font-medium">{parentName || 'Parent'} garu</span>,
+                      <br />
                       Thank you for visiting{' '}
-                      <span className="text-green-600 font-medium">Hanamkonda Public School</span>. We will contact
-                      you within 24 hours regarding admission to {classFor || 'the class'}.
+                      <span className="text-green-600 font-medium">
+                        Hanamkonda Public School
+                      </span>
+                      . We will contact you within 24 hours regarding admission to{' '}
+                      {classFor || 'the class'}.
                       <br />
                       <br />
                       — Principal Ramesh Kumar
                     </p>
                     <p className="text-right text-[10px] text-gray-400 mt-1">
-                      {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date().toLocaleTimeString('en-IN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3 mt-5">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-5">
                   <Button
                     type="button"
                     onClick={closeAddEnquiry}
                     variant="outline"
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -248,6 +297,7 @@ export function AddEnquiryModal() {
                     type="submit"
                     disabled={addEnquiry.isPending}
                     variant="default"
+                    className="w-full sm:w-auto"
                   >
                     <MessageCircle size={14} />
                     {addEnquiry.isPending ? 'Adding...' : 'Add Enquiry & Send WhatsApp'}
