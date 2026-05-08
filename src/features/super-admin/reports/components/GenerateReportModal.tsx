@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { FileText, Loader2, X } from "lucide-react";
-import type { ReportType,  GenerateReportPayload } from "../types/reports.types";
+import type { ReportType, GenerateReportPayload } from "../types/reports.types";
 import { REPORT_CARDS } from "../utils/report-config";
 import { useGenerateReport } from "../hooks/useReports";
 
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+
 // ── Schema ──────────────────────────────────────────────────
 const schema = z.object({
   type: z.enum(["REVENUE", "SCHOOLS", "MARKETING", "WHATSAPP", "FEE", "AUDIT"]),
@@ -33,10 +34,10 @@ type PeriodType = FormValues["periodType"];
 
 // ── Constants ───────────────────────────────────────────────
 const PERIOD_PILLS: { value: PeriodType; label: string }[] = [
-  { value: "THIS_MONTH",   label: "This Month" },
-  { value: "LAST_MONTH",   label: "Last Month" },
+  { value: "THIS_MONTH",    label: "This Month" },
+  { value: "LAST_MONTH",    label: "Last Month" },
   { value: "LAST_3_MONTHS", label: "Last 3 Months" },
-  { value: "CUSTOM",       label: "Custom" },
+  { value: "CUSTOM",        label: "Custom" },
 ];
 
 const FORMAT_OPTIONS: { value: FormValues["format"]; label: string }[] = [
@@ -46,9 +47,9 @@ const FORMAT_OPTIONS: { value: FormValues["format"]; label: string }[] = [
 ];
 
 const SCHOOL_OPTIONS = [
-  { value: "ALL", label: "All Schools" },
+  { value: "ALL",    label: "All Schools" },
   { value: "ACTIVE", label: "Active Schools Only" },
-  { value: "TRIAL", label: "Trial Schools Only" },
+  { value: "TRIAL",  label: "Trial Schools Only" },
 ];
 
 const REPORT_TYPE_OPTIONS = REPORT_CARDS.map((c) => ({
@@ -69,9 +70,7 @@ function getDateRange(periodType: PeriodType, startDate?: string, endDate?: stri
     case "LAST_3_MONTHS":
       return { from: startOfMonth(subMonths(now, 2)), to: endOfMonth(now) };
     case "CUSTOM":
-      if (startDate && endDate) {
-        return { from: new Date(startDate), to: new Date(endDate) };
-      }
+      if (startDate && endDate) return { from: new Date(startDate), to: new Date(endDate) };
       return null;
     default:
       return null;
@@ -81,7 +80,7 @@ function getDateRange(periodType: PeriodType, startDate?: string, endDate?: stri
 function getPeriodLabel(periodType: PeriodType, startDate?: string, endDate?: string) {
   const range = getDateRange(periodType, startDate, endDate);
   if (!range) return "—";
-  return `${format(range.from, "MMMM yyyy")}`;
+  return format(range.from, "MMMM yyyy");
 }
 
 function getEstimatedSize(type: string, fmt: string) {
@@ -98,7 +97,7 @@ interface GenerateReportModalProps {
   onClose: () => void;
 }
 
-const labelClass = "block text-[11px] font-bold tracking-widest uppercase text-gray-500 mb-2";
+const labelClass = "block text-[11px] font-bold tracking-widest uppercase text-gray-500 mb-1.5";
 
 const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportModalProps) => {
   const { mutate, isPending } = useGenerateReport();
@@ -114,16 +113,14 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
     },
   });
 
-  const type = useWatch({ control, name: "type" }) as FormValues["type"];
-  const format_ = useWatch({ control, name: "format" }) as FormValues["format"];
-  const periodType = useWatch({ control, name: "periodType" }) as FormValues["periodType"];
-  const startDate = useWatch({ control, name: "startDate" }) as string | undefined;
-  const endDate = useWatch({ control, name: "endDate" }) as string | undefined;
+  const type        = useWatch({ control, name: "type" }) as FormValues["type"];
+  const format_     = useWatch({ control, name: "format" }) as FormValues["format"];
+  const periodType  = useWatch({ control, name: "periodType" }) as FormValues["periodType"];
+  const startDate   = useWatch({ control, name: "startDate" }) as string | undefined;
+  const endDate     = useWatch({ control, name: "endDate" }) as string | undefined;
   const schoolFilter = useWatch({ control, name: "schoolFilter" }) as string;
 
-  // Auto-fill dates from period
-  const dateRange = useMemo(() => getDateRange(periodType, startDate, endDate), [periodType, startDate, endDate]);
-
+  const dateRange   = useMemo(() => getDateRange(periodType, startDate, endDate), [periodType, startDate, endDate]);
   const displayFrom = dateRange ? format(dateRange.from, "dd MMM yyyy") : "—";
   const displayTo   = dateRange ? format(dateRange.to,   "dd MMM yyyy") : "—";
   const periodLabel = getPeriodLabel(periodType, startDate, endDate);
@@ -142,11 +139,24 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <Card className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl my-auto" onClick={(e) => e.stopPropagation()}>
+      {/* Modal container — bottom sheet on mobile, centered card on sm+ */}
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+        <Card
+          className={[
+            // Mobile: full-width bottom sheet
+            "w-full rounded-t-2xl rounded-b-none",
+            // sm+: floating centered card, all corners rounded
+            "sm:rounded-3xl sm:max-w-lg",
+            // Shared: scrollable, flex column
+            "bg-white shadow-2xl max-h-[92dvh] flex flex-col overflow-hidden",
+          ].join(" ")}
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header */}
-          <div className="flex items-start justify-between px-7 pt-6 pb-5">
+          <div className="relative flex items-start justify-between px-5 pt-6 pb-4 sm:px-7 shrink-0">
+            {/* Drag handle — mobile only */}
+            <div className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-gray-200 sm:hidden" />
+
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">Generate Report</h2>
               <p className="text-sm text-gray-400 mt-0.5">Configure and download a platform report</p>
@@ -156,35 +166,37 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors mt-0.5"
+              className="shrink-0 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors mt-0.5"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />
             </Button>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="px-7 space-y-5 pb-2">
+          {/* Scrollable form body */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="flex-1 overflow-y-auto flex flex-col"
+          >
+            <div className="px-5 sm:px-7 space-y-5 pb-2">
 
-              {/* Report Type — dropdown */}
+              {/* Report Type */}
               <div>
-                <Label className={labelClass} required>
-                  Report Type
-                </Label>
+                <Label className={labelClass} required>Report Type</Label>
                 <Select
                   {...register("type")}
                   options={REPORT_TYPE_OPTIONS}
-                  className="pr-10 cursor-pointer"
+                  className="pr-10 cursor-pointer h-11 sm:h-9"
                 />
                 {errors.type && <p className="text-xs text-red-500 mt-1">{errors.type.message}</p>}
               </div>
 
               {/* Period — pill buttons */}
               <div>
-                <Label className={labelClass} required>
-                  Period
-                </Label>
-                <div className="flex flex-wrap gap-2">
+                <Label className={labelClass} required>Period</Label>
+                {/* 2×2 grid on mobile, single row on sm+ */}
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   {PERIOD_PILLS.map((p) => {
                     const active = periodType === p.value;
                     return (
@@ -194,7 +206,12 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                         variant={active ? "default" : "outline"}
                         size="sm"
                         onClick={() => setValue("periodType", p.value)}
-                        className={active ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200" : "text-gray-600 hover:bg-gray-100"}
+                        className={[
+                          "h-10 sm:h-8 w-full sm:w-auto",
+                          active
+                            ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
+                            : "text-gray-600 hover:bg-gray-100",
+                        ].join(" ")}
                       >
                         {p.label}
                       </Button>
@@ -203,17 +220,23 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                 </div>
               </div>
 
-              {/* From / To — read-only display or date inputs if custom */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* From / To */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className={labelClass}>From</Label>
                   {periodType === "CUSTOM" ? (
                     <>
-                      <Input type="date" {...register("startDate")} />
-                      {errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate.message}</p>}
+                      <Input
+                        type="date"
+                        {...register("startDate")}
+                        className="h-11 sm:h-9"
+                      />
+                      {errors.startDate && (
+                        <p className="text-xs text-red-500 mt-1">{errors.startDate.message}</p>
+                      )}
                     </>
                   ) : (
-                    <div className="h-11 px-4 flex items-center rounded-xl border border-gray-200 text-sm text-gray-800 bg-white">
+                    <div className="h-11 sm:h-9 px-3 flex items-center rounded-xl border border-gray-200 text-sm text-gray-800 bg-white">
                       {displayFrom}
                     </div>
                   )}
@@ -221,9 +244,13 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                 <div>
                   <Label className={labelClass}>To</Label>
                   {periodType === "CUSTOM" ? (
-                    <Input type="date" {...register("endDate")} />
+                    <Input
+                      type="date"
+                      {...register("endDate")}
+                      className="h-11 sm:h-9"
+                    />
                   ) : (
-                    <div className="h-11 px-4 flex items-center rounded-xl border border-gray-200 text-sm text-gray-800 bg-white">
+                    <div className="h-11 sm:h-9 px-3 flex items-center rounded-xl border border-gray-200 text-sm text-gray-800 bg-white">
                       {displayTo}
                     </div>
                   )}
@@ -236,15 +263,13 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                 <Select
                   {...register("schoolFilter")}
                   options={SCHOOL_OPTIONS}
-                  className="pr-10 cursor-pointer"
+                  className="pr-10 cursor-pointer h-11 sm:h-9"
                 />
               </div>
 
-              {/* Format — segmented button */}
+              {/* Format — segmented control */}
               <div>
-                <Label className={labelClass} required>
-                  Format
-                </Label>
+                <Label className={labelClass} required>Format</Label>
                 <div className="grid grid-cols-3 gap-0 rounded-xl border border-gray-200 overflow-hidden">
                   {FORMAT_OPTIONS.map((f, i) => {
                     const active = format_ === f.value;
@@ -255,7 +280,13 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                         variant={active ? "default" : "ghost"}
                         size="sm"
                         onClick={() => setValue("format", f.value)}
-                        className={`h-11 rounded-none ${active ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"} ${i !== FORMAT_OPTIONS.length - 1 ? "border-r border-gray-200" : ""}`}
+                        className={[
+                          "h-11 sm:h-10 rounded-none",
+                          active
+                            ? "bg-indigo-600 text-white"
+                            : "bg-white text-gray-500 hover:bg-gray-50",
+                          i !== FORMAT_OPTIONS.length - 1 ? "border-r border-gray-200" : "",
+                        ].join(" ")}
                       >
                         {f.label}
                       </Button>
@@ -277,38 +308,46 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: GenerateReportM
                     />
                   )}
                 />
-                <label htmlFor="emailWhenReady" className="text-sm text-gray-700 cursor-pointer select-none">
+                <label
+                  htmlFor="emailWhenReady"
+                  className="text-sm text-gray-700 cursor-pointer select-none"
+                >
                   Email report to me when ready
                 </label>
               </div>
 
               {/* Report Preview */}
-              <div className="bg-gray-50 rounded-2xl border border-gray-100 px-5 py-4">
+              <div className="bg-gray-50 rounded-2xl border border-gray-100 px-4 py-4">
                 <p className="text-[11px] font-bold tracking-widest uppercase text-gray-400 mb-2">
                   Report Preview
                 </p>
                 <p className="text-sm text-gray-700 leading-relaxed">
                   {reportLabel} for{" "}
-                  <span className="font-bold text-gray-900">{periodLabel}</span>{" "}
-                  — {schoolLabel} —{" "}
-                  {format_} format
+                  <span className="font-bold text-gray-900">{periodLabel}</span>
+                  {" "}— {schoolLabel} — {format_} format
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-400">
-                  <FileText className="w-3.5 h-3.5" />
-                  Estimated size: <span className="font-medium text-gray-500">{estSize}</span>
+                  <FileText className="w-3.5 h-3.5 shrink-0" />
+                  Estimated size:{" "}
+                  <span className="font-medium text-gray-500">{estSize}</span>
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-between px-7 py-5 mt-1">
-              <Button type="button" variant="outline" onClick={onClose} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors px-2">
+            {/* Footer — stacked on mobile, inline on sm+ */}
+            <div className="flex flex-col-reverse gap-3 px-5 py-4 mt-1 border-t border-gray-100 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-5 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="w-full h-11 text-sm font-semibold text-gray-600 hover:text-gray-900 sm:w-auto sm:h-9 sm:px-5"
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isPending}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm shadow-indigo-200"
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm shadow-indigo-200 sm:w-auto sm:h-9 sm:px-6"
               >
                 {isPending ? (
                   <>

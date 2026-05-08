@@ -13,6 +13,7 @@ import {
 
 import Sidebar from "../components/common/Sidebar";
 import Topbar from "../components/common/Topbar";
+import { useUIStore } from "@/store/uiStore";
 
 // ✅ Breadcrumb labels
 const BreadcrumbLabels: Record<string, string> = {
@@ -44,6 +45,8 @@ export const SchoolAdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement | null>(null);
+  const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const collapsed = useUIStore((s) => s.collapsed);
 
   const breadcrumbs = useMemo(() => {
     const current = BreadcrumbLabels[location.pathname] ?? (
@@ -70,11 +73,15 @@ export const SchoolAdminLayout = () => {
     mainRef.current?.scrollTo({ top: 0, left: 0 });
   }, [location.pathname]);
 
+  // Responsive left padding for main content
+  let mainPadding = "md:pl-72";
+  if (!sidebarOpen) mainPadding = "md:pl-0";
+  else if (collapsed) mainPadding = "md:pl-16";
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F4F6FA]">
       <Sidebar items={NavItem} />
-      
-      <div className="flex-1 flex flex-col min-h-0 md:pl-72 ">
+      <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-20">
           <Outlet />

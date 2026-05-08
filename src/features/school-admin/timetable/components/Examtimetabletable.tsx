@@ -1,6 +1,13 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { ExamTimetable, ExamEntry } from "../types/timetable.types";
 import {
   formatExamDate,
@@ -28,120 +35,204 @@ const ExamTimetableTable: React.FC<Props> = ({
   onResendNotification,
 }) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-5 pb-4">
-        <div>
-          <h2 className="text-base font-bold text-gray-900">{exam.title}</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{exam.subtitle}</p>
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+
+      {/* ══════════════════════════════════════════
+          HEADER
+          Mobile:  title block stacks above actions
+          Desktop: single row
+      ══════════════════════════════════════════ */}
+      <div className="flex flex-col gap-3 p-4 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5 sm:pb-4">
+
+        {/* Title + subtitle */}
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-bold text-gray-900 sm:text-base">
+            {exam.title}
+          </h2>
+          <p className="mt-0.5 text-xs text-gray-400">{exam.subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Actions row */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+
           {/* Notify parents toggle */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">
               Notify Parents
             </span>
-            <Button
+
+            {/* Toggle pill */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={exam.notifyParentsEnabled}
               onClick={() => onToggleNotify(!exam.notifyParentsEnabled)}
-              variant="outline"
-              size="sm"
-              className={`relative w-10 h-5 rounded-full transition-colors p-0 ${
-                exam.notifyParentsEnabled ? "bg-indigo-600" : "bg-gray-200"
-              }`}
+              className={[
+                "relative h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400",
+                exam.notifyParentsEnabled ? "bg-indigo-600" : "bg-gray-200",
+              ].join(" ")}
             >
               <span
-                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  exam.notifyParentsEnabled ? "translate-x-5" : ""
-                }`}
+                className={[
+                  "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
+                  exam.notifyParentsEnabled ? "left-[18px]" : "left-0.5",
+                ].join(" ")}
               />
-            </Button>
-            <span className="text-lg">💬</span>
+            </button>
+
+            <span className="text-base leading-none">💬</span>
           </div>
 
+          {/* Add exam CTA — full width on xs, auto on sm+ */}
           <Button
             onClick={onAddExam}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 xs:w-auto sm:h-auto sm:py-2"
           >
             + Add Exam
           </Button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <Table className="w-full text-sm">
+      {/* ══════════════════════════════════════════
+          TABLE
+          Horizontally scrollable — never crushes on mobile.
+          Sticky Subject column so users always know which row.
+      ══════════════════════════════════════════ */}
+      <div
+        className="overflow-x-auto"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "#e2e8f0 transparent" }}
+      >
+        <style>{`
+          .exam-tt::-webkit-scrollbar { height: 4px; }
+          .exam-tt::-webkit-scrollbar-track { background: transparent; }
+          .exam-tt::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
+        `}</style>
+
+        <Table
+          className="exam-tt w-full text-sm"
+          style={{ minWidth: 580 }}
+        >
           <TableHeader>
             <TableRow className="border-b border-gray-100 bg-gray-50/50">
-              {["SUBJECT", "CLASS", "DATE", "DAY", "TIME", "VENUE", "NOTIFY", "ACTIONS"].map((h) => (
-                <TableHead key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wide">
+              {/* Sticky subject header */}
+              <TableHead className="sticky left-0 z-10 bg-gray-50/80 px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-gray-400 backdrop-blur-sm sm:px-4 sm:text-xs">
+                Subject
+              </TableHead>
+              {["Class", "Date", "Day", "Time", "Venue", "Notify", "Actions"].map((h) => (
+                <TableHead
+                  key={h}
+                  className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-gray-400 sm:px-4 sm:text-xs"
+                >
                   {h}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
+
           <TableBody className="divide-y divide-gray-100">
-            {exam.entries.map((entry) => (
-              <TableRow key={entry.id} className="hover:bg-gray-50/50 transition-colors">
-                <TableCell className="px-4 py-4 font-semibold text-gray-800">{entry.subject}</TableCell>
-                <TableCell className="px-4 py-4 text-gray-500">{entry.className}</TableCell>
-                <TableCell className="px-4 py-4 text-gray-600">
-                  <span className="whitespace-nowrap">{formatExamDate(entry.date)}</span>
-                </TableCell>
-                <TableCell className="px-4 py-4 text-gray-500">{formatExamDay(entry.date)}</TableCell>
-                <TableCell className="px-4 py-4 text-gray-600 whitespace-nowrap">
-                  {formatTimeSlot(entry.startTime, entry.endTime)}
-                </TableCell>
-                <TableCell className="px-4 py-4 text-gray-500 whitespace-nowrap">{entry.venue}</TableCell>
-                <TableCell className="px-4 py-4">
-                  <span title={entry.notifyStatus} className="text-lg">
-                    {NOTIFY_STATUS_ICON[entry.notifyStatus]}
-                  </span>
-                </TableCell>
-                <TableCell className="px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => onEditExam(entry)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-indigo-600 transition-colors text-base h-8 w-8 p-0"
-                      title="Edit"
-                    >
-                      ✏️
-                    </Button>
-                    <Button
-                      onClick={() => onDeleteExam(entry.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-red-500 transition-colors text-base h-8 w-8 p-0"
-                      title="Delete"
-                    >
-                      🗑️
-                    </Button>
-                  </div>
+            {exam.entries.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="px-4 py-8 text-center text-sm text-gray-400"
+                >
+                  No exam entries yet. Click <strong>+ Add Exam</strong> to get started.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              exam.entries.map((entry) => (
+                <TableRow
+                  key={entry.id}
+                  className="transition-colors hover:bg-gray-50/50"
+                >
+                  {/* Sticky subject cell */}
+                  <TableCell className="sticky left-0 z-10 bg-white px-3 py-3 font-semibold text-gray-800 sm:px-4 sm:py-4 sm:text-sm">
+                    {entry.subject}
+                  </TableCell>
+
+                  <TableCell className="px-3 py-3 text-xs text-gray-500 sm:px-4 sm:py-4 sm:text-sm">
+                    {entry.className}
+                  </TableCell>
+
+                  <TableCell className="px-3 py-3 sm:px-4 sm:py-4">
+                    <span className="whitespace-nowrap text-xs text-gray-600 sm:text-sm">
+                      {formatExamDate(entry.date)}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="px-3 py-3 text-xs text-gray-500 sm:px-4 sm:py-4 sm:text-sm">
+                    {/* Full day on sm+, 3-char on mobile */}
+                    <span className="sm:hidden">{formatExamDay(entry.date).slice(0, 3)}</span>
+                    <span className="hidden sm:inline">{formatExamDay(entry.date)}</span>
+                  </TableCell>
+
+                  <TableCell className="whitespace-nowrap px-3 py-3 text-xs text-gray-600 sm:px-4 sm:py-4 sm:text-sm">
+                    {formatTimeSlot(entry.startTime, entry.endTime)}
+                  </TableCell>
+
+                  <TableCell className="whitespace-nowrap px-3 py-3 text-xs text-gray-500 sm:px-4 sm:py-4 sm:text-sm">
+                    {entry.venue}
+                  </TableCell>
+
+                  <TableCell className="px-3 py-3 sm:px-4 sm:py-4">
+                    <span title={entry.notifyStatus} className="text-base sm:text-lg">
+                      {NOTIFY_STATUS_ICON[entry.notifyStatus]}
+                    </span>
+                  </TableCell>
+
+                  {/* Action buttons */}
+                  <TableCell className="px-3 py-3 sm:px-4 sm:py-4">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Button
+                        onClick={() => onEditExam(entry)}
+                        variant="ghost"
+                        size="sm"
+                        title="Edit"
+                        aria-label={`Edit ${entry.subject}`}
+                        className="h-7 w-7 p-0 text-sm text-gray-400 transition-colors hover:text-indigo-600 sm:h-8 sm:w-8 sm:text-base"
+                      >
+                        ✏️
+                      </Button>
+                      <Button
+                        onClick={() => onDeleteExam(entry.id)}
+                        variant="ghost"
+                        size="sm"
+                        title="Delete"
+                        aria-label={`Delete ${entry.subject}`}
+                        className="h-7 w-7 p-0 text-sm text-gray-400 transition-colors hover:text-red-500 sm:h-8 sm:w-8 sm:text-base"
+                      >
+                        🗑️
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Footer notification banner */}
+      {/* ══════════════════════════════════════════
+          FOOTER NOTIFICATION BANNER
+          Stacks on mobile, inline on sm+
+      ══════════════════════════════════════════ */}
       {exam.lastNotificationSentAt && (
-        <div className="flex items-center justify-between flex-wrap gap-2 px-5 py-3 border-t border-gray-100 bg-orange-50">
-          <div className="flex items-center gap-2 text-xs text-orange-700">
-            <span>ℹ️</span>
-            <span>
+        <div className="flex flex-col gap-2 border-t border-gray-100 bg-orange-50 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-5">
+
+          <div className="flex items-start gap-2 text-xs text-orange-700 sm:items-center">
+            <span className="mt-0.5 shrink-0 sm:mt-0">ℹ️</span>
+            <p className="leading-snug">
               Exam schedule WhatsApp sent to{" "}
               <strong>{exam.notificationRecipientsCount} Class 10 parents</strong> on{" "}
               {formatNotificationDate(exam.lastNotificationSentAt)} ✓
-            </span>
+            </p>
           </div>
+
           <Button
             onClick={onResendNotification}
             variant="ghost"
             size="sm"
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-wide transition-colors"
+            className="w-full justify-center text-xs font-bold uppercase tracking-wide text-indigo-600 transition-colors hover:text-indigo-800 sm:w-auto sm:justify-start"
           >
             Resend Notification
           </Button>

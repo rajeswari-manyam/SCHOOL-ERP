@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FaThLarge, FaSchool, FaCreditCard, FaCog, FaComment, FaTicketAlt, FaUsers, FaFileAlt, FaChartBar } from "react-icons/fa";
 import Sidebar from "../components/common/Sidebar";
 import Topbar from "../components/common/Topbar";
+import { useUIStore } from "@/store/uiStore";
 
 const BreadcrumbLabels: Record<string, string> = {
   "/superadmin/dashboard": "Dashboard",
@@ -33,6 +34,8 @@ export const SuperAdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement | null>(null);
+  const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const collapsed = useUIStore((s) => s.collapsed);
 
   const breadcrumbs = useMemo(() => {
     const current = BreadcrumbLabels[location.pathname] ?? (
@@ -59,14 +62,18 @@ export const SuperAdminLayout = () => {
     mainRef.current?.scrollTo({ top: 0, left: 0 });
   }, [location.pathname]);
 
+  // Responsive left margin for main content and topbar
+  let mainMargin = "md:ml-[280px]";
+  if (!sidebarOpen) mainMargin = "md:ml-0";
+  else if (collapsed) mainMargin = "md:ml-16";
+
   return (
     <div className="min-h-screen w-full bg-[#F4F6FA]">
       <Sidebar items={NavItem} />
       <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
-      
-      <main 
-        ref={mainRef} 
-        className="overflow-y-auto bg-[#F4F6FA] pt-16 sm:pt-20 md:pt-20 md:ml-[280px]"
+      <main
+        ref={mainRef}
+        className={`overflow-y-auto bg-[#F4F6FA] pt-16 sm:pt-20 md:pt-20 transition-all duration-300 ${mainMargin}`}
       >
         <div className="p-3 sm:p-4 md:p-6 lg:p-8 min-h-screen">
           <Outlet />

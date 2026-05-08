@@ -1,20 +1,17 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { z } from "zod";
 import { MessageSquare, Check, CheckCircle } from "lucide-react";
 import { ConfigCard, FieldLabel, SecretInput, TextInput, ReadOnlyField, ConnectedBadge } from "./ConfigFields";
 import { useConfigMutations } from "../hooks/useConfig";
 import type { DialogConfig } from "../types/config.types";
 
-const schema = z.object({
-  apiKey: z.string().min(1),
-  partnerId: z.string().min(1),
-  webhookUrl: z.string().url(),
-  baseUrl: z.string().url(),
-});
-
-type FormValues = z.infer<typeof schema>;
+type FormValues = {
+  apiKey: string;
+  partnerId: string;
+  webhookUrl: string;
+  baseUrl: string;
+};
 
 const DialogIcon = () => (
   <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -28,11 +25,11 @@ const DialogConfigCard = ({ config }: DialogConfigCardProps) => {
   const { saveDialog, testDialog } = useConfigMutations();
   const [testMsg, setTestMsg] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { } } = useForm<FormValues>({
+  const { register, handleSubmit } = useForm<FormValues>({
     defaultValues: {
       apiKey: config?.apiKey ?? "",
       partnerId: config?.partnerId ?? "MANYAM-001",
-      webhookUrl: config?.webhookUrl ?? "https://erp.manyam.in/webhook/wa",
+      webhookUrl: config?.webhookUrl ?? "https://erp.manyam.in",
       baseUrl: config?.baseUrl ?? "https://waba.360dialog.io",
     },
   });
@@ -72,7 +69,7 @@ const DialogConfigCard = ({ config }: DialogConfigCardProps) => {
           </div>
           <div>
             <FieldLabel text="Webhook URL" />
-            <ReadOnlyField value={config?.webhookUrl ?? "https://erp.manyam.in/webhook/wa"} />
+            <ReadOnlyField value={config?.webhookUrl ?? "https://erp.manyam.in"} />
           </div>
           <div>
             <FieldLabel text="Base URL" />
