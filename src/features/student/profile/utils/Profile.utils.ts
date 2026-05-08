@@ -1,51 +1,65 @@
-import type { StudentStatus, DocumentCategory } from "../types/profile.types";
+import type { FieldConfig, StudentStatus, DocumentType } from "../types/profile.types";
 
-// ─── Date helpers ───────────────────────────────────────────────────────────────
-export const formatDOB = (isoDate: string): string => {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
+// ─── Status badge styles ──────────────────────────────────────────────────────
 
-// ─── Status styles ──────────────────────────────────────────────────────────────
-export const STATUS_STYLES: Record<StudentStatus, { badge: string; label: string }> = {
-  ACTIVE:      { badge: "bg-green-100 text-green-700 border border-green-200", label: "ACTIVE" },
-  INACTIVE:    { badge: "bg-gray-100 text-gray-500 border border-gray-200",   label: "INACTIVE" },
-  TRANSFERRED: { badge: "bg-orange-100 text-orange-600 border border-orange-200", label: "TRANSFERRED" },
-};
-
-// ─── Document category icons ────────────────────────────────────────────────────
-export const DOC_CATEGORY_CONFIG: Record<
-  DocumentCategory,
-  { icon: string; label: string; iconBg: string }
+export const STATUS_STYLES: Record<
+  StudentStatus,
+  { badge: string; dot: string; label: string }
 > = {
-  ACADEMIC:  { icon: "📄", label: "ACADEMIC DOCUMENT",  iconBg: "bg-red-50" },
-  IDENTITY:  { icon: "🪪", label: "IDENTITY DOCUMENT",  iconBg: "bg-blue-50" },
-  FINANCIAL: { icon: "💰", label: "FINANCIAL DOCUMENT", iconBg: "bg-green-50" },
-  MEDICAL:   { icon: "🏥", label: "MEDICAL DOCUMENT",   iconBg: "bg-pink-50" },
-  OTHER:     { icon: "📎", label: "DOCUMENT",            iconBg: "bg-gray-50" },
+  ACTIVE: {
+    badge: "bg-green-50 text-green-700 border border-green-200",
+    dot: "bg-green-500",
+    label: "Active",
+  },
+  INACTIVE: {
+    badge: "bg-slate-100 text-slate-500 border border-slate-200",
+    dot: "bg-slate-400",
+    label: "Inactive",
+  },
+  SUSPENDED: {
+    badge: "bg-red-50 text-red-600 border border-red-200",
+    dot: "bg-red-500",
+    label: "Suspended",
+  },
 };
 
-// ─── Personal info field labels ─────────────────────────────────────────────────
-export const PERSONAL_INFO_FIELDS = [
-  { key: "dateOfBirth",  label: "DATE OF BIRTH",  span: 1 },
-  { key: "gender",       label: "GENDER",         span: 1 },
-  { key: "bloodGroup",   label: "BLOOD GROUP",    span: 1 },
-  { key: "age",          label: "AGE",            span: 1 },
-  { key: "fatherName",   label: "FATHER'S NAME",  span: 1 },
-  { key: "fatherPhone",  label: "FATHER'S PHONE", span: 1 },
-  { key: "motherName",   label: "MOTHER'S NAME",  span: 1 },
-  { key: "motherPhone",  label: "MOTHER'S PHONE", span: 1 },
-  { key: "fullAddress",  label: "FULL ADDRESS",   span: 2 },
-] as const;
+// ─── Document icon map ────────────────────────────────────────────────────────
 
-// ─── Academic info field labels ─────────────────────────────────────────────────
-export const ACADEMIC_INFO_FIELDS = [
-  { key: "academicYear", label: "ACADEMIC YEAR" },
-  { key: "board",        label: "BOARD" },
-  { key: "section",      label: "SECTION" },
-  { key: "classRoom",    label: "CLASS ROOM" },
-] as const;
+export const DOCUMENT_ICON: Record<DocumentType, string> = {
+  ACADEMIC: "ti-file-text",
+  IDENTITY: "ti-id",
+  FINANCIAL: "ti-receipt",
+};
+
+// ─── Academic field config ────────────────────────────────────────────────────
+
+export const ACADEMIC_INFO_FIELDS: FieldConfig[] = [
+  { key: "academicYear", label: "Academic Year" },
+  { key: "board",        label: "Board" },
+  { key: "section",      label: "Section" },
+  { key: "classroom",    label: "Classroom" },
+];
+
+// ─── Personal field config ────────────────────────────────────────────────────
+
+export const PERSONAL_INFO_FIELDS: FieldConfig[] = [
+  { key: "dateOfBirth",  label: "Date of Birth",   span: 1 },
+  { key: "gender",       label: "Gender",           span: 1 },
+  { key: "bloodGroup",   label: "Blood Group",      span: 1 },
+  { key: "age",          label: "Age",              span: 1 },
+  { key: "fatherName",   label: "Father's Name",    span: 1 },
+  { key: "fatherPhone",  label: "Father's Phone",   span: 1 },
+  { key: "motherName",   label: "Mother's Name",    span: 1 },
+  { key: "motherPhone",  label: "Mother's Phone",   span: 1 },
+  { key: "fullAddress",  label: "Full Address",     span: 2 },
+];
+
+// ─── Formatters ───────────────────────────────────────────────────────────────
+
+export function formatDOB(raw: string): string {
+  return raw;
+}
+
+export function getAvatarBg(color: string): string {
+  return color ?? "#4f46e5";
+}

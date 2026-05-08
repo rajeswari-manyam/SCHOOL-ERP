@@ -6,7 +6,7 @@ import AttendancePage from "./attendance/pages/AttendancePage";
 import { HomeworkPage } from "./homework/pages/HomeWorkPage";
 import { ExamsPage } from "./exams/pages/ExamPage";
 import ClassTimetable from "../student/timetable/pages/ClassTimetablePage";
-import ProfilePage from "./profile/ProfilePage";
+import ProfilePage from "../student/profile/pages/ProfilePage";
 
 export default function StudentRouter() {
   return (

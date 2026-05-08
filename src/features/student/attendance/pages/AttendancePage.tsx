@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAttendance } from "../hooks/useAttendance";
 import { AttendanceStats } from "../components/AttendanceStats";
-import { AttendanceCalendar } from "../components/AttendanceCalendar";
+import { AttendanceCalendar } from "../components/Attendancecalendar";
 import { AbsentList } from "../components/AbsentList";
 import { AttendancePolicy } from "../components/AttendancePolicy";
 

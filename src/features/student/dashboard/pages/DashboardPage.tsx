@@ -69,33 +69,38 @@ export const Dashboard = () => {
       <main className="p-3 sm:p-4 md:p-6 max-w-screen-xl mx-auto space-y-4 sm:space-y-5">
 
         {/* ───── GREETING ───── */}
-        <div className="bg-white border border-gray-100 rounded-xl px-4 sm:px-6 py-4 hover:border-[#3525CD] transition-all duration-200">
-          
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
-            Good morning, Ravi!
-          </h1>
+       {/* ───── GREETING HEADER (NON-CARD STYLE) ───── */}
+<div className="px-1 sm:px-2 py-2 sm:py-3">
 
-          <div className="text-xs sm:text-sm flex flex-wrap items-center gap-2 mt-1 text-gray-500">
-            <span className="flex items-center gap-1">
-              <GraduationCap size={14} className="text-gray-400" />
-              Class 10A
-            </span>
+  <h1 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
+    Good morning, Ravi!
+  </h1>
 
-            <span className="text-gray-300 hidden sm:inline">•</span>
+  <div className="text-xs sm:text-sm flex flex-wrap items-center gap-2 mt-1 text-slate-500">
 
-            <span className="flex items-center gap-1">
-              <MdLocationCity size={14} className="text-gray-400" />
-              Hanamkonda Public School
-            </span>
+    <span className="flex items-center gap-1">
+      <GraduationCap size={14} className="text-slate-400" />
+      Class 10A
+    </span>
 
-            <span className="text-gray-300 hidden sm:inline">•</span>
+    <span className="text-slate-300 hidden sm:inline">•</span>
 
-            <span className="flex items-center gap-1">
-              <TbListNumbers size={14} className="text-gray-400" />
-              Roll No: 01
-            </span>
-          </div>
-        </div>
+    <span className="flex items-center gap-1">
+      <MdLocationCity size={14} className="text-slate-400" />
+      Hanamkonda Public School
+    </span>
+
+    <span className="text-slate-300 hidden sm:inline">•</span>
+
+    <span className="flex items-center gap-1">
+      <TbListNumbers size={14} className="text-slate-400" />
+      Roll No: 01
+    </span>
+
+  </div>
+
+</div>
+      
 
         {/* ───── STATS GRID (RESPONSIVE) ───── */}
         <DashboardStatGrid>

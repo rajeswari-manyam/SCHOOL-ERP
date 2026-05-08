@@ -1,20 +1,10 @@
-// ─── Student & Profile Types ────────────────────────────────────────────────
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
-export interface Student {
-  id: string;
-  admissionNo: string;
-  rollNo: string;
-  name: string;
-  avatarInitials: string;
-  avatarColor: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-  class: string;
-  section: string;
-  classTeacher: Teacher;
-  academic: AcademicInfo;
-  personal: PersonalInfo;
-  quickDownloads: QuickDownload[];
-}
+export type StudentStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+export type DocumentType = "ACADEMIC" | "IDENTITY" | "FINANCIAL";
+export type Gender = "Male" | "Female" | "Other";
+
+// ─── Entities ─────────────────────────────────────────────────────────────────
 
 export interface Teacher {
   id: string;
@@ -32,7 +22,7 @@ export interface AcademicInfo {
 
 export interface PersonalInfo {
   dateOfBirth: string;
-  gender: 'Male' | 'Female' | 'Other';
+  gender: Gender;
   bloodGroup: string;
   age: number;
   fatherName: string;
@@ -46,34 +36,37 @@ export interface QuickDownload {
   id: string;
   title: string;
   subtitle: string;
-  type: 'ACADEMIC' | 'IDENTITY' | 'FINANCIAL';
+  type: DocumentType;
   fileSize: string;
   documentCode?: string;
 }
 
-// ─── Navigation Types ────────────────────────────────────────────────────────
+export interface Student {
+  id: string;
+  admissionNo: string;
+  rollNo: string;
+  name: string;
+  avatarInitials: string;
+  avatarColor: string;
+  status: StudentStatus;
+  className: string;
+  section: string;
+  classTeacher: Teacher;
+  academic: AcademicInfo;
+  personal: PersonalInfo;
+  quickDownloads: QuickDownload[];
+}
 
-export type NavItem = {
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+
+export interface NavItem {
   id: string;
   label: string;
   path: string;
-  icon?: string;
-};
-
-// ─── UI Component Types ──────────────────────────────────────────────────────
-
-export type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral';
-
-export type DocumentType = 'ACADEMIC' | 'IDENTITY' | 'FINANCIAL';
-
-export interface InfoFieldProps {
-  label: string;
-  value: string;
-  fullWidth?: boolean;
 }
 
-export interface SectionHeaderProps {
-  title: string;
-  actionLabel?: string;
-  onAction?: () => void;
+export interface FieldConfig {
+  key: string;
+  label: string;
+  span?: number;
 }

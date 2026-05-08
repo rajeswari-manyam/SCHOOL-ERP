@@ -1,4 +1,4 @@
-import type { AttendanceDay, AttendanceStatus } from "../types/attendance.types";
+import type { AttendanceDay, AttendanceStatus } from "../types/Attendance.types";
 
 interface Props {
   days: AttendanceDay[];

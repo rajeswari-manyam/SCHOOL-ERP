@@ -165,16 +165,19 @@ export default function SubmitHomeworkModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className={cn(
-            "relative w-full max-w-lg rounded-2xl bg-white shadow-2xl",
-            "animate-in fade-in zoom-in-95 duration-200"
-          )}
-        >
+ <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/40 backdrop-blur-sm">
+       <div
+  className={cn(
+    "relative w-full sm:max-w-lg bg-white shadow-2xl",
+"rounded-2xl",
+  "max-h-[90vh] overflow-y-auto",
+    "animate-in fade-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+  )}
+>
+        
           <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
             {/* ── Header ── */}
-            <div className="flex items-start justify-between px-6 pt-6 pb-4">
+            <div className="flex items-start justify-between px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
                   Submit Homework
@@ -193,7 +196,7 @@ export default function SubmitHomeworkModal({
             </div>
 
             {/* ── Meta ── */}
-            <div className="mx-6 mb-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-indigo-50 px-4 py-3 text-xs font-medium">
+   <div className="mx-4 sm:mx-6 mb-4 flex flex-wrap gap-x-2 gap-y-1 rounded-xl bg-indigo-50 px-3 sm:px-4 py-3 text-[11px] sm:text-xs">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-indigo-500" />
                 <span className="text-gray-500">Subject:</span>
@@ -224,7 +227,7 @@ export default function SubmitHomeworkModal({
               </span>
             </div>
 
-            <div className="space-y-5 px-6 pb-6">
+         <div className="space-y-4 sm:space-y-5 px-4 sm:px-6 pb-6">
               {/* ── Submit As Tabs ── */}
               <Controller
                 name="submitAs"

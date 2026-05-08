@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { attendanceMock } from "../data/attendance.mock";
-import type { AttendanceData } from "../types/attendance.types";
+import type { AttendanceData } from "../types/Attendance.types";
 
 export const useAttendance = () => {
   const [data, setData] = useState<AttendanceData | null>(null);

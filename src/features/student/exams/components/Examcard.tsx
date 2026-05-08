@@ -11,9 +11,9 @@ const checks: CheckItem[] = [
 
 export const ExamCard = ({ exam, daysLeft }: { exam: Exam; daysLeft: number }) => {
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+   <div className="w-full max-w-md mx-auto space-y-4 px-2 sm:px-0"> 
       {/* Purple Exam Card */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#4f46e5] via-[#6366f1] to-[#818cf8] p-5 text-white shadow-lg">
+<div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#4f46e5] via-[#6366f1] to-[#818cf8] p-5 text-white shadow-lg border border-transparent hover:border-white/30 transition-all duration-300 hover:shadow-xl">
         {/* Decorative calendar icon background */}
         <div className="absolute top-4 right-4 opacity-10">
           <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
@@ -25,7 +25,7 @@ export const ExamCard = ({ exam, daysLeft }: { exam: Exam; daysLeft: number }) =
           Next Priority
         </span>
 
-        <h2 className="text-xl font-bold tracking-tight">
+      <h2 className="text-lg sm:text-xl font-bold tracking-tight">
           Unit Test 1 — {exam.subject}
         </h2>
 
@@ -50,7 +50,7 @@ export const ExamCard = ({ exam, daysLeft }: { exam: Exam; daysLeft: number }) =
       </div>
 
       {/* White Checklist Card - Separate from purple card */}
-      <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+     <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 hover:border-indigo-500 hover:shadow-md transition-all duration-300">
         <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
           Preparation Checklist
         </p>

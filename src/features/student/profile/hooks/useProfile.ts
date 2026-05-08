@@ -1,10 +1,14 @@
-import { useState, useCallback } from 'react';
-import type { Student, NavItem } from "../types/profile.types";
-import { STUDENT_DATA, NAV_ITEMS } from "../data/profile.mock";
+import { useState, useCallback } from "react";
+import type { Student } from "../types/profile.types";
+import { STUDENT_DATA } from "../data/profile.mock";
 
-// ─── useStudent ──────────────────────────────────────────────────────────────
+// ─── useStudent ───────────────────────────────────────────────────────────────
 
-export function useStudent() {
+export function useStudent(): {
+  student: Student;
+  loading: boolean;
+  error: string | null;
+} {
   const [student] = useState<Student>(STUDENT_DATA);
   const [loading] = useState(false);
   const [error] = useState<string | null>(null);
@@ -12,43 +16,32 @@ export function useStudent() {
   return { student, loading, error };
 }
 
-// ─── useNavigation ───────────────────────────────────────────────────────────
+// ─── useDownload ──────────────────────────────────────────────────────────────
 
-export function useNavigation(initialActive = 'profile') {
-  const [activeNav, setActiveNav] = useState<string>(initialActive);
-  const navItems: NavItem[] = NAV_ITEMS;
-
-  const navigate = useCallback((id: string) => {
-    setActiveNav(id);
-  }, []);
-
-  return { navItems, activeNav, navigate };
-}
-
-// ─── useDownload ─────────────────────────────────────────────────────────────
-
-export function useDownload() {
+export function useDownload(): {
+  downloading: string | null;
+  downloaded: string | null;
+  handleDownload: (id: string, title: string) => void;
+} {
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloaded, setDownloaded]   = useState<string | null>(null);
 
   const handleDownload = useCallback((id: string, title: string) => {
+    if (downloading) return;
+
     setDownloading(id);
-    // Simulate download delay
+    setDownloaded(null);
+
+    // Simulated async download — replace with real API call
     setTimeout(() => {
       setDownloading(null);
-      console.log(`Downloaded: ${title}`);
-    }, 1500);
-  }, []);
+      setDownloaded(id);
+      console.info(`[Download] ${title}`);
 
-  return { downloading, handleDownload };
-}
+      // Reset "done" state after 2.5 s
+      setTimeout(() => setDownloaded(null), 2500);
+    }, 1400);
+  }, [downloading]);
 
-// ─── useNotifications ────────────────────────────────────────────────────────
-
-export function useNotifications() {
-  const [count] = useState(3);
-  const [open, setOpen] = useState(false);
-
-  const toggle = useCallback(() => setOpen((prev) => !prev), []);
-
-  return { count, open, toggle };
+  return { downloading, downloaded, handleDownload };
 }

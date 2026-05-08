@@ -1,4 +1,4 @@
-import type { AttendanceDay } from "../types/attendance.types";
+import type { AttendanceDay } from "../types/Attendance.types";
 
 interface Props {
   days: AttendanceDay[];
@@ -30,7 +30,7 @@ export const AbsentList: React.FC<Props> = ({
       border border-gray-100
       flex flex-col
       transition-all duration-200
-      hover:border-[#4F46E5]
+     hover:border-[#3525CD] 
       hover:shadow-md
     ">
 
@@ -55,7 +55,7 @@ export const AbsentList: React.FC<Props> = ({
                 bg-red-50
                 border-l-[3px] border-red-500
                 transition-all duration-200
-                hover:border-[#4F46E5]
+             hover:border-[#3525CD]   
                 hover:shadow-sm
                 hover:-translate-y-0.5
                 cursor-pointer

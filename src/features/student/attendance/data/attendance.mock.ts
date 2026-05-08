@@ -1,4 +1,4 @@
-import type { AttendanceData } from "../types/attendance.types";
+import type { AttendanceData } from "../types/Attendance.types";
 
 export const attendanceMock: AttendanceData = {
   studentName: "Ravi Kumar",

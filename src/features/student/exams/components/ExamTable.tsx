@@ -89,7 +89,10 @@ export const ExamTable = ({ exams }: { exams: Exam[] }) => {
               };
 
               return (
-                <tr key={e.id} className="transition hover:bg-gray-50/50">
+               <tr
+  key={e.id}
+  className="group transition hover:bg-indigo-50/40 hover:shadow-sm"
+>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${subjectConfig.bg}`}>
@@ -113,8 +116,8 @@ export const ExamTable = ({ exams }: { exams: Exam[] }) => {
       </div>
 
       {/* Mobile Cards */}
-      <div className="md:hidden">
-        <div className="divide-y divide-gray-50">
+    <div className="md:hidden px-2">
+       <div className="space-y-2">
           {exams.map((e) => {
             const subjectConfig = subjectIcons[e.subject] ?? {
               bg: "bg-gray-50",
@@ -126,17 +129,20 @@ export const ExamTable = ({ exams }: { exams: Exam[] }) => {
             };
 
             return (
-              <div key={e.id} className="flex items-center justify-between px-4 py-4">
+            <div
+  key={e.id}
+  className="flex items-center justify-between px-4 py-4 rounded-xl transition border border-transparent hover:border-indigo-200 hover:bg-indigo-50/30 active:scale-[0.99]"
+>
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${subjectConfig.bg}`}>
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${subjectConfig.bg} shrink-0`}>
                     {subjectConfig.icon}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{e.subject}</p>
+                   <p className="text-sm sm:text-base font-semibold text-gray-900">{e.subject}</p>
                     <p className="text-xs text-gray-500">{e.date} · {e.startTime} – {e.endTime}</p>
                   </div>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${venueStyle[e.venue] ?? "bg-gray-100 text-gray-600"}`}>
+                <span className={`rounded-full px-3 py-1 text-[11px] sm:text-xs font-medium whitespace-nowrap  ${venueStyle[e.venue] ?? "bg-gray-100 text-gray-600"}`}>
                   {e.venue}
                 </span>
               </div>

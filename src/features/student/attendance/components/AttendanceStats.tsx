@@ -1,4 +1,4 @@
-import type { AttendanceSummary } from "../types/attendance.types";
+import type { AttendanceSummary } from "../types/Attendance.types";
 
 interface Props {
   title: string;

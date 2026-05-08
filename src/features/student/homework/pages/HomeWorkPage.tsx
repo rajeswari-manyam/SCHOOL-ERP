@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useHomework } from "../hooks/useHomeWork";
+import { useHomework } from "../hooks/Usehomework";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
 import SubmitHomeworkModal from "../components/SubmitHomeworkModal";
@@ -37,20 +37,20 @@ export const HomeworkPage = () => {
   } = useHomework();
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold mb-1">My Homework — Class 10A</h1>
       <p className="text-sm text-gray-400 mb-6">Academic Year 2024-25</p>
 
-      <div className="flex gap-6">
+     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
 
         {/* ── SIDEBAR ── */}
-        <aside className="w-48 flex-shrink-0 flex flex-col gap-3">
+      <aside className="w-full lg:w-48 flex-shrink-0 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible">  
           {/* Tabs Card */}
           <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">
               Homework
             </p>
-            <nav className="flex flex-col gap-1">
+           <nav className="flex lg:flex-col gap-2 lg:gap-1"> 
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
@@ -87,7 +87,7 @@ export const HomeworkPage = () => {
               </span>
               <span className="text-xs text-gray-400">Week 19</span>
             </div>
-            <div className="flex gap-2">
+           <div className="flex gap-2 overflow-x-auto"> 
               {DAYS.map((d) => (
                 <button
                   key={d.date}
@@ -132,7 +132,7 @@ export const HomeworkPage = () => {
           {/* STUDY MATERIALS */}
           {activeTab === "materials" && (
             <>
-              <div className="grid grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
                 {materials.map((m) => (
                   <StudyMaterialCard key={m.id} item={m} />
                 ))}
