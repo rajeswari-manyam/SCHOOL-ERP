@@ -1,18 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import type { KeyboardEvent, ClipboardEvent } from "react";
-import { Shield } from "lucide-react";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import typography, { combineTypography } from "@/styles/typography";
+import { Shield, ArrowLeft, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
-interface OtpInputProps {
-  phone: string;
-  onVerified?: () => void;
-  onBack?: () => void;
-}
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/store/authStore";
+import { useOtpVerifyMutation } from "@/hooks/useAuthMutations";
 
-/* ── 6-box OTP input ────────────────────────────── */
 const OtpBoxes = ({
   value,
   onChange,
