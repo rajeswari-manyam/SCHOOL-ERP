@@ -12,8 +12,8 @@ export { useAdmissionsStore } from './hooks/useAdmissionsStore';
 export { PipelineStats } from './components/PipelineStats';
 export { PipelineBoard } from './components/PipelineBoard';
 export { EnquiryDetailDrawer } from './components/EnquiryDetailDrawer';
-export { AddEnquiryModal } from './components/AddEnquiryModal';
-export { ConfirmAdmissionModal } from './components/ConfirmAdmissionModal';
+export { AddEnquiryModal } from "./components/Addenquirymodal";
+export { ConfirmAdmissionModal } from "./components/Confirmadmissionmodal";
 
 // Page
 export { AdmissionsPage } from './AdmissionsPage';
