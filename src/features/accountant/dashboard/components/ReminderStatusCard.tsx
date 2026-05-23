@@ -1,0 +1,108 @@
+import { Card, CardContent } from "@/components/ui/card";
+import type { ReminderStatus } from "../types/dashboard.types";
+
+interface ReminderStatusProps {
+  data: ReminderStatus & {
+    threeDayCount?: number;
+    todayCount?: number;
+    overdueCount?: number;
+  };
+}
+
+export const ReminderStatusCard = ({ data }: ReminderStatusProps) => {
+  const deliveryRate =
+    data.sent > 0 ? Math.round((data.delivered / data.sent) * 100) : 0;
+
+  const threeDayCount = data.threeDayCount ?? 18;
+  const todayCount = data.todayCount ?? 12;
+  const overdueCount = data.overdueCount ?? 17;
+
+  return (
+    <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD] hover:border transition-colors">
+      <CardContent className="px-3 py-3 sm:px-5 sm:py-4 space-y-4">
+
+       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"> 
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
+            <span className="text-sm font-semibold text-slate-900">
+              Automated Reminder Status
+            </span>
+          </div>
+
+          <span className="text-[11px] sm:text-xs text-slate-400">
+            Active for overdue batches
+          </span>
+        </div>
+
+     
+       <div className="grid grid-cols-3 sm:grid-cols-3 gap-2"> 
+
+        <div className="bg-[#E5EEFF] border border-slate-200 rounded-xl py-2.5 sm:py-3 px-2 text-center">
+  <p className="text-xl sm:text-lg font-bold text-slate-900">
+    {threeDayCount}
+  </p>
+  <p className="text-[10px] text-slate-500 mt-0.5 font-medium uppercase tracking-wide">
+    3-Day
+  </p>
+</div>
+
+          <div className="bg-[#E5EEFF] border border-slate-200 rounded-xl py-2.5 sm:py-3 px-2 text-center">
+            <p className="text-xl sm:text-lg font-bold text-slate-900">
+              {todayCount}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5 font-medium tracking-wide uppercase">
+              Today
+            </p>
+          </div>
+
+          <div className="bg-[#E5EEFF] border border-slate-200 rounded-xl py-2.5 sm:py-3 px-2 text-center">
+            <p className="text-xl sm:text-lg font-bold text-slate-900">
+              {overdueCount}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-0.5 font-medium tracking-wide uppercase">
+              Overdue
+            </p>
+          </div>
+        </div>
+
+     <div className="space-y-2">
+        
+
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+            <span className="text-xs text-slate-500 font-medium">
+              Delivery Rate ({data.sent} Sent)
+            </span>
+
+            <span
+              className={`text-xs font-semibold ${deliveryRate >= 80 ? "text-green-600" : "text-[#F87171]"
+                }`}
+            >
+              {deliveryRate}% Success
+            </span>
+          </div>
+
+        
+         <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden"> 
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${deliveryRate >= 80 ? "bg-green-500" : "bg-red-500"
+                }`}
+              style={{ width: `${deliveryRate}%` }}
+            />
+          </div>
+
+         <div className="flex flex-wrap gap-2 text-[11px] font-medium"> 
+            <span className="text-green-700 bg-green-50 px-2 py-1 rounded-md">
+              {data.delivered} delivered
+            </span>
+
+            <span className="text-[#F87171] bg-red-50 px-2 py-1 rounded-md">
+              {data.failed} failed
+            </span>
+          </div>
+
+        </div>
+
+      </CardContent>
+    </Card>
+  );
+};

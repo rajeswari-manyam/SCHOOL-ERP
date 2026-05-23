@@ -1,0 +1,172 @@
+import type { UpcomingExaminations } from "../types/Classtimetable.types";
+
+interface ExaminationTableProps {
+  examinations: UpcomingExaminations;
+  onAddToCalendar?: () => void;
+}
+
+const SUBJECT_COLORS: Record<string, string> = {
+  English: "text-blue-600",
+  Maths: "text-green-600",
+  Science: "text-cyan-600",
+  "Social Studies": "text-yellow-600",
+  Hindi: "text-red-500",
+};
+
+const ExaminationTable = ({
+  examinations,
+  onAddToCalendar,
+}: ExaminationTableProps) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
+
+    {/* ================= HEADER ================= */}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4 border-b border-gray-100">
+
+      <h2 className="text-sm font-bold text-gray-900">
+        Upcoming Examinations — {examinations.title}
+      </h2>
+
+      <button
+        onClick={onAddToCalendar}
+        className="
+          flex items-center justify-center gap-2
+          px-4 py-1.5 text-xs font-bold
+          text-indigo-600 border border-indigo-200
+          rounded-xl w-full sm:w-auto
+          transition-all duration-200
+          hover:bg-indigo-50 hover:border-indigo-300
+          active:scale-[0.98]
+        "
+      >
+        📅 Add to Calendar
+      </button>
+
+    </div>
+
+    {/* ================= DESKTOP TABLE ================= */}
+    <div className="hidden sm:block overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-100 bg-gray-50">
+            {["Subject", "Date", "Day", "Time", "Venue"].map((h) => (
+              <th
+                key={h}
+                className="py-3 px-6 text-left text-xs font-bold text-gray-400 uppercase tracking-wide"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        <tbody>
+          {examinations.exams.map((exam) => (
+            <tr
+              key={exam.id}
+              className="
+                border-b border-gray-50 last:border-0
+                transition-all duration-200
+                hover:bg-indigo-50/30
+                hover:border-l-4 hover:border-indigo-500
+              "
+            >
+              <td className="py-4 px-6">
+                <span
+                  className={`font-bold ${
+                    SUBJECT_COLORS[exam.subject] ?? "text-indigo-600"
+                  }`}
+                >
+                  {exam.subject}
+                </span>
+              </td>
+
+              <td className="py-4 px-6 text-gray-700 font-medium">
+                {exam.date}
+              </td>
+
+              <td className="py-4 px-6 text-gray-500">
+                {exam.day}
+              </td>
+
+              <td className="py-4 px-6 text-gray-500 whitespace-nowrap">
+                {exam.timeFrom} - {exam.timeTo}
+              </td>
+
+              <td className="py-4 px-6 text-gray-500">
+                {exam.venue}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* ================= MOBILE CARDS ================= */}
+    <div className="sm:hidden divide-y divide-gray-50">
+      {examinations.exams.map((exam) => (
+        <div
+          key={exam.id}
+          className="
+            p-4 bg-white
+            transition-all duration-200
+            hover:bg-indigo-50/30
+            hover:border-indigo-200
+            hover:shadow-sm
+            hover:-translate-y-1
+            border border-transparent
+            active:scale-[0.98]
+          "
+        >
+
+          {/* Top */}
+          <div className="flex items-center justify-between mb-3">
+            <span
+              className={`font-bold text-sm ${
+                SUBJECT_COLORS[exam.subject] ?? "text-indigo-600"
+              }`}
+            >
+              {exam.subject}
+            </span>
+
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+              {exam.day}
+            </span>
+          </div>
+
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <p className="text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                Date
+              </p>
+              <p className="text-gray-700 font-medium">
+                {exam.date}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                Time
+              </p>
+              <p className="text-gray-500">
+                {exam.timeFrom} - {exam.timeTo}
+              </p>
+            </div>
+
+            <div className="col-span-2">
+              <p className="text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                Venue
+              </p>
+              <p className="text-gray-500">
+                {exam.venue}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+export default ExaminationTable;
