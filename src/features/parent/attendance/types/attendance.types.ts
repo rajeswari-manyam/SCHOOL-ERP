@@ -16,6 +16,7 @@ export interface AttendanceHeaderProps {
   onPrev: () => void
   onNext: () => void
   child: ChildInfo
+  isLoading?: boolean
 }
 
 // ─── Stats ────────────────────────────────────────────────
@@ -29,6 +30,7 @@ export interface AttendanceStats {
 export interface AttendanceRecord {
   absent: number[]
   present: number[]
+  late?: number[]
   holidays?: number[]
 }
 
@@ -39,11 +41,13 @@ export interface AttendanceDayEntry {
 
 export interface AttendanceCalendarProps {
   currentDate: Date
-  onAbsentClick: (data: AbsentDayData) => void
+  onAbsentClick: (id: string, day: number, label: string) => void
+  isLoading?: boolean
 }
 
 // ─── Absent list / sidebar ────────────────────────────────
 export interface AbsentDay {
+  id: string
   day: number
   label: string
   time: string
@@ -55,6 +59,7 @@ export interface AbsentMeta {
 }
 
 export interface AbsentDayData {
+  id: string
   day: number
   label: string
   time: string
@@ -63,10 +68,12 @@ export interface AbsentDayData {
 export interface AbsentListProps {
   currentDate: Date
   onSelect: (data: AbsentDay) => void
+  isLoading?: boolean
 }
 
 // ─── Modal ────────────────────────────────────────────────
 export interface AbsentData {
+  id: string
   day: number
   label: string
   time: string
@@ -95,4 +102,13 @@ export interface AbsentModalProps {
 export interface TrendDataPoint {
   month: string
   attendance: number
+}
+
+// ─── Stat cards ───────────────────────────────────────────
+export interface AttendanceStatsProps {
+  onAbsentCardClick: () => void
+  monthSummary: { present: number; absent: number; late: number; total: number }
+  yearlySummary: { present: number; total: number } | null
+  isLoadingMonthly?: boolean
+  isLoadingYearly?: boolean
 }

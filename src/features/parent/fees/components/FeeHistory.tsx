@@ -10,7 +10,6 @@ import { Virtuoso } from "react-virtuoso";
 import { Download, FileDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { PaymentHistory } from "../types/fee.types";
-import { feeHistoryDummy } from "../data/fee.data";
 
 // ─── Mobile card ──────────────────────────────────────────────────────────────
 function ReceiptCard({ item }: { item: PaymentHistory }) {
@@ -207,7 +206,7 @@ function DesktopView({ data }: { data: PaymentHistory[] }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function FeeHistory({ data = feeHistoryDummy }: any) {
+export function FeeHistory({ data = [] }: { data: PaymentHistory[] }) {
   return (
     <>
       <MobileView data={data} />

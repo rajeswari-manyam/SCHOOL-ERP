@@ -34,6 +34,14 @@ export type Tab = "pending" | "history" | "annual";
 
 export interface AllPaidStateProps {
   onTabChange: (t: Tab) => void;
+  studentName?: string;
+  month?: string;
+  lastPayment?: { amount: number; date: string; mode: string } | null;
+  nextDue?: { label: string; date: string } | null;
+  phone?: string;
+  balance?: number;
+  standing?: string;
+  consecutiveOnTime?: number;
 }
 
 export interface FeeBannerProps {
@@ -44,7 +52,10 @@ export interface FeeBannerProps {
 export interface PaymentModalProps {
   fee: Fee;
   onClose: () => void;
-  onSuccess: (mode: string, amount: number) => void;
+  onSuccess: (mode: string, amount: number, txnId: string, date: string) => void;
+  studentId?: string;
+  studentName?: string;
+  studentClass?: string;
 }
 
 export interface MonthStatus {

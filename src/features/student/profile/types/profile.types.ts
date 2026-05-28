@@ -25,10 +25,6 @@ export interface PersonalInfo {
   gender: Gender;
   bloodGroup: string;
   age: number;
-  fatherName: string;
-  fatherPhone: string;
-  motherName: string;
-  motherPhone: string;
   fullAddress: string;
 }
 

@@ -34,10 +34,26 @@ export interface ParentProfile {
   children: Child[];
   notifications: NotificationPref[];
 }
+
 export interface ProfileCardProps {
   name: string;
   initials: string;
   role: string;
   phone: string;
   onEdit?: () => void;
+}
+
+/** Matches the API shape from getParentById */
+export interface ApiParent {
+  id: string;
+  parent_name: string;
+  students: string[]; // array of student IDs
+}
+
+/** Matches the API shape from getstudentsById */
+export interface ApiStudent {
+  id: string;
+  student_name: string;
+  class_name: string;
+  school_name: string;
 }

@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/store/authStore";
 import { useStudent, useDownload } from "../hooks/useProfile";
 import ProfileCard from "../components/ProfileCard";
 import AcademicInfoCard from "../components/AcademicInfoCard";
@@ -29,7 +30,10 @@ function Skeleton() {
 // ─── Page ───────────────────────────────────────────────
 
 export default function ProfilePage() {
-  const { student, loading, error } = useStudent();
+  const user = useAuthStore((state) => state.user);
+ const studentId = user?.id ?? ""; // user.id IS the studentId for Student role
+
+  const { student, loading, error } = useStudent(studentId);
   const { downloading, downloaded, handleDownload } = useDownload();
 
   if (loading) return <Skeleton />;
@@ -54,43 +58,22 @@ export default function ProfilePage() {
 
         {/* LEFT */}
         <div className="flex flex-col gap-4">
-          <div
-            className="
-              rounded-2xl transition-all duration-200
-              hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]
-            "
-          >
+          <div className="rounded-2xl transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]">
             <ProfileCard student={student} />
           </div>
 
-          <div
-            className="
-              rounded-2xl transition-all duration-200
-              hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]
-            "
-          >
+          <div className="rounded-2xl transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]">
             <AcademicInfoCard academic={student.academic} />
           </div>
         </div>
 
         {/* RIGHT */}
         <div className="flex flex-col gap-4">
-
-          <div
-            className="
-              rounded-2xl transition-all duration-200
-              hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]
-            "
-          >
+          <div className="rounded-2xl transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]">
             <PersonalInfoCard personal={student.personal} />
           </div>
 
-          <div
-            className="
-              rounded-2xl transition-all duration-200
-              hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]
-            "
-          >
+          <div className="rounded-2xl transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]">
             <QuickDownloads
               downloads={student.quickDownloads}
               downloadingId={downloading}
@@ -98,7 +81,6 @@ export default function ProfilePage() {
               onDownload={handleDownload}
             />
           </div>
-
         </div>
       </div>
     </main>

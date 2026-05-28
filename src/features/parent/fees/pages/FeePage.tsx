@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Download, Home } from "lucide-react";
+import { Download, Home, Loader2, AlertCircle } from "lucide-react";
 import { useFees } from "../hooks/usefee";
 import { FeeBanner } from "../components/FeeBanner";
 import { FeeCard } from "../components/FeeCard";
@@ -13,12 +13,7 @@ import { PaymentMethods } from "../components/PaymentMethods";
 import { StudentCard } from "../components/Studentcard";
 import { AllPaidState } from "../components/AllPaidState";
 import { HelpBar } from "../components/HelpBar";
-import {
-  sessionSummaryData,
-  studentCardData,
-  tuitionMonths,
-  examTerms,
-} from "../data/fee.data";
+
 import type { Fee } from "../types/fee.types";
 import typography from "@/styles/typography";
 import { cn } from "@/utils/cn";
@@ -29,6 +24,7 @@ type ModalState = "none" | "pay" | "success";
 type ParentLayoutContext = {
   activeChild: {
     id: number;
+    student_id?: string;
     name: string;
     class: string;
     school: string;
@@ -45,24 +41,50 @@ const TABS: { id: Tab; label: string }[] = [
 export default function FeesPage() {
   const [tab, setTab] = useState<Tab>("pending");
   const [modal, setModal] = useState<ModalState>("none");
-  const [paidFeeHead, setPaidFeeHead] = useState("");
-  const [paidAmount, setPaidAmount] = useState(0);
 
-  const { history, pending, allPaid, selectedFee, setSelectedFee, markPaid } = useFees();
+  // Payment success details — populated from the modal callback
+  const [paidFeeHead, setPaidFeeHead]     = useState("");
+  const [paidAmount, setPaidAmount]       = useState(0);
+  const [paidMode, setPaidMode]           = useState("");
+  const [paidReceiptNo, setPaidReceiptNo] = useState("");
+  const [paidDate, setPaidDate]           = useState("");
+
   const { activeChild } = useOutletContext<ParentLayoutContext>();
+
+  const studentId = activeChild.student_id ?? "";
+  const {
+    history, pending, allPaid, selectedFee, setSelectedFee,
+    loading, paying, error, fetchFees,
+    tuitionMonths, examTerms, annualSummary,
+  } = useFees(studentId);
 
   const overdueList = pending.filter((f) => f.status === "overdue");
 
+  // ── Derive AllPaidState props from real data ───────────────────────────────
+  const lastPaid = history[0] ?? null;
+  const paidMonth = lastPaid ? lastPaid.date : "";
+  const standing =
+    history.length >= 10 ? "Excellent" :
+    history.length >= 5  ? "Good"      : "Fair";
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handlePayClick = (fee: Fee) => {
     setSelectedFee(fee);
     setModal("pay");
   };
 
-  const handlePaySuccess = (mode: string, amount: number) => {
+  const handlePaySuccess = (
+    mode: string,
+    amount: number,
+    txnId: string,
+    date: string
+  ) => {
     if (selectedFee) {
-      markPaid(selectedFee.id, mode);
       setPaidFeeHead(selectedFee.term);
       setPaidAmount(amount);
+      setPaidMode(mode);
+      setPaidReceiptNo(txnId);
+      setPaidDate(date);
     }
     setModal("success");
   };
@@ -71,6 +93,36 @@ export default function FeesPage() {
     setModal("none");
     setSelectedFee(null);
   };
+
+  /* ── Loading state ── */
+  if (loading && pending.length === 0 && history.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFF]">
+        <div className="flex flex-col items-center gap-3 text-gray-400">
+          <Loader2 size={28} className="animate-spin text-[#3525CD]" />
+          <p className="text-sm">Loading fees…</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Error state ── */
+  if (error && pending.length === 0 && history.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFF]">
+        <div className="flex flex-col items-center gap-3 text-red-500 max-w-xs text-center">
+          <AlertCircle size={28} />
+          <p className="text-sm font-medium">{error}</p>
+          <button
+            onClick={() => fetchFees(studentId)}
+            className="text-[13px] text-[#3525CD] underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   /* ── Page Header ── */
   const PageHeader = () => (
@@ -165,19 +217,42 @@ export default function FeesPage() {
 
             {overdueList.length > 0 && (
               <FeeBanner
-                text={`Rs.${overdueList[0].amount.toLocaleString("en-IN")} tuition fee due on ${overdueList[0].dueDate} — 3 days remaining`}
+                text={`Rs.${overdueList[0].amount.toLocaleString("en-IN")} ${overdueList[0].term} due on ${overdueList[0].dueDate}${
+                  overdueList[0].daysOverdue ? ` — ${overdueList[0].daysOverdue} days past due` : ""
+                }`}
                 onPayNow={() => handlePayClick(overdueList[0])}
               />
             )}
 
             <TabBar />
 
+            {loading && (
+              <div className="flex items-center gap-2 text-[13px] text-gray-400">
+                <Loader2 size={14} className="animate-spin" />
+                Refreshing…
+              </div>
+            )}
+
             <div className="flex flex-col gap-3">
               {allPaid
-                ? <AllPaidState onTabChange={setTab} />
+                ? (
+                  <AllPaidState
+                    onTabChange={setTab}
+                    studentName={activeChild.name}
+                    month={paidMonth}
+                    lastPayment={
+                      lastPaid
+                        ? { amount: lastPaid.amount, date: lastPaid.date, mode: lastPaid.mode }
+                        : null
+                    }
+                    balance={annualSummary.totalPending}
+                    standing={standing}
+                    consecutiveOnTime={history.length}
+                  />
+                )
                 : pending.map((fee) => (
-                  <FeeCard key={fee.id} fee={fee} onPay={() => handlePayClick(fee)} />
-                ))
+                    <FeeCard key={fee.id} fee={fee} onPay={() => handlePayClick(fee)} />
+                  ))
               }
             </div>
 
@@ -187,16 +262,16 @@ export default function FeesPage() {
           {!allPaid && (
             <div className="flex flex-col gap-3 lg:sticky lg:top-4">
               <SessionSummary
-                totalFees={sessionSummaryData.totalFees}
-                paidAmount={sessionSummaryData.paidAmount}
-                currency={sessionSummaryData.currency}
+                totalFees={annualSummary.totalAmount}
+                paidAmount={annualSummary.totalPaid}
+                currency="INR"
               />
               <PaymentMethods />
               <StudentCard
-                name={studentCardData.name}
-                className={studentCardData.className}
-                rollNo={studentCardData.rollNo}
-                status={studentCardData.status}
+                name={activeChild.name}
+                className={activeChild.class}
+                rollNo={activeChild.id}
+                status="good"
               />
             </div>
           )}
@@ -208,10 +283,19 @@ export default function FeesPage() {
         <div className="flex flex-col gap-4">
           <PageHeader />
           <TabBar />
-          <FeeProgressCard
-            tuitionMonths={tuitionMonths}
-            examTerms={examTerms}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 text-[13px] text-gray-400 py-16">
+              <Loader2 size={18} className="animate-spin text-[#3525CD]" />
+              Loading annual overview…
+            </div>
+          ) : (
+            <FeeProgressCard
+              tuitionMonths={tuitionMonths}
+              examTerms={examTerms}
+              annualSummary={annualSummary}
+              onPayNow={() => setTab("pending")}
+            />
+          )}
         </div>
       )}
 
@@ -233,7 +317,18 @@ export default function FeesPage() {
             </button>
           </div>
 
-          <FeeHistory data={history} />
+          {loading ? (
+            <div className="flex items-center gap-2 text-[13px] text-gray-400 py-8 justify-center">
+              <Loader2 size={18} className="animate-spin text-[#3525CD]" />
+              Loading payment history…
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 text-sm">
+              No payment history found.
+            </div>
+          ) : (
+            <FeeHistory data={history} />
+          )}
 
           <button
             className="sm:hidden flex items-center justify-center gap-2 w-full
@@ -256,13 +351,20 @@ export default function FeesPage() {
           fee={selectedFee}
           onClose={handleClose}
           onSuccess={handlePaySuccess}
+          studentId={studentId}
+          studentName={activeChild.name}
+          studentClass={activeChild.class}
         />
       )}
       {modal === "success" && (
         <PaymentSuccessModal
           amount={paidAmount}
           feeHead={paidFeeHead}
-          mode="UPI"
+          mode={paidMode}
+          receiptNo={paidReceiptNo}
+          date={paidDate}
+          studentName={activeChild.name}
+          className={activeChild.class}
           onBack={handleClose}
         />
       )}

@@ -1,10 +1,13 @@
-// modules/exams/ExamsPage.tsx
-
-import { useExamData } from "../hooks/Useexamdata";
+// pages/ExamsPage.tsx
+import { useExamData } from "../hooks/useExam";
 import { UpcomingSection } from "../components/UpcomingSection";
 import { ResultsSection } from "../components/ResultSection";
 import { ReportCardSection } from "../components/ReportCardSection";
 import { SyllabusSection } from "../components/SyllabusSection";
+
+// ── Change these to come from auth context / route params as needed ──
+const CLASS_NAME = "10";
+const SECTION_NAME = "A";
 
 const tabs = [
   { id: "upcoming", label: "Upcoming Exams" },
@@ -18,25 +21,27 @@ export const ExamsPage = () => {
     activeTab,
     setActiveTab,
     exams,
+    examsLoading,
+    examsError,
+    refetchExams,
     examResult,
     report,
     syllabus,
     unitTestSyllabus,
     deadlines,
-  } = useExamData();
+ } = useExamData(CLASS_NAME, SECTION_NAME);
 
   return (
     <div className="mx-auto max-w-7xl px-2 sm:px-3 py-3 sm:py-4 space-y-4">
 
       {/* ================= HEADER ================= */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
         <div>
           <h1 className="text-xl font-bold text-indigo-700">
             My Exams & Results
           </h1>
           <p className="text-sm text-gray-500">
-            Class 10A | Academic Year 2024-25
+            Class {CLASS_NAME}{SECTION_NAME} | Academic Year 2024-25
           </p>
         </div>
 
@@ -57,7 +62,6 @@ export const ExamsPage = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-
       </div>
 
       {/* ================= TABS ================= */}
@@ -76,7 +80,6 @@ export const ExamsPage = () => {
             `}
           >
             {tab.label}
-
             {activeTab === tab.id && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
             )}
@@ -85,16 +88,42 @@ export const ExamsPage = () => {
       </div>
 
       {/* ================= CONTENT AREA ================= */}
-      <div
-        className="
-          pt-2
-          transition-all duration-200
-          space-y-4
-        "
-      >
-        {/* Each section behaves like a soft card container */}
+      <div className="pt-2 transition-all duration-200 space-y-4">
+
+        {/* ── Upcoming Exams (API-driven) ── */}
         <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
-          {activeTab === "upcoming" && <UpcomingSection exams={exams} />}
+          {activeTab === "upcoming" && (
+            <>
+              {/* Loading */}
+              {examsLoading && (
+                <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+                  <svg className="animate-spin h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Loading exam timetable…
+                </div>
+              )}
+
+              {/* Error */}
+              {!examsLoading && examsError && (
+                <div className="flex flex-col items-center gap-3 py-12 text-sm text-red-500">
+                  <span>{examsError}</span>
+                  <button
+                    onClick={refetchExams}
+                    className="rounded-lg border border-red-200 px-4 py-1.5 text-xs text-red-500 hover:bg-red-50 transition"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {/* Data */}
+              {!examsLoading && !examsError && (
+                <UpcomingSection exams={exams} />
+              )}
+            </>
+          )}
         </div>
 
         <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">

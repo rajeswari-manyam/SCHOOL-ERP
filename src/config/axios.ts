@@ -1,8 +1,8 @@
-// src/config/axios.ts
+
 import axios from "axios";
 import { getAuthToken, getTenantId, useAuthStore } from "@/store/authStore";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.6:4000";
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -10,7 +10,7 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ── Request: attach auth headers ──────────────────────────────────────────────
+
 api.interceptors.request.use(
   (config) => {
     const token    = getAuthToken();
@@ -23,7 +23,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Response: handle 401 globally ─────────────────────────────────────────────
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

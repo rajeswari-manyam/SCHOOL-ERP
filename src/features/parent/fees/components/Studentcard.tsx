@@ -4,14 +4,12 @@ import typography from "@/styles/typography";
 import { cn } from "@/utils/cn";
 
 import type { StudentCardProps } from "../types/fee.types";
-import { studentCardData } from "../data/fee.data";
 
-// Change status default to use `as const` or cast it
 export function StudentCard({
-  name = studentCardData.name,
-  className = studentCardData.className,
-  rollNo = studentCardData.rollNo,
-  status = studentCardData.status as "good" | "warning" | "blocked",
+  name,
+  className,
+  rollNo,
+  status = "good",
 }: StudentCardProps) {
   const isGood = status === "good";
 

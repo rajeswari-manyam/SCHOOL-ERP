@@ -27,45 +27,27 @@ interface PersonalInfoCardProps {
 export default function PersonalInfoCard({ personal }: PersonalInfoCardProps) {
   const values: Record<string, string> = {
     dateOfBirth: formatDOB(personal.dateOfBirth),
-    gender: personal.gender,
-    bloodGroup: personal.bloodGroup,
-    age: `${personal.age} years`,
-    fatherName: personal.fatherName,
-    fatherPhone: personal.fatherPhone,
-    motherName: personal.motherName,
-    motherPhone: personal.motherPhone,
+    gender:      personal.gender,
+    bloodGroup:  personal.bloodGroup,
+    age:         `${personal.age} years`,
     fullAddress: personal.fullAddress,
   };
 
   return (
-    <div
-      className="
-        rounded-2xl border border-slate-200 bg-white
-        p-4 sm:p-5
-        shadow-sm
-        transition-all duration-200
-        hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]
-      "
-    >
-      {/* Header */}
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-[2px]">
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
         <h3 className="text-[13px] font-semibold text-slate-900 tracking-wide">
           Personal Information
         </h3>
-
         <p className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-400">
           <Info size={12} aria-hidden />
           Contact school admin to update personal information
         </p>
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {PERSONAL_INFO_FIELDS.map(({ key, label, span }) => (
-          <div
-            key={key}
-            className={span === 2 ? "sm:col-span-2" : ""}
-          >
+          <div key={key} className={span === 2 ? "sm:col-span-2" : ""}>
             <InfoItem label={label} value={values[key]} />
           </div>
         ))}

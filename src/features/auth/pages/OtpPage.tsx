@@ -7,11 +7,11 @@ import { Loader2, RefreshCw, Shield, GraduationCap, ChevronLeft, Sparkles, Check
 import { verifyOtp } from "../api/auth.api";
 import { sendOtp }   from "../api/auth.api";
 import { useAuthStore, USER_TYPE_ROUTE_MAP } from "@/store/authStore";
+import type { UserType } from "../types/auth.types";
 
 // ── Role → visual theming ─────────────────────────────────────────────────────
 const ROLE_VISUAL: Record<string, { label: string; accent: string; light: string; dark: string }> = {
   Teacher:     { label: "Teacher Portal",    accent: "bg-emerald-500", light: "bg-emerald-50", dark: "text-emerald-700" },
-  // SchoolAdmin: { label: "Admin Portal",      accent: "bg-sky-500",     light: "bg-sky-50",     dark: "text-sky-700"    },
   SuperAdmin:  { label: "Super Admin",       accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
   Admin:       { label: "Admin Portal",      accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
   Accountant:  { label: "Accounts Portal",   accent: "bg-amber-500",   light: "bg-amber-50",   dark: "text-amber-700"  },
@@ -26,11 +26,10 @@ const OtpPage = () => {
   const login    = useAuthStore((s) => s.login);
 
   // ── Read saved data from localStorage (written by LoginPage after sendOtp) ─
-  const phone      = localStorage.getItem("phone")      ?? "";
-  const schoolcode = localStorage.getItem("schoolcode") ?? "";
-  const rawUserType = localStorage.getItem("userType")  ?? "Teacher";
-  // Dev: API returns OTP in response; LoginPage saves it
-  const devOtp     = localStorage.getItem("otp")        ?? "";
+  const phone       = localStorage.getItem("phone")      ?? "";
+  const schoolcode  = localStorage.getItem("schoolcode") ?? "";
+  const rawUserType = localStorage.getItem("userType")   ?? "Teacher";
+  const devOtp      = localStorage.getItem("otp")        ?? "";
 
   const visual = ROLE_VISUAL[rawUserType] ?? ROLE_VISUAL["Teacher"];
 
@@ -40,7 +39,7 @@ const OtpPage = () => {
   }, [phone, navigate]);
 
   // ── OTP state ─────────────────────────────────────────────────────────────
-  const [otp,       setOtp]       = useState(devOtp); // pre-fill in dev
+  const [otp,       setOtp]       = useState(devOtp);
   const [error,     setError]     = useState("");
   const [loading,   setLoading]   = useState(false);
   const [timer,     setTimer]     = useState(RESEND_COUNTDOWN);
@@ -96,19 +95,28 @@ const OtpPage = () => {
       console.log("VERIFY OTP RESPONSE →", response);
 
       if (response?.status === true) {
-        // rawUserType from localStorage — e.g. "Teacher", "SchoolAdmin"
         console.log("USER TYPE →", rawUserType);
 
-        // ✅ Save full session to Zustand + localStorage
+        // ── Build the user object from whichever shape the API returns ──
+        // Student login  → response.data  (id, first_name, last_name, school_code…)
+        // Other roles    → response.user  (id, name, phone, userType, schoolcode…)
+        const userPayload = response.user ?? (response.data
+          ? {
+              id:         response.data.id,
+              name:       `${response.data.first_name} ${response.data.last_name}`.trim(),
+              userType:   rawUserType as UserType,
+              schoolcode: response.data.school_code,
+            }
+          : {});
+
         login(
-          response?.token ?? `token-${Date.now()}`,
-          response?.user  ?? {},
-          rawUserType,           // "Teacher" | "SchoolAdmin" | etc.
+          response.token ?? `token-${Date.now()}`,
+          userPayload,
+          rawUserType,
         );
 
         toast.success("OTP Verified Successfully!");
 
-        // ✅ Navigate to correct dashboard
         const route = USER_TYPE_ROUTE_MAP[rawUserType] ?? "/teacher/dashboard";
         console.log("NAVIGATING TO →", route);
         navigate(route, { replace: true });
