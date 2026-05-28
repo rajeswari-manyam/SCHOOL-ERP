@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import type { TabKey } from "../types/staff.types";
 import { useStaffStore } from "../store/usestore";
 import { StatsCards } from "../components/StatCards";
@@ -33,13 +33,20 @@ export default function StaffManagementPage() {
     showModal,
     staffData,
     stats,
+    loading,
+    error,
     setActiveTab,
     setSearch,
     setRoleFilter,
     setStatusFilter,
     setShowModal,
     getFilteredStaff,
+    loadStaff,
   } = useStaffStore();
+
+  useEffect(() => {
+    loadStaff();
+  }, []);
 
   const filteredStaff = useMemo(
     () => getFilteredStaff(),
@@ -99,11 +106,38 @@ export default function StaffManagementPage() {
           <StaffTabs activeTab={activeTab} tabs={tabs} onChange={setActiveTab} />
         </div>
 
-        {activeTab === "leave-requests" ? (
+        {staffData.length > 0 && (
+          <details className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs">
+            <summary className="cursor-pointer font-semibold text-blue-700">Raw API Response ({staffData.length} records)</summary>
+            <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-blue-900">
+              {JSON.stringify(staffData[0], null, 2)}
+            </pre>
+          </details>
+        )}
+
+        {error && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              onClick={loadStaff}
+              className="rounded-lg bg-red-100 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!error && loading && (
+          <div className="flex items-center justify-center h-48">
+            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!error && !loading && activeTab === "leave-requests" ? (
           <div className="w-full overflow-x-auto">
             <LeaveRequestsTab staff={staffData} />
           </div>
-        ) : (
+        ) : !error && !loading ? (
           <>
             {/* Filters stack vertically on mobile, row on larger screens */}
             <StaffFilters
@@ -119,7 +153,7 @@ export default function StaffManagementPage() {
               <StaffTable staff={filteredStaff} total={staffData.length} />
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

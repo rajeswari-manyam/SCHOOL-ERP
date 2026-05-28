@@ -1,6 +1,6 @@
 import type { Payslip } from "../types/payslip.types";
 
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+const inr = (n: number | undefined | null) => "₹" + (n ?? 0).toLocaleString("en-IN");
 
 interface Props {
   payslip: Payslip;
@@ -38,7 +38,7 @@ const PayslipPdfPreview = ({ payslip }: Props) => {
           ].map(([label, val]) => (
             <div key={label} className="flex justify-between items-center">
               <span className="text-gray-400">{label}</span>
-              <span className="font-bold text-gray-800">{val}</span>
+              <span className="font-bold text-gray-800">{val ?? "-"}</span>
             </div>
           ))}
         </div>
@@ -48,12 +48,12 @@ const PayslipPdfPreview = ({ payslip }: Props) => {
           {/* Earnings */}
           <div className="px-4 py-3">
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 mb-2">Earnings</p>
-            {payslip.earnings.map((e) => (
-              <div key={e.label} className="flex justify-between py-0.5">
-                <span className="text-gray-500 truncate mr-2">{e.label}</span>
+            {Array.isArray(payslip.earnings) ? payslip.earnings.map((e, i) => (
+              <div key={e.label ?? i} className="flex justify-between py-0.5">
+                <span className="text-gray-500 truncate mr-2">{e.label ?? "-"}</span>
                 <span className="font-semibold text-gray-800 whitespace-nowrap">{inr(e.amount)}</span>
               </div>
-            ))}
+            )) : null}
             <div className="flex justify-between pt-2 mt-1 border-t border-gray-200">
               <span className="font-extrabold text-gray-700">Gross</span>
               <span className="font-extrabold text-gray-900">{inr(payslip.grossSalary)}</span>
@@ -63,12 +63,12 @@ const PayslipPdfPreview = ({ payslip }: Props) => {
           {/* Deductions */}
           <div className="px-4 py-3">
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-red-500 mb-2">Deductions</p>
-            {payslip.deductions.map((d) => (
-              <div key={d.label} className="flex justify-between py-0.5">
-                <span className="text-gray-500 truncate mr-2">{d.label}</span>
+            {Array.isArray(payslip.deductions) ? payslip.deductions.map((d, i) => (
+              <div key={d.label ?? i} className="flex justify-between py-0.5">
+                <span className="text-gray-500 truncate mr-2">{d.label ?? "-"}</span>
                 <span className="font-semibold text-red-600 whitespace-nowrap">{inr(d.amount)}</span>
               </div>
-            ))}
+            )) : null}
             <div className="flex justify-between pt-2 mt-1 border-t border-gray-200">
               <span className="font-extrabold text-gray-700">Total</span>
               <span className="font-extrabold text-red-600">{inr(payslip.totalDeductions)}</span>
@@ -85,10 +85,10 @@ const PayslipPdfPreview = ({ payslip }: Props) => {
           <div className="text-right">
             <p className="text-[10px] text-gray-400">Attendance</p>
             <p className="text-[11px] font-bold text-gray-700">
-              {payslip.attendance.presentDays}P &nbsp;
-              {payslip.attendance.absentDays}A &nbsp;
-              {payslip.attendance.halfDays}H &nbsp;/&nbsp;
-              {payslip.attendance.workingDays} days
+              {payslip.attendance?.presentDays ?? 0}P &nbsp;
+              {payslip.attendance?.absentDays ?? 0}A &nbsp;
+              {payslip.attendance?.halfDays ?? 0}H &nbsp;/&nbsp;
+              {payslip.attendance?.workingDays ?? 0} days
             </p>
           </div>
         </div>

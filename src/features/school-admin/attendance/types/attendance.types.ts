@@ -101,3 +101,25 @@ export interface MarkAttendanceForm {
 }
 
 export type AttendanceTab = "today" | "history" | "holiday";
+
+export interface CreateHolidayPayload {
+  holidayname: string;
+  date: string;
+  type: string;
+  note: string;
+  school_code: string;
+}
+
+// ─── GET /tenant/getallholidays ─────────────────────────────────────────────
+export interface GetAllHolidaysResponse {
+  status?: boolean;
+  message?: string;
+  data?: {
+    holidays: Holiday[];
+    totalHolidaysThisYear: number;
+    academicYear: string;
+  };
+  holidays?: Holiday[];
+  totalHolidaysThisYear?: number;
+  academicYear?: string;
+}

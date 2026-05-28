@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { timetableApi } from "../api/timetable.api";
-import type { EditPeriodPayload, ExamEntry, DayOfWeek } from "../types/timetable.types";
+import type { EditPeriodPayload, ExamEntry, DayOfWeek, CreateTimetablePayload, CreateExamTimetablePayload } from "../types/timetable.types";
 
 // ─── Query key factory ──────────────────────────────────────────────────────────
 export const TIMETABLE_KEYS = {
@@ -62,6 +62,24 @@ export const useSavePeriod = () => {
   });
 };
 
+// ─── Create timetable period ────────────────────────────────────────────────────
+export const useCreateTimetable = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateTimetablePayload) => timetableApi.createTimetable(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all }),
+  });
+};
+
+// ─── Create exam timetable entry ────────────────────────────────────────────────
+export const useCreateExamTimetable = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateExamTimetablePayload) => timetableApi.createExamTimetable(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+  });
+};
+
 // ─── Add / delete exam ──────────────────────────────────────────────────────────
 export const useAddExam = () => {
   const qc = useQueryClient();
@@ -78,43 +96,6 @@ export const useDeleteExam = () => {
     mutationFn: (examId: string) => timetableApi.deleteExam(examId),
     onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
   });
-};
-
-// ─── Notify parents toggle ──────────────────────────────────────────────────────
-export const useToggleNotifyParents = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (enabled: boolean) => timetableApi.toggleNotifyParents(enabled),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
-  });
-};
-
-// ─── Resend notification ────────────────────────────────────────────────────────
-export const useResendNotification = () =>
-  useMutation({
-    mutationFn: () => timetableApi.resendNotification(),
-  });
-
-// ─── Print timetable ────────────────────────────────────────────────────────────
-export const usePrintTimetable = () => {
-  const [loading, setLoading] = useState(false);
-
-  const print = useCallback(async (classId: string) => {
-    setLoading(true);
-    try {
-      const blob = await timetableApi.printTimetable(classId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `timetable-${classId}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return { print, loading };
 };
 
 // ─── Edit period modal state ────────────────────────────────────────────────────

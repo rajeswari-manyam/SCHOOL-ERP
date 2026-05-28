@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import type { ClassSection, WorkingDaysConfig } from "../types/settings.types";
+import type { ClassSection, WorkingDaysConfig, CreateClassPayload } from "../types/settings.types";
 import { ALL_DAYS, type Day } from "../utils/Settings.utils";
 
 interface Props {
@@ -10,15 +10,25 @@ interface Props {
   workingDays: WorkingDaysConfig;
   saving: boolean;
   onSaveWorkingDays: (data: Partial<WorkingDaysConfig>) => void;
-  onAddClass: (data: Omit<ClassSection, "id">) => void;
+  onAddClass: (data: CreateClassPayload) => void;
 }
+
+const DEFAULT_NEW_CLASS: CreateClassPayload = {
+  class_name: "",
+  section: "A",
+  academic_year: String(new Date().getFullYear()) + "-" + String(new Date().getFullYear() + 1),
+  class_teacher: "",
+  capacity: 40,
+  description: "",
+  school_code: import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode"),
+};
 
 export const AcademicConfigTab: React.FC<Props> = ({
   classes, workingDays, saving, onSaveWorkingDays, onAddClass,
 }) => {
   const [wdForm, setWdForm] = useState<WorkingDaysConfig>(workingDays);
   const [showAdd, setShowAdd] = useState(false);
-  const [newClass, setNewClass] = useState({ className: "", classTeacher: "", sections: ["A"] });
+  const [newClass, setNewClass] = useState<CreateClassPayload>(DEFAULT_NEW_CLASS);
 
   const toggleDay = (day: Day) => {
     const active = wdForm.activeDays;
@@ -29,14 +39,8 @@ export const AcademicConfigTab: React.FC<Props> = ({
   };
 
   const handleAddClass = () => {
-    onAddClass({
-      className: newClass.className,
-      sections: newClass.sections,
-      classTeacher: newClass.classTeacher,
-      totalStudents: 0,
-      status: "ACTIVE",
-    });
-    setNewClass({ className: "", classTeacher: "", sections: ["A"] });
+    onAddClass(newClass);
+    setNewClass(DEFAULT_NEW_CLASS);
     setShowAdd(false);
   };
 
@@ -188,14 +192,33 @@ export const AcademicConfigTab: React.FC<Props> = ({
         {showAdd && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Add New Class</h3>
-            {/* 1 col → 2 cols on sm+ */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Class Name</label>
+                <label className="block text-xs text-gray-500 mb-1">Class Name *</label>
                 <Input
-                  value={newClass.className}
-                  onChange={(e) => setNewClass((p) => ({ ...p, className: e.target.value }))}
-                  placeholder="e.g. Class 11"
+                  value={newClass.class_name}
+                  onChange={(e) => setNewClass((p) => ({ ...p, class_name: e.target.value }))}
+                  placeholder="e.g. 10th"
+                  inputSize="md"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Section *</label>
+                <Input
+                  value={newClass.section}
+                  onChange={(e) => setNewClass((p) => ({ ...p, section: e.target.value }))}
+                  placeholder="e.g. A"
+                  inputSize="md"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Academic Year *</label>
+                <Input
+                  value={newClass.academic_year}
+                  onChange={(e) => setNewClass((p) => ({ ...p, academic_year: e.target.value }))}
+                  placeholder="e.g. 2025-2026"
                   inputSize="md"
                   className="w-full"
                 />
@@ -203,9 +226,30 @@ export const AcademicConfigTab: React.FC<Props> = ({
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Class Teacher</label>
                 <Input
-                  value={newClass.classTeacher}
-                  onChange={(e) => setNewClass((p) => ({ ...p, classTeacher: e.target.value }))}
+                  value={newClass.class_teacher}
+                  onChange={(e) => setNewClass((p) => ({ ...p, class_teacher: e.target.value }))}
                   placeholder="Teacher name"
+                  inputSize="md"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Capacity</label>
+                <Input
+                  type="number"
+                  value={newClass.capacity}
+                  onChange={(e) => setNewClass((p) => ({ ...p, capacity: Number(e.target.value) }))}
+                  placeholder="40"
+                  inputSize="md"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Description</label>
+                <Input
+                  value={newClass.description}
+                  onChange={(e) => setNewClass((p) => ({ ...p, description: e.target.value }))}
+                  placeholder="Optional"
                   inputSize="md"
                   className="w-full"
                 />
@@ -221,7 +265,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
               </Button>
               <Button
                 onClick={handleAddClass}
-                disabled={!newClass.className || !newClass.classTeacher}
+                disabled={!newClass.class_name || !newClass.section || !newClass.academic_year}
                 className="w-full sm:w-auto rounded-lg text-sm font-medium active:scale-95 transition-all
                   disabled:opacity-60 disabled:cursor-not-allowed"
               >

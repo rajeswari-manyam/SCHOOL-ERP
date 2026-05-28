@@ -6,7 +6,8 @@ import type { NewEnquiryFormData, ConfirmAdmissionFormData, PipelineStage } from
 export const ADMISSIONS_KEYS = {
   all: ['admissions'] as const,
   enquiries: () => [...ADMISSIONS_KEYS.all, 'enquiries'] as const,
-  enquiry: (id: string) => [...ADMISSIONS_KEYS.all, 'enquiry', id] as const,
+  interviewList: () => [...ADMISSIONS_KEYS.all, 'interviewList'] as const,
+  docsList: () => [...ADMISSIONS_KEYS.all, 'docsList'] as const,
   stats: () => [...ADMISSIONS_KEYS.all, 'stats'] as const,
 };
 
@@ -18,11 +19,19 @@ export function useEnquiries() {
   });
 }
 
-export function useEnquiry(id: string | null) {
+export function useInterviewList() {
   return useQuery({
-    queryKey: ADMISSIONS_KEYS.enquiry(id ?? ''),
-    queryFn: () => admissionsApi.getEnquiryById(id!),
-    enabled: !!id,
+    queryKey: ADMISSIONS_KEYS.interviewList(),
+    queryFn: () => admissionsApi.getInterviewList(),
+    staleTime: 30_000,
+  });
+}
+
+export function useDocsVerificationList() {
+  return useQuery({
+    queryKey: ADMISSIONS_KEYS.docsList(),
+    queryFn: () => admissionsApi.getDocsVerificationList(),
+    staleTime: 30_000,
   });
 }
 
@@ -50,12 +59,19 @@ export function useAddEnquiry() {
 export function useMoveToStage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, stage }: { id: string; stage: PipelineStage }) =>
-      admissionsApi.moveToStage(id, stage),
-    onSuccess: (_data, { stage }) => {
+    mutationFn: ({ id, stage }: { id: string; stage: PipelineStage }) => {
+      switch (stage) {
+        case 'interview': return admissionsApi.shortlistToInterview(id);
+        case 'docs_verified': return admissionsApi.shortlistToDocs(id);
+        default: return Promise.resolve();
+      }
+    },
+    onSuccess: (_voidResult, { stage }) => {
       qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries() });
       qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats() });
-      toast.success(`Moved to ${stage.replace('_', ' ')}`);
+      if (stage === 'interview' || stage === 'docs_verified') {
+        toast.success(`Moved to ${stage.replace('_', ' ')}`);
+      }
     },
     onError: () => toast.error('Failed to update stage'),
   });
@@ -79,7 +95,7 @@ export function useDeclineEnquiry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      admissionsApi.declineEnquiry(id, reason),
+      admissionsApi.declineAdmission(id, reason),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries() });
       qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats() });

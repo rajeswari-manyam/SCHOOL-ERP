@@ -12,12 +12,13 @@ import { Download, Plus } from "lucide-react";
 
 const StudentsPage = () => {
   const {
-    filtered, loading, stats,
+    filtered, loading, error, stats,
     search, setSearch,
     classFilter, setClassFilter,
     sectionFilter, setSectionFilter,
     statusFilter, setStatusFilter,
     addStudent,
+    loadStudents,
   } = useStudents();
 
 
@@ -67,17 +68,42 @@ const StudentsPage = () => {
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
       />
 
+      {/* Debug: show raw response */}
+      {!loading && !error && filtered.length > 0 && (
+        <details className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs">
+          <summary className="cursor-pointer font-semibold text-blue-700">Raw Student Data ({filtered.length} records)</summary>
+          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-blue-900">
+            {JSON.stringify(filtered[0], null, 2)}
+          </pre>
+        </details>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <p className="text-sm text-red-700">{error}</p>
+          <button
+            onClick={loadStudents}
+            className="rounded-lg bg-red-100 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Table */}
-      {loading ? (
+      {!error && (loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
           <StudentTable students={filtered} />
-          <p className="text-xs text-gray-400 text-center">Showing {filtered.length} student{filtered.length !== 1 ? "s" : ""}</p>
+          {filtered.length > 0 && (
+            <p className="text-xs text-gray-400 text-center">Showing {filtered.length} student{filtered.length !== 1 ? "s" : ""}</p>
+          )}
         </>
-      )}
+      ))}
 
       {/* Add Student Modal */}
       {showAddModal && (

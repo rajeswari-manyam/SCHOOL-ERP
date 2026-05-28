@@ -3,10 +3,20 @@ import { LEAVE_TYPE_META, LEAVE_STATUS_META, formatDisplayDate } from "../hooks/
 
 interface Props {
   applications: LeaveApplication[];
+  loading?: boolean;
   onCancel: (id: string) => void;
 }
 
-const LeaveHistoryTable = ({ applications, onCancel }: Props) => {
+const LeaveHistoryTable = ({ applications, loading, onCancel }: Props) => {
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+        <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm font-semibold text-gray-400 mt-3">Loading leave history…</p>
+      </div>
+    );
+  }
+
   if (applications.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
@@ -37,12 +47,16 @@ const LeaveHistoryTable = ({ applications, onCancel }: Props) => {
           </thead>
           <tbody>
             {applications.map((app, i) => {
-              const tm  = LEAVE_TYPE_META[app.type];
-              const sm  = LEAVE_STATUS_META[app.status];
-              const canCancel = app.status === "PENDING";
+              if (i === 0) console.log("[LeaveHistoryTable] first app:", JSON.stringify(app));
+              const type    = app?.type ?? "CASUAL";
+              const status  = app?.status ?? "PENDING";
+              const tm      = LEAVE_TYPE_META[type] ?? { shortLabel: type, color: "text-gray-700", bg: "bg-gray-50", border: "border-gray-200", dot: "bg-gray-400" };
+              const sm      = LEAVE_STATUS_META[status] ?? { label: status, classes: "bg-gray-100 text-gray-500 border border-gray-200" };
+              const canCancel = status === "PENDING";
 
+              const id = app?.id ?? `_${i}`;
               return (
-                <tr key={app.id}
+                <tr key={id}
                   className={`border-b border-gray-50 last:border-0 transition-colors hover:bg-gray-50/50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/20"}`}>
 
                   {/* Leave Type */}
@@ -55,21 +69,21 @@ const LeaveHistoryTable = ({ applications, onCancel }: Props) => {
 
                   {/* Dates */}
                   <td className="px-5 py-3.5">
-                    <p className="text-sm font-medium text-gray-800">{formatDisplayDate(app.fromDate)}</p>
+                    <p className="text-sm font-medium text-gray-800">{formatDisplayDate(app?.fromDate)}</p>
                   </td>
                   <td className="px-5 py-3.5">
-                    <p className="text-sm font-medium text-gray-800">{formatDisplayDate(app.toDate)}</p>
+                    <p className="text-sm font-medium text-gray-800">{formatDisplayDate(app?.toDate)}</p>
                   </td>
 
                   {/* Days */}
                   <td className="px-5 py-3.5">
-                    <span className="text-sm font-bold text-gray-700">{app.totalDays}d</span>
+                    <span className="text-sm font-bold text-gray-700">{app?.totalDays ?? 0}d</span>
                   </td>
 
                   {/* Reason */}
                   <td className="px-5 py-3.5 max-w-[220px]">
-                    <p className="text-sm text-gray-600 truncate" title={app.reason}>{app.reason}</p>
-                    {app.medicalCertUrl && (
+                    <p className="text-sm text-gray-600 truncate" title={app?.reason ?? ""}>{app?.reason ?? "-"}</p>
+                    {app?.medicalCertUrl && (
                       <a href={app.medicalCertUrl} target="_blank" rel="noreferrer"
                         className="text-[10px] text-indigo-600 font-semibold hover:underline mt-0.5 inline-block">
                         📄 Medical cert
@@ -83,10 +97,10 @@ const LeaveHistoryTable = ({ applications, onCancel }: Props) => {
                       <span className={`inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full ${sm.classes}`}>
                         {sm.label}
                       </span>
-                      {app.reviewedBy && (
+                      {app?.reviewedBy && (
                         <p className="text-[10px] text-gray-400 mt-1">by {app.reviewedBy}</p>
                       )}
-                      {app.rejectionReason && (
+                      {app?.rejectionReason && (
                         <p className="text-[10px] text-red-400 mt-0.5 truncate max-w-[120px]" title={app.rejectionReason}>
                           {app.rejectionReason}
                         </p>
@@ -96,14 +110,14 @@ const LeaveHistoryTable = ({ applications, onCancel }: Props) => {
 
                   {/* Applied On */}
                   <td className="px-5 py-3.5">
-                    <p className="text-sm text-gray-500">{formatDisplayDate(app.appliedOn)}</p>
+                    <p className="text-sm text-gray-500">{formatDisplayDate(app?.appliedOn)}</p>
                   </td>
 
                   {/* Action */}
                   <td className="px-5 py-3.5">
                     {canCancel ? (
                       <button
-                        onClick={() => onCancel(app.id)}
+                        onClick={() => onCancel(id)}
                         className="text-xs font-semibold text-red-500 hover:text-red-700 hover:underline transition-colors"
                       >
                         Cancel

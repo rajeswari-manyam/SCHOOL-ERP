@@ -180,3 +180,25 @@ export interface NotificationSettings {
   broadcastMessaging: boolean;
   newEnquiryNotification: boolean;
 }
+
+// ─── Create Class (POST /tenant/class) ────────────────────────────────────────
+export interface CreateClassPayload {
+  class_name: string;
+  section: string;
+  academic_year: string;
+  class_teacher: string;
+  capacity: number;
+  description: string;
+  school_code: string;
+}
+
+export interface CreateClassResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    id: string;
+    class_name: string;
+    section: string;
+    academic_year: string;
+  };
+}

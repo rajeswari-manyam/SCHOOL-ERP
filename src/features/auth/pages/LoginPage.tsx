@@ -292,7 +292,9 @@ const LoginPage = () => {
         school_code: values.schoolcode,
         admission_number:
           values.admissionNumber,
+          
       };
+      
 
       const response = await axiosInstance.post(
         "/tenant/studentlogin",
@@ -315,6 +317,10 @@ const LoginPage = () => {
         localStorage.setItem(
           "student_role",
           "student"
+        );
+        localStorage.setItem(
+          "schoolcode",
+          values.schoolcode
         );
 
         toast.success(

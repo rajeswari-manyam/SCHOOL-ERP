@@ -28,6 +28,21 @@ interface Props {
   index: number;
 }
 
+const UnknownStudent = ({ id }: { id: string }) => (
+  <span className="text-sm font-medium text-gray-400 italic">
+    Unknown #{id.slice(0, 8)}
+  </span>
+);
+
+const SourceBadge = ({ source }: { source?: string }) => {
+  if (!source) return <Badge variant="gray">UNKNOWN</Badge>;
+  return (
+    <Badge variant={SOURCE_VARIANTS[source] ?? 'gray'}>
+      {SOURCE_LABELS[source] ?? source.replace(/_/g, ' ').toUpperCase()}
+    </Badge>
+  );
+};
+
 export function EnquiryCard({ enquiry, index }: Props) {
   const { setSelectedEnquiry } = useAdmissionsStore();
   const moveToStage = useMoveToStage();
@@ -42,38 +57,49 @@ export function EnquiryCard({ enquiry, index }: Props) {
         onClick={() => setSelectedEnquiry(enquiry.id)}
         className="p-4 cursor-pointer border-gray-100 hover:border-indigo-200 transition-all"
       >
+        {/* Header */}
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900 text-sm">{enquiry.studentName}</h3>
+          <div className="min-w-0 flex-1">
+            {enquiry.studentName ? (
+              <h3 className="truncate font-semibold text-gray-900 text-sm">
+                {enquiry.studentName}
+              </h3>
+            ) : (
+              <UnknownStudent id={enquiry.id} />
+            )}
+          </div>
           {enquiry.whatsappSent && (
-            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+            <div className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500">
               <MessageCircle size={14} className="text-white" />
             </div>
           )}
         </div>
 
-        <div className="space-y-1 text-xs text-gray-500 mb-3">
+        {/* Details */}
+        <div className="mb-3 space-y-1 text-xs text-gray-500">
           <div className="flex gap-1">
             <span className="text-gray-400">Class:</span>
-            <span className="font-semibold text-gray-700">{enquiry.classApplyingFor}</span>
+            <span className="font-semibold text-gray-700">
+              {enquiry.classApplyingFor || '—'}
+            </span>
           </div>
-          {enquiry.parentName && (
-            <div className="flex gap-1">
-              <span className="text-gray-400">Parent:</span>
-              <span className="text-gray-600">{enquiry.parentName}</span>
-            </div>
-          )}
-          {enquiry.source && (
-            <div className="flex gap-1 items-center">
-              <span className="text-gray-400">Source:</span>
-              <Badge variant={SOURCE_VARIANTS[enquiry.source] ?? 'gray'}>
-                {SOURCE_LABELS[enquiry.source] ?? enquiry.source.toUpperCase()}
-              </Badge>
-            </div>
-          )}
+          <div className="flex gap-1">
+            <span className="text-gray-400">Parent:</span>
+            <span className="truncate text-gray-600">
+              {enquiry.parentName || (enquiry.parentPhone ? `📞 ${enquiry.parentPhone}` : '—')}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-gray-400">Source:</span>
+            <SourceBadge source={enquiry.source} />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-          <span className="text-[11px] text-gray-400">{enquiry.enquiryDate}</span>
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-gray-50 pt-2">
+          <span className="text-[11px] text-gray-400">
+            {enquiry.enquiryDate || '—'}
+          </span>
           <Button
             onClick={(e) => {
               e.stopPropagation();

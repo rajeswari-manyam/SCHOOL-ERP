@@ -1,44 +1,76 @@
+import api from "@/config/axios";
 import type { Payslip, AnnualSummary } from "../types/payslip.types";
 
-// In a real app these would be axios/fetch calls to your backend
+const toCamelCase = (obj: any): any => {
+  if (Array.isArray(obj)) return obj.map(toCamelCase);
+  if (obj !== null && typeof obj === "object") {
+    return Object.keys(obj).reduce((acc, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      acc[camelKey] = toCamelCase(obj[key]);
+      return acc;
+    }, {} as Record<string, any>);
+  }
+  return obj;
+};
+
 export const payslipApi = {
-  /** Fetch all payslips for the logged-in teacher */
-  getPayslips: async (): Promise<Payslip[]> => {
-    // const res = await axios.get("/api/teacher/payslips");
-    // return res.data;
-    return Promise.resolve([]);
+  getPayslips: async (staffId: string, month?: string, year?: string): Promise<Payslip[]> => {
+    const params: Record<string, string> = { staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac" };
+    if (month) params.month = month;
+    if (year) params.year = year;
+    const { data } = await api.get("/tenant/getallpayslips", { params });
+    console.log("getPayslips RAW response:", JSON.stringify(data));
+    let list: any[] = [];
+    if (Array.isArray(data)) list = data;
+    else if (data?.payslips && Array.isArray(data.payslips)) list = data.payslips;
+    else if (data?.data && Array.isArray(data.data)) list = data.data;
+    else console.warn("getPayslips: unexpected shape", data);
+    const result = list.map(toCamelCase) as Payslip[];
+    if (result.length > 0) console.log("getPayslips FIRST item (camelCase):", JSON.stringify(result[0]));
+    return result;
   },
 
-  /** Fetch single payslip by id */
   getPayslip: async (id: string): Promise<Payslip | null> => {
-    // const res = await axios.get(`/api/teacher/payslips/${id}`);
-    // return res.data;
-    void id;
-    return Promise.resolve(null);
+    const { data } = await api.get(`/tenant/teacher/payslips/${id}`);
+    return data ? (toCamelCase(data) as Payslip) : null;
   },
 
-  /** Download payslip PDF for a given month */
   downloadPdf: async (payslipId: string): Promise<void> => {
-    // const res = await axios.get(`/api/teacher/payslips/${payslipId}/pdf`, { responseType: "blob" });
-    // triggerDownload(res.data, `payslip-${payslipId}.pdf`);
-    void payslipId;
+    const res = await api.get(`/tenant/teacher/payslips/${payslipId}/pdf`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `payslip-${payslipId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 
-  /** Send payslip to teacher's WhatsApp */
   sendToWhatsApp: async (payslipId: string): Promise<void> => {
-    // await axios.post(`/api/teacher/payslips/${payslipId}/whatsapp`);
-    void payslipId;
+    await api.post(`/tenant/teacher/payslips/${payslipId}/whatsapp`);
   },
 
-  /** Download annual salary statement */
   downloadAnnualStatement: async (year: number): Promise<void> => {
-    // const res = await axios.get(`/api/teacher/payslips/annual/${year}`, { responseType: "blob" });
-    void year;
+    const res = await api.get(`/tenant/teacher/payslips/annual/${year}`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `annual-statement-${year}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 
-  /** Fetch annual summary */
-  getAnnualSummary: async (year: number): Promise<AnnualSummary | null> => {
-    void year;
-    return Promise.resolve(null);
+  getAnnualSummary: async (staffId: string, year: number): Promise<AnnualSummary | null> => {
+    try {
+      const { data } = await api.get(`/tenant/teacher/payslips/annual/${year}/summary`, {
+        params: { staff_id: staffId },
+      });
+      return data ? (toCamelCase(data) as AnnualSummary) : null;
+    } catch {
+      return null;
+    }
   },
 };

@@ -1,25 +1,33 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { studentsApi, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "../api/students.api";
-import type { Student, AddStudentFormData, CreateStudentPayload } from "../types/student.types";
+import type { Student, AddStudentFormData, CreateStudentPayload, Gender } from "../types/student.types";
 
 export const useStudents = () => {
   const schoolcode = useAuthStore((s) => s.user?.schoolcode ?? "");
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("All");
   const [sectionFilter, setSectionFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("Active");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  useEffect(() => {
+  const loadStudents = () => {
+    setLoading(true);
+    setError(null);
     studentsApi.getAll().then(data => {
       setStudents(data);
       setLoading(false);
-    }).catch((error) => {
-      console.error("Failed to load students", error);
+    }).catch((err) => {
+      console.error("Failed to load students", err);
+      setError(err?.message || "Failed to load students. Please try again.");
       setLoading(false);
     });
+  };
+
+  useEffect(() => {
+    loadStudents();
   }, []);
 
   const filtered = useMemo(() => {
@@ -71,12 +79,13 @@ export const useStudents = () => {
   };
 
   return {
-    students, filtered, loading, stats,
+    students, filtered, loading, error, stats,
     search, setSearch,
     classFilter, setClassFilter,
     sectionFilter, setSectionFilter,
     statusFilter, setStatusFilter,
     addStudent,
+    loadStudents,
   };
 };
 

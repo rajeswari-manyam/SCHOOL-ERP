@@ -1,15 +1,17 @@
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MOCK_ANNUAL_SUMMARY } from "../hooks/usePayslip";
+import type { AnnualSummary } from "../types/payslip.types";
 
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+const inr = (n: number | undefined | null) => "₹" + (n ?? 0).toLocaleString("en-IN");
 
 interface Props {
+  summary: AnnualSummary | null;
   onDownload: () => void;
 }
 
-const AnnualSummaryCard = ({ onDownload }: Props) => {
-  const s = MOCK_ANNUAL_SUMMARY;
+const AnnualSummaryCard = ({ summary, onDownload }: Props) => {
+  if (!summary) return null;
+  const s = summary;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">

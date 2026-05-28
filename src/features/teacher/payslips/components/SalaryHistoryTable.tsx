@@ -1,9 +1,9 @@
 import type { Payslip, PayslipStatus } from "../types/payslip.types";
 import { Download } from "lucide-react";
 
-const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
+const inr = (n: number | undefined | null) => "₹" + (n ?? 0).toLocaleString("en-IN");
 
-const STATUS_CONFIG: Record<PayslipStatus, { label: string; classes: string }> = {
+const STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
   PAID:       { label: "Paid",       classes: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
   PENDING:    { label: "Pending",    classes: "bg-amber-50 text-amber-700 border border-amber-200" },
   PROCESSING: { label: "Processing", classes: "bg-blue-50 text-blue-700 border border-blue-200" },
@@ -45,19 +45,19 @@ const SalaryHistoryTable = ({ payslips, onDownload }: Props) => {
             </tr>
           </thead>
           <tbody>
-            {payslips.map((p) => {
-              const cfg = STATUS_CONFIG[p.status];
+            {payslips.map((p, idx) => {
+              const cfg = STATUS_CONFIG[p.status] ?? { label: p.status ?? "Unknown", classes: "bg-gray-50 text-gray-600 border border-gray-200" };
               return (
                 <tr
-                  key={p.id}
+                  key={p.id ?? idx}
                   className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors"
                 >
-                  <td className="px-5 py-3.5">
-                    <p className="text-sm font-semibold text-gray-900">{p.monthLabel}</p>
-                    <p className="text-[11px] text-gray-400">
-                      {p.attendance.presentDays}/{p.attendance.workingDays} days
-                    </p>
-                  </td>
+                    <td className="px-5 py-3.5">
+                      <p className="text-sm font-semibold text-gray-900">{p.monthLabel ?? "-"}</p>
+                      <p className="text-[11px] text-gray-400">
+                        {p.attendance?.presentDays ?? 0}/{p.attendance?.workingDays ?? 0} days
+                      </p>
+                    </td>
                   <td className="px-5 py-3.5 hidden sm:table-cell">
                     <span className="text-sm text-gray-700">{inr(p.grossSalary)}</span>
                   </td>

@@ -94,6 +94,7 @@ const OtpPage = () => {
 
       const response = await verifyOtp(payload);
       console.log("VERIFY OTP RESPONSE →", response);
+      // clear dev OTP after attempt
 
       if (response?.status === true) {
         // rawUserType from localStorage — e.g. "Teacher", "SchoolAdmin"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, Check, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { usePayslip } from "./hooks/usePayslip";
 import CurrentSalaryCard from "./components/CurrentSalaryCard";
 import PayslipPdfPreview from "./components/PayslipPdfPreview";
@@ -8,22 +8,40 @@ import AnnualSummaryCard from "./components/AnnualSummaryCard";
 
 const PayslipPage = () => {
   const {
-    current,
-    history,
-    canPrev,
-    canNext,
-    goNext,
-    goPrev,
-    waMsg,
-    dlMsg,
-    handleDownload,
-    handleWhatsApp,
+    loading,
+    error,
+    currentPayslip,
+    payslips,
+    hasMonthMatch,
+    annualSummary,
+    monthLabel,
+    goToPrevMonth,
+    goToNextMonth,
+    downloadPayslip,
+    sendToWhatsApp,
+    downloadAnnualStatement,
+    retry,
   } = usePayslip();
 
+  const [dlMsg, setDlMsg] = useState(false);
+  const [waMsg, setWaMsg] = useState(false);
   const [annualDlMsg, setAnnualDlMsg] = useState(false);
   const [historyDlMsg, setHistoryDlMsg] = useState<string | null>(null);
 
+  const handleDownload = () => {
+    downloadPayslip();
+    setDlMsg(true);
+    setTimeout(() => setDlMsg(false), 3000);
+  };
+
+  const handleWhatsApp = () => {
+    sendToWhatsApp();
+    setWaMsg(true);
+    setTimeout(() => setWaMsg(false), 3000);
+  };
+
   const handleAnnualDownload = () => {
+    downloadAnnualStatement();
     setAnnualDlMsg(true);
     setTimeout(() => setAnnualDlMsg(false), 3000);
   };
@@ -32,6 +50,15 @@ const PayslipPage = () => {
     setHistoryDlMsg(id);
     setTimeout(() => setHistoryDlMsg(null), 3000);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <Loader2 size={28} className="text-indigo-600 animate-spin" />
+        <p className="text-sm text-gray-500 font-semibold">Loading payslips…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-0 min-h-full">
@@ -72,64 +99,91 @@ const PayslipPage = () => {
         </div>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl px-5 py-3.5 mb-5">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="text-red-500" />
+            <span className="text-sm font-semibold text-red-700">{error}</span>
+          </div>
+          <button
+            onClick={retry}
+            className="flex items-center gap-1.5 text-sm font-bold text-red-700 hover:text-red-900 transition-colors"
+          >
+            <RefreshCw size={14} className="text-current" strokeWidth={2} />
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Month navigation */}
       <div className="flex items-center justify-between bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3.5 mb-5">
         <button
-          onClick={goPrev}
-          disabled={!canPrev}
-          className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${
-            canPrev
-              ? "text-indigo-600 hover:text-indigo-800"
-              : "text-gray-300 cursor-not-allowed"
-          }`}
+          onClick={goToPrevMonth}
+          className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
         >
           <ChevronLeft size={16} className="text-current" strokeWidth={2.5} />
           Prev
         </button>
 
         <div className="text-center">
-          <p className="text-base font-extrabold text-gray-900">{current.monthLabel}</p>
+          <p className="text-base font-extrabold text-gray-900">{monthLabel}</p>
           <p className="text-[11px] text-gray-400">Salary Period</p>
         </div>
 
         <button
-          onClick={goNext}
-          disabled={!canNext}
-          className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${
-            canNext
-              ? "text-indigo-600 hover:text-indigo-800"
-              : "text-gray-300 cursor-not-allowed"
-          }`}
+          onClick={goToNextMonth}
+          className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
         >
           Next
           <ChevronRight size={16} className="text-current" strokeWidth={2.5} />
         </button>
       </div>
 
-      {/* Current month salary card */}
-      <div className="mb-5">
-        <CurrentSalaryCard
-          payslip={current}
-          onDownload={handleDownload}
-          onWhatsApp={handleWhatsApp}
-        />
-      </div>
+      {/* No data state */}
+      {!currentPayslip && payslips.length === 0 && !error && (
+        <div className="flex flex-col items-center justify-center min-h-[200px] bg-white rounded-2xl border border-gray-100 shadow-sm mb-5">
+          <p className="text-sm font-semibold text-gray-400">No payslip data available</p>
+        </div>
+      )}
 
-      {/* Payslip PDF preview card */}
-      <div className="mb-5">
-        <PayslipPdfPreview payslip={current} />
-      </div>
+      {/* No match for this month */}
+      {!hasMonthMatch && payslips.length > 0 && (
+        <div className="flex items-center justify-center bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 mb-5">
+          <p className="text-sm font-semibold text-amber-700">
+            No payslip data for {monthLabel} — showing latest available
+          </p>
+        </div>
+      )}
+
+      {/* Current month salary card */}
+      {currentPayslip && (
+        <>
+          <div className="mb-5">
+            <CurrentSalaryCard
+              payslip={currentPayslip}
+              onDownload={handleDownload}
+              onWhatsApp={handleWhatsApp}
+            />
+          </div>
+
+          {/* Payslip PDF preview card */}
+          <div className="mb-5">
+            <PayslipPdfPreview payslip={currentPayslip} />
+          </div>
+        </>
+      )}
 
       {/* Salary history table */}
       <div className="mb-5">
         <SalaryHistoryTable
-          payslips={history}
+          payslips={payslips}
           onDownload={(p) => handleHistoryDownload(p.id)}
         />
       </div>
 
       {/* Annual summary card */}
-      <AnnualSummaryCard onDownload={handleAnnualDownload} />
+      <AnnualSummaryCard summary={annualSummary} onDownload={handleAnnualDownload} />
     </div>
   );
 };

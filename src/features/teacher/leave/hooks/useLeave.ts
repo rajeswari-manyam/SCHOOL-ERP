@@ -1,4 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { leaveApi } from "../api/leave.api";
 import type {
   LeaveBalance,
   LeaveApplication,
@@ -19,96 +21,12 @@ export const LEAVE_TYPE_META: Record<
   EMERGENCY: { label: "Emergency Leave", shortLabel: "Emergency", color: "text-amber-700",   bg: "bg-amber-50",   border: "border-amber-200",   dot: "bg-amber-500"   },
 };
 
-export const LEAVE_STATUS_META = {
+export const LEAVE_STATUS_META: Record<string, { label: string; classes: string }> = {
   PENDING:   { label: "Pending",   classes: "bg-amber-50 text-amber-700 border border-amber-200"    },
   APPROVED:  { label: "Approved",  classes: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
   REJECTED:  { label: "Rejected",  classes: "bg-red-50 text-red-700 border border-red-200"          },
   CANCELLED: { label: "Cancelled", classes: "bg-gray-100 text-gray-500 border border-gray-200"      },
 };
-
-// ── Mock data ─────────────────────────────────────────────────────────────
-
-export const MOCK_BALANCES: LeaveBalance[] = [
-  { type: "CASUAL",    label: "Casual Leave",    total: 12, used: 4,  remaining: 8,  accentColor: "sky"    },
-  { type: "SICK",      label: "Sick Leave",      total: 10, used: 2,  remaining: 8,  accentColor: "rose"   },
-  { type: "PERSONAL",  label: "Personal Leave",  total: 6,  used: 1,  remaining: 5,  accentColor: "violet" },
-  { type: "EMERGENCY", label: "Emergency Leave", total: 3,  used: 0,  remaining: 3,  accentColor: "amber"  },
-];
-
-export const MOCK_LEAVE_HISTORY: LeaveApplication[] = [
-  {
-    id: "l1",
-    type: "CASUAL",
-    fromDate: "2025-04-03",
-    toDate: "2025-04-04",
-    totalDays: 2,
-    reason: "Family function — sister's wedding ceremony.",
-    substituteArrangement: "Mr. Praveen Kumar will cover my classes.",
-    status: "APPROVED",
-    appliedOn: "2025-03-28",
-    reviewedBy: "Mr. Rao (Principal)",
-    reviewedOn: "2025-03-30",
-  },
-  {
-    id: "l2",
-    type: "SICK",
-    fromDate: "2025-03-17",
-    toDate: "2025-03-19",
-    totalDays: 3,
-    reason: "Viral fever and doctor advised bed rest for 3 days.",
-    medicalCertUrl: "/uploads/cert-l2.pdf",
-    status: "APPROVED",
-    appliedOn: "2025-03-17",
-    reviewedBy: "Mr. Rao (Principal)",
-    reviewedOn: "2025-03-18",
-  },
-  {
-    id: "l3",
-    type: "PERSONAL",
-    fromDate: "2025-02-20",
-    toDate: "2025-02-20",
-    totalDays: 1,
-    reason: "Personal work — bank-related documentation.",
-    substituteArrangement: "Ms. Divya Reddy will handle the period.",
-    status: "APPROVED",
-    appliedOn: "2025-02-18",
-    reviewedBy: "Mr. Rao (Principal)",
-    reviewedOn: "2025-02-19",
-  },
-  {
-    id: "l4",
-    type: "CASUAL",
-    fromDate: "2025-05-08",
-    toDate: "2025-05-09",
-    totalDays: 2,
-    reason: "Attending a family event outstation.",
-    substituteArrangement: "Mr. Anand will cover Mathematics periods.",
-    status: "PENDING",
-    appliedOn: "2025-04-14",
-  },
-  {
-    id: "l5",
-    type: "EMERGENCY",
-    fromDate: "2025-01-10",
-    toDate: "2025-01-10",
-    totalDays: 1,
-    reason: "Medical emergency — father hospitalised.",
-    status: "APPROVED",
-    appliedOn: "2025-01-10",
-    reviewedBy: "Mr. Rao (Principal)",
-    reviewedOn: "2025-01-10",
-  },
-  {
-    id: "l6",
-    type: "SICK",
-    fromDate: "2025-06-02",
-    toDate: "2025-06-03",
-    totalDays: 2,
-    reason: "Seasonal flu.",
-    status: "PENDING",
-    appliedOn: "2025-04-14",
-  },
-];
 
 // ── Public holidays (for calendar highlighting) ───────────────────────────
 
@@ -161,7 +79,6 @@ export const buildCalendarMonth = (
     const dow = new Date(date + "T00:00:00").getDay();
     const isWeekend = dow === 0; // Sunday only (Sat is working)
 
-    // Find if this date falls in any approved/pending leave
     const leave = leaveHistory.find(l => {
       const from = parseISO(l.fromDate);
       const to   = parseISO(l.toDate);
@@ -195,9 +112,40 @@ const EMPTY_FORM: ApplyLeaveFormData = {
 };
 
 export const useLeave = () => {
-  // Data (replace with useQuery in production)
-  const [leaveHistory, setLeaveHistory] = useState<LeaveApplication[]>(MOCK_LEAVE_HISTORY);
-  const balances = MOCK_BALANCES;
+  const user = useAuthStore(s => s.user);
+  const staffId = user?.id ?? "";
+
+  const [leaveHistory, setLeaveHistory] = useState<LeaveApplication[]>([]);
+  const [balances, setBalances] = useState<LeaveBalance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    if (!staffId) {
+      setError("No staff ID found. Please log in again.");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const [bal, history] = await Promise.all([
+        leaveApi.getLeaveBalances(staffId),
+        leaveApi.getLeaveHistory(staffId),
+      ]);
+      setBalances(bal);
+      setLeaveHistory(history);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to load leave data";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [staffId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Modal state
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -241,34 +189,33 @@ export const useLeave = () => {
   const submitLeave = useCallback(async () => {
     if (!formValid || !form.type) return;
     setSubmitting(true);
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 900));
-    const newApp: LeaveApplication = {
-      id: `l${Date.now()}`,
-      type: form.type,
-      fromDate: form.fromDate,
-      toDate: form.toDate,
-      totalDays,
-      reason: form.reason,
-      substituteArrangement: form.substituteArrangement || undefined,
-      status: "PENDING",
-      appliedOn: toISO(new Date()),
-    };
-    setLeaveHistory(prev => [newApp, ...prev]);
-    setSubmitting(false);
-    setSubmitSuccess(true);
-  }, [form, formValid, totalDays]);
+    try {
+      const newApp = await leaveApi.applyLeave(form, staffId, totalDays);
+      newApp.totalDays = totalDays;
+      setLeaveHistory(prev => [newApp, ...prev]);
+      setSubmitSuccess(true);
+    } catch (err: any) {
+      console.error("submitLeave failed", err);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [form, formValid, totalDays, staffId]);
 
   // ── Cancel ───────────────────────────────────────────────────────────────
 
   const confirmCancel = useCallback((id: string) => setCancelId(id), []);
   const closeCancel   = useCallback(() => setCancelId(null), []);
 
-  const doCancel = useCallback(() => {
+  const doCancel = useCallback(async () => {
     if (!cancelId) return;
-    setLeaveHistory(prev =>
-      prev.map(l => l.id === cancelId ? { ...l, status: "CANCELLED" as const } : l)
-    );
+    try {
+      await leaveApi.cancelLeave(cancelId);
+      setLeaveHistory(prev =>
+        prev.map(l => l.id === cancelId ? { ...l, status: "CANCELLED" as const } : l)
+      );
+    } catch (err: any) {
+      console.error("doCancel failed", err);
+    }
     setCancelId(null);
   }, [cancelId]);
 
@@ -314,6 +261,9 @@ export const useLeave = () => {
     // data
     balances,
     leaveHistory,
+    loading,
+    error,
+    retry: loadData,
     // modal
     applyModalOpen, openApplyModal, closeApplyModal,
     form, patchForm,

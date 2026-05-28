@@ -1,26 +1,40 @@
+import api from "@/config/axios";
 import type { Student } from "../types/my-students.types";
 
-// In a real app these would be axios/fetch calls to your backend
 export const myStudentsApi = {
-  /** Fetch all students for the teacher's class */
   getStudents: async (): Promise<Student[]> => {
-    // Placeholder – replace with:
-    // const res = await axios.get("/api/teacher/students");
-    // return res.data;
-    return Promise.resolve([]);
+    try {
+      const { data } = await api.get<Student[]>("/tenant/teacher/students");
+      return data;
+    } catch {
+      return [];
+    }
   },
 
-  /** Fetch single student detail (for drawer) */
   getStudent: async (id: string): Promise<Student | null> => {
-    // const res = await axios.get(`/api/teacher/students/${id}`);
-    // return res.data;
-    void id;
-    return Promise.resolve(null);
+    try {
+      const { data } = await api.get<Student>(`/tenant/teacher/students/${id}`);
+      return data;
+    } catch {
+      return null;
+    }
   },
 
-  /** Export class list as CSV/PDF */
   exportClassList: async (format: "csv" | "pdf"): Promise<void> => {
-    // await axios.get(`/api/teacher/students/export?format=${format}`, { responseType: "blob" });
-    void format;
+    try {
+      const res = await api.get(`/tenant/teacher/students/export`, { params: { format }, responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `class-list.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("exportClassList failed", { format, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to export class list";
+      throw new Error(message);
+    }
   },
 };

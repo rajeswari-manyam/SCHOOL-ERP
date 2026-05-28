@@ -2,8 +2,8 @@ import { Calendar, Download, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Payslip } from "../types/payslip.types";
 
-const inr = (n: number) =>
-  "₹" + n.toLocaleString("en-IN");
+const inr = (n: number | undefined | null) =>
+  "₹" + (n ?? 0).toLocaleString("en-IN");
 
 interface Props {
   payslip: Payslip;
@@ -11,12 +11,12 @@ interface Props {
   onWhatsApp: () => void;
 }
 
-const StatusBadge = ({ status }: { status: Payslip["status"] }) => {
-  const cfg = {
+const StatusBadge = ({ status }: { status: string }) => {
+  const cfg = ({
     PAID:       { label: "Paid",       classes: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
     PENDING:    { label: "Pending",    classes: "bg-amber-50 text-amber-700 border border-amber-200" },
     PROCESSING: { label: "Processing", classes: "bg-blue-50 text-blue-700 border border-blue-200" },
-  }[status];
+  } as Record<string, { label: string; classes: string }>)[status] ?? { label: status ?? "Unknown", classes: "bg-gray-50 text-gray-600 border border-gray-200" };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cfg.classes}`}>
       {cfg.label}
@@ -25,7 +25,7 @@ const StatusBadge = ({ status }: { status: Payslip["status"] }) => {
 };
 
 const CurrentSalaryCard = ({ payslip, onDownload, onWhatsApp }: Props) => {
-  const att = payslip.attendance;
+  const att = payslip.attendance ?? { workingDays: 0, presentDays: 0, absentDays: 0, halfDays: 0, leaveDays: 0 };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -35,7 +35,7 @@ const CurrentSalaryCard = ({ payslip, onDownload, onWhatsApp }: Props) => {
           <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1">
             Current Month Salary
           </p>
-          <p className="text-base font-extrabold text-gray-900">{payslip.monthLabel}</p>
+          <p className="text-base font-extrabold text-gray-900">{payslip.monthLabel ?? "-"}</p>
         </div>
         <StatusBadge status={payslip.status} />
       </div>
