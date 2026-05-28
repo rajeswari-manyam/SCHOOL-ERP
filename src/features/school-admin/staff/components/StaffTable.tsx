@@ -36,17 +36,17 @@ export const StaffTable = ({ staff, total }: Props) => (
             <TableRow key={s.id} className="group">
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <StaffAvatar initials={s.initials} status={s.status} />
+                  <StaffAvatar initials={s.initials ?? "NA"} status={s.status} />
                   <div>
-                    <p className="font-medium text-slate-800">{s.name}</p>
-                    <p className="text-xs text-slate-400">{s.phone}</p>
+                    <p className="font-medium text-slate-800">{s.name ?? "Unknown"}</p>
+                    <p className="text-xs text-slate-400">{s.phone ?? "—"}</p>
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="text-slate-600">{s.role}</TableCell>
+              <TableCell className="text-slate-600">{s.role ?? "—"}</TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {s.subjects.length > 0
+                  {s.subjects && s.subjects.length > 0
                     ? s.subjects.map((sub) => <SubjectPill key={sub} label={sub} />)
                     : <span className="text-slate-400 text-xs">—</span>}
                 </div>
@@ -55,8 +55,8 @@ export const StaffTable = ({ staff, total }: Props) => (
                 <StatusBadge status={s.status} />
               </TableCell>
               <TableCell>
-                <span className={`font-semibold ${s.leaveBalance <= 3 ? "text-amber-600" : "text-slate-700"}`}>
-                  {s.leaveBalance} days
+                <span className={`font-semibold ${s.leaveBalance != null && s.leaveBalance <= 3 ? "text-amber-600" : "text-slate-700"}`}>
+                  {s.leaveBalance ?? "—"} days
                 </span>
               </TableCell>
               <TableCell>

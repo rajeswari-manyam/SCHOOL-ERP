@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { StaffMember, TabKey } from "../types/staff.types";
+import { fetchStaff } from "../api/staff.api";
 import { staffMockData } from "../data/staff.data";
 
 interface StaffStats {
@@ -13,6 +14,8 @@ interface StaffState {
   // Data
   staffData: StaffMember[];
   stats: StaffStats;
+  loading: boolean;
+  error: string | null;
 
   // Filters
   activeTab: TabKey;
@@ -22,6 +25,7 @@ interface StaffState {
   showModal: boolean;
 
   // Actions
+  loadStaff: () => void;
   setStaffData: (data: StaffMember[]) => void;
   setActiveTab: (tab: TabKey) => void;
   setSearch: (search: string) => void;
@@ -79,6 +83,8 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   // Initial data
   staffData: staffMockData,
   stats: calculateStats(staffMockData),
+  loading: false,
+  error: null,
 
   // Initial filters
   activeTab: "all",
@@ -88,6 +94,16 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   showModal: false,
 
   // Actions
+  loadStaff: () => {
+    set({ loading: true, error: null });
+    fetchStaff().then(data => {
+      set({ staffData: data, stats: calculateStats(data), loading: false });
+    }).catch(err => {
+      console.error("Failed to load staff", err);
+      set({ error: err?.message || "Failed to load staff.", loading: false });
+    });
+  },
+
   setStaffData: (data) => set(() => ({
     staffData: data,
     stats: calculateStats(data),

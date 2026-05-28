@@ -6,7 +6,9 @@ import type { Student } from "../types/student.types";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 
 const Avatar = ({ s }: { s: Student }) => {
-  const initials = (s.firstName[0] + s.lastName[0]).toUpperCase();
+  const first = s.firstName?.[0] ?? "?";
+  const last = s.lastName?.[0] ?? "";
+  const initials = (first + last).toUpperCase();
   const colors = ["bg-indigo-100 text-indigo-700", "bg-pink-100 text-pink-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700", "bg-blue-100 text-blue-700"];
   const color = colors[parseInt(s.id) % colors.length];
   return (
@@ -52,13 +54,13 @@ const StudentTable = ({ students }: { students: Student[] }) => {
                 onClick={() => navigate(`/school-admin/students/${s.id}`)}
               >
                 <TableCell className="px-4 py-3"><Avatar s={s} /></TableCell>
-                <TableCell className="px-4 py-3 text-xs font-semibold text-gray-500">{s.admissionNo}</TableCell>
+                <TableCell className="px-4 py-3 text-xs font-semibold text-gray-500">{s.admissionNo ?? (s as any).admissionNumber ?? (s as any).admissionId ?? "—"}</TableCell>
                 <TableCell className="px-4 py-3">
-                  <p className="text-sm font-semibold text-gray-900">{s.firstName} {s.lastName}</p>
+                  <p className="text-sm font-semibold text-gray-900">{s.firstName ?? "—"} {s.lastName ?? ""}</p>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.class}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.section}</TableCell>
-                <TableCell className="px-4 py-3 text-xs text-gray-600">{s.parentPhone}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.class ?? "—"}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.section ?? "—"}</TableCell>
+                <TableCell className="px-4 py-3 text-xs text-gray-600">{s.parentPhone ?? "—"}</TableCell>
                 <TableCell className="px-4 py-3"><StatusBadge status={s.status} /></TableCell>
                 <TableCell className="px-4 py-3"><FeeBadge status={s.feeStatus} /></TableCell>
                 <TableCell className="px-4 py-3" onClick={e => e.stopPropagation()}>

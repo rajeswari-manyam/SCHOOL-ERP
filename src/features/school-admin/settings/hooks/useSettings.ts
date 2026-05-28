@@ -14,6 +14,7 @@ import type {
   NotificationSettings,
   ModulePermission,
   AddUserFormData,
+  CreateClassPayload,
 } from "../types/settings.types";
 import * as api from "../api/settings.api";
 
@@ -66,8 +67,8 @@ export function useAcademicConfig() {
     setSaving(false);
   }, []);
 
-  const addNewClass = useCallback(async (data: Omit<ClassSection, "id">) => {
-    const newCls = await api.addClass(data);
+  const addNewClass = useCallback(async (payload: CreateClassPayload) => {
+    const newCls = await api.addClass(payload);
     setClasses(prev => [...prev, newCls]);
   }, []);
 

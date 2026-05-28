@@ -93,6 +93,7 @@ export const useAuthStore = create<AuthState>()(
         const role = USER_TYPE_ROLE_MAP[user.userType] ?? user.userType.toLowerCase();
         set({ user, token, userType: user.userType, role });
         localStorage.removeItem("__auth_meta__");
+        localStorage.setItem("userId", user.id);
       },
 
       // ── Backward-compatible login() for old OtpPage code ─────────────────
@@ -113,6 +114,7 @@ export const useAuthStore = create<AuthState>()(
 
         set({ user, token, userType: user.userType, role });
         localStorage.removeItem("__auth_meta__");
+        localStorage.setItem("userId", user.id);
       },
 
       logout: () => {
@@ -122,6 +124,7 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem("phone");
         localStorage.removeItem("schoolcode");
         localStorage.removeItem("otp");
+        localStorage.removeItem("userId");
       },
 
       isAuthenticated: () => {

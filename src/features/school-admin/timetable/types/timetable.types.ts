@@ -99,3 +99,105 @@ export interface TeacherOption {
   label: string;
   conflictWarning?: string; // "Venkat R is assigned to Class 9A on Monday Period 1."
 }
+
+// ─── GET /tenant/getallexams-timetable?school_code=... ────────────────────────
+export interface GetAllExamsTimetableRawItem {
+  exam_id?: string;
+  id?: string;
+  _id?: string;
+  subject_name?: string;
+  subjectname?: string;
+  subject?: string;
+  subjectName?: string;
+  class_name?: string;
+  classname?: string;
+  className?: string;
+  section_name?: string;
+  sectionname?: string;
+  exam_date?: string;
+  date?: string;
+  start_time?: string;
+  startTime?: string;
+  end_time?: string;
+  endTime?: string;
+  room_no?: string;
+  room?: string;
+  venue?: string;
+  notify_status?: string;
+  notifyStatus?: string;
+}
+
+export interface GetAllExamsTimetableResponse {
+  status?: boolean;
+  message?: string;
+  data?: GetAllExamsTimetableRawItem[] | { entries?: GetAllExamsTimetableRawItem[]; exams?: GetAllExamsTimetableRawItem[] };
+  entries?: GetAllExamsTimetableRawItem[];
+  exams?: GetAllExamsTimetableRawItem[];
+  result?: GetAllExamsTimetableRawItem[];
+}
+
+// ─── Create Exam Timetable (POST /tenant/exams-timetable) ─────────────────────
+export interface CreateExamTimetablePayload {
+  subjectname: string;
+  classname: string;
+  sectionname: string;
+  exam_name: string;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+  academic_year: string;
+  school_code: string;
+}
+
+export interface CreateExamTimetableResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    id: string;
+    subjectname: string;
+    classname: string;
+    sectionname: string;
+    exam_name: string;
+    exam_date: string;
+    start_time: string;
+    end_time: string;
+    room_no: string;
+  };
+}
+
+// ─── Create Timetable Period (POST /tenant/createtimetable) ────────────────────
+export interface CreateTimetablePayload {
+  className: string;
+  sectionName: string;
+  subjectname: string;
+  teacher_id: string;
+  teachername: string;
+  period_no: string;
+  time_sloat: string;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+  lunch_start: string;
+  lunch_end: string;
+  academic_year: string;
+  school_code: string;
+}
+
+export interface CreateTimetableResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    id: string;
+    className: string;
+    sectionName: string;
+    subjectname: string;
+    teachername: string;
+    period_no: string;
+    day_of_week: string;
+    start_time: string;
+    end_time: string;
+    room_no: string;
+  };
+}

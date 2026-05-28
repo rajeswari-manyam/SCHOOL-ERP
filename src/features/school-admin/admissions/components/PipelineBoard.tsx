@@ -1,4 +1,4 @@
-import { useEnquiries } from '../hooks/useAdmissionsQueries';
+import { useEnquiries, useInterviewList, useDocsVerificationList } from '../hooks/useAdmissionsQueries';
 import { EnquiryCard } from './EnquiryCard';
 import { InterviewCard } from './InterviewCard';
 import { DocsVerifiedCard } from './DocsVerifiedCard';
@@ -30,31 +30,37 @@ function renderCard(enquiry: Enquiry, stage: PipelineStage, index: number) {
   }
 }
 
-export function PipelineBoard() {
-  const { data: enquiries = [], isLoading } = useEnquiries();
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-5 gap-4">
-        {COLUMNS.map((col) => (
-          <div key={col.id} className="space-y-3">
-            <div className="h-6 bg-gray-200 rounded animate-pulse w-24" />
-            {[1, 2].map((i) => (
-              <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />
-            ))}
-          </div>
+const BoardSkeleton = () => (
+  <div className="grid grid-cols-5 gap-4">
+    {COLUMNS.map((col) => (
+      <div key={col.id} className="space-y-3">
+        <div className="h-6 w-24 animate-pulse rounded bg-gray-200" />
+        {[1, 2].map((i) => (
+          <div key={i} className="h-28 animate-pulse rounded-xl bg-gray-100" />
         ))}
       </div>
-    );
-  }
+    ))}
+  </div>
+);
+
+export function PipelineBoard() {
+  const { data: enquiries = [], isLoading: enqLoading } = useEnquiries();
+  const { data: interviewList = [], isLoading: intLoading } = useInterviewList();
+  const { data: docsList = [], isLoading: docsLoading } = useDocsVerificationList();
+
+  const isLoading = enqLoading || intLoading || docsLoading;
+
+  if (isLoading) return <BoardSkeleton />;
 
   return (
     <div className="grid grid-cols-5 gap-4 min-w-[900px]">
       {COLUMNS.map((col) => {
-        const columnEnquiries = enquiries.filter((e) => e.stage === col.id);
+        const columnEnquiries =
+          col.id === 'interview' ? interviewList
+          : col.id === 'docs_verified' ? docsList
+          : enquiries.filter((e) => e.stage === col.id);
         return (
           <div key={col.id} className="space-y-3">
-            {/* Column header */}
             <div className="flex items-center gap-2 px-1">
               <span className="text-xs font-bold tracking-wider text-gray-900">
                 {col.label}
@@ -63,8 +69,6 @@ export function PipelineBoard() {
                 {columnEnquiries.length}
               </Badge>
             </div>
-
-            {/* Cards */}
             <div className="space-y-3 min-h-[200px]">
               {columnEnquiries.map((enquiry, i) => renderCard(enquiry, col.id, i))}
             </div>

@@ -1,4 +1,5 @@
 import { useAttendanceStore } from "../store";
+import { useAllHolidays } from "../hooks/useAttendance";
 import {
   Card,
   CardContent,
@@ -27,13 +28,64 @@ const holidayTypeColors: Record<
   NATIONAL_HOLIDAY: { bg: "bg-yellow-50", text: "text-yellow-700", dot: "bg-yellow-400", border: "border-yellow-200",label: "National Holiday" },
   PUBLIC_HOLIDAY:   { bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500",    border: "border-red-200",   label: "Public Holiday"   },
   SCHOOL_EVENT:     { bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500",  border: "border-green-200", label: "School Event"     },
+  UNKNOWN:         { bg: "bg-gray-50",   text: "text-gray-700",   dot: "bg-gray-400",   border: "border-gray-200",  label: "Other"           },
 };
+
+const CalendarSkeleton = () => (
+  <div className="space-y-4 animate-pulse p-4">
+    <div className="flex items-center justify-between">
+      <div className="h-5 w-40 rounded bg-gray-200" />
+      <div className="h-8 w-28 rounded bg-gray-200" />
+    </div>
+    <div className="grid grid-cols-7 gap-1">
+      {Array.from({ length: 35 }).map((_, i) => (
+        <div key={i} className="aspect-square rounded bg-gray-100" />
+      ))}
+    </div>
+  </div>
+);
+
+const CalendarError = ({ message, onRetry }: { message: string; onRetry: () => void }) => (
+  <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+    <span className="text-3xl">⚠️</span>
+    <p className="text-sm text-red-600 max-w-xs">{message}</p>
+    <Button onClick={onRetry} variant="outline" size="sm">
+      Try Again
+    </Button>
+  </div>
+);
 
 const HolidayCalendar = () => {
   const {
-    calendarData, calendarMonth, calendarYear,
+    calendarMonth, calendarYear,
     goToPrevMonth, goToNextMonth, openAddHoliday,
   } = useAttendanceStore();
+
+  const { data: calendarData, isLoading, isError, error, refetch } = useAllHolidays();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <Card><CalendarSkeleton /></Card>
+        <Card><CalendarSkeleton /></Card>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <Card>
+          <CalendarError
+            message={(error as any)?.message ?? "Failed to load holidays. Please try again."}
+            onRetry={() => refetch()}
+          />
+        </Card>
+      </div>
+    );
+  }
+
+  const safeData = calendarData ?? { month: MONTHS[calendarMonth], year: calendarYear, holidays: [], totalHolidaysThisYear: 0, academicYear: "" };
 
   const firstDay    = new Date(calendarYear, calendarMonth, 1).getDay();
   const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
@@ -43,7 +95,7 @@ const HolidayCalendar = () => {
 
   const getHolidayForDate = (day: number) => {
     const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return calendarData.holidays.find((h) => h.date === dateStr);
+    return safeData.holidays.find((h) => h.date === dateStr);
   };
 
   const calendarCells: (number | null)[] = [
@@ -222,8 +274,8 @@ const HolidayCalendar = () => {
               Holidays This Academic Year
             </CardTitle>
             <CardDescription className="mt-0.5 text-xs sm:text-sm">
-              {calendarData.totalHolidaysThisYear} holidays scheduled for{" "}
-              {calendarData.academicYear}
+              {safeData.totalHolidaysThisYear} holidays scheduled for{" "}
+               {safeData.academicYear}
             </CardDescription>
           </div>
           <Button
@@ -237,8 +289,8 @@ const HolidayCalendar = () => {
 
         <CardContent className="p-4 sm:p-5">
           <div className="space-y-0">
-            {calendarData.holidays.map((h) => {
-              const style   = holidayTypeColors[h.type];
+            {safeData.holidays.map((h) => {
+              const style   = holidayTypeColors[h.type] ?? holidayTypeColors.UNKNOWN;
               const dateObj = new Date(h.date);
 
               return (

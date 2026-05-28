@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { reportsApi } from "../api/reports.api";
-import type { GeneratedReport, ReportStats, GenerateReportFormData, ReportType } from "../types/reports.types";
+import type { GeneratedReport, ReportStats, GenerateReportFormData, ReportType, CreateReportPayload } from "../types/reports.types";
+
+const SCHOOL_CODE = import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode");
 
 const EMPTY_FORM: GenerateReportFormData = {
   reportType: "ATTENDANCE",
@@ -99,11 +101,24 @@ export const useGenerateReport = (onSuccess: () => void) => {
   const generate = async () => {
     setGenerating(true);
     try {
-      await reportsApi.generate(form);
+      const payload: CreateReportPayload = {
+        reportype: form.reportType.toLowerCase(),
+        from: form.fromDate,
+        to: form.toDate,
+        class: form.classFilter,
+        format: form.format.toLowerCase(),
+        emailreport: form.emailToSelf,
+        school_code: SCHOOL_CODE,
+      };
+      const res = await reportsApi.generate(payload);
+      console.log("generate report success", { url: "/tenant/createreports", payload, response: res });
       setSuccess(true);
       setTimeout(() => {
         onSuccess();
       }, 1000);
+    } catch (err: any) {
+      console.error("generate report failed", { payload, error: err?.message ?? err });
+      alert(err?.message ?? "Failed to generate report");
     } finally {
       setGenerating(false);
     }

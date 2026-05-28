@@ -170,6 +170,7 @@ const LoginPage = () => {
         school_code:       values.schoolcode,
         admission_number:  values.admissionNumber,
       };
+      
 
       const response = await axiosInstance.post("/tenant/studentlogin", payload);
 

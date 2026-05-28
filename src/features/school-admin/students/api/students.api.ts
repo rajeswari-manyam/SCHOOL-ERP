@@ -37,13 +37,45 @@ export const MOCK_DOCUMENTS: StudentDocument[] = [
   { id: "5", name: "Passport Photo", type: "image", size: "450 KB", verified: true },
 ];
 
+const toCamelCase = (obj: any): any => {
+  if (Array.isArray(obj)) return obj.map(toCamelCase);
+  if (obj !== null && typeof obj === "object") {
+    return Object.keys(obj).reduce((acc, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      acc[camelKey] = toCamelCase(obj[key]);
+      return acc;
+    }, {} as Record<string, any>);
+  }
+  return obj;
+};
+
 export const studentsApi = {
   getAll: async (): Promise<Student[]> => {
-    const { data } = await api.get<Student[]>("/tenant/students");
-    return data;
+    const { data } = await api.get("/tenant/getallstudents");
+    const rawJson = JSON.stringify(data);
+    console.log("getAll students raw response:", rawJson);
+    let list: any[] = [];
+    if (Array.isArray(data)) list = data;
+    else if (data?.students && Array.isArray(data.students)) list = data.students;
+    else if (data?.data && Array.isArray(data.data)) list = data.data;
+    else {
+      console.warn("getAll students: unexpected response shape", data);
+      return [];
+    }
+    const mapped = list.map(toCamelCase).map((s: any) => ({
+      ...s,
+      admissionNo: s.admissionNo ?? s.admissionNumber ?? s.admissionId ?? s.admission ?? "",
+      firstName: s.firstName ?? s.first?? s.givenName ?? "",
+      lastName: s.lastName ?? s.last ?? s.familyName ?? s.surName ?? "",
+      parentPhone: s.parentPhone ?? s.parentPhoneNumber ?? s.phone ?? s.mobile ?? "",
+      feeStatus: s.feeStatus ?? s.fee ?? s.feePaymentStatus ?? "PENDING",
+      status: s.status ?? s.studentStatus ?? "ACTIVE",
+    })) as Student[];
+    console.log("getAll students mapped count:", mapped.length, "first:", JSON.stringify(mapped[0]));
+    return mapped;
   },
   getById: async (id: string): Promise<Student | undefined> => {
-    const { data } = await api.get<Student>(`/tenant/students/${id}`);
+    const { data } = await api.get<Student>(`/tenant/getstudent/${id}`);
     return data;
   },
   createStudent: async (payload: CreateStudentPayload): Promise<Student> => {

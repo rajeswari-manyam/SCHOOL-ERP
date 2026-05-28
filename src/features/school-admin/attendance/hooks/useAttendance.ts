@@ -11,6 +11,8 @@ export const attendanceKeys = {
     [...attendanceKeys.all, "history", from, to, cls] as const,
   calendar: (month: number, year: number) =>
     [...attendanceKeys.all, "calendar", month, year] as const,
+  allHolidays: (year: number) =>
+    [...attendanceKeys.all, "holidays", "all", year] as const,
 };
 
 // ─── Today ───────────────────────────────────────────────────────────────────
@@ -48,6 +50,18 @@ export const useHolidayCalendar = () => {
   });
 };
 
+// ─── All Holidays (GET /tenant/getallholidays) ────────────────────────────────
+export const useAllHolidays = () => {
+  const { calendarMonth, calendarYear } = useAttendanceStore();
+  return useQuery({
+    queryKey: attendanceKeys.allHolidays(calendarYear),
+    queryFn: () => attendanceApi.getAllHolidays(calendarMonth, calendarYear),
+    staleTime: 10 * 60_000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+};
+
 // ─── Submit Attendance ────────────────────────────────────────────────────────
 export const useSubmitAttendance = () => {
   const queryClient = useQueryClient();
@@ -71,6 +85,7 @@ export const useAddHoliday = () => {
     mutationFn: attendanceApi.addHoliday,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.allHolidays });
       closeAddHoliday();
     },
   });

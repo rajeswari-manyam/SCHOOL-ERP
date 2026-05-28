@@ -20,7 +20,8 @@ export interface AttendanceSummary {
 
 export interface Payslip {
   id: string;
-  month: string;       // "YYYY-MM"
+  month: string;       // numeric month string e.g. "4" or "04"
+  year: string;        // numeric year string e.g. "2025"
   monthLabel: string;  // "April 2025"
   status: PayslipStatus;
 

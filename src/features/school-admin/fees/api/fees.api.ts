@@ -1,3 +1,4 @@
+import api from "@/config/axios";
 import type {
   PendingFee,
   FeeTransaction,
@@ -20,118 +21,13 @@ export const MOCK_FEE_STATS: FeeStats = {
 };
 
 export const MOCK_PENDING_FEES: PendingFee[] = [
-  {
-    studentId: "1",
-    studentName: "Ravi Teja",
-    admissionNo: "ADM20230492",
-    initials: "RT",
-    class: "10",
-    section: "A",
-    feeHead: "Tuition Fee",
-    amount: 8500,
-    dueDate: "22 Mar 2025",
-    daysOverdue: 16,
-    daysRemaining: null,
-    isDueToday: false,
-    reminders: { sent: 3, total: 3 },
-    parentPhone: "+91 98765 43210",
-  },
-  {
-    studentId: "2",
-    studentName: "Priya Sharma",
-    admissionNo: "ADM20230811",
-    initials: "PS",
-    class: "9",
-    section: "B",
-    feeHead: "Tuition Fee",
-    amount: 8000,
-    dueDate: "28 Mar 2025",
-    daysOverdue: 10,
-    daysRemaining: null,
-    isDueToday: false,
-    reminders: { sent: 2, total: 3 },
-    parentPhone: "+91 87654 32109",
-  },
-  {
-    studentId: "3",
-    studentName: "Kiran Kumar",
-    admissionNo: "ADM20230214",
-    initials: "KK",
-    class: "8",
-    section: "A",
-    feeHead: "Exam Fee",
-    amount: 4500,
-    dueDate: "01 Apr 2025",
-    daysOverdue: 6,
-    daysRemaining: null,
-    isDueToday: false,
-    reminders: { sent: 1, total: 3 },
-    parentPhone: "+91 76543 21098",
-  },
-  {
-    studentId: "4",
-    studentName: "Suresh Reddy",
-    admissionNo: "ADM20230557",
-    initials: "SR",
-    class: "7",
-    section: "B",
-    feeHead: "Tuition Fee",
-    amount: 3000,
-    dueDate: "04 Apr 2025",
-    daysOverdue: null,
-    daysRemaining: 4,
-    isDueToday: false,
-    reminders: { sent: 1, total: 3 },
-    parentPhone: "+91 65432 10987",
-  },
-  {
-    studentId: "5",
-    studentName: "Anitha Devi",
-    admissionNo: "ADM20230321",
-    initials: "AD",
-    class: "6",
-    section: "A",
-    feeHead: "Transport Fee",
-    amount: 2500,
-    dueDate: "07 Apr 2025",
-    daysOverdue: null,
-    daysRemaining: null,
-    isDueToday: true,
-    reminders: { sent: 0, total: 3 },
-    parentPhone: "+91 54321 09876",
-  },
-  {
-    studentId: "6",
-    studentName: "Venkat Rao",
-    admissionNo: "ADM20230109",
-    initials: "VR",
-    class: "10",
-    section: "B",
-    feeHead: "Activity Fee",
-    amount: 1500,
-    dueDate: "15 Mar 2025",
-    daysOverdue: 23,
-    daysRemaining: null,
-    isDueToday: false,
-    reminders: { sent: 3, total: 3 },
-    parentPhone: "+91 43210 98765",
-  },
-  {
-    studentId: "7",
-    studentName: "Deepa Kumari",
-    admissionNo: "ADM20230445",
-    initials: "DK",
-    class: "9",
-    section: "A",
-    feeHead: "Tuition Fee",
-    amount: 8500,
-    dueDate: "20 Mar 2025",
-    daysOverdue: 18,
-    daysRemaining: null,
-    isDueToday: false,
-    reminders: { sent: 2, total: 3 },
-    parentPhone: "+91 32109 87654",
-  },
+  { studentId: "1", studentName: "Ravi Teja", admissionNo: "ADM20230492", initials: "RT", class: "10", section: "A", feeHead: "Tuition Fee", amount: 8500, dueDate: "22 Mar 2025", daysOverdue: 16, daysRemaining: null, isDueToday: false, reminders: { sent: 3, total: 3 }, parentPhone: "+91 98765 43210" },
+  { studentId: "2", studentName: "Priya Sharma", admissionNo: "ADM20230811", initials: "PS", class: "9", section: "B", feeHead: "Tuition Fee", amount: 8000, dueDate: "28 Mar 2025", daysOverdue: 10, daysRemaining: null, isDueToday: false, reminders: { sent: 2, total: 3 }, parentPhone: "+91 87654 32109" },
+  { studentId: "3", studentName: "Kiran Kumar", admissionNo: "ADM20230214", initials: "KK", class: "8", section: "A", feeHead: "Exam Fee", amount: 4500, dueDate: "01 Apr 2025", daysOverdue: 6, daysRemaining: null, isDueToday: false, reminders: { sent: 1, total: 3 }, parentPhone: "+91 76543 21098" },
+  { studentId: "4", studentName: "Suresh Reddy", admissionNo: "ADM20230557", initials: "SR", class: "7", section: "B", feeHead: "Tuition Fee", amount: 3000, dueDate: "04 Apr 2025", daysOverdue: null, daysRemaining: 4, isDueToday: false, reminders: { sent: 1, total: 3 }, parentPhone: "+91 65432 10987" },
+  { studentId: "5", studentName: "Anitha Devi", admissionNo: "ADM20230321", initials: "AD", class: "6", section: "A", feeHead: "Transport Fee", amount: 2500, dueDate: "07 Apr 2025", daysOverdue: null, daysRemaining: null, isDueToday: true, reminders: { sent: 0, total: 3 }, parentPhone: "+91 54321 09876" },
+  { studentId: "6", studentName: "Venkat Rao", admissionNo: "ADM20230109", initials: "VR", class: "10", section: "B", feeHead: "Activity Fee", amount: 1500, dueDate: "15 Mar 2025", daysOverdue: 23, daysRemaining: null, isDueToday: false, reminders: { sent: 3, total: 3 }, parentPhone: "+91 43210 98765" },
+  { studentId: "7", studentName: "Deepa Kumari", admissionNo: "ADM20230445", initials: "DK", class: "9", section: "A", feeHead: "Tuition Fee", amount: 8500, dueDate: "20 Mar 2025", daysOverdue: 18, daysRemaining: null, isDueToday: false, reminders: { sent: 2, total: 3 }, parentPhone: "+91 32109 87654" },
 ];
 
 export const MOCK_TRANSACTIONS: FeeTransaction[] = [
@@ -195,57 +91,89 @@ export const MOCK_PERIOD_SUMMARY: PeriodSummary = {
   breakdown: { cash: 84000, upi: 120000, cheque: 30000, bankTransfer: 0 },
 };
 
-
-
 export const feeApi = {
   getStats: async (): Promise<FeeStats> => {
-    await new Promise(r => setTimeout(r, 200));
-    return { ...MOCK_FEE_STATS };
+    try {
+      const { data } = await api.get<FeeStats>("/tenant/fees/stats");
+      return data;
+    } catch {
+      return { ...MOCK_FEE_STATS };
+    }
   },
 
   getPendingFees: async (): Promise<PendingFee[]> => {
-    await new Promise(r => setTimeout(r, 300));
-    return [...MOCK_PENDING_FEES];
+    try {
+      const { data } = await api.get<PendingFee[]>("/tenant/fees/pending");
+      return data;
+    } catch {
+      return [...MOCK_PENDING_FEES];
+    }
   },
 
   getTransactions: async (): Promise<FeeTransaction[]> => {
-    await new Promise(r => setTimeout(r, 300));
-    return [...MOCK_TRANSACTIONS];
+    try {
+      const { data } = await api.get<FeeTransaction[]>("/tenant/fees/transactions");
+      return data;
+    } catch {
+      return [...MOCK_TRANSACTIONS];
+    }
   },
 
   getPeriodSummary: async (): Promise<PeriodSummary> => {
-    await new Promise(r => setTimeout(r, 200));
-    return { ...MOCK_PERIOD_SUMMARY };
+    try {
+      const { data } = await api.get<PeriodSummary>("/tenant/fees/period-summary");
+      return data;
+    } catch {
+      return { ...MOCK_PERIOD_SUMMARY };
+    }
   },
 
   getFeeHeads: async (): Promise<FeeHead[]> => {
-    await new Promise(r => setTimeout(r, 200));
-    return [...MOCK_FEE_HEADS];
+    try {
+      const { data } = await api.get<FeeHead[]>("/tenant/fee-heads");
+      return data;
+    } catch {
+      return [...MOCK_FEE_HEADS];
+    }
   },
 
   getTransportSlabs: async (): Promise<TransportSlab[]> => {
-    await new Promise(r => setTimeout(r, 200));
-    return [...MOCK_TRANSPORT_SLABS];
+    try {
+      const { data } = await api.get<TransportSlab[]>("/tenant/transport-slabs");
+      return data;
+    } catch {
+      return [...MOCK_TRANSPORT_SLABS];
+    }
   },
 
   getClassFeeStructure: async (className: string): Promise<ClassFeeStructure[]> => {
-    await new Promise(r => setTimeout(r, 200));
-    return MOCK_CLASS_FEE_STRUCTURES[className] || MOCK_CLASS_FEE_STRUCTURES["Class 10"];
+    try {
+      const { data } = await api.get<ClassFeeStructure[]>(`/tenant/fees/class-structure/${encodeURIComponent(className)}`);
+      return data;
+    } catch {
+      return MOCK_CLASS_FEE_STRUCTURES[className] || MOCK_CLASS_FEE_STRUCTURES["Class 10"];
+    }
   },
 
-  recordPayment: async (form: RecordPaymentForm): Promise<{
-    success: boolean;
-    receiptNo: string;
-  }> => {
-    await new Promise((r) => setTimeout(r, 400));
-    return {
-      success: true,
-      receiptNo: `RCP-${new Date().getFullYear()}-${form.studentId}-${Math.floor(Math.random() * 9000) + 1000}`,
-    };
+  recordPayment: async (form: RecordPaymentForm): Promise<{ success: boolean; receiptNo: string }> => {
+    try {
+      const { data } = await api.post<{ success: boolean; receiptNo: string }>("/tenant/fees/payment", form);
+      return data;
+    } catch (err: any) {
+      console.error("recordPayment failed", { url: "/tenant/fees/payment", payload: form, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to record payment";
+      throw new Error(message);
+    }
   },
 
   sendReminder: async (studentIds: string[]): Promise<{ sent: number }> => {
-    await new Promise(r => setTimeout(r, 400));
-    return { sent: studentIds.length };
+    try {
+      const { data } = await api.post<{ sent: number }>("/tenant/fees/reminder", { studentIds });
+      return data;
+    } catch (err: any) {
+      console.error("sendReminder failed", { url: "/tenant/fees/reminder", studentIds, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to send reminder";
+      throw new Error(message);
+    }
   },
 };

@@ -1,3 +1,4 @@
+import api from "@/config/axios";
 import type {
   ExamSelector,
   StudentMarkEntry,
@@ -5,51 +6,69 @@ import type {
   PublishedResult,
 } from "../types/exam-marks.types";
 
-// In a real app these would be axios/fetch calls to your backend
 export const examMarksApi = {
-  /** Load students for a given exam selector */
   loadStudents: async (selector: ExamSelector): Promise<StudentMarkEntry[]> => {
-    // const res = await axios.get("/api/teacher/exams/students", { params: selector });
-    // return res.data;
-    void selector;
-    return Promise.resolve([]);
+    try {
+      const { data } = await api.get<StudentMarkEntry[]>("/tenant/teacher/exams/students", { params: selector });
+      return data;
+    } catch {
+      return [];
+    }
   },
 
-  /** Save draft marks (auto-save or manual) */
-  saveDraft: async (
-    selector: ExamSelector,
-    entries: StudentMarkEntry[]
-  ): Promise<void> => {
-    // await axios.post("/api/teacher/exams/draft", { selector, entries });
-    void selector; void entries;
+  saveDraft: async (selector: ExamSelector, entries: StudentMarkEntry[]): Promise<void> => {
+    try {
+      await api.post("/tenant/teacher/exams/draft", { selector, entries });
+    } catch (err: any) {
+      console.error("saveDraft failed", { url: "/tenant/teacher/exams/draft", selector, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to save draft";
+      throw new Error(message);
+    }
   },
 
-  /** Submit marks for review */
-  submitMarks: async (
-    selector: ExamSelector,
-    entries: StudentMarkEntry[]
-  ): Promise<void> => {
-    // await axios.post("/api/teacher/exams/submit", { selector, entries });
-    void selector; void entries;
+  submitMarks: async (selector: ExamSelector, entries: StudentMarkEntry[]): Promise<void> => {
+    try {
+      await api.post("/tenant/teacher/exams/submit", { selector, entries });
+    } catch (err: any) {
+      console.error("submitMarks failed", { url: "/tenant/teacher/exams/submit", selector, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to submit marks";
+      throw new Error(message);
+    }
   },
 
-  /** Fetch all submitted exams for this teacher */
   getSubmittedExams: async (): Promise<SubmittedExam[]> => {
-    // const res = await axios.get("/api/teacher/exams/submitted");
-    // return res.data;
-    return Promise.resolve([]);
+    try {
+      const { data } = await api.get<SubmittedExam[]>("/tenant/teacher/exams/submitted");
+      return data;
+    } catch {
+      return [];
+    }
   },
 
-  /** Fetch published results */
   getPublishedResults: async (): Promise<PublishedResult[]> => {
-    // const res = await axios.get("/api/teacher/exams/published");
-    // return res.data;
-    return Promise.resolve([]);
+    try {
+      const { data } = await api.get<PublishedResult[]>("/tenant/teacher/exams/published");
+      return data;
+    } catch {
+      return [];
+    }
   },
 
-  /** Download result report PDF */
   downloadReport: async (resultId: string): Promise<void> => {
-    // const res = await axios.get(`/api/teacher/exams/published/${resultId}/pdf`, { responseType: "blob" });
-    void resultId;
+    try {
+      const res = await api.get(`/tenant/teacher/exams/published/${resultId}/pdf`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `result-${resultId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("downloadReport failed", { resultId, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to download report";
+      throw new Error(message);
+    }
   },
 };

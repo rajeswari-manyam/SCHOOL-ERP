@@ -3,7 +3,6 @@ import type { AttendanceTab, MarkAttendanceForm } from "../types/attendance.type
 import {
   mockAttendanceToday,
   mockAttendanceHistory,
-  mockHolidayCalendar,
   mockMarkAttendanceForm,
 } from "./mockData";
 
@@ -27,7 +26,6 @@ interface AttendanceState {
   setHistoryClass: (c: string) => void;
 
   // Holiday Calendar
-  calendarData: typeof mockHolidayCalendar;
   calendarMonth: number; // 0-indexed
   calendarYear: number;
   goToPrevMonth: () => void;
@@ -65,9 +63,8 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   setHistoryDateTo: (d) => set({ historyDateTo: d }),
   setHistoryClass: (c) => set({ historyClass: c }),
 
-  calendarData: mockHolidayCalendar,
-  calendarMonth: 3, // April = index 3
-  calendarYear: 2025,
+  calendarMonth: new Date().getMonth(),
+  calendarYear: new Date().getFullYear(),
   goToPrevMonth: () => {
     const { calendarMonth, calendarYear } = get();
     if (calendarMonth === 0) {

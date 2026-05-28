@@ -93,6 +93,7 @@ const OtpPage = () => {
 
       const response = await verifyOtp(payload);
       console.log("VERIFY OTP RESPONSE →", response);
+      // clear dev OTP after attempt
 
       if (response?.status === true) {
         console.log("USER TYPE →", rawUserType);

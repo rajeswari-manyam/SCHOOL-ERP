@@ -1,4 +1,5 @@
-import type { GeneratedReport, ReportStats } from "../types/reports.types";
+import api from "@/config/axios";
+import type { GeneratedReport, ReportStats, CreateReportPayload, CreateReportResponse } from "../types/reports.types";
 
 export const MOCK_GENERATED_REPORTS: GeneratedReport[] = [
   {
@@ -66,20 +67,40 @@ export const MOCK_REPORT_STATS: ReportStats = {
 
 export const reportsApi = {
   getAll: async (): Promise<GeneratedReport[]> => {
-    await new Promise(r => setTimeout(r, 300));
-    return MOCK_GENERATED_REPORTS;
+    try {
+      const { data } = await api.get("/tenant/getallreports");
+      const list = Array.isArray(data) ? data : (data as any)?.reports ?? (data as any)?.data ?? [];
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return MOCK_GENERATED_REPORTS;
+    }
   },
   getStats: async (): Promise<ReportStats> => {
     await new Promise(r => setTimeout(r, 200));
     return MOCK_REPORT_STATS;
   },
-  generate: async (data: object): Promise<{ success: boolean; reportId: string }> => {
-    await new Promise(r => setTimeout(r, 1200));
-    console.log("Generating report with:", data);
-    return { success: true, reportId: `RPT-${Date.now()}` };
+  generate: async (payload: CreateReportPayload): Promise<CreateReportResponse> => {
+    try {
+      const { data } = await api.post<CreateReportResponse>("/tenant/createreports", payload);
+      return data;
+    } catch (err: any) {
+      console.error("generate report failed", { url: "/tenant/createreports", payload, response: err?.response?.data ?? err?.message });
+      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to generate report";
+      throw new Error(message);
+    }
   },
   download: async (reportId: string): Promise<void> => {
-    await new Promise(r => setTimeout(r, 500));
-    console.log("Downloading report:", reportId);
+    try {
+      const response = await api.get(`/tenant/getreportById/${reportId}`, { responseType: "blob" });
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `report-${reportId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("download report failed", { reportId, response: err?.response?.data ?? err?.message });
+      throw new Error(err?.response?.data?.message ?? err?.message ?? "Failed to download report");
+    }
   },
 };

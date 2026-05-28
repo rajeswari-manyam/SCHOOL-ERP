@@ -53,3 +53,20 @@ export interface ReportStats {
   monthlyAvg: number;
   pendingDelivery: number;
 }
+
+// ─── Create Report (POST /tenant/createreports) ────────────────────────────────
+export interface CreateReportPayload {
+  reportype: string;
+  from: string;
+  to: string;
+  class: string;
+  format: string;
+  emailreport: boolean;
+  school_code: string;
+}
+
+export interface CreateReportResponse {
+  success: boolean;
+  message?: string;
+  reportId?: string;
+}
