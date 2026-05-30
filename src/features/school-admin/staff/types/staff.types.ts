@@ -55,3 +55,18 @@ export interface CreateStaffPayload {
   school_code: string;
   role: string;
 }
+
+export interface UpdateStaffPayload {
+  name?: string;
+  email?: string;
+  phone?: string;
+  emp_number?: string;
+  qualification?: string;
+  department?: string;
+  designation?: string;
+  monthly_salary?: number;
+  date_of_birth?: string;
+  date_of_join?: string;
+  role?: string;
+  status?: StaffStatus;
+}

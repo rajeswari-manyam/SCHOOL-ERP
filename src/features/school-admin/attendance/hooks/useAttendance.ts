@@ -6,7 +6,8 @@ import type { MarkAttendanceForm } from "../types/attendance.types";
 // ─── Query Keys ──────────────────────────────────────────────────────────────
 export const attendanceKeys = {
   all: ["attendance"] as const,
-  today: (date?: string) => [...attendanceKeys.all, "today", date] as const,
+  today: (className: string, section: string, date?: string) =>
+    [...attendanceKeys.all, "today", className, section, date] as const,
   history: (from: string, to: string, cls: string) =>
     [...attendanceKeys.all, "history", from, to, cls] as const,
   calendar: (month: number, year: number) =>
@@ -16,12 +17,13 @@ export const attendanceKeys = {
 };
 
 // ─── Today ───────────────────────────────────────────────────────────────────
-export const useAttendanceToday = (date?: string) => {
+export const useAttendanceToday = (className: string, section: string, date?: string) => {
   return useQuery({
-    queryKey: attendanceKeys.today(date),
-    queryFn: () => attendanceApi.getToday(),
-    refetchInterval: 60_000, // Auto-refresh every 60 seconds as shown in UI
+    queryKey: attendanceKeys.today(className, section, date),
+    queryFn: () => attendanceApi.getToday(className, section),
+    refetchInterval: 60_000,
     staleTime: 30_000,
+    enabled: !!className && !!section,
   });
 };
 
@@ -59,6 +61,17 @@ export const useAllHolidays = () => {
     staleTime: 10 * 60_000,
     retry: 2,
     refetchOnWindowFocus: false,
+  });
+};
+
+// ─── Students for Mark Attendance Modal ──────────────────────────────────────
+export const useAttendanceStudents = (className: string, section: string) => {
+  return useQuery({
+    queryKey: [...attendanceKeys.all, "students", className, section] as const,
+    queryFn: () => attendanceApi.getStudentsForMarkAttendance(className, section),
+    enabled: !!className && !!section,
+    staleTime: 30_000,
+    retry: 1,
   });
 };
 

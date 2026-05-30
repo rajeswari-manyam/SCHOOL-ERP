@@ -18,7 +18,12 @@ const Avatar = ({ s }: { s: Student }) => {
   );
 };
 
-const StudentTable = ({ students }: { students: Student[] }) => {
+interface StudentTableProps {
+  students: Student[];
+  onEdit?: (student: Student) => void;
+}
+
+const StudentTable = ({ students, onEdit }: StudentTableProps) => {
   const navigate = useNavigate();
 
   if (students.length === 0) {
@@ -78,6 +83,7 @@ const StudentTable = ({ students }: { students: Student[] }) => {
                       variant="ghost"
                       size="sm"
                       title="Edit"
+                      onClick={() => onEdit?.(s)}
                       className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
                     >
                       <Edit3 className="h-4 w-4" />

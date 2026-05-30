@@ -1,9 +1,8 @@
 import { create } from "zustand";
-import type { AttendanceTab, MarkAttendanceForm } from "../types/attendance.types";
+import type { AttendanceTab } from "../types/attendance.types";
 import {
   mockAttendanceToday,
   mockAttendanceHistory,
-  mockMarkAttendanceForm,
 } from "./mockData";
 
 interface AttendanceState {
@@ -31,14 +30,10 @@ interface AttendanceState {
   goToPrevMonth: () => void;
   goToNextMonth: () => void;
 
-  // Mark Attendance Modal
+  // Mark Attendance Modal (visibility only; form state lives in the component)
   showMarkAttendanceModal: boolean;
-  markAttendanceForm: MarkAttendanceForm;
   openMarkAttendance: () => void;
   closeMarkAttendance: () => void;
-  toggleStudentPresent: (rollNo: string) => void;
-  setMarkClass: (cls: string) => void;
-  setMarkSection: (sec: string) => void;
 
   // Add Holiday Modal
   showAddHolidayModal: boolean;
@@ -83,24 +78,8 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   },
 
   showMarkAttendanceModal: false,
-  markAttendanceForm: mockMarkAttendanceForm,
   openMarkAttendance: () => set({ showMarkAttendanceModal: true }),
   closeMarkAttendance: () => set({ showMarkAttendanceModal: false }),
-  toggleStudentPresent: (rollNo) => {
-    const form = get().markAttendanceForm;
-    set({
-      markAttendanceForm: {
-        ...form,
-        students: form.students.map((s) =>
-          s.rollNo === rollNo ? { ...s, isPresent: !s.isPresent } : s
-        ),
-      },
-    });
-  },
-  setMarkClass: (cls) =>
-    set((s) => ({ markAttendanceForm: { ...s.markAttendanceForm, class: cls } })),
-  setMarkSection: (sec) =>
-    set((s) => ({ markAttendanceForm: { ...s.markAttendanceForm, section: sec } })),
 
   showAddHolidayModal: false,
   openAddHoliday: () => set({ showAddHolidayModal: true }),

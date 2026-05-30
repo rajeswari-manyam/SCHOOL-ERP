@@ -1,122 +1,178 @@
-import { useState, useMemo } from "react";
-import type { HomeworkItem, StudyMaterial } from "../types/homework.types";
+import { useState, useMemo, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/authStore";
+import { homeworkApi, fetchTeacherId } from "../api/homework.api";
+import type {
+  HomeworkItem,
+  StudyMaterial,
+  HomeworkState,
+  ModalState,
+  CreateHomeworkPayload,
+  CreateStudyMaterialPayload,
+  UpdateHomeworkPayload,
+} from "../types/homework.types";
 
-// ── Mock Data ─────────────────────────────────────────────────────────────
-export const MOCK_HOMEWORK: HomeworkItem[] = [
-  {
-    id: "hw1", title: "Chapter 5 – Exercise 5.2", subject: "Mathematics",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-18",
-    description: "Complete all 12 problems from page 87. Show all working clearly. Students who face difficulty can attempt at least the first 8 problems.",
-    attachmentName: "Chapter5_Exercise.pdf", attachmentUrl: "#",
-    submittedCount: 28, totalCount: 42,
-    waNotifyStatus: "SENT", waNotifiedAt: "2025-04-14 10:30 AM",
-    status: "ACTIVE", createdAt: "2025-04-12",
-  },
-  {
-    id: "hw2", title: "Essay: My Favourite Scientist", subject: "English",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-20",
-    description: "Write a 300–400 word essay about your favourite scientist. Include their key contributions and what inspires you about them. Use your own words.",
-    submittedCount: 15, totalCount: 42,
-    waNotifyStatus: "SENT", waNotifiedAt: "2025-04-13 09:15 AM",
-    status: "ACTIVE", createdAt: "2025-04-11",
-  },
-  {
-    id: "hw3", title: "Newton's Laws – Problem Set", subject: "Science",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-22",
-    description: "Solve the 10 numerical problems based on Newton's First, Second and Third laws. Draw free-body diagrams wherever required.",
-    attachmentName: "Newtons_Laws_Problems.pdf", attachmentUrl: "#",
-    submittedCount: 8, totalCount: 42,
-    waNotifyStatus: "NOT_SENT",
-    status: "ACTIVE", createdAt: "2025-04-14",
-  },
-  {
-    id: "hw4", title: "Map Work – Rivers of India", subject: "Geography",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-17",
-    description: "On the outline map of India, mark and label 10 major rivers. Use blue colour for rivers. Also mention the states they flow through.",
-    submittedCount: 33, totalCount: 42,
-    waNotifyStatus: "SENT", waNotifiedAt: "2025-04-10 11:00 AM",
-    status: "ACTIVE", createdAt: "2025-04-10",
-  },
-  // Past
-  {
-    id: "hw5", title: "Fractions Revision Sheet", subject: "Mathematics",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-07",
-    description: "Complete the 20-question revision sheet on fractions and decimals. All working must be shown in the worksheet itself.",
-    attachmentName: "Fractions_Revision.pdf", attachmentUrl: "#",
-    submittedCount: 40, totalCount: 42,
-    waNotifyStatus: "SENT", waNotifiedAt: "2025-04-03 08:45 AM",
-    status: "PAST", createdAt: "2025-04-01",
-  },
-  {
-    id: "hw6", title: "Letter Writing – Formal Letter", subject: "English",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-05",
-    description: "Write a formal letter to the Principal requesting for an extra library period every week. Follow the proper format.",
-    submittedCount: 38, totalCount: 42,
-    waNotifyStatus: "SENT", waNotifiedAt: "2025-04-01 09:00 AM",
-    status: "PAST", createdAt: "2025-03-30",
-  },
-  {
-    id: "hw7", title: "Periodic Table – First 20 Elements", subject: "Science",
-    className: "Class 8-A", section: "A", dueDate: "2025-04-03",
-    description: "Memorise the first 20 elements of the periodic table with their symbol, atomic number and atomic mass. Write them 3 times each.",
-    submittedCount: 35, totalCount: 42,
-    waNotifyStatus: "SENT",
-    status: "PAST", createdAt: "2025-03-28",
-  },
-];
+// ── Query key factory ───────────────────────────────────────────────────────
 
-export const MOCK_MATERIALS: StudyMaterial[] = [
-  { id: "m1", title: "Chapter 5 Full Notes", subject: "Mathematics", className: "Class 8-A", section: "A", type: "FILE", fileType: "PDF", fileName: "Math_Ch5_Notes.pdf", description: "Complete notes for Chapter 5 – Quadratic Equations with solved examples.", uploadedAt: "2025-04-12", size: "2.4 MB" },
-  { id: "m2", title: "Newton's Laws – Video Explanation", subject: "Science", className: "Class 8-A", section: "A", type: "LINK", fileType: "LINK", url: "https://youtube.com", description: "Khan Academy video covering all three of Newton's laws with animations.", uploadedAt: "2025-04-11", },
-  { id: "m3", title: "India Map – Practice Sheet", subject: "Geography", className: "Class 8-A", section: "A", type: "FILE", fileType: "PDF", fileName: "India_Map_Practice.pdf", description: "Blank outline map of India for practice.", uploadedAt: "2025-04-10", size: "1.1 MB" },
-  { id: "m4", title: "English Grammar Reference", subject: "English", className: "Class 8-A", section: "A", type: "FILE", fileType: "DOC", fileName: "Grammar_Reference.docx", description: "Quick reference guide for formal and informal letter formats.", uploadedAt: "2025-04-09", size: "340 KB" },
-  { id: "m5", title: "Periodic Table Poster", subject: "Science", className: "Class 8-A", section: "A", type: "FILE", fileType: "IMAGE", fileName: "Periodic_Table.png", description: "High-resolution periodic table with all 118 elements.", uploadedAt: "2025-04-08", size: "3.2 MB" },
-  { id: "m6", title: "NCERT Solutions – Chapter 5", subject: "Mathematics", className: "Class 8-A", section: "A", type: "LINK", fileType: "LINK", url: "https://ncert.nic.in", description: "Official NCERT solutions for Class 8 Mathematics Chapter 5.", uploadedAt: "2025-04-07", },
-];
+export const HOMEWORK_KEYS = {
+  all:          ["homework"] as const,
+  teacher:      () => [...HOMEWORK_KEYS.all, "teacherId"] as const,
+  list:         (teacherId: string) => [...HOMEWORK_KEYS.all, "list", teacherId] as const,
+  materials:    () => [...HOMEWORK_KEYS.all, "materials"] as const,
+};
 
-// ── Hook ──────────────────────────────────────────────────────────────────
-export type HomeworkTab = "active" | "past" | "materials";
-export type ModalState =
-  | { type: "none" }
-  | { type: "assign" }
-  | { type: "edit"; id: string }
-  | { type: "confirmAssign"; data: Record<string, unknown> }
-  | { type: "deleteHomework"; id: string }
-  | { type: "uploadMaterial" }
-  | { type: "deleteMaterial"; id: string };
+// ── Hook ─────────────────────────────────────────────────────────────────────
 
-export const useHomework = () => {
-  const [tab, setTab] = useState<HomeworkTab>("active");
-  const [homework, setHomework] = useState<HomeworkItem[]>(MOCK_HOMEWORK);
-  const [materials, setMaterials] = useState<StudyMaterial[]>(MOCK_MATERIALS);
+export const useHomework = (): HomeworkState => {
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const phone = user?.phone ?? "";
+  const fallbackId = user?.id ?? "";
+  const schoolCode = user?.schoolcode ?? "";
+
+  const [tab, setTab] = useState<"active" | "past" | "materials">("active");
   const [modal, setModal] = useState<ModalState>({ type: "none" });
   const [reminderSent, setReminderSent] = useState<Set<string>>(new Set());
 
-  const activeHomework = useMemo(() => homework.filter((h) => h.status === "ACTIVE"), [homework]);
-  const pastHomework   = useMemo(() => homework.filter((h) => h.status === "PAST"),   [homework]);
+  // ── Resolve real staff UUID from staff list ────────────────────────────
+  const { data: teacherId = fallbackId } = useQuery({
+    queryKey: HOMEWORK_KEYS.teacher(),
+    queryFn: () => fetchTeacherId(phone),
+    staleTime: Infinity,
+    retry: 1,
+    enabled: !!phone,
+  });
 
-  const deleteHomework = (id: string) => {
-    setHomework((prev) => prev.filter((h) => h.id !== id));
-    setModal({ type: "none" });
-  };
+  const queryEnabled = !!teacherId;
 
-  const deleteMaterial = (id: string) => {
-    setMaterials((prev) => prev.filter((m) => m.id !== id));
-    setModal({ type: "none" });
-  };
+  // ── Fetch homework list ────────────────────────────────────────────────
+  const {
+    data: homeworkData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: HOMEWORK_KEYS.list(teacherId),
+    queryFn: () => homeworkApi.getHomeworkList({ teacher_id: teacherId }),
+    staleTime: 1000 * 60 * 3,
+    retry: 2,
+    enabled: queryEnabled,
+  });
 
-  const sendReminder = (id: string) => {
+  // ── Fetch materials ────────────────────────────────────────────────────
+  const { data: materialsData = [] } = useQuery({
+    queryKey: HOMEWORK_KEYS.materials(),
+    queryFn: homeworkApi.getMaterials,
+    staleTime: 1000 * 60 * 5,
+    enabled: queryEnabled,
+  });
+
+  const data = homeworkData;
+  const materials = materialsData;
+
+  const activeHomework = useMemo(
+    () => (data ?? []).filter((h) => h.status === "ACTIVE"),
+    [data],
+  );
+  const pastHomework = useMemo(
+    () => (data ?? []).filter((h) => h.status === "PAST"),
+    [data],
+  );
+
+  // ── Mutations ──────────────────────────────────────────────────────────
+  const invalidateList = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.list(teacherId) });
+  }, [queryClient, teacherId]);
+
+  const { mutateAsync: createHomework, isPending: isCreating } = useMutation({
+    mutationFn: (payload: CreateHomeworkPayload) => homeworkApi.createHomework(payload),
+    onSuccess: () => {
+      invalidateList();
+      setModal({ type: "none" });
+    },
+  });
+
+  const { mutateAsync: updateHomework, isPending: isUpdating } = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateHomeworkPayload }) =>
+      homeworkApi.updateHomework(id, payload),
+    onSuccess: () => {
+      invalidateList();
+      setModal({ type: "none" });
+    },
+  });
+
+  const { mutateAsync: delHomework, isPending: isDeleting } = useMutation({
+    mutationFn: (id: string) => homeworkApi.deleteHomework(id),
+    onSuccess: () => {
+      invalidateList();
+      setModal({ type: "none" });
+    },
+  });
+
+  const { mutateAsync: uploadMaterial } = useMutation({
+    mutationFn: (payload: CreateStudyMaterialPayload) => homeworkApi.createStudyMaterial(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
+      setModal({ type: "none" });
+    },
+  });
+
+  const { mutateAsync: deleteMaterial } = useMutation({
+    mutationFn: (id: string) => homeworkApi.deleteMaterial(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
+      setModal({ type: "none" });
+    },
+  });
+
+  // ── Reminder (optimistic) ──────────────────────────────────────────────
+  const { mutateAsync: sendReminderApi } = useMutation({
+    mutationFn: (id: string) => homeworkApi.sendReminder(id),
+  });
+
+  const sendReminder = useCallback(async (id: string) => {
     setReminderSent((prev) => new Set([...prev, id]));
-    setHomework((prev) => prev.map((h) =>
-      h.id === id ? { ...h, waNotifyStatus: "SENT" as const, waNotifiedAt: new Date().toLocaleString() } : h
-    ));
-  };
+    try {
+      await sendReminderApi(id);
+    } catch {
+      setReminderSent((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }, [sendReminderApi]);
+
+  const deleteHomeworkHandler = useCallback(async (id: string) => {
+    await delHomework(id);
+  }, [delHomework]);
+
+  const deleteMaterialHandler = useCallback(async (id: string) => {
+    await deleteMaterial(id);
+  }, [deleteMaterial]);
 
   return {
     tab, setTab,
-    activeHomework, pastHomework, materials,
+    teacherId,
+    schoolCode,
+    data,
+    activeHomework,
+    pastHomework,
+    materials,
+    isLoading,
+    isError,
+    error,
+    refetch,
     modal, setModal,
     reminderSent, sendReminder,
-    deleteHomework, deleteMaterial,
+    createHomework,
+    updateHomework: (id, payload) => updateHomework({ id, payload }),
+    deleteHomework: deleteHomeworkHandler,
+    uploadMaterial,
+    deleteMaterial: deleteMaterialHandler,
+    isCreating,
+    isUpdating,
+    isDeleting,
   };
 };

@@ -10,11 +10,12 @@ import { StaffAvatar } from "./StaffAvathar";
 interface Props {
   staff: StaffMember[];
   total: number;
+  onEdit?: (staff: StaffMember) => void;
 }
 
 const COLUMNS = ["Name & Contact", "Role", "Classes / Subjects", "Status", "Leave Bal.", "Actions"];
 
-export const StaffTable = ({ staff, total }: Props) => (
+export const StaffTable = ({ staff, total, onEdit }: Props) => (
   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
     <Table>
       <TableHeader>
@@ -62,7 +63,8 @@ export const StaffTable = ({ staff, total }: Props) => (
               <TableCell>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="outline" size="sm">View</Button>
-                  <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+                  <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                    onClick={() => onEdit?.(s)}>
                     Edit
                   </Button>
                 </div>

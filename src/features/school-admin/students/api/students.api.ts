@@ -1,5 +1,5 @@
 import api from "@/config/axios";
-import type { CreateStudentPayload, Student, FeePayment, StudentDocument, StudentAttendanceDay } from "../types/student.types";
+import type { CreateStudentPayload, UpdateStudentPayload, Student, FeePayment, StudentDocument, StudentAttendanceDay } from "../types/student.types";
 
 export const MOCK_ATTENDANCE: StudentAttendanceDay[] = [
   { date: "2025-03-31", status: null },
@@ -90,6 +90,43 @@ export const studentsApi = {
         response: err?.response?.data ?? err?.message,
       });
       const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to create student";
+      throw new Error(message);
+    }
+  },
+
+  updateStudent: async (id: string, payload: UpdateStudentPayload): Promise<Student> => {
+    const url = `/tenant/updatestudentById/${id}`;
+    console.log("📤 updateStudent →", url, JSON.stringify(payload, null, 2));
+
+    try {
+      const { data: raw, status: httpStatus } = await api.put(url, payload);
+      console.log("📥 updateStudent ←", httpStatus, JSON.stringify(raw, null, 2));
+
+      if (raw && typeof raw === "object") {
+        const obj = raw as Record<string, unknown>;
+        if (obj?.status === false) {
+          throw new Error((obj?.message as string) ?? "Update failed");
+        }
+        const item = obj?.data && typeof obj.data === "object" && !Array.isArray(obj.data)
+          ? obj.data as Record<string, unknown>
+          : obj;
+        const camel = toCamelCase(item) as Record<string, unknown>;
+        if (camel.id) return camel as unknown as Student;
+      }
+
+      throw new Error("Invalid response from server");
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+      console.error("❌ updateStudent failed", {
+        url, status: error?.response?.status,
+        responseData: error?.response?.data,
+        message: error?.message,
+      });
+      const message =
+        error?.response?.data?.message ??
+        JSON.stringify(error?.response?.data) ??
+        error?.message ??
+        "Failed to update student";
       throw new Error(message);
     }
   },

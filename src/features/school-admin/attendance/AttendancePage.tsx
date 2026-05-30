@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useAttendanceStore } from "./store";
+import { useAttendanceToday } from "./hooks/useAttendance";
 import AttendanceToday from "./components/AttendanceToday";
 import AttendanceHistory from "./components/AttendanceHistory";
 import HolidayCalendar from "./components/HolidayCalendar";
@@ -17,8 +19,14 @@ const TABS: { key: AttendanceTab; label: string }[] = [
 
 const AttendancePage = () => {
   const { activeTab, setActiveTab, openMarkAttendance } = useAttendanceStore();
+  const [activeClass] = useState({ className: "10", section: "B" });
 
-  const todayLabel = new Date("2025-04-07").toLocaleDateString("en-IN", {
+  const { data: todayData, isLoading: todayLoading, error: todayError } = useAttendanceToday(
+    activeClass.className,
+    activeClass.section,
+  );
+
+  const todayLabel = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day:     "numeric",
     month:   "long",
@@ -72,23 +80,17 @@ const AttendancePage = () => {
           </div>
         </div>
 
-        {/* ── Tabs ──────────────────────────────────────────────────
-            Horizontal scroll on mobile so tabs never wrap or truncate.
-            Fade hints on both edges show the user it scrolls.
-        ──────────────────────────────────────────────────────────── */}
+        {/* ── Tabs ────────────────────────────────────────────────── */}
         <div className="relative">
-          {/* Left fade — hidden when scrolled to start (CSS-only hint) */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-6 bg-gradient-to-r from-gray-50 to-transparent sm:hidden"
           />
-          {/* Right fade */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-8 bg-gradient-to-l from-gray-50 to-transparent sm:hidden"
           />
 
-          {/* Scrollable strip */}
           <div
             className="overflow-x-auto"
             style={{ scrollbarWidth: "none" }}
@@ -130,7 +132,13 @@ const AttendancePage = () => {
         </div>
 
         {/* ── Tab Content ── */}
-        {activeTab === "today"   && <AttendanceToday   />}
+        {activeTab === "today"   && (
+          <AttendanceToday
+            data={todayData}
+            loading={todayLoading}
+            error={todayError ? (todayError as Error).message : null}
+          />
+        )}
         {activeTab === "history" && <AttendanceHistory />}
         {activeTab === "holiday" && <HolidayCalendar   />}
       </div>

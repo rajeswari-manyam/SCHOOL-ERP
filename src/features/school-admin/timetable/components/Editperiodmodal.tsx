@@ -23,7 +23,7 @@ const DAY_FULL: Record<DayOfWeek, string> = {
 };
 
 const EditPeriodModal: React.FC<Props> = ({
-  state, subjects, teachers, isSaving, onClose, onSave, onFieldChange,
+  state, subjects = [], teachers = [], isSaving, onClose, onSave, onFieldChange,
 }) => {
   if (!state.open || !state.day || state.periodNo == null) return null;
 

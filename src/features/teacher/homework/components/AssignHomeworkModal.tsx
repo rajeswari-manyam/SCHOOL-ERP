@@ -17,17 +17,16 @@ import WAPreview from "./WAPreview";
 
 const schema = z.object({
   className:        z.string().min(1, "Class required"),
-  section:          z.string().min(1, "Section required"),
-  subject:          z.string().min(1, "Subject required"),
+  sectionName:      z.string().min(1, "Section required"),
+  subjectName:      z.string().min(1, "Subject required"),
   title:            z.string().min(3, "Title must be at least 3 characters"),
-  dueDate:          z.string().min(1, "Due date required"),
+  submission_date:  z.string().min(1, "Due date required"),
   description:      z.string().min(10, "Please write a proper description"),
-  trackSubmissions: z.boolean(),
-  notifyWhatsApp:   z.boolean(),
+  is_published:     z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
 
-const classOptions   = ["Class 7-A", "Class 8-A", "Class 8-B", "Class 9-A", "Class 9-B", "Class 10-A"];
+const classOptions   = ["7", "8", "9", "10", "11", "12"];
 const sectionOptions = ["A", "B", "C", "D"];
 const subjectOptions = ["Mathematics", "English", "Science", "Geography", "History", "Hindi", "Social Studies"];
 
@@ -37,6 +36,7 @@ interface Props {
   onConfirm: (data: AssignHomeworkFormValues) => void;
   initialValues?: Partial<AssignHomeworkFormValues>;
   mode?: "assign" | "edit";
+  isSubmitting?: boolean;
 }
 
 const AssignHomeworkModal = ({
@@ -45,11 +45,12 @@ const AssignHomeworkModal = ({
   onConfirm,
   initialValues,
   mode = "assign",
+  isSubmitting,
 }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver]     = useState(false);
   const [fileName, setFileName]     = useState<string | null>(null);
-  const [attachment, setAttachment] = useState<FileList | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<FileList | null>(null);
 
   const {
     register,
@@ -61,34 +62,36 @@ const AssignHomeworkModal = ({
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      className:        initialValues?.className        ?? "Class 8-A",
-      section:          initialValues?.section          ?? "A",
-      subject:          initialValues?.subject          ?? "",
+      className:        initialValues?.className        ?? "Class 10-A",
+      sectionName:      initialValues?.sectionName      ?? "B",
+      subjectName:      initialValues?.subjectName      ?? "",
       title:            initialValues?.title            ?? "",
-      dueDate:          initialValues?.dueDate          ?? "",
+      submission_date:  initialValues?.submission_date  ?? "",
       description:      initialValues?.description      ?? "",
-      trackSubmissions: initialValues?.trackSubmissions ?? true,
-      notifyWhatsApp:   initialValues?.notifyWhatsApp   ?? true,
+      is_published:     initialValues?.is_published     ?? true,
     },
   });
 
-  const selectedClass   = useWatch({ control, name: "className",   defaultValue: initialValues?.className   ?? "Class 8-A" });
-  const selectedSubject = useWatch({ control, name: "subject",     defaultValue: initialValues?.subject     ?? "" });
-  const selectedSection = useWatch({ control, name: "section",     defaultValue: initialValues?.section     ?? "A" });
-  const title           = useWatch({ control, name: "title",       defaultValue: initialValues?.title       ?? "" });
-  const dueDate         = useWatch({ control, name: "dueDate",     defaultValue: initialValues?.dueDate     ?? "" });
-  const trackSubmissions = useWatch({ control, name: "trackSubmissions", defaultValue: initialValues?.trackSubmissions ?? true });
-  const notifyWA        = useWatch({ control, name: "notifyWhatsApp",    defaultValue: initialValues?.notifyWhatsApp   ?? true });
+  const selectedClass   = useWatch({ control, name: "className",       defaultValue: initialValues?.className      ?? "Class 10-A" });
+  const selectedSubject = useWatch({ control, name: "subjectName",     defaultValue: initialValues?.subjectName    ?? "" });
+  const selectedSection = useWatch({ control, name: "sectionName",     defaultValue: initialValues?.sectionName    ?? "B" });
+  const title           = useWatch({ control, name: "title",           defaultValue: initialValues?.title          ?? "" });
+  const dueDate         = useWatch({ control, name: "submission_date", defaultValue: initialValues?.submission_date ?? "" });
+  const isPublished     = useWatch({ control, name: "is_published",    defaultValue: initialValues?.is_published   ?? true });
 
   const handleClose = () => {
     reset();
     setFileName(null);
-    setAttachment(null);
+    setAttachmentFile(null);
     onClose();
   };
 
   const onSubmit = (values: FormValues) => {
-    onConfirm({ ...values, attachment: attachment ?? undefined } as unknown as AssignHomeworkFormValues);
+    onConfirm({
+      ...values,
+      attachmentFile: attachmentFile ?? undefined,
+      attachments: initialValues?.attachments ?? [],
+    });
   };
 
   const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -97,7 +100,7 @@ const AssignHomeworkModal = ({
     const files = event.dataTransfer.files;
     if (files?.[0]) {
       setFileName(files[0].name);
-      setAttachment(files);
+      setAttachmentFile(files);
     }
   };
 
@@ -106,9 +109,8 @@ const AssignHomeworkModal = ({
       open={open}
       onClose={handleClose}
       title={mode === "edit" ? "Edit Homework" : "Assign Homework"}
-      description="Fill in the details below and notify parents via WhatsApp"
+      description="Fill in the details below and publish for students"
       size="lg"
-      // Force a wide-enough card so the two-column layout never collapses on desktop
       className="sm:min-w-[680px] sm:max-w-3xl"
       footer={
         <ModalActions
@@ -116,20 +118,24 @@ const AssignHomeworkModal = ({
             <Button
               type="submit"
               form="assign-homework-form"
-              // Full-width on mobile, auto on sm+
+              disabled={isSubmitting}
               className="w-full sm:w-auto"
             >
-              {mode === "edit"
+              {isSubmitting
+                ? "Saving..."
+                : mode === "edit"
                 ? "Save Changes"
-                : notifyWA
-                ? "Assign & Notify Parents"
-                : "Assign Homework"}
+                : isPublished
+                ? "Publish Homework"
+                : "Save as Draft"
+              }
             </Button>
           }
           secondary={
             <Button
               variant="outline"
               onClick={handleClose}
+              disabled={isSubmitting}
               className="w-full sm:w-auto"
             >
               Cancel
@@ -139,17 +145,10 @@ const AssignHomeworkModal = ({
       }
     >
       <Form id="assign-homework-form" onSubmit={handleSubmit(onSubmit)}>
-        {/*
-          Layout strategy:
-          - Mobile  : single column, WhatsApp preview collapses BELOW the form
-          - lg+     : 5-column grid — form takes 3 cols, preview takes 2 cols (side by side)
-        */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
 
-          {/* ── Left / main form ── */}
           <div className="md:col-span-3 flex flex-col gap-4">
 
-            {/* Class / Section / Subject — stack on xs, 3-col on sm+ */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <FormField label="Class *" error={errors.className?.message as string | undefined}>
                 <Select
@@ -160,21 +159,21 @@ const AssignHomeworkModal = ({
                 />
               </FormField>
 
-              <FormField label="Section *" error={errors.section?.message as string | undefined}>
+              <FormField label="Section *" error={errors.sectionName?.message as string | undefined}>
                 <Select
                   options={sectionOptions.map((v) => ({ label: v, value: v }))}
                   placeholder="Select section"
                   className="h-11 sm:h-9"
-                  {...register("section")}
+                  {...register("sectionName")}
                 />
               </FormField>
 
-              <FormField label="Subject *" error={errors.subject?.message as string | undefined}>
+              <FormField label="Subject *" error={errors.subjectName?.message as string | undefined}>
                 <Select
                   options={subjectOptions.map((v) => ({ label: v, value: v }))}
                   placeholder="Select subject"
                   className="h-11 sm:h-9"
-                  {...register("subject")}
+                  {...register("subjectName")}
                 />
               </FormField>
             </div>
@@ -187,10 +186,10 @@ const AssignHomeworkModal = ({
               />
             </FormField>
 
-            <FormField label="Due Date *" error={errors.dueDate?.message as string | undefined}>
+            <FormField label="Due Date *" error={errors.submission_date?.message as string | undefined}>
               <Input
                 type="date"
-                {...register("dueDate")}
+                {...register("submission_date")}
                 className="h-11 sm:h-9"
               />
             </FormField>
@@ -206,7 +205,6 @@ const AssignHomeworkModal = ({
               />
             </FormField>
 
-            {/* File drop zone */}
             <FormField label="Attachment (optional)">
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -216,7 +214,6 @@ const AssignHomeworkModal = ({
                 className={[
                   "flex flex-col items-center justify-center gap-2 px-4 py-5",
                   "border-2 border-dashed rounded-xl cursor-pointer transition-all",
-                  // Larger min-height on mobile for easier tap/drop
                   "min-h-[72px] sm:min-h-0",
                   dragOver
                     ? "border-indigo-400 bg-indigo-50"
@@ -252,47 +249,37 @@ const AssignHomeworkModal = ({
                   onChange={(e) => {
                     const files = e.target.files;
                     setFileName(files?.[0]?.name ?? null);
-                    setAttachment(files ?? null);
+                    setAttachmentFile(files ?? null);
                   }}
                 />
               </div>
             </FormField>
 
-            {/* Toggles */}
             <div className="grid gap-3">
               <label className="flex items-center gap-3 cursor-pointer">
                 <Switch
-                  checked={trackSubmissions}
-                  onCheckedChange={(checked) => setValue("trackSubmissions", checked)}
+                  checked={isPublished}
+                  onCheckedChange={(checked) => setValue("is_published", checked)}
                 />
                 <div>
-                  <p className="text-xs font-semibold text-gray-800">Track Submissions</p>
-                  <p className="text-[10px] text-gray-400">Students can mark homework as submitted</p>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 cursor-pointer">
-                <Switch
-                  checked={notifyWA}
-                  onCheckedChange={(checked) => setValue("notifyWhatsApp", checked)}
-                />
-                <div>
-                  <p className="text-xs font-semibold text-gray-800">Notify via WhatsApp</p>
-                  <p className="text-[10px] text-gray-400">Send WA message to all parents</p>
+                  <p className="text-xs font-semibold text-gray-800">Publish immediately</p>
+                  <p className="text-[10px] text-gray-400">
+                    {isPublished
+                      ? "Homework will be visible to students right away"
+                      : "Save as draft — students won't see it"
+                    }
+                  </p>
                 </div>
               </label>
             </div>
           </div>
 
-          {/* ── Right / WhatsApp preview ──
-              Hidden on mobile when WA is off to save vertical space.
-              Always shown on md+ (side by side). */}
           <div className="md:col-span-2">
             <Label className="text-[11px] tracking-widest uppercase text-gray-400">
               Preview
             </Label>
 
-            {notifyWA ? (
+            {isPublished ? (
               <WAPreview
                 title={title}
                 subject={selectedSubject}
@@ -300,11 +287,10 @@ const AssignHomeworkModal = ({
                 dueDate={dueDate}
               />
             ) : (
-              /* On mobile, collapse this placeholder when WA is disabled */
               <div className="hidden md:flex bg-gray-50 rounded-2xl p-4 flex-col items-center justify-center gap-2 h-52 border border-gray-100">
                 <MessageCircle className="text-2xl opacity-30 w-6 h-6" />
                 <p className="text-xs text-gray-300 text-center">
-                  Enable WhatsApp notification to see preview
+                  Publish to see preview
                 </p>
               </div>
             )}

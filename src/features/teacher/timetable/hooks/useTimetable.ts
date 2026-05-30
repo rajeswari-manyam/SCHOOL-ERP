@@ -1,121 +1,62 @@
 import { useState, useMemo } from "react";
-import type { WeeklyGrid, TimetablePeriod, UpcomingExam, TimetableSummary } from "../types/timetable.types";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/authStore";
+import { timetableApi } from "../api/timetable.api";
+import type {
+  WeeklyGrid,
+  TimetablePeriod,
+  TimetableSummary,
+  TeacherTimetableState,
+  TeacherTimetableQuery,
+  UpcomingExam,
+} from "../types/timetable.types";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 export type DayName = typeof DAYS[number];
 
-export const MOCK_PERIODS: TimetablePeriod[] = [
-  { id: "p1", label: "P1", time: "8:00 – 8:45"   },
-  { id: "p2", label: "P2", time: "8:45 – 9:30"   },
-  { id: "p3", label: "P3", time: "9:45 – 10:30"  },
-  { id: "p4", label: "P4", time: "10:30 – 11:15" },
-  { id: "p5", label: "P5", time: "11:30 – 12:15" },
-  { id: "p6", label: "P6", time: "12:15 – 1:00"  },
-  { id: "p7", label: "P7", time: "2:00 – 2:45"   },
-  { id: "p8", label: "P8", time: "2:45 – 3:30"   },
-];
+// ── Query key factory ─────────────────────────────────────────────────────
 
-export const MOCK_GRID: WeeklyGrid = {
-  p1: {
-    Mon: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Tue: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Wed: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Thu: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Fri: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Sat: null,
-  },
-  p2: {
-    Mon: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-    Tue: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Wed: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Thu: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Fri: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Sat: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-  },
-  p3: {
-    Mon: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"   },
-    Tue: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Wed: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Thu: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Fri: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Sat: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-  },
-  p4: {
-    Mon: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Tue: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Wed: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Thu: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Fri: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Sat: null,
-  },
-  p5: {
-    Mon: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Tue: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-    Wed: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Thu: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo"  },
-    Fri: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"     },
-    Sat: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-  },
-  p6: {
-    Mon: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Tue: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Wed: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Thu: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Fri: null,
-    Sat: null,
-  },
-  p7: {
-    Mon: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-    Tue: null,
-    Wed: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Thu: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Fri: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo"  },
-    Sat: null,
-  },
-  p8: {
-    Mon: null,
-    Tue: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Wed: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Thu: null,
-    Fri: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Sat: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-  },
+export const TIMETABLE_KEYS = {
+  all:       ["teacher", "timetable"] as const,
+  timetable: (teacherId: string, academicYear: string) =>
+    [...TIMETABLE_KEYS.all, teacherId, academicYear] as const,
+  exams:     (teacherId: string) =>
+    [...TIMETABLE_KEYS.all, "exams", teacherId] as const,
 };
-
-export const MOCK_UPCOMING_EXAMS: UpcomingExam[] = [
-  { id: "e1", exam: "Unit Test – I",    subject: "Mathematics", class: "Class 8-A", date: "2025-08-12", time: "10:00 AM", venue: "Exam Hall A", hallTicketUrl: "#" },
-  { id: "e2", exam: "Unit Test – I",    subject: "Mathematics", class: "Class 9-B", date: "2025-08-13", time: "10:00 AM", venue: "Exam Hall B", hallTicketUrl: "#" },
-  { id: "e3", exam: "Half Yearly Exam", subject: "Mathematics", class: "Class 7-C", date: "2025-09-20", time: "9:00 AM",  venue: "Main Hall",   hallTicketUrl: "#" },
-  { id: "e4", exam: "Half Yearly Exam", subject: "Mathematics", class: "Class 8-B", date: "2025-09-21", time: "9:00 AM",  venue: "Main Hall",   hallTicketUrl: "#" },
-];
-
-// ── Period time ranges for "current period" detection ─────────────────────
-
-const PERIOD_RANGES: { id: string; start: number; end: number }[] = [
-  { id: "p1", start: 8 * 60,        end: 8 * 60 + 45  },
-  { id: "p2", start: 8 * 60 + 45,   end: 9 * 60 + 30  },
-  { id: "p3", start: 9 * 60 + 45,   end: 10 * 60 + 30 },
-  { id: "p4", start: 10 * 60 + 30,  end: 11 * 60 + 15 },
-  { id: "p5", start: 11 * 60 + 30,  end: 12 * 60 + 15 },
-  { id: "p6", start: 12 * 60 + 15,  end: 13 * 60       },
-  { id: "p7", start: 14 * 60,        end: 14 * 60 + 45 },
-  { id: "p8", start: 14 * 60 + 45,  end: 15 * 60 + 30 },
-];
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 export const getTodayDayName = (): DayName | null => {
-  const dow = new Date().getDay(); // 0=Sun
+  const dow = new Date().getDay();
   if (dow === 0) return null;
   return DAYS[dow - 1];
 };
 
-export const getCurrentPeriodId = (): string | null => {
+const parseTimeFromString = (timeStr: string): number | null => {
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  if (m[3] === "PM" && h !== 12) h += 12;
+  if (m[3] === "AM" && h === 12) h = 0;
+  return h * 60 + min;
+};
+
+export const getCurrentPeriodId = (periods: TimetablePeriod[]): string | null => {
   const now = new Date();
-  const mins = now.getHours() * 60 + now.getMinutes();
-  return PERIOD_RANGES.find(r => mins >= r.start && mins < r.end)?.id ?? null;
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  for (const p of periods) {
+    if (p.kind !== "PERIOD") continue;
+    const parts = p.time.split("–");
+    if (parts.length < 2) continue;
+    const startMins = parseTimeFromString(parts[0].trim());
+    const endMins = parseTimeFromString(parts[1].trim());
+    if (startMins === null || endMins === null) continue;
+    if (currentMins >= startMins && currentMins < endMins) return p.id;
+  }
+  return null;
 };
 
 export const getWeekRangeLabel = (offset: number): string => {
@@ -155,7 +96,7 @@ export const computeSummary = (grid: WeeklyGrid, days: readonly string[]): Timet
 
   for (const pId of Object.keys(grid)) {
     for (const day of days) {
-      const cell = grid[pId][day];
+      const cell = grid[pId]?.[day];
       if (cell) {
         totalPeriods++;
         if (cell.isFree) freePeriods++;
@@ -174,29 +115,93 @@ export const computeSummary = (grid: WeeklyGrid, days: readonly string[]): Timet
 
 // ── Hook ──────────────────────────────────────────────────────────────────
 
-export const useTimetable = () => {
+export const useTimetable = (): TeacherTimetableState => {
   const [weekOffset, setWeekOffset] = useState(0);
 
-  // Replace with useQuery in production
-  const grid      = MOCK_GRID;
-  const periods   = MOCK_PERIODS;
-  const exams     = MOCK_UPCOMING_EXAMS;
+  const user = useAuthStore((s) => s.user);
+  const teacherId =user?.id ?? "";
+  const currentYear = new Date().getFullYear();
+  const academicYear = `${currentYear}`;
 
-  const summary = useMemo(() => computeSummary(grid, DAYS), [grid]);
+  const queryParams = useMemo(
+    (): TeacherTimetableQuery => ({
+      teacher_id: teacherId,
+      academic_year: academicYear,
+    }),
+    [teacherId, academicYear],
+  );
 
-  const todayName      = weekOffset === 0 ? getTodayDayName() : null;
-  const currentPeriodId = weekOffset === 0 ? getCurrentPeriodId() : null;
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: TIMETABLE_KEYS.timetable(teacherId, academicYear),
+    queryFn: () => timetableApi.getTeacherTimetable(queryParams),
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
+    enabled: !!teacherId,
+  });
 
-  const weekLabel     = getWeekRangeLabel(weekOffset);
-  const weekSubLabel  = getWeekDatesSubLabel(weekOffset);
+  // Dedicated exams query (separate endpoint)
+  const {
+    data: examsData,
+    isLoading: isExamsLoading,
+    isError: isExamsError,
+    error: examsError,
+  } = useQuery({
+    queryKey: TIMETABLE_KEYS.exams(teacherId),
+    queryFn: () => timetableApi.getExamsTimetable({ teacher_id: teacherId }),
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
+    enabled: !!teacherId,
+  });
+
+  const data = apiData;
+
+  const grid = data?.grid ?? {};
+  const periods = data?.periods ?? [];
+  // Prefer dedicated exams endpoint, fall back to combined timetable data
+  const exams: UpcomingExam[] = examsData ?? data?.exams ?? [];
+
+  const summary = useMemo(() => {
+    if (data?.summary) return data.summary;
+    return computeSummary(grid, DAYS);
+  }, [data, grid]);
+
+  const classLabel = data?.classLabel ?? "";
+  const section = data?.section ?? "";
+  const classTeacher = data?.classTeacher ?? "";
+  const apiAcademicYear = data?.academicYear ?? academicYear;
+  const currentPeriodLabel = data?.currentPeriodLabel ?? null;
+
+  const todayName = weekOffset === 0 ? getTodayDayName() : null;
+  const currentPeriodId = weekOffset === 0 ? getCurrentPeriodId(periods) : null;
+
+  const weekLabel = getWeekRangeLabel(weekOffset);
+  const weekSubLabel = getWeekDatesSubLabel(weekOffset);
 
   return {
     weekOffset,
     setWeekOffset,
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
     grid,
     periods,
     exams,
+    isExamsLoading,
+    isExamsError,
     summary,
+    classLabel,
+    section,
+    classTeacher,
+    academicYear: apiAcademicYear,
+    currentPeriodLabel,
     todayName,
     currentPeriodId,
     weekLabel,

@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { StaffMember, TabKey } from "../types/staff.types";
-import { fetchStaff } from "../api/staff.api";
+import type { StaffMember, TabKey, UpdateStaffPayload } from "../types/staff.types";
+import { fetchStaff, updateStaff as updateStaffApi } from "../api/staff.api";
 import { staffMockData } from "../data/staff.data";
 
 interface StaffStats {
@@ -24,6 +24,10 @@ interface StaffState {
   statusFilter: string;
   showModal: boolean;
 
+  // Edit
+  editStaffMember: StaffMember | null;
+  editLoading: boolean;
+
   // Actions
   loadStaff: () => void;
   setStaffData: (data: StaffMember[]) => void;
@@ -32,6 +36,8 @@ interface StaffState {
   setRoleFilter: (filter: string) => void;
   setStatusFilter: (filter: string) => void;
   setShowModal: (show: boolean) => void;
+  setEditStaffMember: (member: StaffMember | null) => void;
+  updateStaffInStore: (id: string, payload: UpdateStaffPayload) => Promise<void>;
 
   // Computed
   getFilteredStaff: () => StaffMember[];
@@ -93,6 +99,10 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   statusFilter: "",
   showModal: false,
 
+  // Edit
+  editStaffMember: null,
+  editLoading: false,
+
   // Actions
   loadStaff: () => {
     set({ loading: true, error: null });
@@ -118,6 +128,29 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   setStatusFilter: (filter) => set({ statusFilter: filter }),
 
   setShowModal: (show) => set({ showModal: show }),
+
+  setEditStaffMember: (member) => set({ editStaffMember: member }),
+
+  updateStaffInStore: async (id, payload) => {
+    set({ editLoading: true });
+    try {
+      const updated = await updateStaffApi(id, payload);
+      set((state) => {
+        const next = state.staffData.map((s) =>
+          s.id === id ? { ...s, ...updated } : s,
+        );
+        return {
+          staffData: next,
+          stats: calculateStats(next),
+          editStaffMember: null,
+          editLoading: false,
+        };
+      });
+    } catch (err) {
+      set({ editLoading: false });
+      throw err;
+    }
+  },
 
   // Computed
   getFilteredStaff: () => {

@@ -166,6 +166,36 @@ export interface CreateExamTimetableResponse {
   };
 }
 
+// ─── GET /tenant/getalltimetable?className=...&sectionName=...&academic_year=... ─
+export interface GetAllTimetableRawItem {
+  className?: string;
+  sectionName?: string;
+  subjectname?: string;
+  teacher_id?: string;
+  teachername?: string;
+  period_no?: string;
+  time_sloat?: string;
+  day_of_week?: string;
+  start_time?: string;
+  end_time?: string;
+  room_no?: string;
+  lunch_start?: string;
+  lunch_end?: string;
+  academic_year?: string;
+  school_code?: string;
+  _id?: string;
+  id?: string;
+}
+
+export interface GetAllTimetableResponse {
+  status?: boolean;
+  message?: string;
+  data?: GetAllTimetableRawItem[] | GetAllTimetableRawItem;
+  timetables?: GetAllTimetableRawItem[];
+  result?: GetAllTimetableRawItem[];
+  entries?: GetAllTimetableRawItem[];
+}
+
 // ─── Create Timetable Period (POST /tenant/createtimetable) ────────────────────
 export interface CreateTimetablePayload {
   className: string;

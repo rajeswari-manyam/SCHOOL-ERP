@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import type {
   WeeklyGrid,
@@ -30,16 +30,8 @@ const DOT_COLORS: Record<ClassColorKey, string> = {
   emerald: "bg-emerald-500",
   amber:   "bg-amber-400",
   rose:    "bg-rose-500",
-  slate:   "bg-slate-300",
+  slate:   "bg-slate-300 dark:bg-slate-600",
 };
-
-const CLASS_LEGEND: { label: string; colorKey: ClassColorKey }[] = [
-  { label: "Class 8-A",   colorKey: "indigo"  },
-  { label: "Class 9-B",   colorKey: "violet"  },
-  { label: "Class 7-C",   colorKey: "sky"     },
-  { label: "Class 8-B",   colorKey: "emerald" },
-  { label: "Free Period", colorKey: "slate"   },
-];
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 interface TooltipProps {
@@ -131,20 +123,20 @@ const GridCell = ({ cell, period, day, isCurrent, isToday }: CellProps) => {
       )}
 
       <div
-        className={[
-          "h-full rounded-lg px-2 py-1.5 flex flex-col justify-center",
-          c.bg, c.border, "border",
-        ].join(" ")}
-      >
-        {cell.isFree ? (
-          <p className={`text-[10px] font-bold uppercase tracking-wide ${c.text}`}>Free</p>
-        ) : (
-          <>
-            <p className={`text-[11px] font-bold leading-tight truncate ${c.text}`}>{cell.class}</p>
-            <p className={`text-[10px] leading-tight mt-0.5 ${c.text} opacity-70`}>{cell.room}</p>
-          </>
-        )}
-      </div>
+          className={[
+            "h-full rounded-lg px-2 py-1.5 flex flex-col justify-center",
+            c.bg, c.border, "border",
+          ].join(" ")}
+        >
+          {cell.isFree ? (
+            <p className={`text-[10px] font-bold uppercase tracking-wide ${c.text}`}>Free</p>
+          ) : (
+            <>
+              <p className={`text-[11px] font-bold leading-tight truncate ${c.text}`}>{cell.subject}</p>
+              <p className={`text-[10px] leading-tight mt-0.5 ${c.text} opacity-70 truncate`}>{cell.class}</p>
+            </>
+          )}
+        </div>
 
       {!cell.isFree && (
         <PeriodTooltip cell={cell} period={period} day={day} visible={hovered} />
@@ -202,6 +194,27 @@ const TimetableGrid = ({
 }: Props) => {
   const currentPeriod = periods.find((p) => p.id === currentPeriodId);
 
+  // Build dynamic legend from grid data
+  const legend = useMemo(() => {
+    const seen = new Map<string, ClassColorKey>();
+    for (const pid of Object.keys(grid)) {
+      for (const day of DAYS) {
+        const cell = grid[pid]?.[day];
+        if (cell && !cell.isFree) {
+          if (!seen.has(cell.class)) {
+            seen.set(cell.class, cell.colorKey);
+          }
+        }
+      }
+    }
+    const items = [...seen.entries()].map(([label, colorKey]) => ({ label, colorKey }));
+    const hasFree = Object.values(grid).some((row) =>
+      DAYS.some((d) => row[d]?.isFree)
+    );
+    if (hasFree) items.push({ label: "Free Period", colorKey: "slate" as ClassColorKey });
+    return items;
+  }, [grid]);
+
   return (
     <section
       aria-label="Weekly timetable"
@@ -245,23 +258,25 @@ const TimetableGrid = ({
           )}
         </div>
 
-        {/* Legend — scrollable on mobile */}
-        <div
-          aria-label="Class colour legend"
-          className="flex items-center gap-3 overflow-x-auto pb-0.5 sm:pb-0 sm:flex-wrap scrollbar-none [&::-webkit-scrollbar]:hidden"
-        >
-          {CLASS_LEGEND.map(({ label, colorKey }) => (
-            <div key={label} className="flex shrink-0 items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className={`h-2.5 w-2.5 rounded-full ${DOT_COLORS[colorKey]}`}
-              />
-              <span className="text-[11px] font-medium text-gray-500 dark:text-slate-400 whitespace-nowrap">
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
+        {/* Legend — dynamically built from grid, scrollable on mobile */}
+        {legend.length > 0 && (
+          <div
+            aria-label="Class colour legend"
+            className="flex items-center gap-3 overflow-x-auto pb-0.5 sm:pb-0 sm:flex-wrap scrollbar-none [&::-webkit-scrollbar]:hidden"
+          >
+            {legend.map(({ label, colorKey }) => (
+              <div key={label} className="flex shrink-0 items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className={`h-2.5 w-2.5 rounded-full ${DOT_COLORS[colorKey]}`}
+                />
+                <span className="text-[11px] font-medium text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Table — horizontally scrollable ────────────────────────────── */}
@@ -320,40 +335,63 @@ const TimetableGrid = ({
           </thead>
 
           <tbody>
-            {periods.map((period) => (
-              <tr key={period.id}>
-                {/* Period label — sticky left */}
-                <td
-                  className={[
-                    "sticky left-0 z-10 border border-gray-100 dark:border-slate-800",
-                    "bg-gray-50 dark:bg-slate-800/80 px-3 py-2",
-                  ].join(" ")}
-                  style={{ minWidth: 100 }}
-                >
-                  <p className="text-xs font-extrabold text-gray-700 dark:text-slate-200">
-                    {period.label}
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-500 whitespace-nowrap">
-                    {period.time}
-                  </p>
-                </td>
+            {periods.map((period) =>
+              period.kind !== "PERIOD" ? (
+                <tr key={period.id}>
+                  <td
+                    className="sticky left-0 z-10 border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/80 px-3 py-2"
+                    style={{ minWidth: 100 }}
+                  >
+                    <p className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
+                      {period.label}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-500 whitespace-nowrap">
+                      {period.time}
+                    </p>
+                  </td>
+                  <td
+                    colSpan={DAYS.length}
+                    className="border border-gray-100 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-3 text-center"
+                  >
+                    <span className="text-xs font-semibold text-amber-500 dark:text-amber-400">
+                      {period.kind === "LUNCH" ? "Lunch" : "Break"}
+                    </span>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={period.id}>
+                  <td
+                    className={[
+                      "sticky left-0 z-10 border border-gray-100 dark:border-slate-800",
+                      "bg-gray-50 dark:bg-slate-800/80 px-3 py-2",
+                    ].join(" ")}
+                    style={{ minWidth: 100 }}
+                  >
+                    <p className="text-xs font-extrabold text-gray-700 dark:text-slate-200">
+                      {period.label}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-500 whitespace-nowrap">
+                      {period.time}
+                    </p>
+                  </td>
 
-                {DAYS.map((day) => (
-                  <GridCell
-                    key={day}
-                    cell={grid[period.id]?.[day] ?? null}
-                    period={period}
-                    day={day}
-                    isCurrent={
-                      weekOffset === 0 &&
-                      period.id === currentPeriodId &&
-                      day === todayName
-                    }
-                    isToday={day === todayName}
-                  />
-                ))}
-              </tr>
-            ))}
+                  {DAYS.map((day) => (
+                    <GridCell
+                      key={day}
+                      cell={grid[period.id]?.[day] ?? null}
+                      period={period}
+                      day={day}
+                      isCurrent={
+                        weekOffset === 0 &&
+                        period.id === currentPeriodId &&
+                        day === todayName
+                      }
+                      isToday={day === todayName}
+                    />
+                  ))}
+                </tr>
+              )
+            )}
           </tbody>
         </table>
       </div>

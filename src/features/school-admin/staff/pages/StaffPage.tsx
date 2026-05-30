@@ -7,6 +7,7 @@ import { StaffFilters } from "../components/StaffFilter";
 import { StaffTable } from "../components/StaffTable";
 import { LeaveRequestsTab } from "../components/LeaveRequistTable";
 import { AddStaffModal } from "../components/AddStaffModal";
+import { EditStaffModal } from "../components/EditStaffModal";
 import { Button } from "../../../../components/ui/button";
 
 const buildTabs = (
@@ -42,6 +43,8 @@ export default function StaffManagementPage() {
     setShowModal,
     getFilteredStaff,
     loadStaff,
+    editStaffMember,
+    setEditStaffMember,
   } = useStaffStore();
 
   useEffect(() => {
@@ -61,6 +64,9 @@ export default function StaffManagementPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FB] font-sans">
       {showModal && <AddStaffModal onClose={() => setShowModal(false)} />}
+      {editStaffMember && (
+        <EditStaffModal staff={editStaffMember} onClose={() => setEditStaffMember(null)} />
+      )}
 
       {/* ── Top bar ── */}
       <div className="bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
@@ -150,7 +156,7 @@ export default function StaffManagementPage() {
             />
             {/* Table scrolls horizontally on mobile */}
             <div className="w-full overflow-x-auto">
-              <StaffTable staff={filteredStaff} total={staffData.length} />
+              <StaffTable staff={filteredStaff} total={staffData.length} onEdit={setEditStaffMember} />
             </div>
           </>
         ) : null}

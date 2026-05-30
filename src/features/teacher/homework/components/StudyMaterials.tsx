@@ -75,7 +75,7 @@ export const StudyMaterialCard = ({ material, onDelete }: CardProps) => {
 const schema = z.object({
   className:    z.string().min(1),
   section:      z.string().min(1),
-  subject:      z.string().min(1, "Subject required"),
+  subjectName:  z.string().min(1, "Subject required"),
   title:        z.string().min(3, "Title required"),
   materialType: z.enum(["FILE", "LINK"]),
   url:          z.string().optional(),
@@ -97,7 +97,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
 
   const { register, watch, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { className: "Class 8-A", section: "A", materialType: "FILE" },
+    defaultValues: { className: "8", section: "A", materialType: "FILE" },
   });
 
   const materialType = watch("materialType");
@@ -140,7 +140,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FormField label="Class">
             <Select
-              options={["Class 7-A", "Class 8-A", "Class 9-A", "Class 10-A"].map((value) => ({ label: value, value }))}
+              options={["7", "8", "9", "10", "11", "12"].map((value) => ({ label: `Class ${value}`, value }))}
               placeholder="Select class"
               {...register("className")}
             />
@@ -152,11 +152,11 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
               {...register("section")}
             />
           </FormField>
-          <FormField label="Subject *" error={errors.subject?.message as string | undefined}>
+          <FormField label="Subject *" error={errors.subjectName?.message as string | undefined}>
             <Select
               options={["Mathematics", "English", "Science", "Geography", "Hindi", "History"].map((value) => ({ label: value, value }))}
               placeholder="Select subject"
-              {...register("subject")}
+              {...register("subjectName")}
             />
           </FormField>
         </div>

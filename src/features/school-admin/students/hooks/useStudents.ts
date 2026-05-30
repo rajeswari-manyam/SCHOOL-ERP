@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { studentsApi, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "../api/students.api";
-import type { Student, AddStudentFormData, CreateStudentPayload, Gender } from "../types/student.types";
+import type { Student, AddStudentFormData, CreateStudentPayload, UpdateStudentPayload, Gender } from "../types/student.types";
 
 export const useStudents = () => {
   const schoolcode = useAuthStore((s) => s.user?.schoolcode ?? "");
@@ -78,6 +78,12 @@ export const useStudents = () => {
     return newS;
   };
 
+  const updateStudent = async (id: string, payload: UpdateStudentPayload) => {
+    const updated = await studentsApi.updateStudent(id, payload);
+    setStudents(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+    return updated;
+  };
+
   return {
     students, filtered, loading, error, stats,
     search, setSearch,
@@ -85,6 +91,7 @@ export const useStudents = () => {
     sectionFilter, setSectionFilter,
     statusFilter, setStatusFilter,
     addStudent,
+    updateStudent,
     loadStudents,
   };
 };

@@ -1,5 +1,4 @@
 import { Bell, MessageCircle, X } from "lucide-react";
-import { useAttendanceStore } from "../store";
 import { Card } from "../../../../components/ui/card";
 import { Button } from "../../../../components/ui/button";
 import { Badge } from "../../../../components/ui/badge";
@@ -11,9 +10,16 @@ import {
   TableHead,
   TableCell,
 } from "../../../../components/ui/table";
+import type { AttendanceDay } from "../types/attendance.types";
 
-const AttendanceToday = () => {
-  const { todayData } = useAttendanceStore();
+interface AttendanceTodayProps {
+  data?: AttendanceDay;
+  loading?: boolean;
+  error?: string | null;
+}
+
+const AttendanceToday = ({ data, loading, error }: AttendanceTodayProps) => {
+  const todayData = data ?? { date: "", summary: { totalPresent: 0, totalPresentChange: 0, totalAbsent: 0, totalAbsentChange: 0, classesMarked: 0, classesTotal: 0, alertsSent: 0, alertsTotal: 0 }, classes: [] };
   const { summary, classes } = todayData;
 
   return (

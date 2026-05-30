@@ -1,12 +1,14 @@
 import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { timetableApi } from "../api/timetable.api";
 import type { EditPeriodPayload, ExamEntry, DayOfWeek, CreateTimetablePayload, CreateExamTimetablePayload } from "../types/timetable.types";
 
 // ─── Query key factory ──────────────────────────────────────────────────────────
 export const TIMETABLE_KEYS = {
   all:          ["timetable"] as const,
-  page:         (classId: string) => [...TIMETABLE_KEYS.all, "page", classId] as const,
+  page:         (className: string, sectionName: string, academicYear: string) =>
+    [...TIMETABLE_KEYS.all, "page", className, sectionName, academicYear] as const,
   classTt:      (classId: string) => [...TIMETABLE_KEYS.all, "class", classId] as const,
   exam:         () => [...TIMETABLE_KEYS.all, "exam"] as const,
   subjects:     () => [...TIMETABLE_KEYS.all, "subjects"] as const,
@@ -14,11 +16,12 @@ export const TIMETABLE_KEYS = {
 };
 
 // ─── Full page ──────────────────────────────────────────────────────────────────
-export const useTimetablePage = (classId = "class-10") =>
+export const useTimetablePage = (className: string, sectionName: string, academicYear: string) =>
   useQuery({
-    queryKey: TIMETABLE_KEYS.page(classId),
-    queryFn: () => timetableApi.getTimetablePage(classId),
+    queryKey: TIMETABLE_KEYS.page(className, sectionName, academicYear),
+    queryFn: () => timetableApi.getTimetablePage({ className, sectionName, academicYear }),
     staleTime: 1000 * 60 * 5,
+    enabled: !!className && !!sectionName,
   });
 
 // ─── Class timetable ────────────────────────────────────────────────────────────
@@ -58,7 +61,11 @@ export const useSavePeriod = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: EditPeriodPayload) => timetableApi.savePeriod(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      toast.success("Period updated successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 };
 
@@ -67,7 +74,11 @@ export const useCreateTimetable = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateTimetablePayload) => timetableApi.createTimetable(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      toast.success("Timetable period created successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 };
 
@@ -76,7 +87,11 @@ export const useCreateExamTimetable = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateExamTimetablePayload) => timetableApi.createExamTimetable(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      toast.success("Exam timetable created successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 };
 
@@ -86,7 +101,11 @@ export const useAddExam = () => {
   return useMutation({
     mutationFn: (entry: Omit<ExamEntry, "id" | "notifyStatus">) =>
       timetableApi.addExam(entry),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      toast.success("Exam added successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 };
 
@@ -94,7 +113,11 @@ export const useDeleteExam = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (examId: string) => timetableApi.deleteExam(examId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      toast.success("Exam deleted successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 };
 

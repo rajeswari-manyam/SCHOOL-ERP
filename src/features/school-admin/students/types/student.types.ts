@@ -47,6 +47,26 @@ export interface FeePayment {
   receiptNo?: string;
 }
 
+export interface UpdateStudentPayload {
+  first_name?: string;
+  last_name?: string;
+  gender?: Lowercase<Gender>;
+  date_of_birth?: string;
+  blood_group?: BloodGroup;
+  address?: string;
+  class?: string;
+  section?: string;
+  roll_number?: string;
+  admission_number?: string;
+  status?: StudentStatus;
+  father_name?: string;
+  father_phone?: string;
+  mother_name?: string;
+  mother_phone?: string;
+  emergency_contact?: string;
+  email?: string;
+}
+
 export interface CreateStudentPayload {
   first_name: string;
   last_name: string;

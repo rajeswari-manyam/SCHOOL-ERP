@@ -5,8 +5,9 @@ import StudentStatCards from "../students/components/StudentStatCards";
 import StudentFilterBar from "../students/components/StudentFilterBar";
 import StudentTable from "../students/components/StudentTable";
 import AddStudentModal from "../students/components/AddStudentModal";
+import { EditStudentModal } from "../students/components/EditStudentModal";
 
-import type { AddStudentFormData } from "../students/types/student.types";
+import type { AddStudentFormData, Student } from "../students/types/student.types";
 
 import { Download, Plus } from "lucide-react";
 
@@ -18,13 +19,14 @@ const StudentsPage = () => {
     sectionFilter, setSectionFilter,
     statusFilter, setStatusFilter,
     addStudent,
+    updateStudent,
     loadStudents,
   } = useStudents();
 
 
 
   const [showAddModal, setShowAddModal] = useState(false);
- 
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const handleAddStudent = async (data: AddStudentFormData) => {
     // Return the created student for parent API integration
@@ -98,7 +100,7 @@ const StudentsPage = () => {
         </div>
       ) : (
         <>
-          <StudentTable students={filtered} />
+          <StudentTable students={filtered} onEdit={setEditingStudent} />
           {filtered.length > 0 && (
             <p className="text-xs text-gray-400 text-center">Showing {filtered.length} student{filtered.length !== 1 ? "s" : ""}</p>
           )}
@@ -110,6 +112,14 @@ const StudentsPage = () => {
         <AddStudentModal
           onClose={() => setShowAddModal(false)}
           onSubmit={handleAddStudent}
+        />
+      )}
+
+      {editingStudent && (
+        <EditStudentModal
+          student={editingStudent}
+          onClose={() => setEditingStudent(null)}
+          onSave={updateStudent}
         />
       )}
 

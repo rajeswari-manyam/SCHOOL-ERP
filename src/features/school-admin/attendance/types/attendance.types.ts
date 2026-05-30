@@ -110,6 +110,39 @@ export interface CreateHolidayPayload {
   school_code: string;
 }
 
+// ─── Raw item from GET /tenant/getallattendance?className=...&section=... ───
+export interface GetAllAttendanceRawItem {
+  student_id?: string;
+  _id?: string;
+  id?: string;
+  name?: string;
+  student_name?: string;
+  roll_no?: string;
+  rollNo?: string;
+  className?: string;
+  class_name?: string;
+  section?: string;
+  section_name?: string;
+  date?: string;
+  attendance_date?: string;
+  status?: string;
+  attendance_status?: string;
+  is_present?: boolean;
+  isPresent?: boolean;
+  teacher_name?: string;
+  teachername?: string;
+}
+
+export interface GetAllAttendanceResponse {
+  status?: boolean;
+  message?: string;
+  data?: GetAllAttendanceRawItem[] | GetAllAttendanceRawItem;
+  attendance?: GetAllAttendanceRawItem[];
+  result?: GetAllAttendanceRawItem[];
+  records?: GetAllAttendanceRawItem[];
+  entries?: GetAllAttendanceRawItem[];
+}
+
 // ─── GET /tenant/getallholidays ─────────────────────────────────────────────
 export interface GetAllHolidaysResponse {
   status?: boolean;

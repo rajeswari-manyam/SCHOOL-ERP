@@ -8,10 +8,13 @@ export interface TimetableCell {
   isFree?: boolean;
 }
 
+export type TimetableSlotKind = "PERIOD" | "BREAK" | "LUNCH";
+
 export interface TimetablePeriod {
   id: string;
-  label: string;   // "P1"
-  time: string;    // "8:00 – 8:45"
+  label: string;
+  time: string;
+  kind: TimetableSlotKind;
 }
 
 // [periodId][dayName] → cell or null
@@ -33,4 +36,150 @@ export interface UpcomingExam {
   time: string;
   venue: string;
   hallTicketUrl?: string;
+}
+
+// ─── API response types for /tenant/getalltimetable ──────────────────────────
+
+export interface TeacherTimetableQuery {
+  teacher_id: string;
+  academic_year: string;
+  className?: string;
+  sectionName?: string;
+}
+
+// ─── API types for /tenant/getallexams-timetable ─────────────────────────────
+
+export interface ExamsTimetableQuery {
+  teacher_id: string;
+}
+
+export interface ApiExamTimetableRawEntry {
+  id?: string;
+  _id?: string;
+  examId?: string;
+  exam_id?: string;
+  subject?: string;
+  subjectName?: string;
+  subject_name?: string;
+  className?: string;
+  class?: string;
+  class_name?: string;
+  date?: string;
+  examDate?: string;
+  exam_date?: string;
+  startTime?: string;
+  start_time?: string;
+  endTime?: string;
+  end_time?: string;
+  venue?: string;
+  room?: string;
+  room_number?: string;
+  examName?: string;
+  exam?: string;
+  exam_title?: string;
+  exam_name?: string;
+  title?: string;
+  name?: string;
+  hallTicketUrl?: string;
+  hall_ticket_url?: string;
+  hallTicket?: string;
+  status?: string;
+}
+
+type ApiDayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT";
+
+interface ApiPeriodCell {
+  subject: string;
+  teacherName: string;
+  room?: string;
+  isConflict?: boolean;
+}
+
+interface ApiTimetableSlot {
+  kind: "PERIOD" | "BREAK" | "LUNCH" | "FREE";
+  periodNo?: number;
+  startTime: string;
+  endTime: string;
+  label?: string;
+  cells?: Partial<Record<ApiDayOfWeek, ApiPeriodCell>>;
+}
+
+interface ApiClassTimetable {
+  classId: string;
+  classLabel: string;
+  section: string;
+  classTeacher: string;
+  academicYear: string;
+  currentPeriodLabel?: string;
+  slots: ApiTimetableSlot[];
+}
+
+interface ApiExamEntry {
+  id: string;
+  subject: string;
+  className: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  venue: string;
+}
+
+interface ApiExamTimetable {
+  title: string;
+  subtitle: string;
+  entries: ApiExamEntry[];
+}
+
+interface ApiTimetablePageData {
+  classTabs: { id: string; label: string }[];
+  selectedClassId: string;
+  classTimetable: ApiClassTimetable;
+  examTimetable: ApiExamTimetable;
+}
+
+export interface ApiTimetableResponse {
+  status?: boolean;
+  message?: string;
+  data?: ApiTimetablePageData;
+  classTimetable?: ApiClassTimetable;
+  examTimetable?: ApiExamTimetable;
+}
+
+// ─── Hook return type ────────────────────────────────────────────────────────
+
+export interface TeacherTimetableData {
+  grid: WeeklyGrid;
+  periods: TimetablePeriod[];
+  exams: UpcomingExam[];
+  summary: TimetableSummary;
+  classLabel: string;
+  section: string;
+  classTeacher: string;
+  academicYear: string;
+  currentPeriodLabel: string | null;
+}
+
+export interface TeacherTimetableState {
+  weekOffset: number;
+  setWeekOffset: (offset: number | ((prev: number) => number)) => void;
+  data: TeacherTimetableData | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  refetch: () => void;
+  grid: WeeklyGrid;
+  periods: TimetablePeriod[];
+  exams: UpcomingExam[];
+  isExamsLoading: boolean;
+  isExamsError: boolean;
+  summary: TimetableSummary;
+  classLabel: string;
+  section: string;
+  classTeacher: string;
+  academicYear: string;
+  currentPeriodLabel: string | null;
+  todayName: string | null;
+  currentPeriodId: string | null;
+  weekLabel: string;
+  weekSubLabel: string;
 }

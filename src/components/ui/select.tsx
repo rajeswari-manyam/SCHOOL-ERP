@@ -27,6 +27,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     },
     ref,
   ) => {
+    const safeOptions = Array.isArray(options) ? options : [];
     const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       onValueChange?.(event.target.value);
       onChange?.(event);
@@ -47,7 +48,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {placeholder}
           </option>
         )}
-        {options.map((option) => (
+        {safeOptions.map((option) => (
           <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>

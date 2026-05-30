@@ -7,6 +7,9 @@ import { StatusBadge, FeeBadge } from "./StudentBadge";
 import StudentAttendanceTab from "./StudentAttendanceTab";
 import StudentFeeTab from "./StudentFeeTab";
 import StudentDocumentsTab from "./StudentDocumentTab";
+import { EditStudentModal } from "./EditStudentModal";
+import type { UpdateStudentPayload } from "../types/student.types";
+import { studentsApi } from "../api/students.api";
 
 type Tab = "overview" | "attendance" | "fee-history" | "documents";
 
@@ -32,6 +35,7 @@ const StudentProfilePage = () => {
   const navigate = useNavigate();
   const { student, loading, attendance, feePayments, documents } = useStudentProfile(id!);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [showEdit, setShowEdit] = useState(false);
 
   if (loading) {
     return (
@@ -88,7 +92,8 @@ const StudentProfilePage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
+            <Button variant="outline" size="sm" className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700"
+              onClick={() => setShowEdit(true)}>
               <Edit3 className="h-3 w-3" />
               Edit Student
             </Button>
@@ -231,6 +236,18 @@ const StudentProfilePage = () => {
 
       {activeTab === "documents" && (
         <StudentDocumentsTab documents={documents} />
+      )}
+
+      {showEdit && student && (
+        <EditStudentModal
+          student={student}
+          onClose={() => setShowEdit(false)}
+          onSave={async (_, payload) => {
+            const updated = await studentsApi.updateStudent(student.id, payload);
+            window.location.reload();
+            return updated;
+          }}
+        />
       )}
     </div>
   );

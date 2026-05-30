@@ -21,11 +21,14 @@ import EditPeriodModal from "./components/Editperiodmodal";
 import AddPeriodModal from "./components/Addperiodmodal";
 import AddExamTimetableModal from "./components/AddExamtimetablemodal";
 
+const DEFAULT_ACADEMIC_YEAR = String(new Date().getFullYear());
+
 const TimetablePage: React.FC = () => {
-  const [selectedClassId, setSelectedClassId] = useState("class-10");
+  const [activeClass, setActiveClass] = useState({ className: "10", sectionName: "A" });
+  const selectedClassId = `class-${activeClass.className}`;
 
   // ── Data ──────────────────────────────────────────────────────────────────────
-  const { data, isLoading } = useTimetablePage(selectedClassId);
+  const { data, isLoading } = useTimetablePage(activeClass.className, activeClass.sectionName, DEFAULT_ACADEMIC_YEAR);
   const { data: examTtData, isLoading: examLoading, error: examError, refetch: examRefetch } = useExamTimetable();
   const { data: subjects = [] } = useSubjectOptions();
   const { data: teachers = [] } = useTeacherOptions();
@@ -92,6 +95,11 @@ const TimetablePage: React.FC = () => {
     });
   };
 
+  const handleTabSelect = (tabId: string) => {
+    const className = tabId.replace("class-", "");
+    setActiveClass({ className, sectionName: "A" });
+  };
+
   if (isLoading || !data) {
     return (
       <div className="p-6 text-sm text-gray-400 animate-pulse">Loading timetable…</div>
@@ -111,17 +119,10 @@ const TimetablePage: React.FC = () => {
             The Academic Curator / <span className="text-indigo-600 font-semibold">Timetable</span>
           </p>
           <h1 className="text-2xl font-bold text-gray-900">Timetable</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{classTimetable?.academicYear ?? "2024-25"} Academic Year</p>
+          <p className="text-sm text-gray-400 mt-0.5">{classTimetable?.academicYear ?? DEFAULT_ACADEMIC_YEAR} Academic Year</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-         
-          <button
-            onClick={() => openModal(selectedClassId, "MON", 1, subjects[0]?.value ?? "", teachers[0]?.value ?? "")}
-            className="flex items-center gap-1.5 border border-gray-200 bg-white text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
-          >
-            ✏️ Edit Period
-          </button>
           <button
             onClick={() => setAddPeriodOpen(true)}
             className="flex items-center gap-1.5 border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-indigo-100 transition-colors"
@@ -142,7 +143,7 @@ const TimetablePage: React.FC = () => {
         <ClassTabs
           tabs={classTabs}
           selectedId={selectedClassId}
-          onSelect={setSelectedClassId}
+          onSelect={handleTabSelect}
         />
       </div>
 
@@ -168,6 +169,8 @@ const TimetablePage: React.FC = () => {
       <AddPeriodModal
         open={addPeriodOpen}
         isSaving={isCreatingTimetable}
+        subjects={subjects}
+        teachers={teachers}
         onClose={() => setAddPeriodOpen(false)}
         onSave={handleCreatePeriod}
       />
