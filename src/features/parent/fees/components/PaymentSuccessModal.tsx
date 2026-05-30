@@ -6,17 +6,16 @@ import typography from "@/styles/typography";
 import { cn } from "@/utils/cn";
 
 import type { PaymentSuccessModalProps } from "../types/fee.types";
-import { paymentSuccessDefaults } from "../data/fee.data";
 
 export function PaymentSuccessModal({
   amount,
   feeHead,
   mode,
-  receiptNo = paymentSuccessDefaults.receiptNo,
-  date = paymentSuccessDefaults.date,
-  studentName = paymentSuccessDefaults.studentName,
-  className = paymentSuccessDefaults.className,
-  whatsappNumber = paymentSuccessDefaults.whatsappNumber,
+  receiptNo = "",
+  date = "",
+  studentName = "",
+  className = "",
+  whatsappNumber,
   onDownload,
   onBack,
 }: PaymentSuccessModalProps) {
@@ -51,7 +50,7 @@ export function PaymentSuccessModal({
           </p>
 
           <p className={cn(typography.body.small, "text-gray-400 mt-1 text-center")}>
-            Rs.{amount.toLocaleString("en-IN")} paid for {studentName}
+            Rs.{amount.toLocaleString("en-IN")}{studentName ? ` paid for ${studentName}` : ""}
           </p>
 
         </CardContent>
@@ -60,14 +59,16 @@ export function PaymentSuccessModal({
         <CardContent className="mx-5 mb-4 rounded-xl overflow-hidden p-0 text-[#0B1C30]">
 
           <div className="grid grid-cols-1 sm:grid-cols-2">
-            <Detail label="Receipt No" value={receiptNo} mono />
-            <Detail label="Date" value={date} />
+            {receiptNo && <Detail label="Receipt No" value={receiptNo} mono />}
+            {date && <Detail label="Date" value={date} />}
           </div>
 
-          <Detail
-            label="Student Details"
-            value={`${studentName} | Class: ${className}`}
-          />
+          {(studentName || className) && (
+            <Detail
+              label="Student Details"
+              value={[studentName, className ? `Class: ${className}` : ""].filter(Boolean).join(" | ")}
+            />
+          )}
 
           <Detail label="Fee Head" value={feeHead} />
 
@@ -81,26 +82,30 @@ export function PaymentSuccessModal({
           </div>
 
           {/* WhatsApp */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50">
-            <MessageCircle size={16} className="text-emerald-600" />
-            <p className="text-xs text-emerald-700">
-              Receipt sent to {whatsappNumber} via WhatsApp
-            </p>
-          </div>
+          {whatsappNumber && (
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50">
+              <MessageCircle size={16} className="text-emerald-600" />
+              <p className="text-xs text-emerald-700">
+                Receipt sent to {whatsappNumber} via WhatsApp
+              </p>
+            </div>
+          )}
 
         </CardContent>
 
         {/* ACTIONS */}
         <CardContent className="px-5 pb-6 flex flex-col gap-2.5">
 
-          <Button
-            onClick={onDownload}
-            variant="outline"
-            className="w-full flex items-center gap-2 text-[#3525CD]"
-          >
-            <Download size={14} />
-            Download Receipt PDF
-          </Button>
+          {onDownload && (
+            <Button
+              onClick={onDownload}
+              variant="outline"
+              className="w-full flex items-center gap-2 text-[#3525CD]"
+            >
+              <Download size={14} />
+              Download Receipt PDF
+            </Button>
+          )}
 
           <Button
             onClick={onBack}

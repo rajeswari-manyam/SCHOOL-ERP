@@ -7,11 +7,11 @@ import { Loader2, RefreshCw, Shield, GraduationCap, ChevronLeft, Sparkles, Check
 import { verifyOtp } from "../api/auth.api";
 import { sendOtp }   from "../api/auth.api";
 import { useAuthStore, USER_TYPE_ROUTE_MAP } from "@/store/authStore";
+import type { UserType } from "../types/auth.types";
 
 // ── Role → visual theming ─────────────────────────────────────────────────────
 const ROLE_VISUAL: Record<string, { label: string; accent: string; light: string; dark: string }> = {
   Teacher:     { label: "Teacher Portal",    accent: "bg-emerald-500", light: "bg-emerald-50", dark: "text-emerald-700" },
-  // SchoolAdmin: { label: "Admin Portal",      accent: "bg-sky-500",     light: "bg-sky-50",     dark: "text-sky-700"    },
   SuperAdmin:  { label: "Super Admin",       accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
   Admin:       { label: "Admin Portal",      accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
   Accountant:  { label: "Accounts Portal",   accent: "bg-amber-500",   light: "bg-amber-50",   dark: "text-amber-700"  },
@@ -26,11 +26,10 @@ const OtpPage = () => {
   const login    = useAuthStore((s) => s.login);
 
   // ── Read saved data from localStorage (written by LoginPage after sendOtp) ─
-  const phone      = localStorage.getItem("phone")      ?? "";
-  const schoolcode = localStorage.getItem("schoolcode") ?? "";
-  const rawUserType = localStorage.getItem("userType")  ?? "Teacher";
-  // Dev: API returns OTP in response; LoginPage saves it
-  const devOtp     = localStorage.getItem("otp")        ?? "";
+  const phone       = localStorage.getItem("phone")      ?? "";
+  const schoolcode  = localStorage.getItem("schoolcode") ?? "";
+  const rawUserType = localStorage.getItem("userType")   ?? "Teacher";
+  const devOtp      = localStorage.getItem("otp")        ?? "";
 
   const visual = ROLE_VISUAL[rawUserType] ?? ROLE_VISUAL["Teacher"];
 
@@ -40,7 +39,7 @@ const OtpPage = () => {
   }, [phone, navigate]);
 
   // ── OTP state ─────────────────────────────────────────────────────────────
-  const [otp,       setOtp]       = useState(devOtp); // pre-fill in dev
+  const [otp,       setOtp]       = useState(devOtp);
   const [error,     setError]     = useState("");
   const [loading,   setLoading]   = useState(false);
   const [timer,     setTimer]     = useState(RESEND_COUNTDOWN);
@@ -83,53 +82,111 @@ const OtpPage = () => {
   };
 
   // ── Verify OTP ────────────────────────────────────────────────────────────
-  const handleVerifyOtp = async (otpToVerify = otp) => {
-    if (otpToVerify.length !== 6) { setError("Please enter all 6 digits"); return; }
-    setError("");
-    setLoading(true);
+const handleVerifyOtp = async (otpToVerify = otp) => {
+  if (otpToVerify.length !== 6) {
+    setError("Please enter all 6 digits");
+    return;
+  }
 
-    try {
-      const payload = { schoolcode, phone, otp: otpToVerify };
-      console.log("VERIFY OTP PAYLOAD →", payload);
+  setError("");
+  setLoading(true);
 
-      const response = await verifyOtp(payload);
-      console.log("VERIFY OTP RESPONSE →", response);
-      // clear dev OTP after attempt
+  try {
+    const payload = {
+      schoolcode,
+      phone,
+      otp: otpToVerify,
+    };
 
-      if (response?.status === true) {
-        // rawUserType from localStorage — e.g. "Teacher", "SchoolAdmin"
-        console.log("USER TYPE →", rawUserType);
+    console.log("VERIFY OTP PAYLOAD →", payload);
 
-        // ✅ Save full session to Zustand + localStorage
-        login(
-          response?.token ?? `token-${Date.now()}`,
-          response?.user  ?? {},
-          rawUserType,           // "Teacher" | "SchoolAdmin" | etc.
-        );
+   const response = await verifyOtp(payload);
 
-        toast.success("OTP Verified Successfully!");
+console.log("VERIFY OTP RESPONSE →", response);
 
-        // ✅ Navigate to correct dashboard
-        const route = USER_TYPE_ROUTE_MAP[rawUserType] ?? "/teacher/dashboard";
-        console.log("NAVIGATING TO →", route);
-        navigate(route, { replace: true });
+const parentId =
+  response.userId ||
+  response.user?.id ||
+  response.data?.id;
 
-      } else {
-        setError(response?.message ?? "Invalid OTP");
-        toast.error(response?.message ?? "OTP Verification Failed");
-      }
+if (parentId) {
+  localStorage.setItem("parentId", parentId);
+  localStorage.setItem("userId", parentId);
 
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "OTP Verification Failed";
-      console.error(err);
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
+  console.log("Saved parentId:", parentId);
+}
+
+  if (response?.status === true) {
+  console.log("USER TYPE →", rawUserType);
+
+  const parentId =
+    response.userId ||
+    response.user?.id ||
+    response.data?.id;
+
+  console.log("Extracted Parent ID:", parentId);
+
+  if (parentId) {
+    localStorage.setItem("parentId", String(parentId));
+    localStorage.setItem("userId", String(parentId));
+
+    console.log(
+      "Saved Parent ID:",
+      localStorage.getItem("parentId")
+    );
+  }
+
+  if (rawUserType?.toLowerCase() === "parent") {
+    console.log("Parent Login Detected");
+  }
+      const userPayload =
+        response.user ??
+        (response.data
+          ? {
+              id: response.data.id,
+              name: `${response.data.first_name ?? ""} ${
+                response.data.last_name ?? ""
+              }`.trim(),
+              userType: rawUserType as UserType,
+              schoolcode: response.data.school_code,
+            }
+          : {
+              id: response.userId,
+              userType: rawUserType as UserType,
+            });
+console.log("OTP Response:", response);
+      login(
+        response.token ?? `token-${Date.now()}`,
+        userPayload,
+        rawUserType
+      );
+
+      toast.success("OTP Verified Successfully!");
+
+      const route =
+        USER_TYPE_ROUTE_MAP[rawUserType] ??
+        "/teacher/dashboard";
+
+      console.log("NAVIGATING TO →", route);
+
+      navigate(route, { replace: true });
+    } else {
+      setError(response?.message ?? "Invalid OTP");
+      toast.error(response?.message ?? "OTP Verification Failed");
     }
-  };
+  } catch (err: any) {
+    console.error("OTP Verify Error:", err);
+
+    const msg =
+      err?.response?.data?.message ||
+      "OTP Verification Failed";
+
+    setError(msg);
+    toast.error(msg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ── 6-box OTP input helpers ───────────────────────────────────────────────
   const inputs = useRef<(HTMLInputElement | null)[]>([]);

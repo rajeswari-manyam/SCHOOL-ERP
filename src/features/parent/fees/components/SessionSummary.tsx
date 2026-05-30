@@ -3,11 +3,10 @@ import typography from "../../../../styles/typography";
 import { cn } from "../../../../utils/cn";
 
 import type { SessionSummaryProps } from "../types/fee.types";
-import { sessionSummaryData } from "../data/fee.data";
 
 export function SessionSummary({
-  totalFees = sessionSummaryData.totalFees,
-  paidAmount = sessionSummaryData.paidAmount,
+  totalFees = 0,
+  paidAmount = 0,
 }: SessionSummaryProps) {
 
   const percentage = Math.round((paidAmount / totalFees) * 100);

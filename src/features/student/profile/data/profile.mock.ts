@@ -27,10 +27,6 @@ export const STUDENT_DATA: Student = {
     gender: "Male",
     bloodGroup: "B+",
     age: 16,
-    fatherName: "Suresh Kumar",
-    fatherPhone: "+91 98765 43210",
-    motherName: "Lakshmi Devi",
-    motherPhone: "+91 87654 32109",
     fullAddress: "Plot 12, Hanamkonda Urban, Warangal — 506001",
   },
   quickDownloads: [

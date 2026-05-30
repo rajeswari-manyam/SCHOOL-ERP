@@ -1,53 +1,266 @@
+// ExamPage.tsx
+import { useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { BookOpen, CalendarDays, FileText, AlertCircle, Mail } from "lucide-react";
+import { BookOpen, CalendarDays, FileText, AlertCircle, Mail, Loader2 } from "lucide-react";
 import { useExamsStore } from "../store/useExam.store";
-import { upcomingExams, nextExam, resultSummaries, reportCard } from "../data/data";
-import { findResultById } from "../utils/exam.utils";
+import { reportCard } from "../data/data";
 import { ExamBanner } from "../components/ExamBanner";
 import { ExamTable } from "../components/ExamTable";
 import { ResultSummaryCard } from "../components/ResultSummaryCard";
 import { ResultsTable } from "../components/ResultTable";
 import { ReportCardTable } from "../components/ReportCardTable";
 import { Card, CardContent } from "@/components/ui/card";
+import { getAllExamTimetable } from "../../../../services/examtimetable.api";
+import type { ExamTimetable } from "../../../../services/examtimetable.api";
+import { getStudentResults } from "../../../../services/results.api";
+import type { Result } from "../../../../services/results.api";
+import type { Exam, ExamResult, ResultSummary, ExamBannerProps } from "../types/exam.types";
+import dayjs from "dayjs";
 
 type ParentLayoutContext = {
   activeChild: {
     id: number;
     name: string;
-    class: string;
+    class: string;   // e.g. "10A"
     school: string;
     avatar: string;
   };
 };
 
 const TABS = [
-  { id: "upcoming" as const, label: "Upcoming Exams" },
-  { id: "results" as const, label: "Results" },
-  { id: "reportcard" as const, label: "Report Card" },
+  { id: "upcoming"   as const, label: "Upcoming Exams" },
+  { id: "results"    as const, label: "Results"        },
+  { id: "reportcard" as const, label: "Report Card"    },
 ];
 
+// Exam types the user can switch between in the Results dropdown
+const EXAM_TYPES = [
+  "Unit Test 1",
+  "Unit Test 2",
+  "Midterm",
+  "Unit Test 3",
+  "Final",
+];
+
+const CURRENT_ACADEMIC_YEAR = "2024-25";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const LoadingState = () => (
+  <div className="flex items-center justify-center py-16">
+    <Loader2 size={28} className="animate-spin text-[#3525CD]" />
+  </div>
+);
+
+const ErrorState = ({ message }: { message: string }) => (
+  <div className="bg-white rounded-2xl border border-red-100 px-5 py-8 flex flex-col items-center gap-2 text-center">
+    <AlertCircle size={24} className="text-red-400" />
+    <p className="text-[13px] text-red-500">{message}</p>
+  </div>
+);
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="bg-white rounded-2xl border border-[#E8EBF2] px-5 py-10 text-center">
+    <p className="text-[13px] text-gray-400">{message}</p>
+  </div>
+);
+
+/** Split "10A" → { classname: "10", sectionname: "A" } */
+function parseClassSection(classStr?: string) {
+  if (!classStr) {
+    return { classname: "", sectionname: "" };
+  }
+
+  const match = classStr.match(/^(\d+)([A-Za-z]*)$/);
+
+  return {
+    classname: match?.[1] ?? classStr,
+    sectionname: match?.[2] ?? "",
+  };
+}
+/** Map API ExamTimetable → local Exam for ExamTable */
+function mapApiExam(e: ExamTimetable): Exam {
+  const dateObj = dayjs(e.exam_date);
+  return {
+    id:       e.id,
+    subject:  e.subjectname,
+    date:     dateObj.isValid() ? dateObj.format("DD MMM YYYY") : e.exam_date,
+    day:      dateObj.isValid() ? dateObj.format("dddd") : "",
+    time:     `${e.start_time} – ${e.end_time}`,
+    venue:    `Room ${e.room_no}`,
+    examName: e.exam_name,
+  };
+}
+
+/** Build ExamBannerProps from the soonest upcoming exam */
+function buildBannerProps(e: ExamTimetable): ExamBannerProps {
+  const examDate  = dayjs(e.exam_date);
+  const today     = dayjs().startOf("day");
+  const daysLeft  = examDate.isValid() ? Math.max(0, examDate.diff(today, "day")) : 0;
+  const hoursLeft = daysLeft === 0
+    ? Math.max(0, dayjs(`${e.exam_date} ${e.start_time}`).diff(dayjs(), "hour"))
+    : 0;
+  return {
+    name:     `${e.exam_name} — ${e.subjectname}`,
+    date:     examDate.isValid() ? examDate.format("DD MMMM YYYY") : e.exam_date,
+    time:     e.start_time,
+    venue:    `Room ${e.room_no}`,
+    daysLeft,
+    hoursLeft,
+  };
+}
+
+/** Map flat Result[] from API → ResultSummary shape for UI components */
+function mapApiResults(results: Result[], examType: string, studentName: string): ResultSummary {
+  const totalMarksPerSubject = 100; // adjust if your school uses different max
+
+  const examResults: ExamResult[] = results.map((r) => {
+    const percentage = Math.round((r.marks / totalMarksPerSubject) * 100);
+    return {
+      subject:       r.subjectName ?? "Unknown",
+      marksObtained: r.marks,
+      totalMarks:    totalMarksPerSubject,
+      percentage,
+      grade:         r.grade,
+      status:        r.absent ? "Fail" : r.marks >= 35 ? "Pass" : "Fail",
+    };
+  });
+
+  const totalObtained = examResults.reduce((sum, r) => sum + r.marksObtained, 0);
+  const totalMarks    = examResults.reduce((sum, r) => sum + r.totalMarks, 0);
+  const percentage    = totalMarks > 0 ? Math.round((totalObtained / totalMarks) * 100 * 10) / 10 : 0;
+
+  // Overall grade from highest-marks subject or first result
+  const overallGrade  = results[0]?.grade ?? "N/A";
+
+  // Strongest subjects = top 3 by marks
+  const strongest = [...examResults]
+    .sort((a, b) => b.marksObtained - a.marksObtained)
+    .slice(0, 3)
+    .map((r) => r.subject);
+
+  const passCount = examResults.filter((r) => r.status === "Pass").length;
+  const analyticsNote = percentage >= 75
+    ? `${studentName} has shown strong performance in ${examType}. Keep up the momentum!`
+    : percentage >= 50
+    ? `${studentName} performed well in ${examType}. Focus on weaker subjects to improve further.`
+    : `${studentName} needs extra attention in some subjects. Consider additional practice sessions.`;
+
+  return {
+    id:               examType,
+    examName:         examType,
+    totalObtained,
+    totalMarks,
+    percentage,
+    grade:            overallGrade,
+    rank:             "—",   // rank not available in this API
+    strongestSubjects: strongest,
+    analyticsNote,
+    results:          examResults,
+  };
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function ExamsPage() {
-  const { tab, setTab, selectedResultId, setSelectedResultId } = useExamsStore();
   const { activeChild } = useOutletContext<ParentLayoutContext>();
-  const selectedResult = findResultById(resultSummaries, selectedResultId);
+
+  const {
+    tab, setTab,
+    upcomingExams, upcomingLoading, upcomingError,
+    setUpcomingExams, setUpcomingLoading, setUpcomingError,
+    selectedExamType, setSelectedExamType,
+    results, resultsLoading, resultsError,
+    setResults, setResultsLoading, setResultsError,
+  } = useExamsStore();
+
+  // ── Fetch: Upcoming exams by class + section ──────────────────────────────
+  useEffect(() => {
+    if (tab !== "upcoming") return;
+   const { classname, sectionname } = parseClassSection(activeChild?.class); 
+
+    let cancelled = false;
+    setUpcomingLoading(true);
+    setUpcomingError(null);
+
+    getAllExamTimetable(classname, sectionname)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.status && Array.isArray(res.data)) {
+          setUpcomingExams(res.data);
+        } else {
+          setUpcomingError("Failed to load exam timetable.");
+        }
+      })
+      .catch((err) => { if (!cancelled) setUpcomingError(err?.message ?? "Something went wrong."); })
+      .finally(() => { if (!cancelled) setUpcomingLoading(false); });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, activeChild.class]);
+
+  // ── Fetch: Results by student_id + exam_type + academic_year ─────────────
+  useEffect(() => {
+    if (tab !== "results") return;
+
+    let cancelled = false;
+    setResultsLoading(true);
+    setResultsError(null);
+
+    getStudentResults(
+      String(activeChild.id),
+      selectedExamType,
+      CURRENT_ACADEMIC_YEAR
+    )
+      .then((res) => {
+        if (cancelled) return;
+        if (res.status && Array.isArray(res.data)) {
+          setResults(res.data);
+        } else {
+          setResultsError("Failed to load results.");
+        }
+      })
+      .catch((err) => { if (!cancelled) setResultsError(err?.message ?? "Something went wrong."); })
+      .finally(() => { if (!cancelled) setResultsLoading(false); });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, activeChild.id, selectedExamType]);
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const mappedExams   = upcomingExams.map(mapApiExam);
+  const sortedRaw     = [...upcomingExams].sort((a, b) =>
+    dayjs(a.exam_date).valueOf() - dayjs(b.exam_date).valueOf()
+  );
+  const bannerProps   = sortedRaw.length > 0 ? buildBannerProps(sortedRaw[0]) : null;
+  const groupLabel    = sortedRaw.length > 0
+    ? `${sortedRaw[0].exam_name} — ${dayjs(sortedRaw[0].exam_date).format("MMMM YYYY")}`
+    : "Upcoming Exams";
+
+  const resultSummary = results.length > 0
+    ? mapApiResults(results, selectedExamType, activeChild.name)
+    : null;
 
   return (
     <div className="w-full max-w-[1200px] mx-auto pt-8 px-4 sm:px-6 lg:px-10 pb-16 bg-[#F4F6FB] min-h-screen">
 
+      {/* BREADCRUMB */}
       <p className="text-[12px] text-gray-400 mb-4">
         {activeChild.name} ›
         <span className="text-gray-600 font-medium"> Exams &amp; Results</span>
       </p>
 
+      {/* PAGE HEADER */}
       <div className="mb-6">
         <h1 className="text-[22px] font-bold text-[#0B1C30]">
           Exams &amp; Results — {activeChild.name}
         </h1>
         <p className="text-[13px] text-gray-400 mt-1">
-          Class {activeChild.class} | Academic Year 2024-25
+          Class {activeChild.class} | Academic Year {CURRENT_ACADEMIC_YEAR}
         </p>
       </div>
 
+      {/* TAB BAR */}
       <div className="flex border-b border-[#E8EBF2] mb-7 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <button
@@ -64,96 +277,97 @@ export default function ExamsPage() {
         ))}
       </div>
 
-      {/* UPCOMING TAB */}
+      {/* ── UPCOMING TAB ── */}
       {tab === "upcoming" && (
-        <div>
-          <div className="mb-6">
-            <ExamBanner {...nextExam} />
-          </div>
-          <Card className="rounded-2xl shadow-sm overflow-hidden border-0 mb-6">
-            <CardContent className="p-0">
-              <div className="px-5 pt-5 flex items-center justify-between">
-                <p className="text-[14px] font-semibold text-[#0B1C30]">
-                  Unit Test 1 — April 2025
-                </p>
-                <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#3525CD] hover:underline rounded-full bg-[#F4F6FB] px-2 py-1">
-                  <BookOpen size={13} />
-                  View Syllabus
-                </button>
-              </div>
-              <div className="px-5 pt-4">
-                <ExamTable exams={upcomingExams} />
-              </div>
-              <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between px-5 py-4 border-t border-[#EEF2F7]">
-                <p className="text-[12px] text-gray-400">
-                  Sync your exam schedule with Google Calendar
-                </p>
-                <button className="bg-[#006C49] text-white text-[13px] font-semibold px-5 py-2.5 rounded-xl hover:bg-[#00563a] transition-all flex items-center gap-2">
-                  <CalendarDays size={14} />
-                  Add all to Google Calendar
-                </button>
-              </div>
-            </CardContent>
-          </Card>
+        upcomingLoading ? <LoadingState /> :
+        upcomingError   ? <ErrorState message={upcomingError} /> :
+        upcomingExams.length === 0 ? <EmptyState message="No upcoming exams scheduled for this class." /> : (
+          <div>
+            {bannerProps && (
+              <div className="mb-6"><ExamBanner {...bannerProps} /></div>
+            )}
+            <Card className="rounded-2xl shadow-sm overflow-hidden border-0 mb-6">
+              <CardContent className="p-0">
+                <div className="px-5 pt-5 flex items-center justify-between">
+                  <p className="text-[14px] font-semibold text-[#0B1C30]">{groupLabel}</p>
+                  <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#3525CD] hover:underline rounded-full bg-[#F4F6FB] px-2 py-1">
+                    <BookOpen size={13} />
+                    View Syllabus
+                  </button>
+                </div>
+                <div className="px-5 pt-4">
+                  <ExamTable exams={mappedExams} />
+                </div>
+                <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between px-5 py-4 border-t border-[#EEF2F7]">
+                  <p className="text-[12px] text-gray-400">Sync your exam schedule with Google Calendar</p>
+                  <button className="bg-[#006C49] text-white text-[13px] font-semibold px-5 py-2.5 rounded-xl hover:bg-[#00563a] transition-all flex items-center gap-2">
+                    <CalendarDays size={14} />
+                    Add all to Google Calendar
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Preparation Guide card */}
-            <div className="bg-[#EFF4FF] rounded-2xl p-5 flex gap-3 border border-[#E8EBF2] hover:shadow-md transition-shadow cursor-pointer">
-              <div className="w-9 h-9 rounded-xl bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
-                <FileText size={18} color="#3525CD" strokeWidth={1.3} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#EFF4FF] rounded-2xl p-5 flex gap-3 border border-[#E8EBF2] hover:shadow-md transition-shadow cursor-pointer">
+                <div className="w-9 h-9 rounded-xl bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
+                  <FileText size={18} color="#3525CD" strokeWidth={1.3} />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#0B1C30] mb-1">Preparation Guide</p>
+                  <p className="text-[12px] text-gray-400 leading-relaxed mb-2">
+                    Download the detailed syllabus and reference material for all subjects.
+                  </p>
+                  <button className="text-[12px] font-semibold text-[#3525CD] hover:underline">VIEW RESOURCES →</button>
+                </div>
               </div>
-              <div>
-                <p className="text-[13px] font-semibold text-[#0B1C30] mb-1">Preparation Guide</p>
-                <p className="text-[12px] text-gray-400 leading-relaxed mb-2">
-                  Download the detailed syllabus and reference material for all Unit Test 1 subjects.
-                </p>
-                <button className="text-[12px] font-semibold text-[#3525CD] hover:underline">VIEW RESOURCES →</button>
-              </div>
-            </div>
-
-            {/* Need Assistance card */}
-            <div className="bg-[#FFDDB8] rounded-2xl p-5 flex gap-3 border border-[#E8EBF2] hover:shadow-md transition-shadow cursor-pointer">
-              <div className="w-9 h-9 rounded-xl bg-[#FFF4ED] flex items-center justify-center flex-shrink-0">
-                <AlertCircle size={18} color="#F97316" strokeWidth={1.3} />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-[#0B1C30] mb-1">Need Assistance?</p>
-                <p className="text-[12px] text-gray-400 leading-relaxed mb-2">
-                  Questions regarding the exam schedule or venues? Contact the administration desk.
-                </p>
-                <button className="flex items-center gap-1 text-[12px] font-semibold text-[#3525CD] hover:underline">
-                  CONTACT ADMIN <Mail size={12} className="ml-0.5" />
-                </button>
+              <div className="bg-[#FFDDB8] rounded-2xl p-5 flex gap-3 border border-[#E8EBF2] hover:shadow-md transition-shadow cursor-pointer">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF4ED] flex items-center justify-center flex-shrink-0">
+                  <AlertCircle size={18} color="#F97316" strokeWidth={1.3} />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#0B1C30] mb-1">Need Assistance?</p>
+                  <p className="text-[12px] text-gray-400 leading-relaxed mb-2">
+                    Questions regarding the exam schedule or venues? Contact the administration desk.
+                  </p>
+                  <button className="flex items-center gap-1 text-[12px] font-semibold text-[#3525CD] hover:underline">
+                    CONTACT ADMIN <Mail size={12} className="ml-0.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )
       )}
 
-      {/* RESULTS TAB */}
+      {/* ── RESULTS TAB (real API) ── */}
       {tab === "results" && (
         <div>
+          {/* Exam type selector */}
           <div className="mb-5">
             <select
-              value={selectedResultId}
-              onChange={(e) => setSelectedResultId(e.target.value)}
+              value={selectedExamType}
+              onChange={(e) => setSelectedExamType(e.target.value)}
               className="border border-[#E8EBF2] rounded-xl px-4 py-2 text-[13px] text-[#0B1C30] bg-white cursor-pointer"
             >
-              {resultSummaries.map((s) => (
-                <option key={s.id} value={s.id}>{s.examName}</option>
+              {EXAM_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
               ))}
             </select>
           </div>
-          {selectedResult && (
+
+          {resultsLoading ? <LoadingState /> :
+           resultsError   ? <ErrorState message={resultsError} /> :
+           !resultSummary ? <EmptyState message="No results found for this exam." /> : (
             <>
-              <ResultSummaryCard summary={selectedResult} />
-              <ResultsTable results={selectedResult.results} />
+              <ResultSummaryCard summary={resultSummary} />
+              <ResultsTable results={resultSummary.results} />
             </>
           )}
         </div>
       )}
 
-      {/* REPORT CARD TAB */}
+      {/* ── REPORT CARD TAB (mock data) ── */}
       {tab === "reportcard" && (
         <div>
           <div className="flex items-center justify-between mb-5">

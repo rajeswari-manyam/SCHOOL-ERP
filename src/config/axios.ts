@@ -1,4 +1,4 @@
-// src/config/axios.ts
+
 import axios from "axios";
 import { getAuthToken, getTenantId, useAuthStore } from "@/store/authStore";
 
@@ -10,7 +10,7 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ── Request: attach auth headers ──────────────────────────────────────────────
+
 api.interceptors.request.use(
   (config) => {
     const token    = getAuthToken();
@@ -23,7 +23,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Response: handle 401 globally ─────────────────────────────────────────────
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

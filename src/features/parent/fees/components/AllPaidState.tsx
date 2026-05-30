@@ -12,9 +12,18 @@ import {
 } from "lucide-react";
 
 import type { AllPaidStateProps } from "../types/fee.types";
-import { paidFeeSummary } from "../data/fee.data";
 
-export function AllPaidState({ onTabChange }: AllPaidStateProps) {
+export function AllPaidState({
+  onTabChange,
+  studentName = "Student",
+  month = "",
+  lastPayment = null,
+  nextDue = null,
+  phone,
+  balance = 0,
+  standing = "Good",
+  consecutiveOnTime = 0,
+}: AllPaidStateProps) {
   return (
     <div className="flex flex-col gap-5">
 
@@ -29,29 +38,31 @@ export function AllPaidState({ onTabChange }: AllPaidStateProps) {
 
             <div className="flex flex-col gap-1">
               <p className={combineTypography(typography.body.xs, "text-emerald-700")}>
-                All fees paid for {paidFeeSummary.month}
+                {month ? `All fees paid for ${month}` : "All fees paid"}
               </p>
 
               <p className={combineTypography(typography.body.xs, "text-emerald-600")}>
-                {paidFeeSummary.studentName} has no outstanding dues for this month.
+                {studentName} has no outstanding dues for this month.
               </p>
 
-              <div className="flex items-center gap-1.5 mt-1">
-                <Receipt size={12} color="#16A34A" strokeWidth={1.5} />
-                <p className={combineTypography(typography.body.xs, "text-emerald-600")}>
-                  Last payment: <b>₹{paidFeeSummary.lastPayment.amount}</b>{" "}
-                  on {paidFeeSummary.lastPayment.date} |{" "}
-                  {paidFeeSummary.lastPayment.mode}
-                </p>
-              </div>
+              {lastPayment && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Receipt size={12} color="#16A34A" strokeWidth={1.5} />
+                  <p className={combineTypography(typography.body.xs, "text-emerald-600")}>
+                    Last payment: <b>₹{lastPayment.amount.toLocaleString("en-IN")}</b>{" "}
+                    on {lastPayment.date} | {lastPayment.mode}
+                  </p>
+                </div>
+              )}
 
-              <div className="flex items-center gap-1.5">
-                <Calendar size={12} color="#16A34A" strokeWidth={1.5} />
-                <p className={combineTypography(typography.body.xs, "text-emerald-600")}>
-                  Next due: <b>{paidFeeSummary.nextDue.label}</b> on{" "}
-                  {paidFeeSummary.nextDue.date}
-                </p>
-              </div>
+              {nextDue && (
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={12} color="#16A34A" strokeWidth={1.5} />
+                  <p className={combineTypography(typography.body.xs, "text-emerald-600")}>
+                    Next due: <b>{nextDue.label}</b> on {nextDue.date}
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
@@ -91,14 +102,16 @@ export function AllPaidState({ onTabChange }: AllPaidStateProps) {
             You will be notified via WhatsApp when new fees are due.
           </p>
 
-          <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-full bg-[#F0FDF4] border border-emerald-200">
-            <div className="w-[14px] h-[14px] rounded-full bg-[#25D366] flex items-center justify-center shrink-0">
-              <MessageCircle size={8} color="white" strokeWidth={2} />
+          {phone && (
+            <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-full bg-[#F0FDF4] border border-emerald-200">
+              <div className="w-[14px] h-[14px] rounded-full bg-[#25D366] flex items-center justify-center shrink-0">
+                <MessageCircle size={8} color="white" strokeWidth={2} />
+              </div>
+              <p className={combineTypography(typography.body.xs, "text-gray-600")}>
+                {phone} will receive reminders
+              </p>
             </div>
-            <p className={combineTypography(typography.body.xs, "text-gray-600")}>
-              {paidFeeSummary.phone} will receive reminders
-            </p>
-          </div>
+          )}
 
         </CardContent>
       </Card>
@@ -115,7 +128,7 @@ export function AllPaidState({ onTabChange }: AllPaidStateProps) {
               </p>
             </div>
             <p className={combineTypography(typography.body.xs, "text-[#0B1C30]")}>
-              ₹{paidFeeSummary.balance}
+              ₹{balance.toLocaleString("en-IN")}
             </p>
             <span className={combineTypography(typography.body.xs, "text-emerald-700 px-2 py-1 rounded-full")}>
               Fully Cleared
@@ -132,11 +145,13 @@ export function AllPaidState({ onTabChange }: AllPaidStateProps) {
               </p>
             </div>
             <p className={combineTypography(typography.body.xs, "text-emerald-600")}>
-              {paidFeeSummary.standing}
+              {standing}
             </p>
-            <p className={combineTypography(typography.body.xs, "text-gray-400 mt-1")}>
-              {paidFeeSummary.consecutiveOnTime} Consecutive on-time payments
-            </p>
+            {consecutiveOnTime > 0 && (
+              <p className={combineTypography(typography.body.xs, "text-gray-400 mt-1")}>
+                {consecutiveOnTime} Consecutive on-time payments
+              </p>
+            )}
           </CardContent>
         </Card>
 

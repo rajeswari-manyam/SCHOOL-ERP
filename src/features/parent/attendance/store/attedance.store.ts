@@ -1,67 +1,90 @@
-// import { create } from "zustand"
-// import {
-//   type AttendanceDay,
-//   type AbsentRecord,
-//   type AttendanceStats,
-//   type ChildInfo,
-// } from "../types/attendance.types";
+import { create } from "zustand"
+import type {
+  AttendanceRecord as ApiRecord,
+ 
+} from "../../../../services/attendance.api";
 
-// interface AttendanceState {
-//   month: string
-//   child: ChildInfo
-//   days: AttendanceDay[]
-//   stats: AttendanceStats
-//   absents: AbsentRecord[]
+// ─── Shape of one calendar day entry ──────────────────────
+export interface DayEntry {
+  id: string
+  date: string           // "YYYY-MM-DD"
+  status: "present" | "absent" | "late" | "holiday"
+  reason?: string | null
+}
 
-//   setMonth: (month: string) => void
-// }
+// ─── Monthly summary numbers ───────────────────────────────
+export interface MonthSummary {
+  present: number
+  absent: number
+  late: number
+  total: number
+}
 
-// export const useAttendanceStore = create<AttendanceState>(
-//   (set) => ({
-//     month: "March 2025",
+// ─── Yearly summary ────────────────────────────────────────
+export interface YearlySummary {
+  present: number
+  total: number
+  monthlyTrend: { month: string; attendance: number }[]
+}
 
-//     child: {
-//       id: "1",
-//       name: "Rahul Kumar",
-//       className: "5",
-//       section: "A",
-//     },
+// ─── Store ─────────────────────────────────────────────────
+interface AttendanceState {
+  // navigation
+  currentDate: Date
 
-//     days: [
-//       { date: "2025-03-01", status: "present" },
-//       { date: "2025-03-02", status: "present" },
-//       { date: "2025-03-03", status: "absent" },
-//       { date: "2025-03-04", status: "late" },
-//       { date: "2025-03-05", status: "present" },
-//     ],
+  // data
+  monthlyDays: DayEntry[]
+  monthSummary: MonthSummary
+  yearlySummary: YearlySummary | null
+  selectedRecord: ApiRecord | null   // loaded by getAttendanceById
 
-//     stats: {
-//       present: 18,
-//       absent: 3,
-//       late: 2,
-//     },
+  // loading flags
+  isLoadingMonthly: boolean
+  isLoadingYearly: boolean
+  isLoadingRecord: boolean
 
-//     absents: [
-//       {
-//         date: "12 Mar 2025",
-//         reason: "Absent",
-//         timeline: [
-//           {
-//             title: "Teacher marked absent",
-//             time: "09:05 AM",
-//           },
-//           {
-//             title: "Alert sent to parent",
-//             time: "09:06 AM",
-//           },
-//           {
-//             title: "WhatsApp delivered",
-//             time: "09:07 AM",
-//           },
-//         ],
-//       },
-//     ],
+  // errors
+  monthlyError: string | null
+  yearlyError: string | null
+  recordError: string | null
 
-//     setMonth: (month) => set({ month }),
-//   })
-// )
+  // actions
+  setCurrentDate: (d: Date) => void
+  setMonthlyDays: (days: DayEntry[], summary: MonthSummary) => void
+  setYearlySummary: (s: YearlySummary) => void
+  setSelectedRecord: (r: ApiRecord | null) => void
+  setLoadingMonthly: (v: boolean) => void
+  setLoadingYearly: (v: boolean) => void
+  setLoadingRecord: (v: boolean) => void
+  setMonthlyError: (e: string | null) => void
+  setYearlyError: (e: string | null) => void
+  setRecordError: (e: string | null) => void
+}
+
+export const useAttendanceStore = create<AttendanceState>((set) => ({
+  currentDate: new Date(),
+
+  monthlyDays: [],
+  monthSummary: { present: 0, absent: 0, late: 0, total: 0 },
+  yearlySummary: null,
+  selectedRecord: null,
+
+  isLoadingMonthly: false,
+  isLoadingYearly: false,
+  isLoadingRecord: false,
+
+  monthlyError: null,
+  yearlyError: null,
+  recordError: null,
+
+  setCurrentDate: (d) => set({ currentDate: d }),
+  setMonthlyDays: (days, summary) => set({ monthlyDays: days, monthSummary: summary }),
+  setYearlySummary: (s) => set({ yearlySummary: s }),
+  setSelectedRecord: (r) => set({ selectedRecord: r }),
+  setLoadingMonthly: (v) => set({ isLoadingMonthly: v }),
+  setLoadingYearly: (v) => set({ isLoadingYearly: v }),
+  setLoadingRecord: (v) => set({ isLoadingRecord: v }),
+  setMonthlyError: (e) => set({ monthlyError: e }),
+  setYearlyError: (e) => set({ yearlyError: e }),
+  setRecordError: (e) => set({ recordError: e }),
+}))

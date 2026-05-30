@@ -30,11 +30,11 @@ const navLinks = [
 
 interface ParentTopNavBarProps {
     activeChild: {
-        id: number
-        name: string
-        class: string
-        school: string
-        avatar: string
+        id?: number | string;
+        name?: string;
+        class?: string;
+        school?: string;
+        avatar?: string;
     }
     onSwitchChild: () => void
 }
@@ -49,12 +49,20 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
     const handleLogout = () => {
         navigate("/login");
     };
+const name = activeChild?.name ?? "";
 
-    const user = {
-        name: activeChild.name,
-        initials: activeChild.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase(),
-        className: `Class ${activeChild.class}`,
-    };
+const user = {
+    name: name || "Student",
+    initials: name
+        ? name
+              .split(" ")
+              .map((n) => n?.[0] ?? "")
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()
+        : "ST",
+    className: `Class ${activeChild?.class ?? "-"}`,
+};
 
     return (
         <>

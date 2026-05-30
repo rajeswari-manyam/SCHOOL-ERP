@@ -2,12 +2,8 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import type { FeeBannerProps } from "../types/fee.types";
-import { feeBannerDummy } from "../data/fee.data";
 
-export function FeeBanner({
-  text = feeBannerDummy.text,
-  onPayNow,
-}: FeeBannerProps) {
+export function FeeBanner({ text, onPayNow }: FeeBannerProps) {
   return (
     <div
       className="
@@ -26,15 +22,11 @@ export function FeeBanner({
         cursor-pointer
       "
     >
-      {/* Left side */}
       <div className="flex items-center gap-2">
         <AlertTriangle size={16} color="#92400E" strokeWidth={1.5} />
-        <span className="text-[13px] text-[#92400E] font-medium">
-          {text}
-        </span>
+        <span className="text-[13px] text-[#92400E] font-medium">{text}</span>
       </div>
 
-      {/* Button */}
       <Button
         onClick={onPayNow}
         className="

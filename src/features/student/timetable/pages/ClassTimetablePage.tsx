@@ -2,7 +2,7 @@ import {
   useClassTimetable,
   useUpcomingExaminations,
   useAddExamsToCalendar,
-} from "../hooks/Useclasstimetable";
+} from "../hooks/useclassTimetable";
 
 import TimetableGrid from "../components/Timetablegrid";
 import SubjectLegend from "../components/Subjectlegend";

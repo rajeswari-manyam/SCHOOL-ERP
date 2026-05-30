@@ -1,16 +1,49 @@
 import { create } from "zustand";
 import type { ExamTab } from "../types/exam.types";
+import type { ExamTimetable } from "../../../../services/examtimetable.api";
+import type { Result } from "../../../../services/results.api";
 
 interface ExamsState {
   tab: ExamTab;
-  selectedResultId: string;
   setTab: (tab: ExamTab) => void;
-  setSelectedResultId: (id: string) => void;
+
+  // Upcoming exams (from API)
+  upcomingExams: ExamTimetable[];
+  upcomingLoading: boolean;
+  upcomingError: string | null;
+  setUpcomingExams: (data: ExamTimetable[]) => void;
+  setUpcomingLoading: (v: boolean) => void;
+  setUpcomingError: (e: string | null) => void;
+
+  // Results (from API)
+  selectedExamType: string;
+  setSelectedExamType: (v: string) => void;
+  results: Result[];
+  resultsLoading: boolean;
+  resultsError: string | null;
+  setResults: (data: Result[]) => void;
+  setResultsLoading: (v: boolean) => void;
+  setResultsError: (e: string | null) => void;
 }
 
 export const useExamsStore = create<ExamsState>((set) => ({
   tab: "upcoming",
-  selectedResultId: "ut1-jan-2025",
   setTab: (tab) => set({ tab }),
-  setSelectedResultId: (id) => set({ selectedResultId: id }),
+
+  upcomingExams: [],
+  upcomingLoading: false,
+  upcomingError: null,
+  setUpcomingExams: (data) => set({ upcomingExams: data }),
+  setUpcomingLoading: (v) => set({ upcomingLoading: v }),
+  setUpcomingError: (e) => set({ upcomingError: e }),
+
+  // Default exam_type — user can switch via dropdown
+  selectedExamType: "Unit Test 1",
+  setSelectedExamType: (v) => set({ selectedExamType: v }),
+  results: [],
+  resultsLoading: false,
+  resultsError: null,
+  setResults: (data) => set({ results: data }),
+  setResultsLoading: (v) => set({ resultsLoading: v }),
+  setResultsError: (e) => set({ resultsError: e }),
 }));

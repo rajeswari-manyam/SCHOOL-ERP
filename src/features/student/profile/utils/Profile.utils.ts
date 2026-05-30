@@ -47,10 +47,6 @@ export const PERSONAL_INFO_FIELDS: FieldConfig[] = [
   { key: "gender",       label: "Gender",           span: 1 },
   { key: "bloodGroup",   label: "Blood Group",      span: 1 },
   { key: "age",          label: "Age",              span: 1 },
-  { key: "fatherName",   label: "Father's Name",    span: 1 },
-  { key: "fatherPhone",  label: "Father's Phone",   span: 1 },
-  { key: "motherName",   label: "Mother's Name",    span: 1 },
-  { key: "motherPhone",  label: "Mother's Phone",   span: 1 },
   { key: "fullAddress",  label: "Full Address",     span: 2 },
 ];
 

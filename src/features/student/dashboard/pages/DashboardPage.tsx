@@ -1,27 +1,22 @@
-import { useDashboard } from "../hooks/useDashboard";
+// src/features/dashboard/pages/DashboardPage.tsx
+// No config needed — all data is derived from the Zustand auth store automatically.
+
+import { useDashboard }                                from "../hooks/useDashboard";
+import { DashboardStatCard, DashboardStatGrid }        from "../components/DashboardStatCard";
+import { ScheduleTable }                               from "../components/ScheduleTable";
+import { HomeworkList }                                from "../components/Homeworklist";
+import { AttendanceCalendar }                          from "../components/Attendancecalendar";
+import { RecentResults }                               from "../components/Recentresults";
+import { LatestAnnouncements }                         from "../components/Latestannouncements";
+import type { StatItem }                               from "../types/dashboard.types";
 import {
-  DashboardStatCard,
-  DashboardStatGrid,
-} from "../components/DashboardStatCard";
-import { ScheduleTable } from "../components/ScheduleTable";
-import { HomeworkList } from "../components/Homeworklist";
-import { AttendanceCalendar } from "../components/Attendancecalendar";
-import { RecentResults } from "../components/Recentresults";
-import { LatestAnnouncements } from "../components/Latestannouncements";
-import type { StatItem } from "../types/dashboard.types";
-import {
-  CalendarDays,
-  Percent,
-  BookOpen,
-  FileText,
-  GraduationCap,
+  CalendarDays, Percent, BookOpen, FileText,
+  GraduationCap, Loader2,
 } from "lucide-react";
 import { MdLocationCity } from "react-icons/md";
-import { TbListNumbers } from "react-icons/tb";
+import { TbListNumbers }  from "react-icons/tb";
 
-
-// ─── Icon helpers ─────────────────────────────────────────────────────────────
-
+// ─── Icon helpers ──────────────────────────────────────────────────────────────
 const iconColorMap: Record<string, string> = {
   attendance: "#00714D",
   percent:    "#3525CD",
@@ -52,57 +47,87 @@ const getVariant = (
   }
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Loading ───────────────────────────────────────────────────────────────────
+const LoadingSkeleton = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="flex flex-col items-center gap-3 text-slate-400">
+      <Loader2 size={32} className="animate-spin" />
+      <p className="text-sm font-medium">Loading your dashboard…</p>
+    </div>
+  </div>
+);
+
+// ─── Error ─────────────────────────────────────────────────────────────────────
+const ErrorState = ({ message }: { message: string }) => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="text-center space-y-2 text-red-500">
+      <p className="text-base font-semibold">Failed to load dashboard</p>
+      <p className="text-sm text-slate-500">{message}</p>
+    </div>
+  </div>
+);
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────────
 export const Dashboard = () => {
   const {
+    loading,
+    error,
+    studentName,
+    rollNumber,
+    studentClass,
+    studentSection,
+    studentSchoolCode,
     stats,
     schedule,
     homework,
     attendance,
+    attendanceToday,
+    attendanceMonthLabel,
     recentResult,
     announcements,
-  } = useDashboard();
+  } = useDashboard(); // ← no config arg; reads from auth store internally
+
+  if (loading) return <LoadingSkeleton />;
+  if (error)   return <ErrorState message={error} />;
 
   return (
     <div className="min-h-screen">
-
       <main className="p-3 sm:p-4 md:p-6 max-w-screen-xl mx-auto space-y-4 sm:space-y-5">
 
-        {/* ───── GREETING ───── */}
-       {/* ───── GREETING HEADER (NON-CARD STYLE) ───── */}
-<div className="px-1 sm:px-2 py-2 sm:py-3">
+        {/* ── GREETING ── */}
+        <div className="px-1 sm:px-2 py-2 sm:py-3">
+          <h1 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
+            Good morning, {studentName}!
+          </h1>
 
-  <h1 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
-    Good morning, Ravi!
-  </h1>
+          <div className="text-xs sm:text-sm flex flex-wrap items-center gap-2 mt-1 text-slate-500">
 
-  <div className="text-xs sm:text-sm flex flex-wrap items-center gap-2 mt-1 text-slate-500">
+            <span className="flex items-center gap-1">
+              <GraduationCap size={14} className="text-slate-400" />
+              Class {studentClass}{studentSection}
+            </span>
 
-    <span className="flex items-center gap-1">
-      <GraduationCap size={14} className="text-slate-400" />
-      Class 10A
-    </span>
+            <span className="text-slate-300 hidden sm:inline">•</span>
 
-    <span className="text-slate-300 hidden sm:inline">•</span>
+            <span className="flex items-center gap-1">
+              <MdLocationCity size={14} className="text-slate-400" />
+              {studentSchoolCode}
+            </span>
 
-    <span className="flex items-center gap-1">
-      <MdLocationCity size={14} className="text-slate-400" />
-      Hanamkonda Public School
-    </span>
+            {rollNumber && (
+              <>
+                <span className="text-slate-300 hidden sm:inline">•</span>
+                <span className="flex items-center gap-1">
+                  <TbListNumbers size={14} className="text-slate-400" />
+                  Roll No: {rollNumber}
+                </span>
+              </>
+            )}
 
-    <span className="text-slate-300 hidden sm:inline">•</span>
+          </div>
+        </div>
 
-    <span className="flex items-center gap-1">
-      <TbListNumbers size={14} className="text-slate-400" />
-      Roll No: 01
-    </span>
-
-  </div>
-
-</div>
-      
-
-        {/* ───── STATS GRID (RESPONSIVE) ───── */}
+        {/* ── STATS ── */}
         <DashboardStatGrid>
           {stats.map((item, i) => (
             <DashboardStatCard
@@ -117,28 +142,31 @@ export const Dashboard = () => {
           ))}
         </DashboardStatGrid>
 
-        {/* ───── MAIN LAYOUT (STACK ON MOBILE) ───── */}
+        {/* ── MAIN LAYOUT ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 sm:gap-5">
 
-          {/* LEFT SECTION */}
           <div className="space-y-4 sm:space-y-5">
             <ScheduleTable data={schedule} />
-            <HomeworkList data={homework} />
+            <HomeworkList  data={homework} />
           </div>
 
-          {/* RIGHT SECTION (BECOMES BELOW ON MOBILE) */}
           <div className="space-y-4 sm:space-y-5">
             <AttendanceCalendar
               data={attendance}
-              today={24}
-              monthLabel="My Attendance – April"
+              today={attendanceToday}
+              monthLabel={attendanceMonthLabel}
             />
-            <RecentResults data={recentResult} />
+            {recentResult ? (
+              <RecentResults data={recentResult} />
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-400">
+                No recent results available.
+              </div>
+            )}
             <LatestAnnouncements data={announcements} />
           </div>
 
         </div>
-
       </main>
     </div>
   );

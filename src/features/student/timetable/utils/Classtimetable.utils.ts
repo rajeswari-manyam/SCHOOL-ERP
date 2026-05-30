@@ -31,16 +31,25 @@ export const SUBJECT_BG_COLORS: Record<string, string> = {
   FREE: "bg-gray-50",
 };
 
-export function isPeriodNow(startTime: string, endTime: string): boolean {
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+export function isPeriodNow(startTime?: string, endTime?: string): boolean {
+  // Guard: return false if times are missing or not in HH:MM format
+  if (!startTime || !endTime) return false;
 
   const toMinutes = (t: string) => {
-    const [h, m] = t.split(":").map(Number);
+    const parts = t.split(":");
+    if (parts.length < 2) return NaN;
+    const [h, m] = parts.map(Number);
     return h * 60 + m;
   };
 
-  return nowMinutes >= toMinutes(startTime) && nowMinutes < toMinutes(endTime);
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const start = toMinutes(startTime);
+  const end   = toMinutes(endTime);
+
+  if (isNaN(start) || isNaN(end)) return false;
+
+  return nowMinutes >= start && nowMinutes < end;
 }
 
 export function getTodayDay(): DayName {

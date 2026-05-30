@@ -1,9 +1,16 @@
 // HomeworkPage.tsx
+import { useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Loader2, AlertCircle } from "lucide-react";
 import { useHomeworkStore } from "../store/HomeWork.store";
-import { homeworkData, studyMaterials } from "../data/HomeWork.data";
-import { filterHomeworkByDay, groupBySubject, sortByDueDate } from "../utils/homework.utils";
+import {
+  filterHomeworkByDay,
+  groupBySubject,
+  sortByDueDate,
+  mapApiHomework,
+} from "../utils/homework.utils";
+import { getAllHomework, getHomeworkByClass } from "../../../../services/homework.api";
+import { useStudyMaterials } from "../hooks/useStudymaterial";
 import { DayFilter } from "../components/DayFilter";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
@@ -15,7 +22,7 @@ type ParentLayoutContext = {
   activeChild: {
     id: number;
     name: string;
-    class: string;
+    class: string;  // e.g. "10A"
     school: string;
     avatar: string;
   };
@@ -28,6 +35,31 @@ const TABS = [
 ];
 
 const SUBJECT_ORDER = ["ENGLISH", "MATHEMATICS", "SCIENCE"];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const LoadingState = () => (
+  <div className="flex items-center justify-center py-16">
+    <Loader2 size={28} className="animate-spin text-[#3525CD]" />
+  </div>
+);
+
+const ErrorState = ({ message }: { message: string }) => (
+  <div className="bg-white rounded-2xl border border-red-100 px-5 py-8 flex flex-col items-center gap-2 text-center">
+    <AlertCircle size={24} className="text-red-400" />
+    <p className={combineTypography(typography.body.small, "text-red-500")}>
+      {message}
+    </p>
+  </div>
+);
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="bg-white rounded-2xl border border-[#E8EBF2] px-5 py-10 text-center">
+    <p className={combineTypography(typography.body.small, "text-gray-400")}>
+      {message}
+    </p>
+  </div>
+);
 
 const NeedHelpCard = () => (
   <div className="bg-white rounded-2xl border border-[#E8EBF2] p-4 flex gap-3">
@@ -48,12 +80,90 @@ const NeedHelpCard = () => (
   </div>
 );
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function HomeworkPage() {
-  const { tab, setTab, day } = useHomeworkStore();
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
-  const thisWeekHomework = sortByDueDate(filterHomeworkByDay(homeworkData, day));
-  const allGrouped       = groupBySubject(sortByDueDate(homeworkData));
+  const {
+    tab, setTab, day,
+    allHomeworks, allLoading, allError,
+    setAllHomeworks, setAllLoading, setAllError,
+    weekHomeworks, weekLoading, weekError,
+    setWeekHomeworks, setWeekLoading, setWeekError,
+  } = useHomeworkStore();
+
+  // Strip trailing section letter: "10A" → "10", "9B" → "9"
+  // because the API stores className and section separately
+ const classNameForApi =
+  activeChild?.class?.replace(/[A-Za-z]+$/, "")?.trim() ?? ""; 
+
+  // ── Study Materials — fetched by className ────────────────────────────────
+  const {
+    materials,
+    loading: materialsLoading,
+    error: materialsError,
+  } = useStudyMaterials(tab === "materials" ? classNameForApi : "");
+
+  // ── Fetch: All Homework (tab = "all") ─────────────────────────────────────
+  useEffect(() => {
+    if (tab !== "all") return;
+
+    let cancelled = false;
+    setAllLoading(true);
+    setAllError(null);
+
+    getAllHomework({ is_published: true })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.status && Array.isArray(res.data)) {
+          setAllHomeworks(res.data.map(mapApiHomework));
+        } else {
+          setAllError(res.message ?? "Failed to load homework.");
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setAllError(err?.message ?? "Something went wrong.");
+      })
+      .finally(() => {
+        if (!cancelled) setAllLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
+  // ── Fetch: This Week — by class_id (activeChild.id) ───────────────────────
+  useEffect(() => {
+    if (tab !== "week") return;
+
+    let cancelled = false;
+    setWeekLoading(true);
+    setWeekError(null);
+
+    getHomeworkByClass(classNameForApi)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.status && Array.isArray(res.data)) {
+          setWeekHomeworks(res.data.map(mapApiHomework));
+        } else {
+          setWeekError(res.message ?? "Failed to load homework.");
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setWeekError(err?.message ?? "Something went wrong.");
+      })
+      .finally(() => {
+        if (!cancelled) setWeekLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, activeChild.id]);
+
+  // ── Derived data ──────────────────────────────────────────────────────────
+  const thisWeekHomework = sortByDueDate(filterHomeworkByDay(weekHomeworks ?? [], day));
+  const allGrouped       = groupBySubject(sortByDueDate(allHomeworks ?? []));
 
   return (
     <div className="w-full max-w-[1200px] mx-auto pt-6 sm:pt-[28px] px-4 sm:px-6 md:px-8 lg:px-[40px]
@@ -99,60 +209,64 @@ export default function HomeworkPage() {
             <DayFilter />
           </div>
 
-          <div className="flex flex-col gap-3">
-            {thisWeekHomework.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-[#E8EBF2] px-5 py-10 text-center">
-                <p className={combineTypography(typography.body.small, "text-gray-400")}>
-                  No homework for this day 🎉
-                </p>
-              </div>
-            ) : (
-              thisWeekHomework.map((hw) => (
-                <HomeworkCard key={hw.id} hw={hw} variant="week" />
-              ))
-            )}
-          </div>
+          {weekLoading ? (
+            <LoadingState />
+          ) : weekError ? (
+            <ErrorState message={weekError} />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {thisWeekHomework.length === 0 ? (
+                <EmptyState message="No homework for this day 🎉" />
+              ) : (
+                thisWeekHomework.map((hw) => (
+                  <HomeworkCard key={hw.id} hw={hw} variant="week" />
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {/* ── ALL HOMEWORK TAB ── */}
       {tab === "all" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-          {/* Left: subject-grouped list */}
           <div className="lg:col-span-2 flex flex-col gap-5">
-            {SUBJECT_ORDER.filter((s) => allGrouped[s]).map((subject) => {
-              const items = allGrouped[subject];
-              return (
-                <div key={subject}>
-                  {/* Subject header row */}
-                  <div className="flex items-center justify-between px-1 mb-2">
-                    <span className={combineTypography(
-                      typography.body.small,
-                      "font-bold text-gray-400 uppercase tracking-widest"
-                    )}>
-                      {subject}
-                    </span>
-                    <span className={combineTypography(
-                      typography.body.small,
-                      "rounded-full bg-[#E5EEFF] text-[#3525CD] px-2 py-1"
-                    )}>
-                      {items.length} assignment{items.length !== 1 ? "s" : ""}
-                    </span>
+            {allLoading ? (
+              <LoadingState />
+            ) : allError ? (
+              <ErrorState message={allError} />
+            ) : (allHomeworks ?? []).length === 0 ? (
+              <EmptyState message="No homework found." />
+            ) : (
+              SUBJECT_ORDER.filter((s) => allGrouped[s]).map((subject) => {
+                const items = allGrouped[subject];
+                return (
+                  <div key={subject}>
+                    <div className="flex items-center justify-between px-1 mb-2">
+                      <span className={combineTypography(
+                        typography.body.small,
+                        "font-bold text-gray-400 uppercase tracking-widest"
+                      )}>
+                        {subject}
+                      </span>
+                      <span className={combineTypography(
+                        typography.body.small,
+                        "rounded-full bg-[#E5EEFF] text-[#3525CD] px-2 py-1"
+                      )}>
+                        {items.length} assignment{items.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="bg-white rounded-2xl border border-[#E8EBF2] overflow-hidden">
+                      {items.map((hw) => (
+                        <HomeworkCard key={hw.id} hw={hw} variant="all" />
+                      ))}
+                    </div>
                   </div>
-
-                  {/* White card wrapper with dividers between rows */}
-                  <div className="bg-white rounded-2xl border border-[#E8EBF2] overflow-hidden">
-                    {items.map((hw) => (
-                      <HomeworkCard key={hw.id} hw={hw} variant="all" />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
 
-          {/* Right: sidebar */}
           <div className="flex flex-col gap-3">
             <HomeworkProgress />
             <RecommendedResources />
@@ -163,11 +277,19 @@ export default function HomeworkPage() {
 
       {/* ── STUDY MATERIALS TAB ── */}
       {tab === "materials" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {studyMaterials.map((item) => (
-            <StudyMaterialCard key={item.id} item={item} />
-          ))}
-        </div>
+        materialsLoading ? (
+          <LoadingState />
+        ) : materialsError ? (
+          <ErrorState message={materialsError} />
+        ) : materials.length === 0 ? (
+          <EmptyState message="No study materials available for this class." />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {materials.map((item) => (
+              <StudyMaterialCard key={item.id} item={item} />
+            ))}
+          </div>
+        )
       )}
 
     </div>
