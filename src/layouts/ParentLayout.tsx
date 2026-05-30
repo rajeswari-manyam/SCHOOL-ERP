@@ -4,47 +4,60 @@ import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNa
 import WhatsAppFAB from "../components/ui/whatsappfab";
 import { X } from "lucide-react";
 import { getParentById, getstudentsById } from "@/services/parent.api";
+import { useAuthStore } from "@/store/authStore";
 
 const ParentLayout = () => {
   const [children, setChildren] = useState<any[]>([]);
   const [activeChild, setActiveChild] = useState<any>(null);
   const [showChildModal, setShowChildModal] = useState(false);
+  const authUser = useAuthStore((s) => s.user);
 
   useEffect(() => {
   const fetchChildren = async () => {
-    try {
-      const parentId = localStorage.getItem("parentId");
-      if (!parentId) return;
+  try {
+  const parentId = localStorage.getItem("parentId") || authUser?.id;
 
-      const parent = await getParentById(parentId);
+if (!parentId) {
+  console.error("No parentId found");
+  return;
+}
 
-      const studentsData = await Promise.all(
-        parent.students.map(async (studentId: string) => {
-          const student = await getstudentsById(studentId);
+    const parent = await getParentById(parentId);
 
-          return {
-            id: student.id,
-            studentId: student.id,
-            parentId,
-            name: `${student.first_name} ${student.last_name}`.trim(),
-            class: student.class,
-            section: student.section,
-            school: student.school_code ?? "",
-            avatar: `https://i.pravatar.cc/150?u=${student.id}`,
-          };
-        })
-      );
+    console.log("Parent API:", parent);
 
-      const students = studentsData.filter(Boolean);
-      setChildren(students);
-      if (students.length > 0) setActiveChild(students[0]);
-    } catch (err) {
-      console.error("fetchChildren:", err);
+    const studentsData = await Promise.all(
+      parent.students.map(async (studentId: string) => {
+        const student = await getstudentsById(studentId);
+
+        console.log("Student API:", student);
+
+        return {
+          id: student.id,
+          studentId: student.id,
+          parentId,
+          parentName: parent.parent_name,
+          name: `${student.first_name} ${student.last_name}`.trim(),
+          class: student.class,
+          section: student.section,
+          school: student.school_code ?? "",
+          avatar: `https://i.pravatar.cc/150?u=${student.id}`,
+        };
+      })
+    );
+
+    const students = studentsData.filter(Boolean);
+    setChildren(students);
+
+    if (students.length > 0) {
+      setActiveChild(students[0]);
     }
-  };
-
+  } catch (err) {
+    console.error("fetchChildren:", err);
+  }
+};
   fetchChildren();
-}, []);
+}, [authUser]);
 
   if (!activeChild) return <div>Loading...</div>;
 

@@ -82,62 +82,111 @@ const OtpPage = () => {
   };
 
   // ── Verify OTP ────────────────────────────────────────────────────────────
-  const handleVerifyOtp = async (otpToVerify = otp) => {
-    if (otpToVerify.length !== 6) { setError("Please enter all 6 digits"); return; }
-    setError("");
-    setLoading(true);
+const handleVerifyOtp = async (otpToVerify = otp) => {
+  if (otpToVerify.length !== 6) {
+    setError("Please enter all 6 digits");
+    return;
+  }
 
-    try {
-      const payload = { schoolcode, phone, otp: otpToVerify };
-      console.log("VERIFY OTP PAYLOAD →", payload);
+  setError("");
+  setLoading(true);
 
-      const response = await verifyOtp(payload);
-      console.log("VERIFY OTP RESPONSE →", response);
-      // clear dev OTP after attempt
+  try {
+    const payload = {
+      schoolcode,
+      phone,
+      otp: otpToVerify,
+    };
 
-      if (response?.status === true) {
-        console.log("USER TYPE →", rawUserType);
+    console.log("VERIFY OTP PAYLOAD →", payload);
 
-        // ── Build the user object from whichever shape the API returns ──
-        // Student login  → response.data  (id, first_name, last_name, school_code…)
-        // Other roles    → response.user  (id, name, phone, userType, schoolcode…)
-        const userPayload = response.user ?? (response.data
+   const response = await verifyOtp(payload);
+
+console.log("VERIFY OTP RESPONSE →", response);
+
+const parentId =
+  response.userId ||
+  response.user?.id ||
+  response.data?.id;
+
+if (parentId) {
+  localStorage.setItem("parentId", parentId);
+  localStorage.setItem("userId", parentId);
+
+  console.log("Saved parentId:", parentId);
+}
+
+  if (response?.status === true) {
+  console.log("USER TYPE →", rawUserType);
+
+  const parentId =
+    response.userId ||
+    response.user?.id ||
+    response.data?.id;
+
+  console.log("Extracted Parent ID:", parentId);
+
+  if (parentId) {
+    localStorage.setItem("parentId", String(parentId));
+    localStorage.setItem("userId", String(parentId));
+
+    console.log(
+      "Saved Parent ID:",
+      localStorage.getItem("parentId")
+    );
+  }
+
+  if (rawUserType?.toLowerCase() === "parent") {
+    console.log("Parent Login Detected");
+  }
+      const userPayload =
+        response.user ??
+        (response.data
           ? {
-              id:         response.data.id,
-              name:       `${response.data.first_name} ${response.data.last_name}`.trim(),
-              userType:   rawUserType as UserType,
+              id: response.data.id,
+              name: `${response.data.first_name ?? ""} ${
+                response.data.last_name ?? ""
+              }`.trim(),
+              userType: rawUserType as UserType,
               schoolcode: response.data.school_code,
             }
-          : {});
+          : {
+              id: response.userId,
+              userType: rawUserType as UserType,
+            });
+console.log("OTP Response:", response);
+      login(
+        response.token ?? `token-${Date.now()}`,
+        userPayload,
+        rawUserType
+      );
 
-        login(
-          response.token ?? `token-${Date.now()}`,
-          userPayload,
-          rawUserType,
-        );
+      toast.success("OTP Verified Successfully!");
 
-        toast.success("OTP Verified Successfully!");
+      const route =
+        USER_TYPE_ROUTE_MAP[rawUserType] ??
+        "/teacher/dashboard";
 
-        const route = USER_TYPE_ROUTE_MAP[rawUserType] ?? "/teacher/dashboard";
-        console.log("NAVIGATING TO →", route);
-        navigate(route, { replace: true });
+      console.log("NAVIGATING TO →", route);
 
-      } else {
-        setError(response?.message ?? "Invalid OTP");
-        toast.error(response?.message ?? "OTP Verification Failed");
-      }
-
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "OTP Verification Failed";
-      console.error(err);
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
+      navigate(route, { replace: true });
+    } else {
+      setError(response?.message ?? "Invalid OTP");
+      toast.error(response?.message ?? "OTP Verification Failed");
     }
-  };
+  } catch (err: any) {
+    console.error("OTP Verify Error:", err);
+
+    const msg =
+      err?.response?.data?.message ||
+      "OTP Verification Failed";
+
+    setError(msg);
+    toast.error(msg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ── 6-box OTP input helpers ───────────────────────────────────────────────
   const inputs = useRef<(HTMLInputElement | null)[]>([]);

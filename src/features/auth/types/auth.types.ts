@@ -32,7 +32,12 @@ export interface OtpVerifyPayload {
 export interface OtpVerifyResponse {
   status: boolean;
   message: string;
+
   token?: string;
+  userId?: string;
+  userType?: string;
+  email?: string;
+
   data?: {
     id: string;
     first_name: string;
@@ -43,6 +48,7 @@ export interface OtpVerifyResponse {
     section: string;
     school_code: string;
   };
+
   user?: {
     id: string;
     name: string;
@@ -51,7 +57,6 @@ export interface OtpVerifyResponse {
     schoolcode: string;
   };
 }
-
 // ── Auth Session (stored in Zustand + localStorage) ─
 export interface Child {
   id: string;
