@@ -139,10 +139,10 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                   className="flex items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#6C63FF] text-sm font-bold shadow-lg shadow-[#6C63FF]/30">
-                    M
+                    V
                   </div>
                   <div className="whitespace-nowrap">
-                    <p className="text-[13px] font-bold tracking-wide leading-tight">SCHOOL ERP</p>
+                    <p className="text-[13px] font-bold tracking-wide leading-tight">VidyaTracker</p>
                     <p className="text-[10px] text-slate-400 leading-tight">School Management</p>
                   </div>
                 </Link>

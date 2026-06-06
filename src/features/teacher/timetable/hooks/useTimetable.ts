@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import { timetableApi } from "../api/timetable.api";
@@ -11,8 +11,6 @@ import type {
   UpcomingExam,
 } from "../types/timetable.types";
 
-// ── Constants ─────────────────────────────────────────────────────────────
-
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 export type DayName = typeof DAYS[number];
 
@@ -22,8 +20,8 @@ export const TIMETABLE_KEYS = {
   all:       ["teacher", "timetable"] as const,
   timetable: (teacherId: string, academicYear: string) =>
     [...TIMETABLE_KEYS.all, teacherId, academicYear] as const,
-  exams:     (teacherId: string) =>
-    [...TIMETABLE_KEYS.all, "exams", teacherId] as const,
+  exams:     (teacherId: string, academicYear: string) =>
+    [...TIMETABLE_KEYS.all, "exams", teacherId, academicYear] as const,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -119,9 +117,14 @@ export const useTimetable = (): TeacherTimetableState => {
   const [weekOffset, setWeekOffset] = useState(0);
 
   const user = useAuthStore((s) => s.user);
-  const teacherId =user?.id ?? "";
+  const teacherId = user?.id ?? "";
   const currentYear = new Date().getFullYear();
   const academicYear = `${currentYear}`;
+
+  // Reset week offset when teacher changes
+  useEffect(() => {
+    setWeekOffset(0);
+  }, [teacherId]);
 
   const queryParams = useMemo(
     (): TeacherTimetableQuery => ({
@@ -145,15 +148,13 @@ export const useTimetable = (): TeacherTimetableState => {
     enabled: !!teacherId,
   });
 
-  // Dedicated exams query (separate endpoint)
   const {
     data: examsData,
     isLoading: isExamsLoading,
     isError: isExamsError,
-    error: examsError,
   } = useQuery({
-    queryKey: TIMETABLE_KEYS.exams(teacherId),
-    queryFn: () => timetableApi.getExamsTimetable({ teacher_id: teacherId }),
+    queryKey: TIMETABLE_KEYS.exams(teacherId, academicYear),
+    queryFn: () => timetableApi.getExamsTimetable({ teacher_id: teacherId, academic_year: academicYear }),
     staleTime: 1000 * 60 * 5,
     retry: 2,
     enabled: !!teacherId,
@@ -164,7 +165,6 @@ export const useTimetable = (): TeacherTimetableState => {
 
   const grid = data?.grid ?? {};
   const periods = data?.periods ?? [];
-  // Prefer dedicated exams endpoint, fall back to combined timetable data
   const exams: UpcomingExam[] = examsData ?? data?.exams ?? [];
 
   const summary = useMemo(() => {

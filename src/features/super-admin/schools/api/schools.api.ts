@@ -1,7 +1,16 @@
 import axios from "@/config/axios";
-import type { School, SchoolFilters, SchoolsResponse, SchoolFormValues } from "../types/school.types";
+import type { School, SchoolFilters, SchoolsResponse, GetAllSchoolsResponse, SchoolFormValues } from "../types/school.types";
 
 export const schoolsApi = {
+  getAllSchools: async (search?: string): Promise<GetAllSchoolsResponse> => {
+    const { data } = await axios.get("/getallschools", {
+      params: search ? { search } : undefined,
+    });
+    if (Array.isArray(data?.data)) return data;
+    if (Array.isArray(data)) return { data, total: data.length };
+    throw new Error("Invalid response format from /getallschools");
+  },
+
   getSchools: async (filters: Partial<SchoolFilters>): Promise<SchoolsResponse> => {
     const { data } = await axios.get("/super-admin/schools", { params: filters });
     return data;

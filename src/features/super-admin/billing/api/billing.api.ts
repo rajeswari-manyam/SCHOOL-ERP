@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '@/config/axios';
 import type {
   BillingOverview,
   MRRHistoryResponse,
@@ -8,6 +8,9 @@ import type {
   InstitutionFilters,
   RecordPaymentPayload,
   UpdatePlanPayload,
+  OrganizationBillingPayload,
+  OrganizationBillingResponse,
+  OrganizationSchoolsResponse,
   Institution,
 } from '../types/billing.types';
 
@@ -17,39 +20,31 @@ export const billingApi = {
   // ── Overview KPIs ──────────────────────────────────────────────────────────
 
   getOverview: async (): Promise<BillingOverview> => {
-    const { data } = await axios.get<BillingOverview>(`${BASE}/overview`);
+    const { data } = await api.get<BillingOverview>(`${BASE}/overview`);
     return data;
   },
 
-  // ── Revenue Charts ─────────────────────────────────────────────────────────
-
   getMRRHistory: async (months = 6): Promise<MRRHistoryResponse> => {
-    const { data } = await axios.get<MRRHistoryResponse>(`${BASE}/mrr-history`, {
+    const { data } = await api.get<MRRHistoryResponse>(`${BASE}/mrr-history`, {
       params: { months },
     });
     return data;
   },
 
   getRevenueByPlan: async (): Promise<RevenueByPlanResponse> => {
-    const { data } = await axios.get<RevenueByPlanResponse>(`${BASE}/revenue-by-plan`);
+    const { data } = await api.get<RevenueByPlanResponse>(`${BASE}/revenue-by-plan`);
     return data;
   },
 
-  // ── Top Institutions ───────────────────────────────────────────────────────
-
   getTopInstitutions: async (limit = 5): Promise<TopInstitutionsResponse> => {
-    const { data } = await axios.get<TopInstitutionsResponse>(`${BASE}/top-institutions`, {
+    const { data } = await api.get<TopInstitutionsResponse>(`${BASE}/top-institutions`, {
       params: { limit },
     });
     return data;
   },
 
-  // ── Institutions List (full) ───────────────────────────────────────────────
-
-  listInstitutions: async (
-    filters: InstitutionFilters = {}
-  ): Promise<InstitutionsListResponse> => {
-    const { data } = await axios.get<InstitutionsListResponse>(
+  listInstitutions: async (filters: InstitutionFilters = {}): Promise<InstitutionsListResponse> => {
+    const { data } = await api.get<InstitutionsListResponse>(
       `${BASE}/institutions`,
       { params: filters }
     );
@@ -57,29 +52,47 @@ export const billingApi = {
   },
 
   getInstitution: async (id: string): Promise<Institution> => {
-    const { data } = await axios.get<Institution>(`${BASE}/institutions/${id}`);
+    const { data } = await api.get<Institution>(`${BASE}/institutions/${id}`);
     return data;
   },
 
-  // ── Payment Actions ────────────────────────────────────────────────────────
+  // ── Organization / Schools ──────────────────────────────────────────────
 
+  getOrganizationSchools: async (): Promise<OrganizationSchoolsResponse> => {
+    const { data } = await api.get<OrganizationSchoolsResponse>(
+      "/organization/getallschools"
+    );
+    console.log("[billingApi] getOrganizationSchools response:", data);
+    return data;
+  },
+
+  // ── Payment Actions ──
   recordPayment: async (payload: RecordPaymentPayload): Promise<Institution> => {
-    const { data } = await axios.post<Institution>(`${BASE}/payments`, payload);
+    const { data } = await api.post<Institution>(`${BASE}/payments`, payload);
+    return data;
+  },
+
+  recordOrganizationBilling: async (
+    payload: OrganizationBillingPayload
+  ): Promise<OrganizationBillingResponse> => {
+    const { data } = await api.post<OrganizationBillingResponse>(
+      "/organization/billing",
+      payload
+    );
     return data;
   },
 
   updatePlan: async (payload: UpdatePlanPayload): Promise<Institution> => {
-    const { data } = await axios.patch<Institution>(
+    const { data } = await api.patch<Institution>(
       `${BASE}/institutions/${payload.institutionId}/plan`,
       { plan: payload.plan }
     );
     return data;
   },
 
-  // ── Export ─────────────────────────────────────────────────────────────────
-
+  // ── Export ──
   exportInstitutionsCsv: async (filters: InstitutionFilters = {}): Promise<Blob> => {
-    const { data } = await axios.get(`${BASE}/institutions/export`, {
+    const { data } = await api.get(`${BASE}/institutions/export`, {
       params: filters,
       responseType: 'blob',
     });

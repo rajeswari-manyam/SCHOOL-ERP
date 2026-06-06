@@ -218,7 +218,7 @@ const LoginPage = () => {
                 <GraduationCap size={18} className="text-white" />
               </div>
               <span className="text-lg font-bold text-slate-900 tracking-tight">
-                School<span className="text-indigo-600">ERP</span>
+                Vidya<span className="text-indigo-600">Tracker</span>
               </span>
             </div>
             <p className="text-[10px] text-slate-400 uppercase tracking-widest ml-10">
@@ -340,7 +340,7 @@ const LoginPage = () => {
             <span className="text-indigo-200">Fully connected.</span>
           </h2>
           <p className="text-indigo-200 text-sm leading-relaxed mb-10 max-w-xs">
-            From classrooms to boardrooms — SchoolERP connects teachers, students, parents and admins into one secure ecosystem.
+            From classrooms to boardrooms — vidyatracker connects teachers, students, parents and admins into one secure ecosystem.
           </p>
           <div className="grid grid-cols-2 gap-3">
             {ROLES.map(({ label, icon: Icon, color, bg }) => (

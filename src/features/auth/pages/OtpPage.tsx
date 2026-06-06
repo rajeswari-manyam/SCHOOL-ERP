@@ -236,7 +236,7 @@ console.log("OTP Response:", response);
               <GraduationCap size={18} className="text-white" />
             </div>
             <span className="text-lg font-bold text-slate-900 tracking-tight">
-              School<span className="text-indigo-600">ERP</span>
+              Vidya<span className="text-indigo-600">Tracker</span>
             </span>
           </div>
 

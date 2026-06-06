@@ -9,6 +9,7 @@ import type {
   InstitutionFilters,
   RecordPaymentPayload,
   UpdatePlanPayload,
+  OrganizationBillingPayload,
 } from '../types/billing.types';
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ export const billingKeys = {
   institutionsList: (filters: InstitutionFilters) =>
     [...billingKeys.institutions(), 'list', filters] as const,
   institution: (id: string) => [...billingKeys.institutions(), 'detail', id] as const,
+  organizationSchools: ['billing', 'organization', 'schools'] as const,
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -78,6 +80,22 @@ export function useInstitution(id: string) {
   });
 }
 
+export function useOrganizationSchools() {
+  return useQuery({
+    queryKey: billingKeys.organizationSchools,
+    queryFn: billingApi.getOrganizationSchools,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    retry: 2,
+    refetchOnWindowFocus: false,
+    select: (data) => {
+      const schools = Array.isArray(data?.schools) ? data.schools : [];
+      console.log("[useOrganizationSchools] selected schools:", schools);
+      return schools;
+    },
+  });
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export function useBillingMutations() {
@@ -88,7 +106,25 @@ export function useBillingMutations() {
 
   const recordPayment = useMutation({
     mutationFn: (payload: RecordPaymentPayload) => billingApi.recordPayment(payload),
-    onSuccess: () => invalidateAll(),
+    onSuccess: (data) => {
+      console.log("[useBilling] recordPayment success:", data);
+      invalidateAll();
+    },
+    onError: (error) => {
+      console.error("[useBilling] recordPayment error:", error);
+    },
+  });
+
+  const recordOrganizationBilling = useMutation({
+    mutationFn: (payload: OrganizationBillingPayload) =>
+      billingApi.recordOrganizationBilling(payload),
+    onSuccess: (data) => {
+      console.log("[useBilling] recordOrganizationBilling success:", data);
+      invalidateAll();
+    },
+    onError: (error) => {
+      console.error("[useBilling] recordOrganizationBilling error:", error);
+    },
   });
 
   const updatePlan = useMutation({
@@ -111,5 +147,5 @@ export function useBillingMutations() {
     },
   });
 
-  return { recordPayment, updatePlan, exportCsv };
+  return { recordPayment, recordOrganizationBilling, updatePlan, exportCsv };
 }

@@ -89,6 +89,60 @@ export const EXAM_TYPE_LABELS: Record<ExamType, string> = {
   FINAL:       "Final Exam",
 };
 
-export const CLASS_OPTIONS = ["Class 8-A", "Class 8-B", "Class 9-A", "Class 9-B"];
-export const SUBJECT_OPTIONS = ["Mathematics", "Science", "English", "Hindi", "Social Studies", "Computer Science"];
-export const ACADEMIC_YEAR_OPTIONS = ["2024-25", "2023-24", "2022-23"];
+export const CLASS_OPTIONS = ["Class 8-A", "Class 8-B", "Class 9-A", "Class 9-B","Class 10-A", "Class 10-B"];
+export const SUBJECT_OPTIONS = ["Mathematics", "Science", "English", "Hindi", "Social Studies", "Computer Science","Max"];
+export const ACADEMIC_YEAR_OPTIONS = ["2024-25", "2023-24", "2022-23","2025-2026"];
+
+// ── /tenant/class-student-results API types ──────────────────────────────────
+
+export interface ClassStudentResultsQuery {
+  className: string;
+  sectionName: string;
+  subjectName: string;
+  academicYear: string;
+  exam_type: string;
+}
+
+export interface StudentResultItem {
+  id: string;
+  studentId?: string;
+  studentName?: string;
+  rollNo?: string;
+  marks?: number;
+  maxMarks?: number;
+  grade?: string;
+  isAbsent?: boolean;
+  remarks?: string;
+  subjectName?: string;
+  examType?: string;
+  className?: string;
+  sectionName?: string;
+}
+
+export interface ClassStudentResultsResponse {
+  status: boolean;
+  count?: number;
+  message?: string;
+  data?: StudentResultItem[];
+}
+
+// ── /tenant/createresults API types ─────────────────────────────────────────
+
+export interface CreateStudentResultPayload {
+  student_id: string;
+  exam_type: string;
+  className: string;
+  subjectName: string;
+  academic_year: string;
+  marks: number;
+  grade: string;
+  remarks: string;
+  absent: boolean;
+  school_code: string;
+}
+
+export interface CreateStudentResultResponse {
+  status: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
+}

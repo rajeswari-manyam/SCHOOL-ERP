@@ -3,12 +3,13 @@ import { X, ChevronDown } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useBillingMutations } from '../hooks/useBilling';
-import type { Institution } from '../types/billing.types';
+import { useBillingMutations, useOrganizationSchools } from '../hooks/useBilling';
+import type { Institution, OrganizationSchool } from '../types/billing.types';
 
-const PAYMENT_MODES = ['Razorpay', 'Bank Transfer', 'Cash', 'Cheque'] as const;
+const PAYMENT_MODES = ['Razorpay', 'Bank Transfer', 'Cash', 'Cheque', 'UPI'] as const;
 
 const schema = z.object({
+  schoolName: z.string().optional(),
   institutionId: z.string().min(1, 'Select a school'),
   amount: z
     .string()
@@ -40,9 +41,20 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   open,
   onClose,
   preselectedInstitution,
-  institutions = [],
+  institutions: propInstitutions,
 }) => {
-  const { recordPayment } = useBillingMutations();
+  const { recordPayment, recordOrganizationBilling } = useBillingMutations();
+
+  const { data: orgSchools } = useOrganizationSchools();
+
+  const institutions: Pick<Institution, 'id' | 'name'>[] = (
+    propInstitutions?.length
+      ? propInstitutions
+      : (orgSchools ?? []).map((s: OrganizationSchool) => ({
+          id: s.school_code,
+          name: s.school_name,
+        }))
+  );
 
   const {
     register,
@@ -55,6 +67,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     resolver: zodResolver(schema),
     mode: 'onTouched',
     defaultValues: {
+      schoolName: '',
       institutionId: preselectedInstitution?.id ?? '',
       amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
       paymentDate: new Date().toISOString().slice(0, 10),
@@ -67,6 +80,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
   useEffect(() => {
     reset({
+      schoolName: '',
       institutionId: preselectedInstitution?.id ?? '',
       amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
       paymentDate: new Date().toISOString().slice(0, 10),
@@ -80,17 +94,31 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const institutionId = useWatch({ control, name: 'institutionId' });
   const paymentMode = useWatch({ control, name: 'paymentMode' });
   const showOrderId = paymentMode === 'Razorpay';
+  const isUpi = paymentMode === 'UPI';
 
   const onSubmit = (values: FormValues) => {
-    recordPayment.mutate(
-      {
-        institutionId: values.institutionId,
-        amount: Number(values.amount),
-        paymentDate: values.paymentDate,
-        notes: values.description,
-      },
-      { onSuccess: onClose }
-    );
+    if (isUpi) {
+      recordOrganizationBilling.mutate(
+        {
+          School: values.schoolName || values.institutionId,
+          Amount: Number(values.amount),
+          PaymentDate: values.paymentDate,
+          PaymentMode: values.paymentMode,
+          Description: values.description ?? '',
+        },
+        { onSuccess: onClose }
+      );
+    } else {
+      recordPayment.mutate(
+        {
+          institutionId: values.institutionId,
+          amount: Number(values.amount),
+          paymentDate: values.paymentDate,
+          notes: values.description,
+        },
+        { onSuccess: onClose }
+      );
+    }
   };
 
   if (!open) return null;
@@ -147,28 +175,37 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               <label className={labelClass}>
                 School <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <select
-                  {...register('institutionId')}
-                  className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-sm text-gray-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                >
-                  <option value="" disabled>Select school...</option>
-                  {preselectedInstitution && (
-                    <option value={preselectedInstitution.id}>
-                      {preselectedInstitution.name}
-                    </option>
-                  )}
-                  {institutions
-                    .filter((i) => i.id !== preselectedInstitution?.id)
-                    .map((i) => (
-                      <option key={i.id} value={i.id}>{i.name}</option>
-                    ))}
-                </select>
-                <ChevronDown
-                  size={15}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              {isUpi ? (
+                <input
+                  type="text"
+                  {...register('schoolName')}
+                  placeholder="Enter school name..."
+                  className={inputClass}
                 />
-              </div>
+              ) : (
+                <div className="relative">
+                  <select
+                    {...register('institutionId')}
+                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-sm text-gray-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  >
+                    <option value="" disabled>Select school...</option>
+                    {preselectedInstitution && (
+                      <option value={preselectedInstitution.id}>
+                        {preselectedInstitution.name}
+                      </option>
+                    )}
+                    {institutions
+                      .filter((i) => i.id !== preselectedInstitution?.id)
+                      .map((i) => (
+                        <option key={i.id} value={i.id}>{i.name}</option>
+                      ))}
+                  </select>
+                  <ChevronDown
+                    size={15}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                </div>
+              )}
               {errors.institutionId && (
                 <p className="mt-1 text-xs text-red-500">{errors.institutionId.message}</p>
               )}
@@ -292,10 +329,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={recordPayment.isPending || !institutionId}
+              disabled={(isUpi ? recordOrganizationBilling.isPending : recordPayment.isPending) || (!isUpi && !institutionId)}
               className="w-full sm:w-auto rounded-xl bg-indigo-600 px-6 py-2.5 text-[13px] font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             >
-              {recordPayment.isPending ? 'Saving…' : 'Record Payment'}
+              {(isUpi ? recordOrganizationBilling.isPending : recordPayment.isPending) ? 'Saving…' : 'Record Payment'}
             </button>
           </div>
         </form>

@@ -11,4 +11,5 @@ export { useReps, useAttendance, useMarketingStats, useMarketingMutations } from
 export type {
   MarketingRep, MarketingStats, TicketFilters as RepFilters,
   AttendanceRecord, RepStatus, PayoutStatus, MarketingTab,
+  CreateMarketingPayload,
 } from "./types/marketing.types";

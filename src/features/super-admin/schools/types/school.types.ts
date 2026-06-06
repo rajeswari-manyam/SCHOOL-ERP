@@ -40,6 +40,11 @@ export interface SchoolsResponse {
   pageSize: number;
 }
 
+export interface GetAllSchoolsResponse {
+  data: School[];
+  total: number;
+}
+
 export interface SchoolFormValues {
   school_name: string;
   email: string;

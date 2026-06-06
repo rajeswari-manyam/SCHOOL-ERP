@@ -11,10 +11,35 @@ import type {
   ClassColorKey,
   UpcomingExam,
   ExamsTimetableQuery,
-  ApiExamTimetableRawEntry,
 } from "../types/timetable.types";
 
-// ── Colour assignment ──────────────────────────────────────────────────────
+const isDev = import.meta.env.DEV;
+
+type LoggerFn = typeof console.log;
+
+function logger(level: "log" | "warn" | "error", ...args: unknown[]) {
+  if (!isDev) return;
+  const fn: LoggerFn = console[level];
+  fn(`[timetable-api]`, ...args);
+}
+
+function formatTime(t: string): string {
+  if (!t) return "";
+  const [h, m] = t.split(":");
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const h12 = hour % 12 || 12;
+  return `${h12}:${m ?? "00"} ${ampm}`;
+}
+
+function getMinutesBetween(start: string, end: string): number {
+  const toMins = (s: string) => {
+    const [h, m] = s.split(":");
+    return parseInt(h, 10) * 60 + parseInt(m ?? "0", 10);
+  };
+  const diff = toMins(end) - toMins(start);
+  return diff > 0 ? diff : 0;
+}
 
 const CLASS_COLORS: ClassColorKey[] = [
   "indigo", "violet", "sky", "emerald", "amber", "rose",
@@ -23,85 +48,95 @@ const CLASS_COLORS: ClassColorKey[] = [
 const colorIndex = new Map<string, ClassColorKey>();
 let colorCursor = 0;
 
-const getColorKey = (classLabel: string): ClassColorKey => {
+function getColorKey(classLabel: string): ClassColorKey {
   if (!colorIndex.has(classLabel)) {
     colorIndex.set(classLabel, CLASS_COLORS[colorCursor % CLASS_COLORS.length]);
     colorCursor++;
   }
   return colorIndex.get(classLabel)!;
-};
+}
 
-// ── Day name mapping ───────────────────────────────────────────────────────
-
-const API_DAYS: ApiDayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const API_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
 const UI_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const toUiDay = (apiDay: ApiDayOfWeek): string =>
-  UI_DAYS[API_DAYS.indexOf(apiDay)] ?? apiDay.charAt(0) + apiDay.slice(1).toLowerCase();
+function toUiDay(apiDay: string): string {
+  const idx = API_DAYS.indexOf(apiDay as typeof API_DAYS[number]);
+  return idx >= 0 ? UI_DAYS[idx] : apiDay.charAt(0) + apiDay.slice(1).toLowerCase();
+}
 
-// ── Time formatting ────────────────────────────────────────────────────────
+// ── Response extraction helpers ─────────────────────────────────────────────
 
-const formatTime = (t: string): string => {
-  if (!t) return "";
-  const [h, m] = t.split(":");
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const h12 = hour % 12 || 12;
-  return `${h12}:${m ?? "00"} ${ampm}`;
-};
-
-const formatTimeRange = (start: string, end: string): string => {
-  const s = formatTime(start);
-  const e = formatTime(end);
-  return s ? `${s} – ${e}` : `${start} – ${end}`;
-};
-
-// ── Response extractors ────────────────────────────────────────────────────
-
-const extractApiError = (raw: unknown): string | null => {
+function extractNestedArray(raw: unknown): unknown[] | null {
   if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
 
-  if (obj?.status === false) {
-    return (obj?.message as string) ?? null;
+  if (Array.isArray(obj)) return obj;
+
+  const wrappers = ["data", "response", "result", "exams", "entries", "records", "list"] as const;
+  for (const key of wrappers) {
+    const val = obj[key];
+    if (Array.isArray(val)) return val;
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      const nested = extractNestedArray(val);
+      if (nested) return nested;
+    }
   }
-
-  const inner = obj?.data && typeof obj.data === "object"
-    ? obj.data as Record<string, unknown>
-    : null;
-
-  if (inner?.status === false) {
-    return (inner?.message as string) ?? null;
-  }
-
   return null;
-};
+}
 
-const extractInnerData = (raw: unknown): ApiTimetableResponse["data"] => {
-  if (!raw || typeof raw !== "object") return undefined;
+function extractFlatArray(raw: unknown): Record<string, unknown>[] | null {
+  if (!raw || typeof raw !== "object") return null;
   const obj = raw as Record<string, unknown>;
 
-  if (obj?.data && typeof obj.data === "object") {
-    return obj.data as ApiTimetableResponse["data"];
-  }
+  const arr = obj?.data;
+  if (Array.isArray(arr)) return arr as Record<string, unknown>[];
 
-  if ("classTimetable" in obj || "examTimetable" in obj) {
-    return obj as unknown as ApiTimetableResponse["data"];
-  }
+  return null;
+}
 
-  return undefined;
-};
-
-const getMinutesBetween = (start: string, end: string): number => {
-  const toMins = (t: string) => {
-    const [h, m] = t.split(":");
-    return parseInt(h, 10) * 60 + parseInt(m ?? "0", 10);
+function hasApiError(raw: unknown): string | null {
+  const check = (obj: Record<string, unknown>): string | null => {
+    if (obj?.status === false) return (obj?.message as string) ?? "Unknown API error";
+    return null;
   };
-  const diff = toMins(end) - toMins(start);
-  return diff > 0 ? diff : 0;
-};
 
-const buildPeriodsAndGrid = (slots: ApiTimetableSlot[], classLabel: string) => {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+
+  const top = check(obj);
+  if (top) return top;
+
+  if (obj.data && typeof obj.data === "object" && !Array.isArray(obj.data)) {
+    return check(obj.data as Record<string, unknown>);
+  }
+  return null;
+}
+
+// ── Slot parsing ────────────────────────────────────────────────────────────
+
+interface RawPeriodCell {
+  subject?: string;
+  teacherName?: string;
+  room?: string;
+  isConflict?: boolean;
+}
+
+interface RawSlot {
+  kind: "PERIOD" | "BREAK" | "LUNCH" | "FREE";
+  periodNo?: number;
+  startTime: string;
+  endTime: string;
+  label?: string;
+  cells?: Partial<Record<string, RawPeriodCell>>;
+}
+
+function parseSlotTimeRange(start: string, end: string): string {
+  const s = formatTime(start);
+  const e = formatTime(end);
+  return s ? `${s} – ${e}` : `${start} – ${end}`;
+}
+
+function buildPeriodsAndGrid(slots: RawSlot[], classLabel: string) {
   const periods: TimetablePeriod[] = [];
   const grid: Record<string, Record<string, TimetableCell | null>> = {};
   let totalTeachingMinutes = 0;
@@ -114,17 +149,16 @@ const buildPeriodsAndGrid = (slots: ApiTimetableSlot[], classLabel: string) => {
       periods.push({
         id: pid,
         label: `P${periodNo}`,
-        time: formatTimeRange(slot.startTime, slot.endTime),
+        time: parseSlotTimeRange(slot.startTime, slot.endTime),
         kind: "PERIOD",
       });
 
       totalTeachingMinutes += getMinutesBetween(slot.startTime, slot.endTime);
-
       grid[pid] = {};
 
       if (slot.cells) {
         for (const [apiDay, cell] of Object.entries(slot.cells)) {
-          const uiDay = toUiDay(apiDay as ApiDayOfWeek);
+          const uiDay = toUiDay(apiDay);
           if (!cell) {
             grid[pid][uiDay] = null;
             continue;
@@ -161,34 +195,202 @@ const buildPeriodsAndGrid = (slots: ApiTimetableSlot[], classLabel: string) => {
       periods.push({
         id: pid,
         label: slot.label ?? (slot.kind === "BREAK" ? "Break" : "Lunch"),
-        time: formatTimeRange(slot.startTime, slot.endTime),
+        time: parseSlotTimeRange(slot.startTime, slot.endTime),
         kind: slot.kind,
       });
     }
   }
 
   return { periods, grid, totalTeachingMinutes };
+}
+
+// ── Flat array format ──────────────────────────────────────────────────────
+// Actual API returns { status: true, count: N, data: [...] } where each item
+// has: className, sectionName, subjectname, teachername, teacher_id,
+// period_no, day_of_week (lowercase), start_time, end_time, room_no,
+// lunch_start, lunch_end, academic_year, school_code.
+
+const DAY_MAP: Record<string, string> = {
+  monday: "Mon", tuesday: "Tue", wednesday: "Wed",
+  thursday: "Thu", friday: "Fri", saturday: "Sat",
+  sunday: "Mon",
 };
 
-// ── Main transformer ───────────────────────────────────────────────────────
+interface FlatSlot {
+  className: string;
+  sectionName: string;
+  subjectname: string;
+  teachername: string;
+  period_no: number | string;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+  lunch_start: string;
+  lunch_end: string;
+  academic_year: string;
+}
 
-export const transformApiResponse = (
-  apiData: ApiTimetableResponse["data"]
-): TeacherTimetableData | null => {
-  if (!apiData) return null;
+function transformFlatSlots(items: Record<string, unknown>[]): TeacherTimetableData | null {
+  if (!items.length) return null;
 
-  const ct = apiData.classTimetable;
-  const et = apiData.examTimetable;
+  const clean = items.filter(i => i.period_no != null && i.day_of_week);
+  if (!clean.length) return null;
 
-  if (!ct || !ct.slots) return null;
+  const first = clean[0];
 
-  const classLabel = ct.classLabel && ct.section
-    ? `${ct.classLabel}-${ct.section}`
-    : ct.classLabel || "My Schedule";
+  // Determine class label from all unique class-section combos
+  const classSections = new Set<string>();
+  clean.forEach(i => {
+    const c = (i.className as string) ?? "";
+    const s = (i.sectionName as string) ?? "";
+    classSections.add(c && s ? `${c}-${s}` : c || "Unknown");
+  });
+  const classLabelVal = Array.from(classSections).join(", ") || "My Classes";
+  const sectionVal = (first.sectionName as string) ?? "";
 
-  const { periods, grid, totalTeachingMinutes } = buildPeriodsAndGrid(ct.slots, classLabel);
+  const lunchStart = (first.lunch_start as string) ?? "12:30:00";
+  const lunchEnd = (first.lunch_end as string) ?? "13:00:00";
 
-  // Build summary
+  // Group by period_no, sorted
+  const periodMap = new Map<number, Record<string, unknown>[]>();
+  clean.forEach(i => {
+    const p = Number(i.period_no);
+    if (!periodMap.has(p)) periodMap.set(p, []);
+    periodMap.get(p)!.push(i);
+  });
+  const sortedPeriods = Array.from(periodMap.entries()).sort((a, b) => a[0] - b[0]);
+
+  const allPeriodNos = sortedPeriods.map(([p]) => p);
+  const maxPeriod = allPeriodNos.length > 0 ? Math.max(...allPeriodNos) : 0;
+
+  // Insert break slots between non-consecutive periods
+  const rawSlots: RawSlot[] = [];
+  let prevP = 0;
+  let insertedLunch = false;
+
+  for (const [periodNo, periodItems] of sortedPeriods) {
+    // Insert break if gap
+    if (periodNo > prevP + 1) {
+      rawSlots.push({
+        kind: "BREAK",
+        periodNo: prevP + 0.5,
+        startTime: periodItems[0]?.start_time as string ?? "00:00",
+        endTime: periodItems[0]?.start_time as string ?? "00:00",
+        label: "Break",
+      });
+    }
+
+    // Insert lunch before this period if its start >= lunch start
+    const pStart = (periodItems[0]?.start_time as string) ?? "";
+    if (!insertedLunch && pStart && pStart >= lunchStart) {
+      rawSlots.push({
+        kind: "LUNCH",
+        periodNo: periodNo - 0.5,
+        startTime: lunchStart.slice(0, 5),
+        endTime: lunchEnd.slice(0, 5),
+        label: `Lunch ${lunchStart.slice(0, 5)} - ${lunchEnd.slice(0, 5)}`,
+      });
+      insertedLunch = true;
+    }
+
+    const cells: Record<string, RawPeriodCell> = {};
+    periodItems.forEach(i => {
+      const dayKey = DAY_MAP[(i.day_of_week as string)?.toLowerCase()] ?? "";
+      if (dayKey) {
+        cells[dayKey] = {
+          subject: (i.subjectname as string) ?? "",
+          teacherName: (i.teachername as string) ?? "",
+          room: (i.room_no as string) ?? "",
+        };
+      }
+    });
+
+    const start = (periodItems[0]?.start_time as string) ?? "";
+    const end = (periodItems[0]?.end_time as string) ?? "";
+
+    rawSlots.push({
+      kind: "PERIOD",
+      periodNo,
+      startTime: start.slice(0, 5),
+      endTime: end.slice(0, 5),
+      cells,
+    });
+
+    prevP = periodNo;
+  }
+
+  if (!insertedLunch) {
+    rawSlots.push({
+      kind: "LUNCH",
+      periodNo: maxPeriod + 0.5,
+      startTime: lunchStart.slice(0, 5),
+      endTime: lunchEnd.slice(0, 5),
+      label: `Lunch ${lunchStart.slice(0, 5)} - ${lunchEnd.slice(0, 5)}`,
+    });
+  }
+
+  const classDisplay = Array.from(classSections).join(", ");
+  const { periods, grid, totalTeachingMinutes } = buildPeriodsAndGrid(rawSlots, classDisplay);
+
+  let totalPeriods = 0;
+  let freePeriods = 0;
+  const classSet = new Set<string>();
+
+  for (const pid of Object.keys(grid)) {
+    for (const day of UI_DAYS) {
+      const cell = grid[pid]?.[day];
+      if (cell) {
+        totalPeriods++;
+        if (cell.isFree) freePeriods++;
+        else classSet.add(cell.class);
+      }
+    }
+  }
+
+  const summary = {
+    totalPeriods,
+    teachingHours: parseFloat((totalTeachingMinutes / 60).toFixed(1)),
+    freePeriods,
+    classesTaught: classSet.size,
+  };
+
+  const academicYearVal = (first.academic_year as string) ?? `${new Date().getFullYear()}`;
+
+  return {
+    grid,
+    periods,
+    exams: [],
+    summary,
+    classLabel: classLabelVal,
+    section: sectionVal,
+    classTeacher: "",
+    academicYear: academicYearVal,
+    currentPeriodLabel: null,
+  };
+}
+
+// ── Nested format ───────────────────────────────────────────────────────────
+// Alternative response shape: { data: { classTimetable: {...}, examTimetable: {...} } }
+
+function transformNestedTimetable(data: Record<string, unknown>): TeacherTimetableData | null {
+  const ct = data?.classTimetable as Record<string, unknown> | undefined;
+  const et = data?.examTimetable as Record<string, unknown> | undefined;
+
+  if (!ct || !Array.isArray(ct.slots)) return null;
+
+  const classLabelVal = (ct.classLabel as string) ?? "";
+  const sectionVal = (ct.section as string) ?? "";
+
+  const classLabel = classLabelVal && sectionVal
+    ? `${classLabelVal}-${sectionVal}`
+    : classLabelVal || "My Schedule";
+
+  const { periods, grid, totalTeachingMinutes } = buildPeriodsAndGrid(
+    ct.slots as RawSlot[],
+    classLabel,
+  );
+
   let totalPeriods = 0;
   let freePeriods = 0;
   const classSet = new Set<string>();
@@ -214,328 +416,44 @@ export const transformApiResponse = (
   const currentYear = new Date().getFullYear();
   const defaultTitle = `Examination ${currentYear}`;
 
-  // Build exams
-  const exams: UpcomingExam[] = (et?.entries ?? []).map((e) => ({
-    id: e.id,
-    exam: et?.title ?? defaultTitle,
-    subject: e.subject,
-    class: e.className,
-    date: e.date,
-    time: `${formatTime(e.startTime)} – ${formatTime(e.endTime)}`,
-    venue: e.venue,
-  }));
+  const exams: UpcomingExam[] = ((et?.entries as unknown[]) ?? []).map((e) => {
+    const entry = e as Record<string, unknown>;
+    return {
+      id: (entry.id as string) ?? "",
+      exam: (et?.title as string) ?? defaultTitle,
+      subject: (entry.subject as string) ?? "",
+      class: (entry.className as string) ?? "",
+      date: (entry.date as string) ?? "",
+      time: `${formatTime(entry.startTime as string)} – ${formatTime(entry.endTime as string)}`,
+      venue: (entry.venue as string) ?? "",
+    };
+  });
 
   return {
     grid,
     periods,
     exams,
     summary,
-    classLabel: ct.classLabel ?? "",
-    section: ct.section ?? "",
-    classTeacher: ct.classTeacher ?? "",
-    academicYear: ct.academicYear ?? `${new Date().getFullYear()}`,
-    currentPeriodLabel: ct.currentPeriodLabel ?? null,
+    classLabel: classLabelVal,
+    section: sectionVal,
+    classTeacher: (ct.classTeacher as string) ?? "",
+    academicYear: (ct.academicYear as string) ?? `${currentYear}`,
+    currentPeriodLabel: (ct.currentPeriodLabel as string) ?? null,
   };
-};
-
-// ── Mock fallback data (used when API is unreachable) ─────────────────────
-
-const MOCK_PERIODS: TimetablePeriod[] = [
-  { id: "p1", label: "P1",     time: "8:00 AM – 8:45 AM",    kind: "PERIOD" },
-  { id: "b1", label: "Break",  time: "8:45 AM – 9:00 AM",    kind: "BREAK"  },
-  { id: "p2", label: "P2",     time: "9:00 AM – 9:45 AM",    kind: "PERIOD" },
-  { id: "p3", label: "P3",     time: "9:45 AM – 10:30 AM",   kind: "PERIOD" },
-  { id: "p4", label: "P4",     time: "10:30 AM – 11:15 AM",  kind: "PERIOD" },
-  { id: "b2", label: "Break",  time: "11:15 AM – 11:30 AM",  kind: "BREAK"  },
-  { id: "p5", label: "P5",     time: "11:30 AM – 12:15 PM",  kind: "PERIOD" },
-  { id: "l1", label: "Lunch",  time: "12:15 PM – 1:15 PM",   kind: "LUNCH"  },
-  { id: "p6", label: "P6",     time: "1:15 PM – 2:00 PM",    kind: "PERIOD" },
-  { id: "p7", label: "P7",     time: "2:00 PM – 2:45 PM",    kind: "PERIOD" },
-  { id: "p8", label: "P8",     time: "2:45 PM – 3:30 PM",    kind: "PERIOD" },
-];
-
-const MOCK_GRID: Record<string, Record<string, TimetableCell | null>> = {
-  p1: {
-    Mon: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Tue: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Wed: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Thu: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Fri: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Sat: null,
-  },
-  p2: {
-    Mon: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-    Tue: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Wed: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Thu: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Fri: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Sat: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-  },
-  p3: {
-    Mon: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"   },
-    Tue: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Wed: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Thu: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Fri: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Sat: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-  },
-  p4: {
-    Mon: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Tue: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Wed: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Thu: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Fri: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Sat: null,
-  },
-  p5: {
-    Mon: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Tue: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-    Wed: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Thu: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo"  },
-    Fri: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"     },
-    Sat: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-  },
-  p6: {
-    Mon: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Tue: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Wed: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet" },
-    Thu: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Fri: null,
-    Sat: null,
-  },
-  p7: {
-    Mon: { subject: "Mathematics", class: "Class 9-B", room: "Room 7",  colorKey: "violet"  },
-    Tue: null,
-    Wed: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Thu: { subject: "Mathematics", class: "Class 8-B", room: "Room 11", colorKey: "emerald" },
-    Fri: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo"  },
-    Sat: null,
-  },
-  p8: {
-    Mon: null,
-    Tue: { subject: "Mathematics", class: "Class 7-C", room: "Room 3",  colorKey: "sky"    },
-    Wed: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-    Thu: null,
-    Fri: { subject: "Free Period", class: "Staff Room", room: "—",      colorKey: "slate", isFree: true },
-    Sat: { subject: "Mathematics", class: "Class 8-A", room: "Room 12", colorKey: "indigo" },
-  },
-};
-
-const MOCK_EXAMS: UpcomingExam[] = [
-  { id: "mock-e1", exam: "Unit Test – I",    subject: "Mathematics", class: "10", date: "2026-06-15", time: "10:00 AM – 12:00 PM", venue: "Exam Hall A" },
-  { id: "mock-e2", exam: "Unit Test – I",    subject: "Mathematics", class: "9",  date: "2026-06-16", time: "10:00 AM – 12:00 PM", venue: "Exam Hall B" },
-  { id: "mock-e3", exam: "Half Yearly Exam", subject: "Mathematics", class: "8",  date: "2026-07-20", time: "9:00 AM – 12:00 PM",  venue: "Main Hall" },
-  { id: "mock-e4", exam: "Half Yearly Exam", subject: "Mathematics", class: "7",  date: "2026-07-21", time: "9:00 AM – 12:00 PM",  venue: "Main Hall" },
-];
-
-const MOCK_TIMETABLE_DATA: TeacherTimetableData = {
-  grid: MOCK_GRID,
-  periods: MOCK_PERIODS,
-  exams: MOCK_EXAMS,
-  summary: { totalPeriods: 34, teachingHours: 24, freePeriods: 6, classesTaught: 4 },
-  classLabel: "Class 10",
-  section: "A",
-  classTeacher: "Venkat R",
-  academicYear: `${new Date().getFullYear()}`,
-  currentPeriodLabel: null,
-};
-
-// ── API service ────────────────────────────────────────────────────────────
-
-export const timetableApi = {
-  getTeacherTimetable: async (
-    params: TeacherTimetableQuery
-  ): Promise<TeacherTimetableData> => {
-    console.log("📥 Fetching teacher timetable", { params });
-    try {
-      const { data: raw } = await api.get<ApiTimetableResponse>("/tenant/getalltimetable", {
-        params,
-      });
-
-      console.log("📥 Raw timetable response:", JSON.stringify(raw, null, 2));
-
-      const apiError = extractApiError(raw);
-      if (apiError) {
-        console.warn("⚠️ API returned error status", { message: apiError });
-        throw new Error(apiError);
-      }
-
-      const inner = extractInnerData(raw);
-      if (!inner) {
-        console.warn("⚠️ Unexpected response structure, falling back to mock data", raw);
-        return MOCK_TIMETABLE_DATA;
-      }
-
-      const result = transformApiResponse(inner);
-      if (result) {
-        console.log("✅ Timetable transformed successfully", {
-          periods: result.periods.length,
-          gridKeys: Object.keys(result.grid),
-          exams: result.exams.length,
-        });
-        return result;
-      }
-
-      console.warn("⚠️ Incomplete data from server, falling back to mock data", { inner });
-      return MOCK_TIMETABLE_DATA;
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const ctx = error?.response?.data ?? error?.message;
-      const statusCode = (error as Record<string, unknown>)?.response
-        ? ((error as Record<string, unknown>)?.response as Record<string, unknown>)?.status
-        : null;
-
-      const isServerError = statusCode === 404 || statusCode === 500;
-      const isNetworkError = !statusCode && error?.message === "Network Error";
-
-      if (isServerError || isNetworkError) {
-        console.warn("⚠️ getTeacherTimetable failed, falling back to mock data", {
-          url: "/tenant/getalltimetable",
-          params,
-          statusCode,
-          response: ctx,
-        });
-        return MOCK_TIMETABLE_DATA;
-      }
-
-      const message =
-        error?.response?.data?.message ??
-        (typeof ctx === "string" ? ctx : undefined) ??
-        error?.message ??
-        "Failed to fetch teacher timetable";
-      console.error("❌ getTeacherTimetable error:", message);
-      throw new Error(message);
-    }
-  },
-
-  // ── Dedicated exams timetable endpoint ──────────────────────────────────────
-
-  getExamsTimetable: async (
-    params: ExamsTimetableQuery
-  ): Promise<UpcomingExam[]> => {
-    console.log("📥 Fetching exams timetable", { params });
-    try {
-      const { data: raw } = await api.get<unknown>("/tenant/getallexams-timetable", {
-        params,
-      });
-
-      console.log("📥 Raw exams timetable response:", JSON.stringify(raw, null, 2));
-
-      // Check for explicit error status
-      const apiError = extractApiError(raw);
-      if (apiError) {
-        console.warn("⚠️ Exams API returned error status", { message: apiError });
-        throw new Error(apiError);
-      }
-
-      // Extract the raw entries array from any wrapper shape.
-      const rawEntries = extractExamsArray(raw);
-
-      if (!rawEntries || rawEntries.length === 0) {
-        console.log("📭 No exams returned from API, using mock fallback");
-        return getMockExams();
-      }
-
-      const exams: UpcomingExam[] = rawEntries.map(transformExamEntry).filter(Boolean) as UpcomingExam[];
-
-      console.log("✅ Exams timetable transformed successfully", {
-        count: exams.length,
-      });
-
-      return exams;
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const ctx = error?.response?.data ?? error?.message;
-      const statusCode = (error as Record<string, unknown>)?.response
-        ? ((error as Record<string, unknown>)?.response as Record<string, unknown>)?.status
-        : null;
-
-      const isServerError = statusCode === 404 || statusCode === 500;
-      const isNetworkError = !statusCode && error?.message === "Network Error";
-
-      if (isServerError || isNetworkError) {
-        console.warn("⚠️ getExamsTimetable failed, falling back to mock data", {
-          url: "/tenant/getallexams-timetable",
-          params,
-          statusCode,
-          response: ctx,
-        });
-        return getMockExams();
-      }
-
-      const message =
-        error?.response?.data?.message ??
-        (typeof ctx === "string" ? ctx : undefined) ??
-        error?.message ??
-        "Failed to fetch exams timetable";
-      console.error("❌ getExamsTimetable error:", message);
-      throw new Error(message);
-    }
-  },
-};
-
-// ── Exams response extractors ────────────────────────────────────────────────
-
-/** Drill into any wrapper to find a candidate array or inner object. */
-function extractExamsArray(raw: unknown): ApiExamTimetableRawEntry[] | null {
-  if (!raw || typeof raw !== "object") return null;
-
-  const obj = raw as Record<string, unknown>;
-
-  // ── 1. Already an array ────────────────────────────────────────────────
-  if (Array.isArray(obj)) return obj as ApiExamTimetableRawEntry[];
-
-  // ── 2. Check known wrapper fields at the top level ─────────────────────
-  const wrapperKeys = ["data", "response", "result", "exams", "entries", "records", "list"] as const;
-  for (const key of wrapperKeys) {
-    const val = obj[key];
-    if (Array.isArray(val)) return val as ApiExamTimetableRawEntry[];
-  }
-
-  // ── 3. { data/response: { exams/entries/data/records/list: [...] } } ──
-  for (const outerKey of ["data", "response", "result"] as const) {
-    const outer = obj[outerKey];
-    if (outer && typeof outer === "object" && !Array.isArray(outer)) {
-      const inner = outer as Record<string, unknown>;
-      for (const innerKey of ["exams", "entries", "data", "records", "list"] as const) {
-        if (Array.isArray(inner[innerKey])) return inner[innerKey] as ApiExamTimetableRawEntry[];
-      }
-      // Single object inside — wrap it.
-      const hasId = "id" in inner || "_id" in inner || "examId" in inner || "exam_id" in inner;
-      if (hasId) return [inner] as ApiExamTimetableRawEntry[];
-    }
-  }
-
-  // ── 4. Single object at the top level with an ID — wrap it. ──────────
-  const hasId = "id" in obj || "_id" in obj || "examId" in obj || "exam_id" in obj;
-  if (hasId) return [obj] as ApiExamTimetableRawEntry[];
-
-  return null;
 }
 
-/** Return the first truthy value from a list of optional fields. */
-function firstOf<T>(obj: Record<string, unknown>, ...keys: string[]): T | undefined {
-  for (const k of keys) {
-    const v = obj[k];
-    if (v != null && v !== "") return v as T;
-  }
-  return undefined;
-}
+function transformExamEntry(e: Record<string, unknown>): UpcomingExam | null {
+  const resolvedId = (e.id ?? e._id ?? e.examId ?? e.exam_id ?? "") as string;
 
-function transformExamEntry(e: ApiExamTimetableRawEntry): UpcomingExam | null {
-  const rec = e as Record<string, unknown>;
-
-  const resolvedId = firstOf<string>(rec, "id", "_id", "examId", "exam_id");
-  if (!resolvedId) return null;
-
-  const subject     = firstOf<string>(rec, "subject", "subjectName", "subject_name") ?? "";
-  const cls         = firstOf<string>(rec, "className", "class", "class_name") ?? "";
-  const date        = firstOf<string>(rec, "date", "examDate", "exam_date") ?? "";
-  const startTime   = firstOf<string>(rec, "startTime", "start_time") ?? "";
-  const endTime     = firstOf<string>(rec, "endTime", "end_time") ?? "";
-  const venue       = firstOf<string>(rec, "venue", "room", "room_number") ?? "";
-  const examName    = firstOf<string>(rec, "exam", "examName", "exam_name", "exam_title", "title", "name") ?? "Examination";
-  const hallTicket  = firstOf<string>(rec, "hallTicketUrl", "hall_ticket_url", "hallTicket") ?? undefined;
+  // Actual API uses snake_case: subjectname, classname, exam_name, exam_date
+  const subject = (e.subjectname ?? e.subject ?? e.subjectName ?? e.subject_name ?? "") as string;
+  const cls = (e.classname ?? e.className ?? e.class ?? e.class_name ?? "") as string;
+  const date = (e.exam_date ?? e.date ?? e.examDate ?? e.exam_date ?? "") as string;
+  const startTime = (e.start_time ?? e.startTime ?? e.start_time ?? "") as string;
+  const endTime = (e.end_time ?? e.endTime ?? e.end_time ?? "") as string;
+  const venue = (e.room_no ?? e.venue ?? e.room ?? e.room_number ?? "") as string;
+  const examName = (e.exam_name ?? e.exam ?? e.examName ?? e.exam_title ?? e.title ?? e.name ?? "Examination") as string;
+  const hallTicket = (e.hallTicketUrl ?? e.hall_ticket_url ?? e.hallTicket ?? undefined) as string | undefined;
 
   const time = startTime
     ? endTime
@@ -544,7 +462,7 @@ function transformExamEntry(e: ApiExamTimetableRawEntry): UpcomingExam | null {
     : "";
 
   return {
-    id: resolvedId,
+    id: resolvedId || `exam-${date}-${subject}-${Math.random().toString(36).slice(2, 8)}`,
     exam: examName,
     subject,
     class: cls,
@@ -555,6 +473,114 @@ function transformExamEntry(e: ApiExamTimetableRawEntry): UpcomingExam | null {
   };
 }
 
-function getMockExams(): UpcomingExam[] {
-  return MOCK_EXAMS;
+// ── API service ────────────────────────────────────────────────────────────
+
+export class TimetableApiError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode?: number,
+    public readonly endpoint?: string,
+    public readonly originalError?: unknown,
+  ) {
+    super(message);
+    this.name = "TimetableApiError";
+  }
 }
+
+export const timetableApi = {
+  async getTeacherTimetable(params: TeacherTimetableQuery): Promise<TeacherTimetableData> {
+    logger("log", "Fetching teacher timetable", params);
+
+    const { data: raw } = await api.get<unknown>("/tenant/getalltimetable", { params });
+
+    const apiError = hasApiError(raw);
+    if (apiError) {
+      logger("warn", "API returned error status", { message: apiError });
+      throw new TimetableApiError(apiError, undefined, "/tenant/getalltimetable");
+    }
+
+    // Try nested format first: { data: { classTimetable: {...} } }
+    if (raw && typeof raw === "object") {
+      const obj = raw as Record<string, unknown>;
+      const nestedData = obj?.data && typeof obj.data === "object" && !Array.isArray(obj.data)
+        ? obj.data as Record<string, unknown>
+        : null;
+
+      if (nestedData && ("classTimetable" in nestedData || "examTimetable" in nestedData)) {
+        const nestedResult = transformNestedTimetable(nestedData);
+        if (nestedResult) return nestedResult;
+      }
+
+      // Also check if raw itself has classTimetable/examTimetable at top level
+      if ("classTimetable" in obj || "examTimetable" in obj) {
+        const nestedResult = transformNestedTimetable(obj);
+        if (nestedResult) return nestedResult;
+      }
+    }
+
+    // Flat array format: { status: true, count: N, data: [...] }
+    const flatItems = extractFlatArray(raw);
+    if (flatItems) {
+      const flatResult = transformFlatSlots(flatItems);
+      if (flatResult) return flatResult;
+      // Empty array is valid — return empty data
+      return {
+        grid: {},
+        periods: [],
+        exams: [],
+        summary: { totalPeriods: 0, teachingHours: 0, freePeriods: 0, classesTaught: 0 },
+        classLabel: "",
+        section: "",
+        classTeacher: "",
+        academicYear: params.academic_year,
+        currentPeriodLabel: null,
+      };
+    }
+
+    // Both formats exhausted — error
+    logger("error", "Unrecognized response structure", raw);
+    throw new TimetableApiError(
+      "Unrecognized timetable API response structure",
+      undefined,
+      "/tenant/getalltimetable",
+      raw,
+    );
+  },
+
+  async getExamsTimetable(params: ExamsTimetableQuery): Promise<UpcomingExam[]> {
+    logger("log", "Fetching exams timetable", params);
+
+    const { data: raw } = await api.get<unknown>("/tenant/getallexams-timetable", { params });
+
+    const apiError = hasApiError(raw);
+    if (apiError) {
+      logger("warn", "Exams API returned error", { message: apiError });
+      throw new TimetableApiError(apiError, undefined, "/tenant/getallexams-timetable");
+    }
+
+    // Flat format: { status: true, count: N, data: [...] }
+    const flatItems = extractFlatArray(raw);
+    if (flatItems) {
+      if (flatItems.length === 0) {
+        logger("log", "No exams returned from API");
+        return [];
+      }
+      return flatItems
+        .map((e) => transformExamEntry(e))
+        .filter(Boolean) as UpcomingExam[];
+    }
+
+    // Nested format fallback: drill into wrapper objects
+    const rawEntries = extractNestedArray(raw);
+    if (!rawEntries || rawEntries.length === 0) {
+      logger("log", "No exams returned from API");
+      return [];
+    }
+
+    return rawEntries
+      .map((e) => transformExamEntry(e as Record<string, unknown>))
+      .filter(Boolean) as UpcomingExam[];
+  },
+};
+
+

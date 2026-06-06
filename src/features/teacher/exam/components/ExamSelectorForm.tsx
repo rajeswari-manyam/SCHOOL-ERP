@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Users, Database, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ExamSelector, ExamType } from "../types/exam-marks.types";
 import {
@@ -12,13 +12,16 @@ interface Props {
   selector: ExamSelector;
   onChange: (s: ExamSelector) => void;
   onLoad: () => void;
+  onLoadFromApi?: () => void;
   studentsLoaded: boolean;
+  apiLoading?: boolean;
+  apiError?: boolean;
 }
 
 const selectCls =
   "h-10 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition cursor-pointer w-full";
 
-const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded }: Props) => {
+const ExamSelectorForm = ({ selector, onChange, onLoad, onLoadFromApi, studentsLoaded, apiLoading, apiError }: Props) => {
   const set = (patch: Partial<ExamSelector>) => onChange({ ...selector, ...patch });
 
   const allSelected =
@@ -86,16 +89,42 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded }: Props)
         </div>
       </div>
 
-      <Button
-        onClick={onLoad}
-        disabled={!allSelected}
-        variant={allSelected ? "default" : "outline"}
-        size="md"
-        className={`flex items-center gap-2 w-full md:w-auto ${!allSelected ? "text-gray-400" : ""}`}
-      >
-        <Users size={14} className="text-current" />
-        {studentsLoaded ? "Reload Students" : "Load Students"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={onLoad}
+          disabled={!allSelected}
+          variant={allSelected ? "default" : "outline"}
+          size="md"
+          className={`flex items-center gap-2 ${!allSelected ? "text-gray-400" : ""}`}
+        >
+          <Users size={14} className="text-current" />
+          {studentsLoaded ? "Reload Students" : "Load Students"}
+        </Button>
+
+        {onLoadFromApi && (
+          <Button
+            onClick={onLoadFromApi}
+            disabled={!allSelected || apiLoading}
+            variant="outline"
+            size="md"
+            className="flex items-center gap-2"
+          >
+            {apiLoading ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : (
+              <Database size={14} />
+            )}
+            Load from API
+          </Button>
+        )}
+
+        {apiError && (
+          <span className="inline-flex items-center gap-1 text-xs text-red-500 font-semibold">
+            <AlertCircle size={12} />
+            API fetch failed
+          </span>
+        )}
+      </div>
     </div>
   );
 };

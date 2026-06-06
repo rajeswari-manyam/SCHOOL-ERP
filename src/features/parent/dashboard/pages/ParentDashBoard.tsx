@@ -1,5 +1,5 @@
-import { useNavigate, useOutletContext } from "react-router-dom"
 import { useEffect } from "react"
+import { useNavigate, useOutletContext } from "react-router-dom"
 
 import { StatCard }           from "../../../../components/ui/statcard"
 import { AttendanceWidget }   from "../components/AttendanceWidge"
@@ -7,7 +7,7 @@ import { HomeworkCard }       from "../components/HomeWorkCard"
 import { AnnouncementCard }   from "../components/AnnouncamentsCard"
 import { UpcomingExamsTable } from "../components/UpCommingExampleTimeTable"
 
-import { useDashboard }       from "../hooks/useDashboard"
+import { useDashboard }       from "../hooks/usedashboard"
 import { useStudentById }     from "../hooks/useStudent"
 
 type ParentLayoutContext = {

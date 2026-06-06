@@ -96,7 +96,31 @@ export interface RecordPaymentPayload {
   notes?: string;
 }
 
+export interface OrganizationBillingPayload {
+  School: string;
+  Amount: number;
+  PaymentDate: string;
+  PaymentMode: string;
+  Description: string;
+}
+
+export interface OrganizationBillingResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface UpdatePlanPayload {
   institutionId: string;
   plan: PlanType;
+}
+
+// ─── Organization Schools ─────────────────────────────────────────────────────
+
+export interface OrganizationSchool {
+  school_name: string;
+  school_code: string;
+}
+
+export interface OrganizationSchoolsResponse {
+  schools: OrganizationSchool[];
 }

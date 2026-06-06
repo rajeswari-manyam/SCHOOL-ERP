@@ -67,3 +67,15 @@ export interface RepFormValues {
   perClosingRate: number;
   monthTarget: number;
 }
+
+export interface CreateMarketingPayload {
+  name: string;
+  email: string;
+  role: string;
+  phone: string;
+  whatsapp_number: string;
+  date_of_join: string;
+  closing_rate: string;
+  notes: string;
+  territory: string;
+}

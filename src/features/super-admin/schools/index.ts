@@ -6,5 +6,5 @@ export { default as SchoolAvatar } from "../components/Pagination";
 export { PlanBadge, StatusBadge } from "../components/Pagination";
 export { default as SubscriptionEndCell } from "../../super-admin/components/Pagination";
 export { default as Pagination } from "../components/Pagination";
-export { useSchools, useSchoolMutations } from "./hooks/useSchools";
+export { useSchools, useAllSchools, useSchool, useSchoolMutations } from "./hooks/useSchools";
 export type { School, SchoolFilters, SchoolsResponse, SchoolFormValues } from "./types/school.types";

@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { schoolsApi } from "../api/schools.api";
-import type { SchoolFilters, SchoolFormValues } from "../types/school.types";
+import type { SchoolFilters, SchoolFormValues, School } from "../types/school.types";
 
 export const SCHOOLS_KEYS = {
   all: ["super-admin", "schools"] as const,
   list: (filters: Partial<SchoolFilters>) => [...SCHOOLS_KEYS.all, "list", filters] as const,
   detail: (id: string) => [...SCHOOLS_KEYS.all, "detail", id] as const,
+  allSchools: ["super-admin", "schools", "all"] as const,
 };
 
 export const useSchools = (filters: Partial<SchoolFilters>) => {
@@ -14,6 +15,21 @@ export const useSchools = (filters: Partial<SchoolFilters>) => {
     queryFn: () => schoolsApi.getSchools(filters),
     staleTime: 1000 * 60 * 2,
     placeholderData: (prev) => prev,
+  });
+};
+
+export const useAllSchools = (search?: string) => {
+  return useQuery({
+    queryKey: [...SCHOOLS_KEYS.allSchools, search ?? ""],
+    queryFn: () => schoolsApi.getAllSchools(search),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    select: (data): School[] => {
+      if (Array.isArray(data?.data)) return data.data;
+      return [];
+    },
   });
 };
 

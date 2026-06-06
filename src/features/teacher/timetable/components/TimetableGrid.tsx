@@ -279,8 +279,8 @@ const TimetableGrid = ({
         )}
       </div>
 
-      {/* ── Table — horizontally scrollable ────────────────────────────── */}
-      <div className="overflow-x-auto" role="region" aria-label="Timetable grid, scroll horizontally on small screens">
+      {/* ── Table — horizontally and vertically scrollable ──────────────── */}
+      <div className="overflow-auto max-h-[calc(100vh-280px)]" role="region" aria-label="Timetable grid, scroll horizontally and vertically">
         <table
           className="border-collapse"
           style={{ minWidth: 640 }}
@@ -288,14 +288,14 @@ const TimetableGrid = ({
         >
           <thead>
             <tr>
-              {/* Period/Time header — sticky left */}
+              {/* Period/Time header — sticky left + top */}
               <th
                 scope="col"
                 className={[
-                  "sticky left-0 z-10 border border-gray-100 dark:border-slate-800",
+                  "sticky left-0 z-20 border border-gray-100 dark:border-slate-800",
                   "bg-gray-50 dark:bg-slate-800/80 px-3 py-3 text-left",
                 ].join(" ")}
-                style={{ minWidth: 100 }}
+                style={{ minWidth: 100, top: 0 }}
               >
                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-slate-500">
                   Period
@@ -305,7 +305,7 @@ const TimetableGrid = ({
                 </p>
               </th>
 
-              {/* Day columns */}
+              {/* Day columns — sticky top */}
               {DAYS.map((day) => {
                 const isToday = day === todayName;
                 return (
@@ -313,7 +313,7 @@ const TimetableGrid = ({
                     key={day}
                     scope="col"
                     className={[
-                      "border px-3 py-3 text-center transition-colors",
+                      "sticky top-0 z-10 border px-3 py-3 text-center transition-colors",
                       isToday
                         ? "border-indigo-200 dark:border-indigo-700 bg-indigo-600 dark:bg-indigo-700"
                         : "border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/80",
@@ -340,7 +340,7 @@ const TimetableGrid = ({
                 <tr key={period.id}>
                   <td
                     className="sticky left-0 z-10 border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/80 px-3 py-2"
-                    style={{ minWidth: 100 }}
+                    style={{ minWidth: 100, top: 0 }}
                   >
                     <p className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
                       {period.label}
@@ -365,7 +365,7 @@ const TimetableGrid = ({
                       "sticky left-0 z-10 border border-gray-100 dark:border-slate-800",
                       "bg-gray-50 dark:bg-slate-800/80 px-3 py-2",
                     ].join(" ")}
-                    style={{ minWidth: 100 }}
+                    style={{ minWidth: 100, top: 0 }}
                   >
                     <p className="text-xs font-extrabold text-gray-700 dark:text-slate-200">
                       {period.label}

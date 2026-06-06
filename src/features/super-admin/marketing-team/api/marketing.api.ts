@@ -2,6 +2,7 @@ import axios from "@/config/axios";
 import type {
   RepFilters, RepsResponse, MarketingRep,
   RepFormValues, MarketingStats, AttendanceRecord,
+  CreateMarketingPayload,
 } from "../types/marketing.types";
 
 export const marketingApi = {
@@ -32,8 +33,8 @@ export const marketingApi = {
     await axios.post("/super-admin/marketing-team/attendance", { repId, date, status });
   },
 
-  createRep: async (payload: RepFormValues): Promise<MarketingRep> => {
-    const { data } = await axios.post("/super-admin/marketing-team/reps", payload);
+  createRep: async (payload: CreateMarketingPayload): Promise<MarketingRep> => {
+    const { data } = await axios.post("/organization/marketing", payload);
     return data;
   },
 

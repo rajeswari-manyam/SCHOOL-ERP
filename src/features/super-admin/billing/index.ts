@@ -21,6 +21,7 @@ export {
   useTopInstitutions,
   useInstitutions,
   useInstitution,
+  useOrganizationSchools,
   useBillingMutations,
   billingKeys,
 } from './hooks/useBilling';
@@ -45,4 +46,8 @@ export type {
   RecordPaymentPayload,
   UpdatePlanPayload,
   PlanRevenue,
+  OrganizationBillingPayload,
+  OrganizationBillingResponse,
+  OrganizationSchool,
+  OrganizationSchoolsResponse,
 } from './types/billing.types';

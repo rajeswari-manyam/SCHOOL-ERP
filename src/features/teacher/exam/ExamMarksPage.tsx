@@ -28,6 +28,9 @@ const ExamMarksPage = () => {
     handleSaveDraft, handleOpenSubmit, handleConfirmSubmit,
     handleDownloadReport,
     submittedExams, publishedResults,
+    apiResults, apiResultsLoading, apiResultsError,
+    handleLoadFromApi,
+    submitting, submitError,
   } = useExamMarks();
 
   return (
@@ -58,6 +61,12 @@ const ExamMarksPage = () => {
             <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
               <Check size={14} className="text-current" strokeWidth={2.5} />
               Report downloading!
+            </div>
+          )}
+          {submitError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse" role="alert">
+              <Send size={14} className="text-current" strokeWidth={2.5} />
+              {submitError}
             </div>
           )}
         </div>
@@ -96,7 +105,10 @@ const ExamMarksPage = () => {
             selector={selector}
             onChange={setSelector}
             onLoad={handleLoadStudents}
+            onLoadFromApi={handleLoadFromApi}
             studentsLoaded={studentsLoaded}
+            apiLoading={apiResultsLoading}
+            apiError={apiResultsError}
           />
 
           {/* Summary bar */}
@@ -124,10 +136,11 @@ const ExamMarksPage = () => {
                 onClick={handleOpenSubmit}
                 variant="default"
                 size="md"
-                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold"
+                disabled={submitting}
+                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold disabled:opacity-50"
               >
                 <Send size={14} className="text-current" />
-                Submit for Review
+                {submitting ? "Submitting..." : "Submit for Review"}
               </Button>
 
               <Button

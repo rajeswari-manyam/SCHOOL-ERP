@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm,useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useSchools } from "../../schools/hooks/useSchools";
+import { useAllSchools } from "../../schools/hooks/useSchools";
 import { useConfigMutations } from "../hooks/useConfig";
 import type { ConfigTemplate, ConfigTemplateAssignPayload } from "../types/config.types";
 import { Button } from "@/components/ui/button";
@@ -34,18 +34,7 @@ interface AssignModalProps {
 
 const AssignModal = ({ open, template, onClose }: AssignModalProps) => {
   const [search, setSearch] = useState("");
-  const { data: schoolsResponse, isFetching } = useSchools({
-    search,
-    plan: "ALL",
-    status: "ALL",
-    city: "",
-    page: 1,
-    pageSize: 100,
-  });
-
-  const schools = Array.isArray(schoolsResponse)
-    ? schoolsResponse
-    : schoolsResponse?.data ?? [];
+  const { data: schools, isFetching } = useAllSchools(search);
 
   const { assignTemplateToSchools } = useConfigMutations();
 

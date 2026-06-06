@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import TicketFilterBar from "./components/TicketFilterBar";
 import TicketsTable from "./components/TicketsTable";
@@ -6,17 +6,12 @@ import TicketDetailDrawer from "./components/TicketDetailDrawer";
 import Pagination from "../components/Pagination";
 import { StatPill } from "./components/TicketBadges";
 import { useTickets, useTicketStats } from "./hooks/useSupport";
+import { useAllSchools } from "../schools/hooks/useSchools";
 import type { TicketFilters, SupportTicket } from "./types/support.types";
 
 const DEFAULT_FILTERS: TicketFilters = {
   search: "", priority: "ALL", status: "ALL", school: "", page: 1, pageSize: 8,
 };
-
-const SCHOOLS = [
-  "Hanamkonda Public","St. Mary's CBSE","Kazipet English",
-  "Sri Vidya Mandir","Little Stars School","Global Kids School",
-  "Kendriya Modern","Sunrise Academy",
-];
 
 const MOCK_STATS = { open: 12, inProgress: 4, resolvedToday: 7 };
 
@@ -26,10 +21,16 @@ const SupportPage = () => {
   const [pendingFilters, setPending]  = useState<TicketFilters>(DEFAULT_FILTERS);
   const [selectedTicket, setSelected] = useState<SupportTicket | null>(null);
 
+  const { data: allSchools } = useAllSchools();
   const { data, isLoading } = useTickets(filters);
   const { data: stats }     = useTicketStats();
 
   const displayStats = stats ?? MOCK_STATS;
+
+  const schoolNames = useMemo(() => {
+    if (!allSchools?.length) return [];
+    return allSchools.map((s) => s.name).filter(Boolean) as string[];
+  }, [allSchools]);
 
   const handleApply = () => setFilters({ ...pendingFilters, page: 1 });
 
@@ -63,7 +64,7 @@ const SupportPage = () => {
         {/* Filter bar */}
         <TicketFilterBar
           filters={pendingFilters}
-          schools={SCHOOLS}
+          schools={schoolNames}
           onChange={(patch) => setPending((p) => ({ ...p, ...patch }))}
           onApply={handleApply}
         />

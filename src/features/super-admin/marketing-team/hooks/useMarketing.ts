@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { marketingApi } from "../api/marketing.api";
-import type { RepFilters, RepFormValues } from "../types/marketing.types";
+import type { RepFilters, CreateMarketingPayload } from "../types/marketing.types";
 
 export const MARKETING_KEYS = {
   all:        ["super-admin", "marketing-team"] as const,
@@ -32,8 +33,17 @@ export const useMarketingMutations = () => {
   const inv = () => qc.invalidateQueries({ queryKey: MARKETING_KEYS.all });
 
   return {
-    createRep:       useMutation({ mutationFn: (p: RepFormValues) => marketingApi.createRep(p), onSuccess: inv }),
-    updateRep:       useMutation({ mutationFn: ({ id, p }: { id: string; p: Partial<RepFormValues> }) => marketingApi.updateRep(id, p), onSuccess: inv }),
+    createRep:       useMutation({
+      mutationFn: (p: CreateMarketingPayload) => marketingApi.createRep(p),
+      onSuccess: () => {
+        inv();
+        toast.success("Marketing team member added successfully");
+      },
+      onError: (err: Error) => {
+        toast.error(err?.message ?? "Failed to add marketing team member");
+      },
+    }),
+    updateRep:       useMutation({ mutationFn: ({ id, p }: { id: string; p: Partial<CreateMarketingPayload> }) => marketingApi.updateRep(id, p), onSuccess: inv }),
     deleteRep:       useMutation({ mutationFn: (id: string) => marketingApi.deleteRep(id), onSuccess: inv }),
     markAttendance:  useMutation({ mutationFn: ({ repId, date, status }: { repId: string; date: string; status: string }) => marketingApi.markAttendance(repId, date, status), onSuccess: inv }),
     approvePayout:   useMutation({ mutationFn: (id: string) => marketingApi.approvePayout(id), onSuccess: inv }),

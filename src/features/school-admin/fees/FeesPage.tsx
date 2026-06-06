@@ -8,6 +8,7 @@ import { FeeStructureTab } from "../fees/components/Feestructuretab";
 import { CommunicationCenter } from "./components/Communicationcenter";
 
 import { useFeeCollection } from "./hooks/Usefeecollection";
+import { Button } from "@/components/ui/button";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
@@ -63,6 +64,17 @@ const FeeCollectionPage = () => {
             Manage pending dues, payments, and fee structure
           </p>
         </div>
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                 
+                  <Button
+                    onClick={() => openRecordPayment()}
+                    className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 gap-1.5 text-sm px-3 sm:px-4 py-2 whitespace-nowrap"
+                  >
+                    <span className="text-base leading-none">+</span>
+                    <span className="hidden sm:inline">Record Payment</span>
+                    <span className="sm:hidden">Record Payment</span>
+                  </Button>
+                </div>
       </div>
 
       {/* ── Stats ────────────────────────────────────────────────────────── */}
@@ -212,9 +224,10 @@ const FeeCollectionPage = () => {
       </div>
 
       {/* ── Modals ───────────────────────────────────────────────────────── */}
-      {showRecordPayment && recordPaymentStudent && (
+      {showRecordPayment && (
         <RecordPaymentModal
           fee={recordPaymentStudent}
+          pendingFees={filteredFees}
           onClose={closeRecordPayment}
           onSubmit={submitPayment}
         />

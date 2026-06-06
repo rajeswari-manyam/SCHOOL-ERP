@@ -47,10 +47,11 @@ export interface TeacherTimetableQuery {
   sectionName?: string;
 }
 
-// ─── API types for /tenant/getallexams-timetable ─────────────────────────────
+// ─── API response types for /tenant/getallexams-timetable ────────────────────
 
 export interface ExamsTimetableQuery {
   teacher_id: string;
+  academic_year?: string;
 }
 
 export interface ApiExamTimetableRawEntry {
