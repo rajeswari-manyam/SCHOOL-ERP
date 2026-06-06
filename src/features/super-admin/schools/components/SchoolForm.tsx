@@ -1,7 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { SchoolFormValues } from "../types/school.types";
 
 const schema = z.object({
   school_name: z.string().min(1, "School name is required"),
@@ -19,14 +18,16 @@ const schema = z.object({
   logo: z.string().optional().or(z.literal("")),
 });
 
+type SchemaType = z.infer<typeof schema>;
+
 type SchoolFormProps = {
-  defaultValues?: Partial<SchoolFormValues>;
-  onSubmit: (values: SchoolFormValues) => void;
+  defaultValues?: Partial<SchemaType>;
+  onSubmit: (values: SchemaType) => void;
   loading?: boolean;
 };
 
 export const SchoolForm = ({ defaultValues = {}, onSubmit, loading }: SchoolFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<SchoolFormValues>({
+  const { register, handleSubmit, formState: { errors } } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     defaultValues,
   });

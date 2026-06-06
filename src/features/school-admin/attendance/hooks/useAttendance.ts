@@ -98,7 +98,8 @@ export const useAddHoliday = () => {
     mutationFn: attendanceApi.addHoliday,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.allHolidays });
+      const { calendarYear } = useAttendanceStore.getState?.() ?? { calendarYear: new Date().getFullYear() };
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.allHolidays(calendarYear) });
       closeAddHoliday();
     },
   });

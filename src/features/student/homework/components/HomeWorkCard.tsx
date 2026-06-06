@@ -7,12 +7,14 @@ interface Props {
 }
 
 const subjectBadge: Record<string, string> = {
-  English: "bg-indigo-50 text-indigo-700 border border-indigo-200",
+  English:     "bg-indigo-50 text-indigo-700 border border-indigo-200",
   Mathematics: "bg-green-50 text-green-700 border border-green-200",
-  Science: "bg-orange-50 text-orange-700 border border-orange-200",
-  SST: "bg-purple-50 text-purple-700 border border-purple-200",
-  Hindi: "bg-pink-50 text-pink-700 border border-pink-200",
+  Science:     "bg-orange-50 text-orange-700 border border-orange-200",
+  SST:         "bg-purple-50 text-purple-700 border border-purple-200",
+  Hindi:       "bg-pink-50 text-pink-700 border border-pink-200",
 };
+// Fallback for subjects not in the map (e.g. Telugu, Computer, EVS)
+const DEFAULT_BADGE = "bg-gray-50 text-gray-600 border border-gray-200";
 
 const dueBadge: Record<string, string> = {
   urgent: "bg-rose-50 text-rose-600 border border-rose-200",
@@ -24,9 +26,7 @@ const attachmentIcon = (name: string) =>
   name.endsWith(".pdf") ? Paperclip : FileText;
 
 export const HomeworkCard = ({ item, onSubmit }: Props) => {
-  const subjectCls =
-    subjectBadge[item.subject] ??
-    "bg-gray-50 text-gray-600 border border-gray-200";
+  const subjectCls = subjectBadge[item.subject] ?? DEFAULT_BADGE;
 
   const dueCls = dueBadge[item.dueUrgency] ?? dueBadge.normal;
   const AttachIcon = item.attachment ? attachmentIcon(item.attachment) : Paperclip;

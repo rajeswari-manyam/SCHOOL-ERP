@@ -112,6 +112,7 @@ export const leaveApi = {
   },
 
   applyLeave: async (form: ApplyLeaveFormData, staffId: string, totalDays?: number): Promise<LeaveApplication> => {
+    void staffId;
     const payload: ApplyLeavePayload = {
       staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac",
       leave_type: (form.type?.toLowerCase() ?? "casual") as ApplyLeavePayload["leave_type"],

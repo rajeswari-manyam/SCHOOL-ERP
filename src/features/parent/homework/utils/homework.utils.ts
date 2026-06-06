@@ -1,9 +1,26 @@
 import type { Homework } from "../types/homework.types";
 import type { Homework as ApiHomework } from "../../../../services/homework.api";
 
+/** Normalise subject names from the API to match UI badge/icon keys */
+const SUBJECT_ALIAS: Record<string, string> = {
+  MATHS:   "MATHEMATICS",
+  MATH:    "MATHEMATICS",
+  ENG:     "ENGLISH",
+  SCI:     "SCIENCE",
+  PHYSICS: "SCIENCE",
+  BIOLOGY: "SCIENCE",
+  CHEM:    "SCIENCE",
+  CHEMISTRY: "SCIENCE",
+};
+
+function normaliseSubject(raw: string): string {
+  const up = raw.toUpperCase().trim();
+  return SUBJECT_ALIAS[up] ?? up;
+}
+
 /** Map API homework shape → local UI shape */
 export function mapApiHomework(hw: ApiHomework): Homework {
-  const subjectRaw = hw.subjectName?.toUpperCase() ?? "ENGLISH";
+  const subjectRaw = normaliseSubject(hw.subjectName ?? "ENGLISH");
 
   const dateObj = new Date(hw.submission_date);
   const dayNum  = isNaN(dateObj.getTime()) ? 0 : dateObj.getDate();
@@ -13,10 +30,10 @@ export function mapApiHomework(hw: ApiHomework): Homework {
     : dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
   let dueLabel: string | undefined;
-  const today = new Date();
+  const today    = new Date();
   const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const dueMid   = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()).getTime();
-  const diff = Math.round((dueMid - todayMid) / (1000 * 60 * 60 * 24));
+  const diff     = Math.round((dueMid - todayMid) / (1000 * 60 * 60 * 24));
   if (diff === 0)  dueLabel = "Today";
   if (diff === 1)  dueLabel = "Tomorrow";
   if (diff === -1) dueLabel = "Yesterday";
@@ -29,28 +46,54 @@ export function mapApiHomework(hw: ApiHomework): Homework {
     .slice(0, 2);
 
   return {
-    id:              hw.id,
-    subject:         subjectRaw,
-    subjectColor:    "blue",
-    title:           hw.title,
-    description:     hw.description,
-    due:             dueStr,
+    id:             hw.id,
+    subject:        subjectRaw,
+    subjectColor:   "blue",
+    title:          hw.title,
+    description:    hw.description,
+    due:            dueStr,
     dueLabel,
-    teacher:         hw.teacher_id ?? "",
+    teacher:        hw.teacher_id ?? "",
     teacherInitials,
-    day:             dayNum,
-    status:          "NOT TRACKED",
-    attachment:      hw.attachments?.length
+    day:            dayNum,
+    // Store the full submission date so DayFilter can match properly
+    submissionDate: isNaN(dateObj.getTime()) ? undefined : dateObj,
+    status:         "NOT TRACKED",
+    attachment:     hw.attachments?.length
       ? { name: hw.attachments[0], url: hw.attachments[0] }
       : undefined,
   };
 }
 
-/** Filter homework whose due-day >= selected day */
-export function filterHomeworkByDay(data: Homework[] | undefined, day: number | null): Homework[] {
+/**
+ * Filter homework whose submission date matches (or is on/after) the selected date.
+ * Falls back to day-number comparison if submissionDate is absent.
+ */
+export function filterHomeworkByDay(
+  data: Homework[] | undefined,
+  selectedDate: Date | null
+): Homework[] {
   if (!data) return [];
-  if (!day) return data;
-  return data.filter((h) => h.day >= day);
+  if (!selectedDate) return data;
+
+  const sel = new Date(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth(),
+    selectedDate.getDate()
+  ).getTime();
+
+  return data.filter((h) => {
+    if (h.submissionDate) {
+      const due = new Date(
+        h.submissionDate.getFullYear(),
+        h.submissionDate.getMonth(),
+        h.submissionDate.getDate()
+      ).getTime();
+      return due >= sel;
+    }
+    // Legacy fallback: compare just the day number
+    return h.day >= selectedDate.getDate();
+  });
 }
 
 export function groupBySubject(data: Homework[] | undefined): Record<string, Homework[]> {

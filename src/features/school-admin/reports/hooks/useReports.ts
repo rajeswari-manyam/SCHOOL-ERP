@@ -117,7 +117,7 @@ export const useGenerateReport = (onSuccess: () => void) => {
         onSuccess();
       }, 1000);
     } catch (err: any) {
-      console.error("generate report failed", { payload, error: err?.message ?? err });
+      console.error("generate report failed", { error: err?.message ?? err });
       alert(err?.message ?? "Failed to generate report");
     } finally {
       setGenerating(false);

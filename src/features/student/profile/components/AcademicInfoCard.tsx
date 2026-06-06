@@ -3,14 +3,15 @@ import type { AcademicInfo } from "../types/profile.types";
 
 interface AcademicInfoCardProps {
   academic: AcademicInfo;
+  classId?: string;           // ← added (optional)
 }
 
-export default function AcademicInfoCard({ academic }: AcademicInfoCardProps) {
+export default function AcademicInfoCard({ academic, classId }: AcademicInfoCardProps) {
   const values: Record<string, string> = {
     academicYear: academic.academicYear,
-    board: academic.board,
-    section: academic.section,
-    classroom: academic.classroom,
+    board:        academic.board,
+    section:      academic.section,
+    classroom:    academic.classroom,
   };
 
   return (
@@ -38,17 +39,32 @@ export default function AcademicInfoCard({ academic }: AcademicInfoCardProps) {
             <span className="text-[11px] sm:text-xs text-slate-500">
               {label}
             </span>
-
-            <span
-              className="
-                text-[11px] sm:text-xs font-semibold text-slate-900
-                text-right break-words max-w-[55%]
-              "
-            >
+            <span className="
+              text-[11px] sm:text-xs font-semibold text-slate-900
+              text-right break-words max-w-[55%]
+            ">
               {values[key] || "-"}
             </span>
           </div>
         ))}
+
+        {/* Class ID row — only rendered when classId is available */}
+        {classId && (
+          <div className="
+            flex items-start sm:items-center justify-between
+            gap-3 py-2 sm:py-[9px] last:pb-0
+          ">
+            <span className="text-[11px] sm:text-xs text-slate-500">
+              Class ID
+            </span>
+            <span className="
+              font-mono text-[11px] sm:text-xs font-semibold text-indigo-600
+              text-right break-all max-w-[55%] select-all
+            ">
+              {classId}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

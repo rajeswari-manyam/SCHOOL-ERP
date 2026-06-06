@@ -105,7 +105,6 @@ const HomeworkPage = () => {
       description: values.description,
       submission_date: values.submission_date,
       attachments: values.attachments ?? [],
-      is_published: values.is_published,
       school_code: schoolCode,
     }),
     [teacherId, schoolCode],
@@ -120,7 +119,6 @@ const HomeworkPage = () => {
       description: values.description,
       submission_date: values.submission_date,
       attachments: values.attachments ?? [],
-      is_published: values.is_published,
     }),
     [],
   );

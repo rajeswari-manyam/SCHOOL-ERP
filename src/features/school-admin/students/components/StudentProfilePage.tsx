@@ -8,7 +8,6 @@ import StudentAttendanceTab from "./StudentAttendanceTab";
 import StudentFeeTab from "./StudentFeeTab";
 import StudentDocumentsTab from "./StudentDocumentTab";
 import { EditStudentModal } from "./EditStudentModal";
-import type { UpdateStudentPayload } from "../types/student.types";
 import { studentsApi } from "../api/students.api";
 
 type Tab = "overview" | "attendance" | "fee-history" | "documents";

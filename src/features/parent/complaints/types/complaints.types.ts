@@ -6,6 +6,8 @@ export type ComplaintCategory =
   | "Facility"
   | "Other";
 
+export type ComplaintPriority = "low" | "medium" | "high";
+
 export type ComplaintStatus = "pending" | "submitted" | "resolved";
 
 export interface ComplaintAttachee {
@@ -15,14 +17,19 @@ export interface ComplaintAttachee {
   avatarColor: string;
 }
 
+/** UI-layer complaint (what the store and components work with) */
 export interface Complaint {
   id: string;
   subject: string;
   category: ComplaintCategory;
   description: string;
-  attachees: string[]; // child ids
+  priority: ComplaintPriority;
+  attachees: string[];      // child ids — "regarding"
   photoFile?: File | null;
+  photos?: string[];        // uploaded URLs from API
   status: ComplaintStatus;
   referenceNo?: string;
   submittedAt?: string;
+  resolution?: string | null;
+  resolved_at?: string | null;
 }

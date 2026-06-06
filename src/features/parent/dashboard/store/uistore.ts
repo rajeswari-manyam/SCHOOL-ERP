@@ -17,6 +17,7 @@ interface DashboardState {
   weekDays: WeekDay[]
   weeklyPct: number
   monthlyPct: number
+  todayStatus: "present" | "absent" | "not_marked"  // today's actual status
 
  
   fees: Fee[]
@@ -40,6 +41,7 @@ interface DashboardState {
   // Setters
   setWeekDays: (days: WeekDay[], pct: number) => void
   setMonthlyPct: (pct: number) => void
+  setTodayStatus: (s: "present" | "absent" | "not_marked") => void
   setFees: (fees: Fee[]) => void
   setHomework: (hw: Homework[]) => void
   setExams: (exams: ExamTimetable[]) => void
@@ -55,6 +57,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   weekDays: [],
   weeklyPct: 0,
   monthlyPct: 0,
+  todayStatus: "not_marked" as const,
 
   fees: [],
   isPaid: false,
@@ -71,9 +74,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
 
   setWeekDays: (days, pct) => set({ weekDays: days, weeklyPct: pct }),
   setMonthlyPct: (pct) => set({ monthlyPct: pct }),
+  setTodayStatus: (s) => set({ todayStatus: s }),
   setFees: (fees) => set({
     fees,
-    isPaid: fees.length > 0 && fees.every((f) => f.status === "paid"),
+    isPaid: fees.length === 0 || fees.every((f) => f.status === "paid"),
   }),
   setHomework: (hw) => set({ homework: hw }),
   setExams: (exams) => set({ exams }),

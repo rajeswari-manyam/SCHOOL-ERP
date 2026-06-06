@@ -2,18 +2,21 @@
 import { useExamData } from "../hooks/useExam";
 import { UpcomingSection } from "../components/UpcomingSection";
 import { ResultsSection } from "../components/ResultSection";
-import { ReportCardSection } from "../components/ReportCardSection";
-import { SyllabusSection } from "../components/SyllabusSection";
+// import { ReportCardSection } from "../components/ReportCardSection";
+// import { SyllabusSection } from "../components/SyllabusSection";
 
 // ── Change these to come from auth context / route params as needed ──
 const CLASS_NAME = "10";
 const SECTION_NAME = "A";
+const STUDENT_ID = "";
+const EXAM_TYPE = "Midterm";
+const ACADEMIC_YEAR = "2025-2026";
 
 const tabs = [
   { id: "upcoming", label: "Upcoming Exams" },
   { id: "results", label: "Results" },
-  { id: "report", label: "Report Card" },
-  { id: "syllabus", label: "Syllabus" },
+  // { id: "report", label: "Report Card" },
+  // { id: "syllabus", label: "Syllabus" },
 ] as const;
 
 export const ExamsPage = () => {
@@ -25,11 +28,11 @@ export const ExamsPage = () => {
     examsError,
     refetchExams,
     examResult,
-    report,
-    syllabus,
-    unitTestSyllabus,
-    deadlines,
- } = useExamData(CLASS_NAME, SECTION_NAME);
+    // report,
+    // syllabus,
+    // unitTestSyllabus,
+    // deadlines,
+  } = useExamData(CLASS_NAME, SECTION_NAME, STUDENT_ID, EXAM_TYPE, ACADEMIC_YEAR);
 
   return (
     <div className="mx-auto max-w-7xl px-2 sm:px-3 py-3 sm:py-4 space-y-4">
@@ -132,13 +135,13 @@ export const ExamsPage = () => {
           )}
         </div>
 
-        <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
+        {/* <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
           {activeTab === "report" && report && (
             <ReportCardSection report={report} />
           )}
-        </div>
+        </div> */}
 
-        <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
+        {/* <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
           {activeTab === "syllabus" && (
             <SyllabusSection
               syllabus={syllabus}
@@ -146,7 +149,7 @@ export const ExamsPage = () => {
               deadlines={deadlines}
             />
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 // src/features/dashboard/pages/DashboardPage.tsx
 // No config needed — all data is derived from the Zustand auth store automatically.
 
+import { useNavigate } from "react-router-dom";
 import { useDashboard }                                from "../hooks/useDashboard";
 import { DashboardStatCard, DashboardStatGrid }        from "../components/DashboardStatCard";
 import { ScheduleTable }                               from "../components/ScheduleTable";
@@ -87,6 +88,15 @@ export const Dashboard = () => {
     announcements,
   } = useDashboard(); // ← no config arg; reads from auth store internally
 
+  const navigate = useNavigate();
+
+  const cardRoutes: Record<string, string> = {
+    attendance: "/student/attendance",
+    percent:    "/student/attendance",
+    homework:   "/student/homework",
+    exam:       "/student/exams",
+  };
+
   if (loading) return <LoadingSkeleton />;
   if (error)   return <ErrorState message={error} />;
 
@@ -138,6 +148,10 @@ export const Dashboard = () => {
               icon={getIcon(item.iconType)}
               variant={getVariant(item.iconType)}
               active={item.iconType === "homework"}
+              onClick={() => {
+                const route = cardRoutes[item.iconType ?? ""];
+                if (route) navigate(route);
+              }}
             />
           ))}
         </DashboardStatGrid>

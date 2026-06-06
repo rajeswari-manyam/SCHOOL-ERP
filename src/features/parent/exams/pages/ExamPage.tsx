@@ -139,7 +139,6 @@ function mapApiResults(results: Result[], examType: string, studentName: string)
     .slice(0, 3)
     .map((r) => r.subject);
 
-  const passCount = examResults.filter((r) => r.status === "Pass").length;
   const analyticsNote = percentage >= 75
     ? `${studentName} has shown strong performance in ${examType}. Keep up the momentum!`
     : percentage >= 50

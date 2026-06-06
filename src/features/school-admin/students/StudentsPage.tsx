@@ -29,8 +29,8 @@ const StudentsPage = () => {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const handleAddStudent = async (data: AddStudentFormData) => {
-    // Return the created student for parent API integration
-    return await addStudent(data);
+    const student = await addStudent(data);
+    return { status: true, message: "Student created", data: student };
   };
 
 

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ContactInfo, NotificationPref, Child } from "../types/profile.types";
-import { getParentById, getstudentsById } from "../../../../services/parent.api";
+import { getParentById } from "../../../../services/parent.api";
+import { getStudentById } from "../../../../services/student.api";
 
 interface ProfileState {
   parentName: string;
@@ -56,7 +57,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
       const parent = await getParentById(parentId);
 
       const students = await Promise.all(
-        parent.students.map((sid) => getstudentsById(sid))
+      parent.students.map((sid) => getStudentById(sid))
       );
 
       const children: Child[] = students.map((s, idx) => ({

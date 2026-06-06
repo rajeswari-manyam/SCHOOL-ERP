@@ -8,7 +8,7 @@ import AbsentList         from "../components/AbsentList"
 import AbsentModal        from "../components/AbsentModal"
 
 import typography, { combineTypography } from "../../../../styles/typography"
-import { useAttendance } from "../hooks/useattedance";
+import { useAttendance } from "../hooks/useAttedance";
 import { useAttendanceStore } from "../store/attedance.store"
 import type { AbsentData } from "../types/attendance.types"
 

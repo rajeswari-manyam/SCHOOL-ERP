@@ -149,7 +149,7 @@ const AddStudentModal = ({
   // PARENT API
   const {
     mutateAsync: createParent,
-    isLoading: parentLoading,
+    isPending: parentLoading,
     error: parentApiError,
     reset: resetParentError,
   } = useCreateParentMutation();
@@ -228,7 +228,7 @@ const AddStudentModal = ({
     if (!payload.phone?.trim())
       return "Phone is required.";
 
-    if (!payload.student_id?.trim())
+    if (!payload.students?.[0]?.trim())
       return "Student ID is required.";
 
     if (!payload.address?.trim())
@@ -256,11 +256,7 @@ const AddStudentModal = ({
       }
 
       // SCHOOL ID FROM AUTH STORE
-      const schoolId =
-        user?.school_id ||
-        user?.schoolId ||
-        user?.schoolcode ||
-        "";
+      const schoolId = user?.schoolcode || "";
 
       // UPDATED PAYLOAD
       const parentPayload: CreateParentPayload = {
@@ -269,7 +265,7 @@ const AddStudentModal = ({
         occupation: form.fatherOccupation,
         email: form.email,
         phone: form.fatherPhone,
-        student_id: studentData.id,
+        students: [studentData.id],
         address: form.residentialAddress,
         school_id: schoolId,
       };

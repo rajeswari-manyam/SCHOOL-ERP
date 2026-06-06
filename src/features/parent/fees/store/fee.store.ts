@@ -211,7 +211,7 @@ export const useFeeStore = create<FeeStore>((set, get) => ({
     }
   },
 
-  markPaid: (id, mode) =>
+  markPaid: (id) =>
     set((state) => ({
       fees: state.fees.map((f) =>
         f.id === id ? { ...f, status: "paid" as const } : f

@@ -11,7 +11,7 @@ import { getAllHomework }                               from "../../../../servic
 import { getAllExamTimetable }                          from "../../../../services/examtimetable.api";
 import { getAllResults }                                from "../../../../services/results.api";
 import { getAllTimetable }                              from "../../../../services/timetable.api";
-import { getstudentsById }                              from "../../../../services/parent.api";
+import { getStudentById } from "../../../../services/student.api";
 
 // ── Dashboard-local types ─────────────────────────────────────────────────────
 import type {
@@ -109,15 +109,16 @@ const toAttendanceDays = (
   }
 
   const lookup: Record<number, "present" | "absent" | "holiday"> = {};
-  if (Array.isArray(records?.data)) {
-    for (const r of records.data as { date: string; status: string }[]) {
-      const d = new Date(r.date).getDate();
-      lookup[d] =
-        r.status === "present" ? "present"
-        : r.status === "absent" ? "absent"
-        : "holiday";
-    }
+if (Array.isArray(records?.records)) {
+  for (const r of records.records as { date: string; status: string }[]) {
+    const d = new Date(r.date).getDate();
+    const s = r.status?.toLowerCase();
+    lookup[d] =
+      s === "present" ? "present"
+      : s === "absent" ? "absent"
+      : "holiday";
   }
+}
 
   const today = new Date();
   const isCurrentMonth =
@@ -202,15 +203,15 @@ export const useDashboard = (): DashboardState => {
       try {
         // ── Step 1: student profile — user.id IS the student ID ────────────
         const studentId = authUser.id;
-        const student = await getstudentsById(studentId);
+      const apiStudent = await getStudentById(studentId);
 
-        if (!student) throw new Error("Could not load student profile.");
+        if (!apiStudent) throw new Error("Could not load student profile.");
 
-        const className   = student.class;
-        const sectionName = student.section;
-        const schoolCode  = student.school_code;
-        const rollNumber  = student.roll_number;
-        const studentName = `${student.first_name} ${student.last_name}`;
+        const className   = apiStudent.class;
+        const sectionName = apiStudent.section;
+        const schoolCode  = apiStudent.school_code;
+        const rollNumber  = apiStudent.roll_number;
+        const studentName = `${apiStudent.first_name} ${apiStudent.last_name}`;
 
         // ── Step 3: all widget data in parallel ───────────────────────────
         const now   = new Date();
@@ -264,11 +265,10 @@ export const useDashboard = (): DashboardState => {
         const todayRecord = weeklyData?.records?.find(
           (r) => r.date.startsWith(todayStr)
         );
-        const todayStatus =
-          todayRecord?.status === "present" ? "Present"
-          : todayRecord?.status === "absent" ? "Absent"
-          : "—";
-
+       const todayStatus =
+  todayRecord?.status?.toLowerCase() === "present" ? "Present"
+  : todayRecord?.status?.toLowerCase() === "absent" ? "Absent"
+  : "—";
         // ── Monthly attendance calendar ───────────────────────────────────
         const monthlyRaw =
           monthlyAttendanceRes.status === "fulfilled"

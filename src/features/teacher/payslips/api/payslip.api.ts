@@ -15,6 +15,7 @@ const toCamelCase = (obj: any): any => {
 
 export const payslipApi = {
   getPayslips: async (staffId: string, month?: string, year?: string): Promise<Payslip[]> => {
+    void staffId;
     const params: Record<string, string> = { staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac" };
     if (month) params.month = month;
     if (year) params.year = year;

@@ -145,12 +145,12 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
 
           <FormField label="Role">
             <Select options={ROLE_OPTIONS} placeholder="Select role" value={form.role}
-              onChange={(v) => handleChange("role", v)} />
+              onChange={(v) => handleChange("role", typeof v === "string" ? v : v?.target?.value ?? "")} />
           </FormField>
 
           <FormField label="Status">
             <Select options={STATUS_OPTIONS} placeholder="Select status" value={form.status}
-              onChange={(v) => handleChange("status", v)} />
+              onChange={(v) => handleChange("status", typeof v === "string" ? v : v?.target?.value ?? "")} />
           </FormField>
 
           <FormField label="Employee ID">

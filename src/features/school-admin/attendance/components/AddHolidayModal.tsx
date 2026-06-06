@@ -30,7 +30,7 @@ const AddHolidayModal = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const successTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const successTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     return () => {

@@ -1,4 +1,4 @@
-import type { Payslip, PayslipStatus } from "../types/payslip.types";
+import type { Payslip } from "../types/payslip.types";
 import { Download } from "lucide-react";
 
 const inr = (n: number | undefined | null) => "₹" + (n ?? 0).toLocaleString("en-IN");

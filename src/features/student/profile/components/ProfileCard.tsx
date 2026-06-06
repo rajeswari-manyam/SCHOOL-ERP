@@ -75,7 +75,7 @@ export default function ProfileCard({ student }: ProfileCardProps) {
             Class Teacher
           </p>
           <p className="text-[12px] sm:text-[13px] font-medium text-slate-700 break-words">
-            {student.classTeacher.name} {student.classTeacher.title}
+         {student.classTeacher.name}
           </p>
         </div>
       </div>

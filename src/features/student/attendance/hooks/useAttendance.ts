@@ -34,16 +34,16 @@ export const useAttendance = (options: UseAttendanceOptions) => {
       ]);
 
       // ── Map monthly records → AttendanceDay[] ──────────────────────────
-      const days: AttendanceDay[] = (monthlyRes?.data ?? []).map(
+     const days: AttendanceDay[] = (monthlyRes?.records ?? []).map(
         (record: any): AttendanceDay => ({
           date: record.date,
           // API statuses: "present" | "absent" | "late" → map "late" → "present"
-          status:
-            record.status === "absent"
-              ? "absent"
-              : record.status === "holiday"
-              ? "holiday"
-              : "present",
+        status:
+  record.status === "absent" || record.status === "Absent"
+    ? "absent"
+    : record.status === "holiday" || record.status === "Holiday"
+    ? "holiday"
+    : "present",
           whatsappTime: record.whatsappAlertTime ?? undefined,
         })
       );
@@ -55,18 +55,22 @@ export const useAttendance = (options: UseAttendanceOptions) => {
       const monthPercentage =
         totalDays > 0 ? parseFloat(((presentDays / totalDays) * 100).toFixed(1)) : 0;
 
-      // ── Derive yearly summary ──────────────────────────────────────────
-      const yearlyRecords: any[] = yearlyRes?.data ?? [];
-      const yearPresent = yearlyRecords.filter(
-        (r: any) => r.status !== "absent" && r.status !== "holiday"
-      ).length;
-      const yearAbsent = yearlyRecords.filter((r: any) => r.status === "absent").length;
+   const yearlyRecords: any[] = yearlyRes?.records ?? [];
+      
+    const yearPresent = yearlyRecords.filter(
+  (r: any) =>
+    r.status !== "absent" && r.status !== "Absent" &&
+    r.status !== "holiday" && r.status !== "Holiday"
+).length;
+const yearAbsent = yearlyRecords.filter(
+  (r: any) => r.status === "absent" || r.status === "Absent"
+).length;
       const yearTotal = yearPresent + yearAbsent;
       const yearPercentage =
         yearTotal > 0 ? parseFloat(((yearPresent / yearTotal) * 100).toFixed(1)) : 0;
 
       // ── Grab student meta from first available record ──────────────────
-      const firstRecord = monthlyRes?.data?.[0] ?? yearlyRes?.data?.[0];
+      const firstRecord = monthlyRes?.records?.[0] ?? yearlyRes?.records?.[0];
 
       const assembled: AttendanceData = {
         studentName: firstRecord?.studentName ?? "Student",

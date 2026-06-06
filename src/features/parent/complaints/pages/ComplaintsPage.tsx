@@ -1,31 +1,54 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Plus, X, AlertCircle, MessageSquareWarning } from "lucide-react";
+import { Plus, X, AlertCircle, MessageSquareWarning, Trash2, RefreshCw } from "lucide-react";
 import { useComplaintsStore } from "../hooks/useComplaintsStore";
 import { RaiseComplaintCard } from "../components/RaiseComplaintBox";
 import { ComplaintSubmittedCard } from "../components/ComplaintsSubmittedBox";
+import type { Complaint } from "../types/complaints.types";
 
 type ParentLayoutContext = {
   activeChild: {
     id: number;
     name: string;
     class: string;
-    school: string;
+    school: string;       // school_code
     avatar: string;
+    complainant_id: string;
+    complainant_type: string;
+    regarding_type: string;
   };
+  /** JWT token from auth context — pass this down from your layout */
+  token: string;
 };
 
 export default function ComplaintsPage() {
-  const { submitted } = useComplaintsStore();
-  const { activeChild } = useOutletContext<ParentLayoutContext>();
+  const {
+    submitted,
+    isLoading,
+    error,
+    fetchComplaints,
+    deleteComplaint,
+  } = useComplaintsStore();
+
+  const { activeChild, token } = useOutletContext<ParentLayoutContext>();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [successComplaint, setSuccessComplaint] = useState<typeof submitted[0] | null>(null);
+  const [successComplaint, setSuccessComplaint] = useState<Complaint | null>(null);
+
+  /* Fetch complaints on mount / child change */
+  useEffect(() => {
+    fetchComplaints({ school_code: activeChild.school });
+  }, [activeChild.school]);
 
   const handleSubmitSuccess = () => {
-    const store = useComplaintsStore.getState();
-    const latest = store.submitted[0];
-    setSuccessComplaint(latest);
+    const latest = useComplaintsStore.getState().submitted[0];
+    setSuccessComplaint(latest ?? null);
     setIsFormOpen(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this complaint? This cannot be undone.")) return;
+    await deleteComplaint(id);
   };
 
   return (
@@ -48,7 +71,14 @@ export default function ComplaintsPage() {
               </button>
             </div>
             <div className="p-6">
-              <RaiseComplaintCard onSubmitSuccess={handleSubmitSuccess} />
+              <RaiseComplaintCard
+                complainant_id={String(activeChild.complainant_id ?? activeChild.id)}
+                complainant_type={activeChild.complainant_type ?? "parent"}
+                regarding_type={activeChild.regarding_type ?? "student"}
+                school_code={activeChild.school}
+                token={token}                    
+                onSubmitSuccess={handleSubmitSuccess}
+              />
             </div>
           </div>
         </div>
@@ -96,11 +126,27 @@ export default function ComplaintsPage() {
           </button>
         </div>
 
+        {/* ERROR BANNER */}
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-[12px] text-red-600 font-medium">
+            {error}
+          </div>
+        )}
+
         {/* SUBMITTED LIST */}
-        {submitted.length > 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20 gap-2 text-gray-400">
+            <RefreshCw size={16} className="animate-spin" />
+            <span className="text-[13px]">Loading complaints…</span>
+          </div>
+        ) : submitted.length > 0 ? (
           <div className="flex flex-col gap-4">
             {submitted.map((complaint) => (
-              <SubmittedListCard key={complaint.id} complaint={complaint} />
+              <SubmittedListCard
+                key={complaint.id}
+                complaint={complaint}
+                onDelete={() => handleDelete(complaint.id)}
+              />
             ))}
           </div>
         ) : (
@@ -117,7 +163,14 @@ export default function ComplaintsPage() {
   );
 }
 
-function SubmittedListCard({ complaint }: { complaint: any }) {
+/* ── LIST CARD ── */
+function SubmittedListCard({
+  complaint,
+  onDelete,
+}: {
+  complaint: Complaint;
+  onDelete: () => void;
+}) {
   const submittedDate = complaint.submittedAt
     ? new Date(complaint.submittedAt).toLocaleDateString("en-IN", {
         day: "2-digit", month: "short", year: "numeric",
@@ -130,25 +183,55 @@ function SubmittedListCard({ complaint }: { complaint: any }) {
     resolved:  "bg-[#DCFCE7] text-[#166534]",
   };
 
+  const PRIORITY_STYLE: Record<string, string> = {
+    low:    "text-gray-400",
+    medium: "text-amber-500",
+    high:   "text-red-500",
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-[#E8EBF2] p-5 flex items-start justify-between gap-4 hover:shadow-md transition-all duration-200">
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 min-w-0">
         <div className="w-9 h-9 rounded-xl bg-[#EEF2FF] flex items-center justify-center shrink-0 mt-0.5">
           <MessageSquareWarning size={16} color="#3525CD" strokeWidth={1.5} />
         </div>
-        <div>
-          <p className="text-[14px] font-bold text-[#0B1C30] mb-0.5">{complaint.subject}</p>
-          <p className="text-[11px] text-gray-400 mb-2">{complaint.category} · {submittedDate}</p>
+        <div className="min-w-0">
+          <p className="text-[14px] font-bold text-[#0B1C30] mb-0.5 truncate">{complaint.subject}</p>
+          <p className="text-[11px] text-gray-400 mb-2">
+            {complaint.category} · {submittedDate}
+            {complaint.priority && (
+              <span className={`ml-2 font-semibold capitalize ${PRIORITY_STYLE[complaint.priority]}`}>
+                · {complaint.priority}
+              </span>
+            )}
+          </p>
           {complaint.referenceNo && (
             <span className="text-[11px] font-semibold text-[#3525CD] bg-[#EEF2FF] px-2 py-0.5 rounded-md">
               {complaint.referenceNo}
             </span>
           )}
+          {complaint.resolution && (
+            <p className="text-[11px] text-[#166534] mt-2 bg-[#DCFCE7] px-2 py-1 rounded-lg">
+              Resolution: {complaint.resolution}
+            </p>
+          )}
         </div>
       </div>
-      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide shrink-0 ${STATUS_STYLE[complaint.status] ?? STATUS_STYLE.pending}`}>
-        {complaint.status}
-      </span>
+
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide ${STATUS_STYLE[complaint.status] ?? STATUS_STYLE.pending}`}>
+          {complaint.status}
+        </span>
+        {complaint.status !== "resolved" && (
+          <button
+            onClick={onDelete}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition"
+            title="Delete complaint"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

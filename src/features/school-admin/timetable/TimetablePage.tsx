@@ -11,7 +11,7 @@ import {
   useDeleteExam,
   useEditPeriodState,
 } from "./hooks/useTimetable";
-import type { DayOfWeek, ExamEntry, CreateTimetablePayload, CreateExamTimetablePayload } from "./types/";
+import type { DayOfWeek, ExamEntry, ExamTimetable, CreateTimetablePayload, CreateExamTimetablePayload } from "./types/";
 import { mockClass10Timetable } from "./store";
 import ClassTabs from "./components/Classtabs";
 import WeeklyTimetableGrid from "./components/Weeklytimetablegrid";
@@ -107,7 +107,7 @@ const TimetablePage: React.FC = () => {
   }
 
   const { classTabs = [], classTimetable = mockClass10Timetable } = data ?? {};
-  const safeExamTt = examTtData ?? { title: "Exam Timetable", subtitle: "Final Assessment Schedule", notifyParentsEnabled: true, entries: [] };
+  const safeExamTt: ExamTimetable = examTtData ?? { title: "Exam Timetable", subtitle: "Final Assessment Schedule", notifyParentsEnabled: true, entries: [] };
   const handleRetryExam = useCallback(() => { examRefetch(); }, [examRefetch]);
 
   return (

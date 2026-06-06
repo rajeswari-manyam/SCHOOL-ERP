@@ -69,13 +69,27 @@ export const getHomeworkById = async (id: string) => {
   return res.data;
 };
 
-/** Get Homework By Class Name (FIXED) */
-export const getHomeworkByClass = async (className: string) => {
+/**
+ * Get Homework By Class + Section
+ *
+ * API: GET /tenant/gethomeworkByClass?className=9&section=A
+ *
+ * Accepts a combined string like "10A" or "9B" and splits it automatically.
+ * e.g. "10A" → className=10&section=A
+ *      "9"   → className=9  (no section param)
+ */
+export const getHomeworkByClass = async (rawClass: string) => {
+  // Split "10A" → { className: "10", section: "A" }
+  const match = (rawClass ?? "").trim().match(/^(\d+)([A-Za-z]*)$/);
+  const className = match ? match[1] : rawClass.trim();
+  const section   = match ? match[2] : "";
+
+  const params: Record<string, string> = { className };
+  if (section) params.section = section;
+
   const res = await api.get<ApiResponse<Homework[]>>(
     "/tenant/gethomeworkByClass",
-    {
-      params: { className }   // ✅ correct query param
-    }
+    { params }
   );
   return res.data;
 };

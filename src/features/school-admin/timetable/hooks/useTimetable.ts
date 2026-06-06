@@ -36,7 +36,7 @@ export const useClassTimetable = (classId: string) =>
 export const useExamTimetable = () =>
   useQuery({
     queryKey: TIMETABLE_KEYS.exam(),
-    queryFn: timetableApi.getExamTimetable,
+    queryFn: () => timetableApi.getExamTimetable(),
     staleTime: 1000 * 60 * 5,
   });
 

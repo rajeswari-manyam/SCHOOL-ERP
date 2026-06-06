@@ -75,7 +75,7 @@ export const studentsApi = {
     return mapped;
   },
   getById: async (id: string): Promise<Student | undefined> => {
-    const { data } = await api.get<Student>(`/tenant/getstudent/${id}`);
+    const { data } = await api.get<Student>(`/tenant/getstudentsById/${id}`);
     return data;
   },
   createStudent: async (payload: CreateStudentPayload): Promise<Student> => {

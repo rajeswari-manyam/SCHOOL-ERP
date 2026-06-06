@@ -54,7 +54,7 @@ export default function FeesPage() {
   const studentId = activeChild.student_id ?? "";
   const {
     history, pending, allPaid, selectedFee, setSelectedFee,
-    loading, paying, error, fetchFees,
+    loading, error, fetchFees,
     tuitionMonths, examTerms, annualSummary,
   } = useFees(studentId);
 

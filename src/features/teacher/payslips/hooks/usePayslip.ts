@@ -21,8 +21,8 @@ export function usePayslip() {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
 
   const monthLabel = `${MONTHS[selectedMonthIndex]} ${selectedYear}`;
-  const formattedMonth = String(selectedMonthIndex + 1).padStart(2, "0");
-  const formattedYear = String(selectedYear);
+  void selectedMonthIndex;
+  void selectedYear;
 
   const filteredPayslips = useMemo(
     () =>

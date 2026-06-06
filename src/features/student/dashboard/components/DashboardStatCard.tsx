@@ -17,6 +17,7 @@ export interface DashboardStatCardProps {
   variant?: DashboardStatVariant;
   active?: boolean;
   className?: string;
+  onClick?: () => void;
 }
 
 // ─── Variant config ───────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ export const DashboardStatCard = ({
   variant = "default",
   active = false,
   className,
+  onClick,
 }: DashboardStatCardProps) => {
   const { valueColor, iconBg, iconColor } = variantMap[variant];
 
@@ -57,6 +59,7 @@ export const DashboardStatCard = ({
 
   return (
     <div
+      onClick={onClick}
       className={cn(
         "flex flex-col gap-1.5 sm:gap-2",
         "px-4 sm:px-5 py-4 sm:py-[18px]",

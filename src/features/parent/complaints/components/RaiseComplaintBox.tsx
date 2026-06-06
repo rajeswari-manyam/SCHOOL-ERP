@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Camera, Images, Send, CheckCircle, Upload } from "lucide-react";
+import { Camera, Images, Send, CheckCircle, Upload, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,31 +7,74 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 import { useComplaintsStore } from "../hooks/useComplaintsStore";
-import { COMPLAINT_ATTACHEES, COMPLAINT_CATEGORIES } from "../data/complaimts.data";
+import { useParentChildren } from "../hooks/useParentChildren";
+import { COMPLAINT_CATEGORIES } from "../data/complaimts.data";
+
+interface Props {
+  complainant_id: string;
+  complainant_type: string;
+  regarding_type: string;
+  school_code: string;
+  /** JWT token – needed to call the children API */
+  token: string;
+  onSubmitSuccess?: () => void;
+}
 
 export function RaiseComplaintCard({
+  complainant_id,
+  complainant_type,
+  regarding_type,
+  school_code,
+  token,
   onSubmitSuccess,
-}: {
-  onSubmitSuccess?: () => void;
-}) {
+}: Props) {
   const {
     current,
+    isSubmitting,
+    error,
     setSubject,
     setCategory,
+    setPriority,
     setDescription,
     toggleAttachee,
     setPhoto,
     submitComplaint,
   } = useComplaintsStore();
 
+  // ── Fetch children from API (replaces mock COMPLAINT_ATTACHEES) ────
+  const {
+    children,
+    isLoading: childrenLoading,
+    error: childrenError,
+  } = useParentChildren(complainant_id, school_code, token);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canSubmit =
     current.subject.trim().length > 0 &&
-    current.description.trim().length > 0;
+    current.description.trim().length > 0 &&
+    current.attachees.length > 0 &&   // must select at least one child
+    !isSubmitting;
+
+  const handleSubmit = async () => {
+    const result = await submitComplaint({
+      complainant_id,
+      complainant_type,
+      regarding_type,
+      school_code,
+    });
+    if (result) onSubmitSuccess?.();
+  };
 
   return (
     <div className="flex flex-col gap-4">
+
+      {/* API ERROR */}
+      {error && (
+        <div className="px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-[12px] text-red-600 font-medium">
+          {error}
+        </div>
+      )}
 
       {/* SUBJECT */}
       <div>
@@ -80,6 +123,34 @@ export function RaiseComplaintCard({
         </div>
       </div>
 
+      {/* PRIORITY */}
+      <div>
+        <Label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
+          Priority
+        </Label>
+        <div className="flex gap-2">
+          {(["low", "medium", "high"] as const).map((p) => {
+            const isActive = current.priority === p;
+            const COLOR = {
+              low:    isActive ? "bg-gray-600 text-white border-gray-600" : "border-gray-300 text-gray-600 hover:bg-gray-50",
+              medium: isActive ? "bg-amber-500 text-white border-amber-500" : "border-amber-300 text-amber-600 hover:bg-amber-50",
+              high:   isActive ? "bg-red-500 text-white border-red-500" : "border-red-300 text-red-500 hover:bg-red-50",
+            }[p];
+            return (
+              <Button
+                key={p}
+                onClick={() => setPriority(p)}
+                variant="outline"
+                size="sm"
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border capitalize transition-all ${COLOR}`}
+              >
+                {p}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* DESCRIPTION */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
@@ -106,31 +177,48 @@ export function RaiseComplaintCard({
         />
       </div>
 
-      {/* ATTACHEES */}
+      {/* REGARDING — dynamic from API */}
       <div>
         <Label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
           Regarding
         </Label>
-        <div className="flex flex-wrap gap-2">
-          {COMPLAINT_ATTACHEES.map((child) => {
-            const isSelected = current.attachees.includes(child.id);
-            return (
-              <Button
-                key={child.id}
-                onClick={() => toggleAttachee(child.id)}
-                variant={isSelected ? "default" : "outline"}
-                size="sm"
-                className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all
-                  ${isSelected
-                    ? "bg-[#3525CD] text-white border-[#3525CD]"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-              >
-                {child.name}
-              </Button>
-            );
-          })}
-        </div>
+
+        {childrenLoading ? (
+          <div className="flex items-center gap-2 text-[12px] text-gray-400">
+            <Loader2 size={13} className="animate-spin" />
+            Loading children…
+          </div>
+        ) : childrenError ? (
+          <p className="text-[12px] text-red-500">{childrenError}</p>
+        ) : children.length === 0 ? (
+          <p className="text-[12px] text-gray-400">No children found.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {children.map((child) => {
+              const isSelected = current.attachees.includes(child.id);
+              return (
+                <Button
+                  key={child.id}
+                  onClick={() => toggleAttachee(child.id)}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all
+                    ${isSelected
+                      ? "bg-[#3525CD] text-white border-[#3525CD]"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  {/* coloured dot */}
+                  <span
+                    className="w-2 h-2 rounded-full mr-1.5 inline-block"
+                    style={{ backgroundColor: isSelected ? "#fff" : child.avatarColor }}
+                  />
+                  {child.name}
+                </Button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* PHOTO UPLOAD */}
@@ -138,7 +226,7 @@ export function RaiseComplaintCard({
         <Label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
           Attachment (optional)
         </Label>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Button
             onClick={() => fileInputRef.current?.click()}
             variant="outline"
@@ -154,7 +242,7 @@ export function RaiseComplaintCard({
             size="sm"
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8EBF2] text-[12px] font-semibold text-[#0B1C30] hover:bg-[#F4F6FB]"
           >
-            <Upload />
+            <Upload size={14} />
             Upload File
           </Button>
           <Button
@@ -164,7 +252,7 @@ export function RaiseComplaintCard({
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E8EBF2] text-[12px] font-semibold text-[#0B1C30] hover:bg-[#F4F6FB]"
           >
             <Images size={14} />
-            Choose from Gallery
+            Gallery
           </Button>
           <Input
             ref={fileInputRef}
@@ -184,10 +272,7 @@ export function RaiseComplaintCard({
 
       {/* SUBMIT */}
       <Button
-        onClick={() => {
-          submitComplaint();
-          onSubmitSuccess?.();
-        }}
+        onClick={handleSubmit}
         disabled={!canSubmit}
         className="
           w-full py-3 rounded-xl
@@ -199,8 +284,17 @@ export function RaiseComplaintCard({
           flex items-center justify-center gap-2
         "
       >
-        <Send size={14} />
-        Submit Complaint
+        {isSubmitting ? (
+          <>
+            <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            Submitting…
+          </>
+        ) : (
+          <>
+            <Send size={14} />
+            Submit Complaint
+          </>
+        )}
       </Button>
 
       {/* WHATSAPP NOTE */}

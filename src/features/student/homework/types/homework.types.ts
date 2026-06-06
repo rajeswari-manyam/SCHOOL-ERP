@@ -1,4 +1,4 @@
-export type Subject = "English" | "Mathematics" | "Science" | "SST" | "Hindi";
+export type Subject = string; // open — API can return any subject name
 export type DueUrgency = "urgent" | "medium" | "normal";
 export type ActiveTab = "week" | "all" | "materials";
 export type MaterialType = "pdf" | "doc" | "image" | "link";
@@ -13,8 +13,9 @@ export interface Homework {
   assignedBy: string;
   submitted: boolean;
   attachment?: string;
-  weekDay?: string; // "MON" | "TUE" etc.
+  weekDay?: string;        // "MON" | "TUE" etc.
   weekDate?: number;
+  submissionDate?: Date;  // full Date for accurate day-filter matching
 }
 
 export interface StudyMaterial {

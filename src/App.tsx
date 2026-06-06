@@ -9,7 +9,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./features/auth/pages/LoginPage";
 import OtpPage  from "./features/auth/pages/OtpPage";
 
-// Role routers — already exist in your project
+
 import ParentRouter     from "./features/parent/ParentRouter";
 import TeacherRouter    from "./features/teacher/TeacherRouter";
 import SuperAdminRouter from "./features/super-admin/SuperAdminRouter";

@@ -24,12 +24,11 @@ export default function AttendancePage(): React.ReactElement {
     return <p className="p-6 text-gray-400">Student not found. Please login again.</p>;
   }
 
-  const { data, loading, error, refetch } = useAttendance({
-    studentId: studentId,
-    month: currentMonth + 1, // ⚠️ IMPORTANT FIX (backend expects 1–12)
-    year: currentYear,
-  });
-
+const { data, loading, error, refetch } = useAttendance({
+  studentId: studentId,
+  month: currentMonth,  // ✅ 0-indexed; hook adds +1 for the API
+  year: currentYear,
+});
   const prevMonth = () => setCurrentMonth((m) => (m === 0 ? 11 : m - 1));
   const nextMonth = () => setCurrentMonth((m) => (m === 11 ? 0 : m + 1));
 

@@ -23,9 +23,11 @@ export function useAttendance() {
       try {
         const res = await getMonthlyAttendance({ studentId, month, year })
 
-        // Normalise: API may return { data: [...] } or bare array
+        // Normalise: API may return { records: [...] }, { data: [...] } or bare array
         const records: any[] = Array.isArray(res)
           ? res
+          : Array.isArray(res?.records)
+          ? res.records
           : Array.isArray(res?.data)
           ? res.data
           : []
@@ -33,7 +35,7 @@ export function useAttendance() {
         const days: DayEntry[] = records.map((r: any) => ({
           id: r.id,
           date: r.date,
-          status: r.status,
+          status: (r.status as string).toLowerCase() as DayEntry["status"],
           reason: r.reason ?? null,
         }))
 
@@ -66,6 +68,8 @@ export function useAttendance() {
         // Normalise
         const records: any[] = Array.isArray(res)
           ? res
+          : Array.isArray(res?.records)
+          ? res.records
           : Array.isArray(res?.data)
           ? res.data
           : []
@@ -75,10 +79,11 @@ export function useAttendance() {
         for (let m = 1; m <= 12; m++) buckets[m] = { present: 0, total: 0 }
 
         records.forEach((r: any) => {
+          const statusLower = (r.status as string).toLowerCase()
           const m = new Date(r.date).getMonth() + 1  // 1-based
           if (buckets[m]) {
             buckets[m].total++
-            if (r.status === "present" || r.status === "late") buckets[m].present++
+            if (statusLower === "present" || statusLower === "late") buckets[m].present++
           }
         })
 
@@ -90,7 +95,7 @@ export function useAttendance() {
           }))
 
         const totalPresent = records.filter(
-          (r) => r.status === "present" || r.status === "late"
+          (r) => (r.status as string).toLowerCase() === "present" || (r.status as string).toLowerCase() === "late"
         ).length
 
         const yearly: YearlySummary = {

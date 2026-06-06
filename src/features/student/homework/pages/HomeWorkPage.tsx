@@ -1,6 +1,4 @@
-// pages/HomeworkPage.tsx
-import { useState } from "react";
-import { useHomework } from "../hooks/usehomework";
+import { useHomework } from "../hooks/useHomework";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
 import SubmitHomeworkModal from "../components/SubmitHomeworkModal";
@@ -12,31 +10,22 @@ const CLASS_NAME = "10A";
 type Tab = "week" | "all" | "materials";
 
 const TABS = [
-  { key: "week" as Tab, label: "This Week", icon: "📅" },
-  { key: "all" as Tab, label: "All Homework", icon: "📋" },
+  { key: "week"      as Tab, label: "This Week",       icon: "📅" },
+  { key: "all"       as Tab, label: "All Homework",    icon: "📋" },
   { key: "materials" as Tab, label: "Study Materials", icon: "📚" },
 ];
 
-const DAYS = [
-  { label: "Mon", date: 7 },
-  { label: "Tue", date: 8 },
-  { label: "Wed", date: 9 },
-  { label: "Thu", date: 10 },
-  { label: "Fri", date: 11 },
-];
-
 export const HomeworkPage = () => {
-  const [activeDay, setActiveDay] = useState(7);
-
   const {
-    activeTab,
-    setActiveTab,
+    activeTab, setActiveTab,
     homework,
     thisWeekHomework,
     materials,
-    loading,
-    error,
-    refetch,
+    loading, error, refetch,
+    // Real calendar week from hook
+    weekDays,
+    selectedDay, setSelectedDay,
+    // Modal
     submitModalOpen,
     selectedHomework,
     openSubmitModal,
@@ -44,7 +33,7 @@ export const HomeworkPage = () => {
     handleSubmit,
   } = useHomework({ className: CLASS_NAME });
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="p-3 sm:p-6 bg-gray-50 min-h-screen flex items-center justify-center">
@@ -56,7 +45,7 @@ export const HomeworkPage = () => {
     );
   }
 
-  // ── Error ────────────────────────────────────────────────────────────────
+  // ── Error ──────────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="p-3 sm:p-6 bg-gray-50 min-h-screen flex items-center justify-center">
@@ -72,6 +61,10 @@ export const HomeworkPage = () => {
       </div>
     );
   }
+
+  // ── Month/year label from the real week ────────────────────────────────────
+  const firstDay  = weekDays[0].fullDate;
+  const monthYear = firstDay.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
   return (
     <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
@@ -113,40 +106,56 @@ export const HomeworkPage = () => {
         {/* ── MAIN ── */}
         <div className="flex-1 flex flex-col gap-4 min-w-0">
 
-          {/* Calendar strip */}
+          {/* ── Real calendar strip — Mon–Fri of current week ── */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                🗓 May 2026
+                🗓 {monthYear}
               </span>
-              <span className="text-xs text-gray-400">Week 19</span>
             </div>
             <div className="flex gap-2 overflow-x-auto">
-              {DAYS.map((d) => (
-                <button
-                  key={d.date}
-                  onClick={() => setActiveDay(d.date)}
-                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-colors
-                    ${activeDay === d.date
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-                    }`}
-                >
-                  <span className={`text-[10px] font-semibold uppercase tracking-wide
-                    ${activeDay === d.date ? "text-indigo-200" : "text-gray-400"}`}>
-                    {d.label}
-                  </span>
-                  <span className="text-sm font-medium">{d.date}</span>
-                </button>
-              ))}
+              {weekDays.map((d) => {
+                const isActive =
+                  d.date  === selectedDay.date &&
+                  d.month === selectedDay.month &&
+                  d.year  === selectedDay.year;
+
+                const today = new Date();
+                const isToday =
+                  d.date  === today.getDate() &&
+                  d.month === today.getMonth() &&
+                  d.year  === today.getFullYear();
+
+                return (
+                  <button
+                    key={`${d.year}-${d.month}-${d.date}`}
+                    onClick={() => setSelectedDay(d)}
+                    className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-colors
+                      ${isActive
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                      }`}
+                  >
+                    <span className={`text-[10px] font-semibold uppercase tracking-wide
+                      ${isActive ? "text-indigo-200" : "text-gray-400"}`}>
+                      {d.label}
+                    </span>
+                    <span className="text-sm font-medium">{d.date}</span>
+                    {/* dot for today */}
+                    <span className={`w-1 h-1 rounded-full
+                      ${isActive ? "bg-white/60" : isToday ? "bg-indigo-500" : "bg-transparent"}`}
+                    />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* THIS WEEK */}
+          {/* ── THIS WEEK — filtered by selected calendar day ── */}
           {activeTab === "week" && (
             <div className="space-y-3">
               {thisWeekHomework.length === 0
-                ? <p className="text-sm text-gray-400 p-4">No homework this week 🎉</p>
+                ? <p className="text-sm text-gray-400 p-4">No homework from this day onwards 🎉</p>
                 : thisWeekHomework.map((hw) => (
                     <HomeworkCard key={hw.id} item={hw} onSubmit={openSubmitModal} />
                   ))
@@ -154,7 +163,7 @@ export const HomeworkPage = () => {
             </div>
           )}
 
-          {/* ALL HOMEWORK */}
+          {/* ── ALL HOMEWORK — show every subject from API, no whitelist ── */}
           {activeTab === "all" && (
             <div className="space-y-3">
               {homework.length === 0
@@ -166,7 +175,7 @@ export const HomeworkPage = () => {
             </div>
           )}
 
-          {/* STUDY MATERIALS */}
+          {/* ── STUDY MATERIALS ── */}
           {activeTab === "materials" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -191,7 +200,7 @@ export const HomeworkPage = () => {
         </div>
       </div>
 
-      {/* SUBMIT MODAL */}
+      {/* ── SUBMIT MODAL ── */}
       <SubmitHomeworkModal
         open={submitModalOpen}
         onClose={closeSubmitModal}
@@ -199,10 +208,10 @@ export const HomeworkPage = () => {
         assignment={
           selectedHomework
             ? {
-                title: selectedHomework.title,
-                subject: selectedHomework.subject,
-                className: CLASS_NAME,
-                dueLabel: selectedHomework.dueDate,
+                title:      selectedHomework.title,
+                subject:    selectedHomework.subject,
+                className:  CLASS_NAME,
+                dueLabel:   selectedHomework.dueDate,
                 assignedBy: selectedHomework.assignedBy,
               }
             : undefined

@@ -18,7 +18,7 @@ interface AttendanceTodayProps {
   error?: string | null;
 }
 
-const AttendanceToday = ({ data, loading, error }: AttendanceTodayProps) => {
+const AttendanceToday = ({ data, loading: _loading, error: _error }: AttendanceTodayProps) => {
   const todayData = data ?? { date: "", summary: { totalPresent: 0, totalPresentChange: 0, totalAbsent: 0, totalAbsentChange: 0, classesMarked: 0, classesTotal: 0, alertsSent: 0, alertsTotal: 0 }, classes: [] };
   const { summary, classes } = todayData;
 

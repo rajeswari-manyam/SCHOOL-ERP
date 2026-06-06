@@ -97,6 +97,8 @@ export interface CreateStudyMaterialPayload {
   section: string;
   subjectName: string;
   upload_date: string;
+  title?: string;
+  description?: string;
   download?: string;
   downloadFile?: File;
   open_link?: string;

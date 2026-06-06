@@ -3,8 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import { homeworkApi, fetchTeacherId } from "../api/homework.api";
 import type {
-  HomeworkItem,
-  StudyMaterial,
   HomeworkState,
   ModalState,
   CreateHomeworkPayload,
@@ -166,10 +164,10 @@ export const useHomework = (): HomeworkState => {
     refetch,
     modal, setModal,
     reminderSent, sendReminder,
-    createHomework,
-    updateHomework: (id, payload) => updateHomework({ id, payload }),
+    createHomework: ((payload: CreateHomeworkPayload) => createHomework(payload).then(() => undefined)) as (payload: CreateHomeworkPayload) => Promise<void>,
+    updateHomework: ((id: string, payload: UpdateHomeworkPayload) => updateHomework({ id, payload }).then(() => undefined)) as (id: string, payload: UpdateHomeworkPayload) => Promise<void>,
     deleteHomework: deleteHomeworkHandler,
-    uploadMaterial,
+    uploadMaterial: ((data: CreateStudyMaterialPayload) => uploadMaterial(data).then(() => undefined)) as (data: CreateStudyMaterialPayload) => Promise<void>,
     deleteMaterial: deleteMaterialHandler,
     isCreating,
     isUpdating,

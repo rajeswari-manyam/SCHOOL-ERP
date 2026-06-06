@@ -8,7 +8,7 @@ export interface TimetableCell {
   isFree?: boolean;
 }
 
-export type TimetableSlotKind = "PERIOD" | "BREAK" | "LUNCH";
+export type TimetableSlotKind = "PERIOD" | "BREAK" | "LUNCH" | "FREE";
 
 export interface TimetablePeriod {
   id: string;
@@ -86,16 +86,16 @@ export interface ApiExamTimetableRawEntry {
   status?: string;
 }
 
-type ApiDayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT";
+export type ApiDayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT";
 
-interface ApiPeriodCell {
+export interface ApiPeriodCell {
   subject: string;
   teacherName: string;
   room?: string;
   isConflict?: boolean;
 }
 
-interface ApiTimetableSlot {
+export interface ApiTimetableSlot {
   kind: "PERIOD" | "BREAK" | "LUNCH" | "FREE";
   periodNo?: number;
   startTime: string;

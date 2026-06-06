@@ -6,6 +6,7 @@ import type {
   ApiTimetableResponse,
   ApiTimetableSlot,
   ApiDayOfWeek,
+  ApiPeriodCell,
   TimetableCell,
   ClassColorKey,
   UpcomingExam,
@@ -129,7 +130,7 @@ const buildPeriodsAndGrid = (slots: ApiTimetableSlot[], classLabel: string) => {
             continue;
           }
 
-          const subject = cell.subject?.trim();
+          const subject = (cell as ApiPeriodCell).subject?.trim();
           if (!subject || subject.toLowerCase() === "free" || subject.toLowerCase() === "free period") {
             grid[pid][uiDay] = {
               subject: "Free Period",
@@ -144,7 +145,7 @@ const buildPeriodsAndGrid = (slots: ApiTimetableSlot[], classLabel: string) => {
           grid[pid][uiDay] = {
             subject,
             class: classLabel,
-            room: cell.room ?? "—",
+            room: (cell as ApiPeriodCell).room ?? "—",
             colorKey: getColorKey(classLabel),
           };
         }

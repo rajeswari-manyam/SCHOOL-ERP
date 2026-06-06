@@ -119,11 +119,17 @@ function WeekCard({ hw }: { hw: Homework }) {
 // ── "All Homework" compact list row ──────────────────────────────────────────
 function AllCard({ hw }: { hw: Homework }) {
   const subject = hw.subject?.toUpperCase() as Subject;
-  const status  = hw.status?.toUpperCase() as Status;
+  // Status from API might vary in casing; normalise to known keys
+  const rawStatus = (hw.status ?? "NOT TRACKED").toUpperCase();
+  const status = (
+    rawStatus === "PENDING"   ? "PENDING"     :
+    rawStatus === "SUBMITTED" ? "SUBMITTED"   :
+                                "NOT TRACKED"
+  ) as Status;
 
-  const iconBg    = SUBJECT_ICON_BG[subject] ?? SUBJECT_ICON_BG.ENGLISH;
-  const icon      = SUBJECT_ICONS[subject]   ?? SUBJECT_ICONS.ENGLISH;
-  const statusCls = STATUS_BADGE[status]     ?? STATUS_BADGE["NOT TRACKED"];
+  const iconBg    = SUBJECT_ICON_BG[subject] ?? "bg-[#F1F5F9] text-[#475569]";
+  const icon      = SUBJECT_ICONS[subject]   ?? <Pencil size={18} strokeWidth={1.5} />;
+  const statusCls = STATUS_BADGE[status];
 
   return (
     <div className="flex items-center gap-4 px-4 py-3.5

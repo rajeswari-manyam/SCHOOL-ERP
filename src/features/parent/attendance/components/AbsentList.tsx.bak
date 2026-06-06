@@ -12,7 +12,7 @@ import {
 
 import type { AbsentListProps, AbsentDay } from "../types/attendance.types"
 import { useAttendanceStore } from "../store/attedance.store"
-import { MONTH_NAMES } from "../../../../utils/date"
+import { getMonth, getYear, MONTH_NAMES } from "../../../../utils/date"
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
@@ -41,8 +41,8 @@ export default function AbsentList({
 }: AbsentListProps) {
   const { monthlyDays, yearlySummary } = useAttendanceStore()
 
-  const year  = currentDate.getFullYear()
-  const month = currentDate.getMonth()   // 0-based, matches MONTH_NAMES index
+  const year  = getYear(currentDate)
+  const month = getMonth(currentDate)  // 0-based
   const monthLabel = `${MONTH_NAMES[month]} ${year}`
 
   // Build absent days for this month from live store data

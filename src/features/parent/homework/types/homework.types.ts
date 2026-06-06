@@ -13,6 +13,7 @@ export interface Homework {
   teacher: string;
   teacherInitials: string;
   day: number;
+  submissionDate?: Date;   // full Date for accurate day-filter matching
   status: HomeworkStatus;
   attachment?: { name: string; url?: string };
   whatsappNotified?: string;
@@ -28,20 +29,7 @@ export interface StudyMaterial {
   isLink?: boolean;
 }
 
-// src/study-material/types/types.ts
-
 export type StudyMaterialType = "pdf" | "jpg" | "doc" | "link";
-
-export interface StudyMaterial {
-  id: string;
-  title: string;
-  uploaded: string;
-  class: string;
-  subject: string;
-  type: StudyMaterialType;
-  isLink?: boolean;
-}
-// src/recommended-resources/types/types.ts
 
 export type ResourceType = "download" | "link";
 

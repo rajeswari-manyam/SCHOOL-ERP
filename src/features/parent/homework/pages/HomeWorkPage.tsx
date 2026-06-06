@@ -22,7 +22,7 @@ type ParentLayoutContext = {
   activeChild: {
     id: number;
     name: string;
-    class: string;  // e.g. "10A"
+    class: string;
     school: string;
     avatar: string;
   };
@@ -35,8 +35,6 @@ const TABS = [
 ];
 
 const SUBJECT_ORDER = ["ENGLISH", "MATHEMATICS", "SCIENCE"];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const LoadingState = () => (
   <div className="flex items-center justify-center py-16">
@@ -80,35 +78,30 @@ const NeedHelpCard = () => (
   </div>
 );
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function HomeworkPage() {
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
   const {
-    tab, setTab, day,
+    tab, setTab,
+    selectedDate,                       // ← now using full Date
     allHomeworks, allLoading, allError,
     setAllHomeworks, setAllLoading, setAllError,
     weekHomeworks, weekLoading, weekError,
     setWeekHomeworks, setWeekLoading, setWeekError,
   } = useHomeworkStore();
 
-  // Strip trailing section letter: "10A" → "10", "9B" → "9"
-  // because the API stores className and section separately
- const classNameForApi =
-  activeChild?.class?.replace(/[A-Za-z]+$/, "")?.trim() ?? ""; 
+  const classNameForApi =
+    activeChild?.class?.replace(/[A-Za-z]+$/, "")?.trim() ?? "";
 
-  // ── Study Materials — fetched by className ────────────────────────────────
   const {
     materials,
     loading: materialsLoading,
     error: materialsError,
   } = useStudyMaterials(tab === "materials" ? classNameForApi : "");
 
-  // ── Fetch: All Homework (tab = "all") ─────────────────────────────────────
+  // Fetch All Homework
   useEffect(() => {
     if (tab !== "all") return;
-
     let cancelled = false;
     setAllLoading(true);
     setAllError(null);
@@ -133,10 +126,9 @@ export default function HomeworkPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  // ── Fetch: This Week — by class_id (activeChild.id) ───────────────────────
+  // Fetch This Week homework
   useEffect(() => {
     if (tab !== "week") return;
-
     let cancelled = false;
     setWeekLoading(true);
     setWeekError(null);
@@ -161,9 +153,11 @@ export default function HomeworkPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, activeChild.id]);
 
-  // ── Derived data ──────────────────────────────────────────────────────────
-  const thisWeekHomework = sortByDueDate(filterHomeworkByDay(weekHomeworks ?? [], day));
-  const allGrouped       = groupBySubject(sortByDueDate(allHomeworks ?? []));
+  // Derived — use selectedDate (full Date) for accurate filtering
+  const thisWeekHomework = sortByDueDate(
+    filterHomeworkByDay(weekHomeworks ?? [], selectedDate)
+  );
+  const allGrouped = groupBySubject(sortByDueDate(allHomeworks ?? []));
 
   return (
     <div className="w-full max-w-[1200px] mx-auto pt-6 sm:pt-[28px] px-4 sm:px-6 md:px-8 lg:px-[40px]
@@ -202,9 +196,10 @@ export default function HomeworkPage() {
         ))}
       </div>
 
-      {/* ── THIS WEEK TAB ── */}
+      {/* THIS WEEK TAB */}
       {tab === "week" && (
         <div className="flex flex-col gap-4">
+          {/* DayFilter — now shows real current-week dates from the calendar */}
           <div className="overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             <DayFilter />
           </div>
@@ -227,7 +222,7 @@ export default function HomeworkPage() {
         </div>
       )}
 
-      {/* ── ALL HOMEWORK TAB ── */}
+      {/* ALL HOMEWORK TAB */}
       {tab === "all" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-2 flex flex-col gap-5">
@@ -238,7 +233,11 @@ export default function HomeworkPage() {
             ) : (allHomeworks ?? []).length === 0 ? (
               <EmptyState message="No homework found." />
             ) : (
-              SUBJECT_ORDER.filter((s) => allGrouped[s]).map((subject) => {
+              // Show SUBJECT_ORDER subjects first, then any other subjects from the API
+              [
+                ...SUBJECT_ORDER.filter((s) => allGrouped[s]),
+                ...Object.keys(allGrouped).filter((s) => !SUBJECT_ORDER.includes(s)),
+              ].map((subject) => {
                 const items = allGrouped[subject];
                 return (
                   <div key={subject}>
@@ -275,7 +274,7 @@ export default function HomeworkPage() {
         </div>
       )}
 
-      {/* ── STUDY MATERIALS TAB ── */}
+      {/* STUDY MATERIALS TAB */}
       {tab === "materials" && (
         materialsLoading ? (
           <LoadingState />

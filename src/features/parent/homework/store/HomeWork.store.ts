@@ -4,8 +4,13 @@ import type { StudyMaterial } from "../../../../services/studymaterial.api";
 
 interface HomeworkState {
   tab: HomeworkTab;
+
+  // Calendar selection — full Date object so we can match year/month/day
+  selectedDate: Date | null;
+  setSelectedDate: (date: Date | null) => void;
+
+  // Kept for backward compat (derived from selectedDate)
   day: number | null;
-  setTab: (tab: HomeworkTab) => void;
   setDay: (day: number | null) => void;
 
   // All Homework tab
@@ -31,13 +36,19 @@ interface HomeworkState {
   setStudyMaterials: (data: StudyMaterial[]) => void;
   setMaterialsLoading: (v: boolean) => void;
   setMaterialsError: (e: string | null) => void;
+
+  setTab: (tab: HomeworkTab) => void;
 }
 
 export const useHomeworkStore = create<HomeworkState>((set) => ({
   tab: "week",
+
+  selectedDate: new Date(),       // default = today
+  setSelectedDate: (date) =>
+    set({ selectedDate: date, day: date ? date.getDate() : null }),
+
   day: new Date().getDate(),
-  setTab: (tab) => set({ tab }),
-  setDay: (day) => set({ day }),
+  setDay: (day) => set({ day }),  // legacy setter still works
 
   allHomeworks: [],
   allLoading: false,
@@ -59,4 +70,6 @@ export const useHomeworkStore = create<HomeworkState>((set) => ({
   setStudyMaterials: (data) => set({ studyMaterials: data }),
   setMaterialsLoading: (v) => set({ materialsLoading: v }),
   setMaterialsError: (e) => set({ materialsError: e }),
+
+  setTab: (tab) => set({ tab }),
 }));

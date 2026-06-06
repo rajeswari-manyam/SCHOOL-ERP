@@ -165,7 +165,7 @@ const TimetablePage = () => {
           onResetWeek={() => setWeekOffset(0)}
           weekLabel={weekLabel}
           weekSubLabel={weekSubLabel}
-          todayName={todayName}
+          todayName={todayName as "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | null}
           currentPeriodId={currentPeriodId}
         />
       </div>

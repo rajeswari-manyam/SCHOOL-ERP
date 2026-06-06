@@ -21,7 +21,7 @@ export function ComplaintSubmittedCard({ complaint, onClose }: Props) {
   return (
     <div className="p-8 flex flex-col items-center text-center gap-5">
 
-      {/* TOP ROW — title + badge */}
+      {/* TOP ROW */}
       <div className="w-full flex items-center justify-between">
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
           Complaint Desk
@@ -46,14 +46,12 @@ export function ComplaintSubmittedCard({ complaint, onClose }: Props) {
         </p>
       </div>
 
-      <p className="text-[12px] text-gray-400">
-        Submitted on {submittedDate}
-      </p>
+      <p className="text-[12px] text-gray-400">Submitted on {submittedDate}</p>
 
       {/* REFERENCE */}
       <div className="bg-[#EEF2FF] rounded-xl px-6 py-3">
         <p className="text-[14px] font-bold text-[#3525CD]">
-          Reference: {complaint.referenceNo}
+          Reference: {complaint.referenceNo ?? complaint.id}
         </p>
       </div>
 
