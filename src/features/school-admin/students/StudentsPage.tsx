@@ -70,16 +70,6 @@ const StudentsPage = () => {
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
       />
 
-      {/* Debug: show raw response */}
-      {!loading && !error && filtered.length > 0 && (
-        <details className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs">
-          <summary className="cursor-pointer font-semibold text-blue-700">Raw Student Data ({filtered.length} records)</summary>
-          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-blue-900">
-            {JSON.stringify(filtered[0], null, 2)}
-          </pre>
-        </details>
-      )}
-
       {/* Error */}
       {error && (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">

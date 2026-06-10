@@ -8,7 +8,8 @@ import {
   FaCalendarAlt,
   FaMoneyBill,
   FaBullhorn,
-  FaCog
+  FaCog,
+  FaBook
 } from "react-icons/fa";
 
 import Sidebar from "../components/common/Sidebar";
@@ -22,6 +23,7 @@ const BreadcrumbLabels: Record<string, string> = {
   "/schooladmin/attendance": "Attendance",
   "/schooladmin/students": "Students",
   "/schooladmin/staff": "Staff",
+  "/schooladmin/classes": "Classes",
   "/schooladmin/timetable": "Timetable",
   "/schooladmin/fees": "Fee Collection",
   "/schooladmin/reports": "Reports",
@@ -34,6 +36,7 @@ const NavItem = [
   { label: "Attendance", to: "/schooladmin/attendance", icon: <FaUserCheck /> },
   { label: "Students", to: "/schooladmin/students", icon: <FaUserFriends /> },
   { label: "Staff", to: "/schooladmin/staff", icon: <FaUserTie /> },
+  { label: "Classes", to: "/schooladmin/classes", icon: <FaBook /> },
   { label: "Timetable", to: "/schooladmin/timetable", icon: <FaCalendarAlt /> },
   { label: "Fee Collection", to: "/schooladmin/fees", icon: <FaMoneyBill /> },
   { label: "Reports", to: "/schooladmin/reports", icon: <FaBullhorn /> },

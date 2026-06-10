@@ -2,15 +2,18 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import type { ClassSection, WorkingDaysConfig, CreateClassPayload } from "../types/settings.types";
+import type { AcademicYear, CreateAcademicYearPayload, ClassSection, WorkingDaysConfig, CreateClassPayload } from "../types/settings.types";
 import { ALL_DAYS, type Day } from "../utils/Settings.utils";
+import { CreateAcademicYearModal } from "./CreateAcademicYearModal";
 
 interface Props {
   classes: ClassSection[];
   workingDays: WorkingDaysConfig;
+  academicYears: AcademicYear[];
   saving: boolean;
   onSaveWorkingDays: (data: Partial<WorkingDaysConfig>) => void;
   onAddClass: (data: CreateClassPayload) => void;
+  onCreateAcademicYear: (data: CreateAcademicYearPayload) => Promise<void>;
 }
 
 const DEFAULT_NEW_CLASS: CreateClassPayload = {
@@ -24,11 +27,12 @@ const DEFAULT_NEW_CLASS: CreateClassPayload = {
 };
 
 export const AcademicConfigTab: React.FC<Props> = ({
-  classes, workingDays, saving, onSaveWorkingDays, onAddClass,
+  classes, workingDays, academicYears, saving, onSaveWorkingDays, onAddClass, onCreateAcademicYear,
 }) => {
   const [wdForm, setWdForm] = useState<WorkingDaysConfig>(workingDays);
   const [showAdd, setShowAdd] = useState(false);
   const [newClass, setNewClass] = useState<CreateClassPayload>(DEFAULT_NEW_CLASS);
+  const [showCreateYear, setShowCreateYear] = useState(false);
 
   const toggleDay = (day: Day) => {
     const active = wdForm.activeDays;
@@ -66,32 +70,32 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
         {/* Year badge + status */}
         <div className="flex items-center gap-3 mb-4 sm:mb-5 flex-wrap">
-          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">
-            2024-25
-          </span>
-          <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
-            <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" /> ACTIVE
-          </span>
+          {academicYears.length === 0 ? (
+            <span className="text-sm text-gray-500">No academic year configured</span>
+          ) : (academicYears.map((year) => (
+            <div key={year.id} className="flex items-center gap-2">
+              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                year.active
+                  ? "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
+                  : "bg-gray-100 text-gray-600"
+              }`}>
+                {year.yearName}
+              </span>
+              {year.active && (
+                <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" /> ACTIVE
+                </span>
+              )}
+            </div>
+          )))}
+         
         </div>
 
-        {/* Date fields: 1 col → 3 cols */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          {[
-            { label: "Year Start Date", defaultValue: "01 June 2024" },
-            { label: "Year End Date",   defaultValue: "30 April 2025" },
-            { label: "Year Label",      defaultValue: "2024-25" },
-          ].map(({ label, defaultValue }) => (
-            <div key={label}>
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                {label}
-              </label>
-              <Input defaultValue={defaultValue} inputSize="md" className="w-full" />
-            </div>
-          ))}
-        </div>
+        
 
         <Button
           variant="ghost"
+          onClick={() => setShowCreateYear(true)}
           className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1 px-0"
         >
           <span className="text-lg leading-none">⊕</span> Create New Academic Year
@@ -356,7 +360,13 @@ export const AcademicConfigTab: React.FC<Props> = ({
           ))}
         </div>
       </div>
-
+{showCreateYear && (
+        <CreateAcademicYearModal
+         
+          onClose={() => setShowCreateYear(false)}
+          onSubmit={onCreateAcademicYear}
+        />
+      )}
     </div>
   );
 };

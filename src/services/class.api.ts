@@ -24,6 +24,7 @@ export interface GetAllClassesResponse {
 }
 
 export interface GetAllClassesParams {
+  academicYearId?: string;
   academic_year?: string;
   section?: string;
   status?: string;
@@ -37,6 +38,74 @@ export const getAllClasses = async (
   const { data } = await api.get<GetAllClassesResponse>(
     `/tenant/getallclasses`,
     { params }
+  );
+  return data;
+};
+
+/* ── getsectionbyid ── */
+
+export interface GetSectionByIdResponse {
+  status: boolean;
+  data: SectionRecord;
+}
+
+export const getSectionById = async (
+  sectionId: string
+): Promise<GetSectionByIdResponse> => {
+  const { data } = await api.get<GetSectionByIdResponse>(
+    `/tenant/getsectionbyid/${sectionId}`
+  );
+  return data;
+};
+
+/* ── getallsections ── */
+
+export interface SectionRecord {
+  id: string;
+  classId?: string;
+  class_id?: string;
+  className?: string;
+  class_name?: string;
+  sectionName?: string;
+  section_name?: string;
+  classTeacherId?: string;
+  class_teacher_id?: string;
+  academicYearId?: string;
+  academic_year_id?: string;
+  totalStrength?: number;
+  total_strength?: number;
+}
+
+export interface GetAllSectionsResponse {
+  status: boolean;
+  count?: number;
+  data: SectionRecord[];
+}
+
+export const getAllSections = async (params?: {
+  classId?: string;
+  academicYearId?: string;
+}): Promise<GetAllSectionsResponse> => {
+  const { data } = await api.get<GetAllSectionsResponse>(
+    `/tenant/getallsections`,
+    { params }
+  );
+  return data;
+};
+
+/* ── getsectionsbyclassId ── */
+
+export interface GetSectionsByClassIdResponse {
+  status: boolean;
+  count?: number;
+  data: SectionRecord[];
+}
+
+export const getSectionsByClassId = async (
+  classId: string
+): Promise<GetSectionsByClassIdResponse> => {
+  const { data } = await api.get<GetSectionsByClassIdResponse>(
+    `/tenant/getsectionsbyclassId/${classId}`
   );
   return data;
 };
@@ -71,6 +140,7 @@ export interface GetAllStaffResponse {
 export const getAllStaff = async (params: {
   class?: string;
   section?: string;
+  role?: string;
 }): Promise<GetAllStaffResponse> => {
   const { data } = await api.get<GetAllStaffResponse>(
     `/tenant/getallstaff`,

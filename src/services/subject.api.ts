@@ -1,0 +1,73 @@
+import api from "@/config/axios";
+
+export interface SubjectRecord {
+  id: string;
+  subject_name: string;
+  subject_code?: string;
+  class_id: string;
+  section_id: string;
+  teacher_id: string;
+  academic_year_id: string;
+  teacher_name?: string;
+}
+
+export interface GetAllSubjectsParams {
+  class_id?: string;
+  section_id?: string;
+  academicYearId?: string;
+}
+
+export interface GetAllSubjectsResponse {
+  status: boolean;
+  count?: number;
+  data: SubjectRecord[];
+}
+
+export interface CreateSubjectPayload {
+  subject_name: string;
+  class_id: string;
+  sectionid: string;
+  teacher_id: string;
+  academicYearId: string;
+}
+
+export interface CreateSubjectResponse {
+  status: boolean;
+  message?: string;
+  data?: SubjectRecord;
+}
+
+export const getAllSubjects = async (
+  params?: GetAllSubjectsParams
+): Promise<GetAllSubjectsResponse> => {
+  const { data } = await api.get<GetAllSubjectsResponse>(
+    "/tenant/getallsubjects",
+    { params }
+  );
+  return data;
+};
+
+export interface GetSubjectsBySectionIdResponse {
+  status: boolean;
+  count?: number;
+  data: SubjectRecord[];
+}
+
+export const getSubjectsBySectionId = async (
+  sectionId: string
+): Promise<GetSubjectsBySectionIdResponse> => {
+  const { data } = await api.get<GetSubjectsBySectionIdResponse>(
+    `/tenant/getsubjectsBySectionId/${sectionId}`
+  );
+  return data;
+};
+
+export const createSubject = async (
+  payload: CreateSubjectPayload
+): Promise<CreateSubjectResponse> => {
+  const { data } = await api.post<CreateSubjectResponse>(
+    "/tenant/subjects",
+    payload
+  );
+  return data;
+};

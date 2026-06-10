@@ -57,7 +57,10 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setForm(toForm(student));
+    const timer = window.setTimeout(() => {
+      setForm(toForm(student));
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [student]);
 
   const set = (field: keyof FormState) => (value: string) =>

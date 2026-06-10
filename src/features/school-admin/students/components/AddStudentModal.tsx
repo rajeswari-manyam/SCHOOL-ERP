@@ -2,10 +2,13 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useState } from "react";
 
 import { useAuthStore } from "@/store/authStore";
+import { useUIStore } from "@/store/uiStore";
+import { useClassesList } from "../hooks/useClassesList";
+import { useSectionsList } from "../hooks/useSectionsList";
 
 import type {
   AddStudentFormData,
@@ -53,16 +56,6 @@ const EMPTY_FORM: AddStudentFormData = {
   relation: "",
   email: "",
 };
-
-const CLASSES = Array.from({ length: 12 }, (_, i) => ({
-  value: String(i + 1),
-  label: String(i + 1),
-}));
-
-const SECTIONS = ["A", "B", "C", "D"].map((s) => ({
-  value: s,
-  label: s,
-}));
 
 const BLOOD_GROUPS = [
   "A+",
@@ -138,6 +131,8 @@ const AddStudentModal = ({
     useState<AddStudentFormData>(EMPTY_FORM);
 
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   const [studentData, setStudentData] = useState<{
     id?: string;
@@ -145,6 +140,22 @@ const AddStudentModal = ({
 
   // AUTH STORE
   const { user } = useAuthStore();
+
+  // ACADEMIC YEAR
+  const academicYearId = useUIStore((s) => s.academicYearId);
+  const {
+    classes,
+    loading: classesLoading,
+    error: classesError,
+    retry: retryClasses,
+  } = useClassesList(academicYearId);
+
+  const {
+    sections,
+    loading: sectionsLoading,
+    error: sectionsError,
+    retry: retrySections,
+  } = useSectionsList(selectedClassId);
 
   // PARENT API
   const {
@@ -157,29 +168,27 @@ const AddStudentModal = ({
   const set =
     (field: keyof AddStudentFormData) =>
     (value: string | boolean) =>
-      setForm((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
+      setForm((prev) => {
+        if (field === "class") {
+          const matched = classes.find((c) => c.value === value);
+          setSelectedClassId(matched?.id ?? null);
+          return { ...prev, section: "", [field]: value };
+        }
+        return { ...prev, [field]: value };
+      });
 
   // STEP 1 -> CREATE STUDENT
   const handleNext = async () => {
     setLoading(true);
+    setFormError(null);
 
     try {
       const response = await onSubmit(form);
 
-      console.log(
-        "DEBUG: Student API raw response:",
-        response
-      );
-
       const student = response?.data;
 
       if (!student || !student.id) {
-        throw new Error(
-          "Student creation failed. No ID returned."
-        );
+        throw new Error("Student creation failed. No ID returned.");
       }
 
       setStudentData({
@@ -189,26 +198,14 @@ const AddStudentModal = ({
       setStep(2);
     } catch (err: any) {
       setStudentData(null);
-
-      console.error("FULL Student API Error:", err);
-
-      console.error(
-        "Student API Error Response:",
-        err?.response?.data
-      );
-
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Student API error";
-
-      alert(message);
+      setFormError(err?.message || "Student API error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleBack = () => {
+    setFormError(null);
     setStep(1);
   };
 
@@ -243,22 +240,18 @@ const AddStudentModal = ({
   // STEP 2 -> CREATE PARENT
   const handleSubmit = async () => {
     setLoading(true);
+    setFormError(null);
 
     resetParentError();
 
     try {
       if (!studentData?.id) {
-        alert(
-          "Student data missing. Please add student first."
-        );
-
+        setFormError("Student data missing. Please add student first.");
         return;
       }
 
-      // SCHOOL ID FROM AUTH STORE
       const schoolId = user?.schoolcode || "";
 
-      // UPDATED PAYLOAD
       const parentPayload: CreateParentPayload = {
         parent_name: form.fatherName,
         relation: form.relation,
@@ -270,55 +263,21 @@ const AddStudentModal = ({
         school_id: schoolId,
       };
 
-      console.log(
-        "FINAL PARENT PAYLOAD:",
-        JSON.stringify(parentPayload, null, 2)
-      );
-
-      const validationError =
-        validateParentPayload(parentPayload);
+      const validationError = validateParentPayload(parentPayload);
 
       if (validationError) {
-        alert(validationError);
-
+        setFormError(validationError);
         return;
       }
 
-      const parentRes =
-        await createParent(parentPayload);
+      await createParent(parentPayload);
 
-      console.log(
-        "Parent API response:",
-        parentRes
-      );
-
-      alert("Student & Parent added successfully");
-
-      // RESET
       setForm(EMPTY_FORM);
-
       setStudentData(null);
-
       setStep(1);
-
       onClose();
     } catch (err: any) {
-      console.error(
-        "FULL Parent API Error:",
-        err
-      );
-
-      console.error(
-        "Parent API Error Response:",
-        err?.response?.data
-      );
-
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Parent API error";
-
-      alert(message);
+      setFormError(err?.message || "Parent API error");
     } finally {
       setLoading(false);
     }
@@ -447,21 +406,61 @@ const AddStudentModal = ({
               </div>
 
               <Field label="Class">
-                <Select
-                  value={form.class}
-                  onValueChange={set("class")}
-                  options={CLASSES}
-                  placeholder="Select Class"
-                />
+                {classesLoading ? (
+                  <div className="flex items-center gap-2 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    <span className="text-xs text-gray-400">Loading classes...</span>
+                  </div>
+                ) : classesError ? (
+                  <div className="flex items-center gap-2 h-10 px-3 border border-red-200 rounded-lg bg-red-50">
+                    <span className="text-xs text-red-600 flex-1 truncate">Failed to load classes</span>
+                    <button
+                      type="button"
+                      onClick={retryClasses}
+                      className="text-[10px] font-bold text-red-700 hover:text-red-900 shrink-0"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.class}
+                    onValueChange={set("class")}
+                    options={classes}
+                    placeholder="Select Class"
+                  />
+                )}
               </Field>
 
               <Field label="Section">
-                <Select
-                  value={form.section}
-                  onValueChange={set("section")}
-                  options={SECTIONS}
-                  placeholder="Select Section"
-                />
+                {!form.class ? (
+                  <div className="flex items-center h-10 px-3 border border-gray-200 rounded-lg bg-gray-50">
+                    <span className="text-xs text-gray-400">Select a class first</span>
+                  </div>
+                ) : sectionsLoading ? (
+                  <div className="flex items-center gap-2 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    <span className="text-xs text-gray-400">Loading sections...</span>
+                  </div>
+                ) : sectionsError ? (
+                  <div className="flex items-center gap-2 h-10 px-3 border border-red-200 rounded-lg bg-red-50">
+                    <span className="text-xs text-red-600 flex-1 truncate">Failed to load sections</span>
+                    <button
+                      type="button"
+                      onClick={retrySections}
+                      className="text-[10px] font-bold text-red-700 hover:text-red-900 shrink-0"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.section}
+                    onValueChange={set("section")}
+                    options={sections}
+                    placeholder="Select Section"
+                  />
+                )}
               </Field>
 
               <Field label="Blood Group">
@@ -566,6 +565,14 @@ const AddStudentModal = ({
             </div>
           )}
         </div>
+
+        {formError && (
+          <div className="px-4 sm:px-6 pb-2">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-xs text-red-600">{formError}</p>
+            </div>
+          </div>
+        )}
 
         {/* FOOTER */}
         <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-4 border-t border-gray-100 shrink-0">

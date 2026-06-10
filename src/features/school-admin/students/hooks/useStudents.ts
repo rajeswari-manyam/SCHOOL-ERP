@@ -1,7 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { studentsApi, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "../api/students.api";
 import type { Student, AddStudentFormData, CreateStudentPayload, UpdateStudentPayload, Gender } from "../types/student.types";
+
+const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`TIMEOUT: ${label} exceeded ${ms}ms`)), ms)
+    ),
+  ]);
+
+const LOAD_TIMEOUT_MS = 30_000;
 
 export const useStudents = () => {
   const schoolcode = useAuthStore((s) => s.user?.schoolcode ?? "");
@@ -12,23 +22,46 @@ export const useStudents = () => {
   const [classFilter, setClassFilter] = useState("All");
   const [sectionFilter, setSectionFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-
-  const loadStudents = () => {
-    setLoading(true);
-    setError(null);
-    studentsApi.getAll().then(data => {
-      setStudents(data);
-      setLoading(false);
-    }).catch((err) => {
-      console.error("Failed to load students", err);
-      setError(err?.message || "Failed to load students. Please try again.");
-      setLoading(false);
-    });
-  };
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    loadStudents();
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
+
+  const loadStudents = useCallback(() => {
+    setLoading(true);
+    setError(null);
+
+    const doLoad = async () => {
+      try {
+        const data = await withTimeout(
+          studentsApi.getAll(),
+          LOAD_TIMEOUT_MS,
+          "getAllStudents"
+        );
+        if (mountedRef.current) {
+          setStudents(data);
+          setLoading(false);
+        }
+      } catch (err: unknown) {
+        if (mountedRef.current) {
+          const message = err instanceof Error ? err.message : "Failed to load students";
+          setError(message);
+          setLoading(false);
+        }
+      }
+    };
+
+    void doLoad();
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadStudents();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadStudents]);
 
   const filtered = useMemo(() => {
     return students.filter(s => {
@@ -73,14 +106,26 @@ export const useStudents = () => {
       ...(data.admissionNo ? { admission_number: data.admissionNo } : {}),
     } as CreateStudentPayload;
 
-    const newS = await studentsApi.createStudent(payload);
-    setStudents(prev => [...prev, newS]);
+    const newS = await withTimeout(
+      studentsApi.createStudent(payload),
+      LOAD_TIMEOUT_MS,
+      "createStudent"
+    );
+    if (mountedRef.current) {
+      setStudents(prev => [...prev, newS]);
+    }
     return newS;
   };
 
   const updateStudent = async (id: string, payload: UpdateStudentPayload) => {
-    const updated = await studentsApi.updateStudent(id, payload);
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+    const updated = await withTimeout(
+      studentsApi.updateStudent(id, payload),
+      LOAD_TIMEOUT_MS,
+      "updateStudent"
+    );
+    if (mountedRef.current) {
+      setStudents(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+    }
     return updated;
   };
 
@@ -99,16 +144,31 @@ export const useStudents = () => {
 export const useStudentProfile = (id: string) => {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    studentsApi.getById(id).then(s => {
-      setStudent(s ?? null);
-      setLoading(false);
-    });
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const s = await withTimeout(
+          studentsApi.getById(id),
+          LOAD_TIMEOUT_MS,
+          `getStudentById(${id})`
+        );
+        setStudent(s ?? null);
+        setLoading(false);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load student";
+        setError(message);
+        setLoading(false);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [id]);
 
   return {
-    student, loading,
+    student, loading, error,
     attendance: MOCK_ATTENDANCE,
     feePayments: MOCK_FEE_PAYMENTS,
     documents: MOCK_DOCUMENTS,
