@@ -34,11 +34,11 @@ export default function ReceiptsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [receipts.length]);
+  }, (receipts || []).length);
 
-  const total = receipts.length;
+  const total = (receipts || []).length;
 
-  const paginatedReceipts = receipts.slice(
+  const paginatedReceipts = (receipts || []).slice(
     (page - 1) * pageSize,
     page * pageSize
   );
@@ -97,9 +97,18 @@ export default function ReceiptsPage() {
       {/* Filters */}
       <ReceiptFilters />
 
+      {/* Empty State */}
+      {(receipts || []).length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-xl border border-gray-200">
+          <span className="text-4xl mb-3">🧾</span>
+          <p className="text-sm font-medium">No receipts found</p>
+          <p className="text-xs mt-1">Receipts will appear here once payments are recorded</p>
+        </div>
+      ) : (
+      <>
       {/* Mobile Card View */}
       <div className="sm:hidden space-y-3">
-        {paginatedReceipts.map((receipt: Receipt) => (
+        {(paginatedReceipts || []).map((receipt: Receipt) => (
           <div
             key={receipt.id}
             className="bg-white rounded-xl border border-gray-200 p-4 space-y-3"
@@ -179,7 +188,7 @@ export default function ReceiptsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {paginatedReceipts.map((receipt: Receipt) => (
+            {(paginatedReceipts || []).map((receipt: Receipt) => (
               <tr key={receipt.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <span className="text-xs font-medium text-blue-600">{receipt.receiptNo}</span>
@@ -255,6 +264,8 @@ export default function ReceiptsPage() {
           📊 Generate Report
         </Button>
       </div>
+      </>
+      )}
 
       {/* Modals */}
       {selectedReceipt && (

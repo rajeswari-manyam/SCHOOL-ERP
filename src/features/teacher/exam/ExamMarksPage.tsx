@@ -28,7 +28,7 @@ const ExamMarksPage = () => {
     handleSaveDraft, handleOpenSubmit, handleConfirmSubmit,
     handleDownloadReport,
     submittedExams, publishedResults,
-    apiResults, apiResultsLoading, apiResultsError,
+    apiResultsLoading, apiResultsError,
     handleLoadFromApi,
     submitting, submitError,
   } = useExamMarks();

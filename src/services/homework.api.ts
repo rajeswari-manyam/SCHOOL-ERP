@@ -4,18 +4,22 @@ import api from "@/config/axios";
 
 export interface Homework {
   id: string;
+
   class_id: string | null;
-  className: string;
-  sectionName: string;
+  section_id: string | null;
   subject_id: string | null;
-  subjectName: string;
+
   teacher_id: string;
+
   title: string;
   description: string;
   submission_date: string;
+
   attachments: string[];
   is_published: boolean;
-  school_code: string;
+
+  academicYearId: string;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -31,16 +35,19 @@ export interface ApiResponse<T> {
 
 /** Create Homework */
 export const createHomework = async (payload: {
-  className: string;
-  sectionName: string;
-  subjectName: string;
+  class_id: string;
+  section_id: string;
+  subject_id: string;
   teacher_id: string;
+
   title: string;
   description: string;
   submission_date: string;
+
   attachments: string[];
   is_published: boolean;
-  school_code: string;
+
+  academicYearId: string;
 }) => {
   const res = await api.post<ApiResponse<Homework>>(
     "/tenant/createhomework",
@@ -78,18 +85,18 @@ export const getHomeworkById = async (id: string) => {
  * e.g. "10A" → className=10&section=A
  *      "9"   → className=9  (no section param)
  */
-export const getHomeworkByClass = async (rawClass: string) => {
-  // Split "10A" → { className: "10", section: "A" }
-  const match = (rawClass ?? "").trim().match(/^(\d+)([A-Za-z]*)$/);
-  const className = match ? match[1] : rawClass.trim();
-  const section   = match ? match[2] : "";
-
-  const params: Record<string, string> = { className };
-  if (section) params.section = section;
-
+export const getHomeworkByClass = async (params: {
+  class_id: string;
+  section_id?: string;
+}) => {
   const res = await api.get<ApiResponse<Homework[]>>(
     "/tenant/gethomeworkByClass",
-    { params }
+    {
+      params: {
+        class_id: params.class_id,
+        section_id: params.section_id,
+      },
+    }
   );
   return res.data;
 };

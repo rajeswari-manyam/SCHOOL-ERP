@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Printer, RefreshCw, AlertCircle, Calendar, GraduationCap, User, School } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
-import { useTimetable } from "./hooks/useTimetable";
+import { useTimetable, type DayName } from "./hooks/useTimetable";
 import { TimetableErrorBoundary } from "./components/ErrorBoundary";
 import TimetableGrid from "./components/TimetableGrid";
 import TimetableSummaryCards from "./components/TimetableSummaryCards";
@@ -198,7 +198,7 @@ const TimetablePage = () => {
             onResetWeek={() => setWeekOffset(0)}
             weekLabel={weekLabel}
             weekSubLabel={weekSubLabel}
-            todayName={todayName}
+            todayName={todayName as DayName | null}
             currentPeriodId={currentPeriodId}
           />
         </div>

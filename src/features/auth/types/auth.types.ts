@@ -74,6 +74,8 @@ export interface AuthUser {
   schoolcode: string;
   studentId?: string;
   children?: Child[];
+  class_id?: string;
+  section_id?: string;
 }
 
 // ── Login Step State ───────────────────────────────

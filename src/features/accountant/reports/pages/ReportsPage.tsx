@@ -1,13 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronRight, ChevronDown, Check } from "lucide-react";
+import { ChevronRight, ChevronDown, Check, FileText, Loader2, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { ReportCard } from "../components/ReportCard";
 import { GenerateReportModal } from "../components/GenerateReportModal";
 import { RecentReportsTable } from "../components/RecentReportsTable";
+import { ReportFilters } from "../components/ReportFilters";
+import { ReportSummaryCards } from "../components/ReportSummaryCards";
 import { useReports } from "../hooks/useReports";
 import { useReportsStore } from "../store/useReportStore";
 import { Outlet } from "react-router-dom";
 import type { GenerateReportInput } from "../types/reports.types";
+import type { ReportFilterValues } from "../components/ReportFilters";
 import { reportCards } from "../data/report.data";
 
 
@@ -82,10 +86,9 @@ export default function ReportsPage() {
 
   const [selectedReport, setSelectedReport] = useState<ReportCardItem | null>(null);
 
- 
   const { academicYear, setAcademicYear } = useReportsStore();
 
-  const { reports, generateReport } = useReports();
+  const { recentReports, generateReport, loading, error } = useReports();
 
   const handleGenerate = (data: GenerateReportInput) => {
     if (!selectedReport) return;
@@ -100,31 +103,60 @@ export default function ReportsPage() {
     });
   };
 
+  const handleFilter = (_filters: ReportFilterValues) => {};
+
   return (
     <div className="flex min-h-screen bg-gray-50/50">
       <main className="flex-1 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-6">  
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-6">
 
           {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-xs flex items-center gap-1.5 text-gray-400 mb-1">
                 <span>Dashboard</span>
                 <ChevronRight className="w-3 h-3" />
                 <span className="text-gray-600 font-medium">Reports</span>
               </div>
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900">Financial Reports</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900">Financial Reports</h1>
               <p className="text-sm text-gray-500">Generate and download financial reports</p>
             </div>
 
-            {/* Academic Year */}
+            {/* Academic Year + Export Buttons */}
             <div className="flex items-center gap-2.5">
               <span className="text-xs text-gray-400 uppercase tracking-wide hidden sm:inline">
                 Academic Year
               </span>
               <AcademicYearDropdown value={academicYear} onChange={setAcademicYear} />
+              <div className="h-6 w-px bg-gray-200 hidden sm:block" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs flex items-center gap-1.5"
+                onClick={() => alert("Export to PDF placeholder")}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Export PDF</span>
+                <span className="sm:hidden">PDF</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs flex items-center gap-1.5"
+                onClick={() => alert("Export to Excel placeholder")}
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Export Excel</span>
+                <span className="sm:hidden">Excel</span>
+              </Button>
             </div>
           </div>
+
+          {/* Filters */}
+          <ReportFilters onFilter={handleFilter} />
+
+          {/* Summary Cards */}
+          <ReportSummaryCards />
 
           {/* Report Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -139,7 +171,26 @@ export default function ReportsPage() {
 
           {/* Recent Reports Table */}
           <div className="overflow-x-auto">
-            <RecentReportsTable data={reports} />
+            {loading ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-8 h-8 text-[#3525CD] animate-spin" />
+                <p className="text-sm text-gray-500">Loading reports...</p>
+              </div>
+            ) : error ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 flex flex-col items-center justify-center gap-3">
+                <p className="text-sm text-red-500">Failed to load reports. Please try again.</p>
+              </div>
+            ) : recentReports.length === 0 ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 flex flex-col items-center justify-center gap-3">
+                <FileText className="w-10 h-10 text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">No reports generated yet</p>
+                <p className="text-xs text-gray-400 text-center max-w-sm">
+                  Use the Generate button on any report card above to create your first report.
+                </p>
+              </div>
+            ) : (
+              <RecentReportsTable data={recentReports} />
+            )}
           </div>
 
           <Outlet />

@@ -1,38 +1,71 @@
 import type { BillingCycle } from "../constants/fee.constants";
 
+// ─── Payment ──────────────────────────────────────────────────────────────────
 
+/** Extended payment modes: BANK added alongside CASH, UPI, CARD, CHEQUE */
+export type PaymentMode = "UPI" | "CASH" | "CARD" | "CHEQUE" | "BANK";
 
-export type PaymentMode = "UPI" | "CASH" | "CHEQUE" | "ONLINE";
+/**
+ * NEW: Three-state payment status for partial payment support.
+ * PAID       → paidAmount === totalAmount
+ * PARTIAL    → 0 < paidAmount < totalAmount
+ * PENDING    → paidAmount === 0
+ */
+export type PaymentStatus = "PAID" | "PARTIAL" | "PENDING";
+
+// ─── Transactions ─────────────────────────────────────────────────────────────
 
 export type Transaction = {
   id: string;
   date: string;
   student: string;
   className: string;
+  /** Total fee amount originally due */
   amount: number;
+  /** NEW: amount the student actually paid in this transaction */
+  paidAmount: number;
+  /** NEW: amount still outstanding after payment */
+  remainingAmount: number;
+  /** NEW: PAID | PARTIAL | PENDING */
+  status: PaymentStatus;
   mode: PaymentMode;
+  /** NEW: reference for UPI / CARD / BANK transfers */
+  transactionId?: string;
   feeHead?: string;
   receiptNo?: string;
 };
 
 export type FeeTransaction = Transaction & {
   class?: string;
-  status?: string;
 };
+
+// ─── Fee record ───────────────────────────────────────────────────────────────
 
 export type Fee = {
   id: string;
-  studentId: string;  
+  studentId: string;
   studentName: string;
   studentInitials: string;
   studentAdmissionId: string;
   class: string;
+  /** NEW: section within the class, e.g. "A" | "B" */
+  section?: string;
   feeHead: string;
   amount: number;
+  /** NEW: cumulative amount paid across all partial/full payments */
+  paidAmount: number;
+  /** NEW: amount still due (amount - paidAmount) */
+  remainingAmount: number;
   dueDate: string;
+  /** NEW: days after dueDate before lateFee starts accruing */
+  gracePeriod: number;
+  /** NEW: late fee calculated if overdue beyond gracePeriod */
+  lateFee: number;
   daysOverdue: number;
   reminders: number;
   status: FeeStatus;
+  /** NEW: payment lifecycle status */
+  paymentStatus: PaymentStatus;
   overdueSeverity: OverdueSeverity;
   billingCycle: BillingCycle;
 };
@@ -42,16 +75,21 @@ export type FeeCreateInput = {
   feeHead: string;
   amount: number;
   dueDate: string;
+  gracePeriod?: number;
   billingCycle: BillingCycle;
+  /** NEW: class + section for correct fee assignment */
+  classId: string;
+  sectionId?: string;
 };
-
 
 export type FeeUpdateInput = {
   feeHead?: string;
   amount?: number;
   dueDate?: string;
+  gracePeriod?: number;
   billingCycle?: BillingCycle;
 };
+
 export type FeeStatus =
   | "overdue"
   | "due-today"
@@ -68,25 +106,14 @@ export type DueStatus =
   | "Overdue"
   | "Severely Overdue";
 
-export type FeeRow = {
-  id: string;
-  student: string;
-  admissionNo: string;
-  className: string;
-  feeHead: string;
-  amount: number;
-  dueDate: string;
-  daysOverdue: number;
-  reminders: number;
-  status: FeeStatus;
-};
-
-
+// ─── Payment form ─────────────────────────────────────────────────────────────
 
 export type FeeFormData = {
   studentId: string;
-  amount: number;
+  /** Amount student is paying NOW (may be partial) */
+  paymentAmount: number;
   paymentMode: PaymentMode;
+  /** Required for UPI / CARD / BANK */
   transactionId?: string;
   receiptNo?: string;
   paymentDate: string;
@@ -97,7 +124,16 @@ export type FeeOption = {
   id: string;
   label: string;
   amount: number;
+  /** Portion already paid on this fee item */
+  paidAmount: number;
+  /** Remaining outstanding on this fee item */
+  remainingAmount: number;
+  overdue?: boolean;
+  /** Applicable late fee for this item */
+  lateFee?: number;
 };
+
+// ─── Fee head ─────────────────────────────────────────────────────────────────
 
 export interface FeeHeadFormValues {
   name: string;
@@ -108,18 +144,6 @@ export interface FeeHeadFormValues {
   billingCycle: BillingCycle;
   displayOrder: string;
 }
-
-export type FilterValues = {
-  search: string;
-  dateFrom: string;
-  dateTo: string;
-  selectedClass: string;
-  selectedMode: string;
-  dueStatus: DueStatus;
-  sortBy: string;
-};
-
-
 
 export type FeeHeadStatus = "ACTIVE" | "INACTIVE";
 
@@ -134,7 +158,7 @@ export type FeeHead = {
   status: FeeHeadStatus;
 };
 
-
+// ─── Class / fee structure ────────────────────────────────────────────────────
 
 export type SectionType = "Section A" | "Section B" | "Both Same";
 
@@ -152,21 +176,61 @@ export type ClassFee = {
   billingCycle: BillingCycle;
   amount: number | null;
   dueDate: string;
+  /** NEW: days of grace before late fee triggers */
+  gracePeriod: number;
+  /** NEW: flat or percentage late fee */
+  lateFeeAmount: number;
+  lateFeeType: "flat" | "percentage";
   annualTotal: number | null;
+  /** NEW: which class this fee belongs to */
+  classId: string;
+  /** NEW: which section(s); null means all sections */
+  sectionId: string | null;
 };
 
+// ─── Filters ──────────────────────────────────────────────────────────────────
 
+export type FilterValues = {
+  search: string;
+  dateFrom: string;
+  dateTo: string;
+  selectedClass: string;
+  selectedMode: string;
+  dueStatus: DueStatus;
+  sortBy: string;
+};
+
+export type FeeRow = {
+  id: string;
+  student: string;
+  admissionNo: string;
+  className: string;
+  feeHead: string;
+  amount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  dueDate: string;
+  daysOverdue: number;
+  lateFee?: number;
+  reminders: number;
+  status: FeeStatus;
+  paymentStatus: PaymentStatus;
+};
+
+// ─── Student ──────────────────────────────────────────────────────────────────
 
 export type Student = {
   id: string;
   name: string;
   admissionNo: string;
   className: string;
+  /** NEW: section within the class */
+  section?: string;
   parentName: string;
   pendingAmount: number;
 };
 
-
+// ─── Transport ────────────────────────────────────────────────────────────────
 
 export type TransportSlab = {
   id: string;
@@ -187,7 +251,7 @@ export type TransportStudent = {
   pickupPoint?: string;
 };
 
-
+// ─── Concession ───────────────────────────────────────────────────────────────
 
 export type ConcessionStatus = "ACTIVE" | "PENDING";
 
@@ -206,7 +270,7 @@ export type Concession = {
   status: ConcessionStatus;
 };
 
-
+// ─── Component props ──────────────────────────────────────────────────────────
 
 export interface FeeStructureProps {
   showModal: boolean;
@@ -216,6 +280,9 @@ export interface FeeStructureProps {
 export interface Props {
   receiptNo: string;
   amount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  paymentStatus: PaymentStatus;
   paymentMode: string;
   paymentDate: string;
   studentName: string;

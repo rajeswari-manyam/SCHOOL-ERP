@@ -6,6 +6,7 @@ import FeeManagementPage from "./fees/pages/FeeManagementPage";
 import ReceiptsPage from "./receipts/pages/ReceiptsPage";
 import PayrollPage from "./payroll/pages/PayrollPage";
 import LedgerPage from "./ledger/pages/LedgerPage";
+import StudentLedgerPage from "./ledger/pages/StudentLedgerPage";
 import ReportsPage from "./reports/pages/ReportsPage";
 
 export default function AccountantRouter() {
@@ -21,6 +22,7 @@ export default function AccountantRouter() {
         <Route path="receipts" element={<ReceiptsPage />} />
         <Route path="payroll" element={<PayrollPage />} />
         <Route path="ledger" element={<LedgerPage />} />
+        <Route path="student-ledger" element={<StudentLedgerPage />} />
 <Route path="reports" element={<ReportsPage />} />
 
 

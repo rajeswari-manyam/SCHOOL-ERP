@@ -127,6 +127,7 @@ export type MonthlyPayrollTabProps = {
   processedDate: string | null;
   processedBy: string | null;
   onStartProcessing: () => void;
+  onViewPayslip?: (staff: StaffPayroll) => void;
 };
 
 export interface PayrollSummary {
@@ -201,6 +202,7 @@ export interface PayrollStatsProps {
 export interface PayrollTableProps {
   data: StaffPayroll[];
   isProcessed?: boolean;
+  onViewPayslip?: (staff: StaffPayroll) => void;
 }
 
 export interface ProcessPayrollModalProps {

@@ -65,7 +65,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
         name:        `${s.first_name} ${s.last_name}`.trim(),
         initials:    toInitials(`${s.first_name} ${s.last_name}`),
         avatarColor: AVATAR_COLORS[idx % AVATAR_COLORS.length],
-        class:       s.class,
+        class:       s.class_id ?? "",
         admissionNo: s.admission_number,
         status:      "ACTIVE" as const,
       }));

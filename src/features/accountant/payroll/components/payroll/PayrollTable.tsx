@@ -5,7 +5,7 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { Pencil } from "lucide-react";
+import { Pencil, Eye } from "lucide-react";
 import { formatCurrency } from "../../../../../utils/formatters";
 import type { StaffPayroll, PayrollTableProps } from "../../types/payroll.types";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import typography, { combineTypography } from "@/styles/typography";
 
 const columnHelper = createColumnHelper<StaffPayroll>();
 
-export const PayrollTable = ({ data, isProcessed = false }: PayrollTableProps) => {
+export const PayrollTable = ({ data, isProcessed = false, onViewPayslip }: PayrollTableProps) => {
   const totalPresent    = data.reduce((sum: number, s: StaffPayroll) => sum + s.present, 0);
   const totalAbsent     = data.reduce((sum: number, s: StaffPayroll) => sum + s.absent, 0);
   const totalGross      = data.reduce((sum: number, s: StaffPayroll) => sum + s.gross, 0);
@@ -84,13 +84,25 @@ export const PayrollTable = ({ data, isProcessed = false }: PayrollTableProps) =
     columnHelper.display({
       id: "actions",
       header: "Action",
-      cell: () => (
-        <Button variant="ghost" size="sm">
-          <Pencil className="w-4 h-4" />
-        </Button>
+      cell: (info) => (
+        <div className="flex items-center gap-1">
+          {isProcessed && onViewPayslip && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewPayslip(info.row.original)}
+              title="View Payslip"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm">
+            <Pencil className="w-4 h-4" />
+          </Button>
+        </div>
       ),
     }),
-  ], [isProcessed]);
+  ], [isProcessed, onViewPayslip]);
 
   const table = useReactTable({
     data,
@@ -153,9 +165,21 @@ export const PayrollTable = ({ data, isProcessed = false }: PayrollTableProps) =
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Net Pay</p>
                 <p className="text-base font-bold text-[#3525CD]">{formatCurrency(staff.net)}</p>
               </div>
-              <Button variant="ghost" size="sm">
-                <Pencil className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {isProcessed && onViewPayslip && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewPayslip(staff)}
+                    title="View Payslip"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         ))}

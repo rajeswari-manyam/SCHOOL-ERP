@@ -3,9 +3,6 @@ import type {
   TeacherTimetableQuery,
   TeacherTimetableData,
   TimetablePeriod,
-  ApiTimetableResponse,
-  ApiTimetableSlot,
-  ApiDayOfWeek,
   ApiPeriodCell,
   TimetableCell,
   ClassColorKey,
@@ -215,21 +212,6 @@ const DAY_MAP: Record<string, string> = {
   thursday: "Thu", friday: "Fri", saturday: "Sat",
   sunday: "Mon",
 };
-
-interface FlatSlot {
-  className: string;
-  sectionName: string;
-  subjectname: string;
-  teachername: string;
-  period_no: number | string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-  room_no: string;
-  lunch_start: string;
-  lunch_end: string;
-  academic_year: string;
-}
 
 function transformFlatSlots(items: Record<string, unknown>[]): TeacherTimetableData | null {
   if (!items.length) return null;
@@ -476,14 +458,21 @@ function transformExamEntry(e: Record<string, unknown>): UpcomingExam | null {
 // ── API service ────────────────────────────────────────────────────────────
 
 export class TimetableApiError extends Error {
+  statusCode?: number;
+  endpoint?: string;
+  originalError?: unknown;
+
   constructor(
     message: string,
-    public readonly statusCode?: number,
-    public readonly endpoint?: string,
-    public readonly originalError?: unknown,
+    statusCode?: number,
+    endpoint?: string,
+    originalError?: unknown,
   ) {
     super(message);
     this.name = "TimetableApiError";
+    this.statusCode = statusCode;
+    this.endpoint = endpoint;
+    this.originalError = originalError;
   }
 }
 

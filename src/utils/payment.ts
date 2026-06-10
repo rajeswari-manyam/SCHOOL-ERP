@@ -1,4 +1,4 @@
-import type { PaymentMode } from "../features/accountant/receipts/types/receipts.types";
+type PaymentMode = "UPI" | "CASH" | "CARD" | "CHEQUE" | "BANK" | "ONLINE";
 
 type TransactionLike = {
   amount: number;
@@ -51,6 +51,8 @@ export const calculatePaymentSummary = (data: TransactionLike[]) => {
         case "CHEQUE":
           acc.cheque += item.amount;
           break;
+        case "CARD":
+        case "BANK":
         case "ONLINE":
           acc.online += item.amount;
           break;

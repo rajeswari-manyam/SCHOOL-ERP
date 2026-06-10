@@ -12,7 +12,7 @@ const tabs = [
 export const HomeworkLayout = ({ children }: { children?: React.ReactNode }) => {
   const [activeTab, setActiveTab] = useState<Tab>("week");
 
-  // Real current-week days
+
   const weekDays = getCurrentWeekDays();
   const today    = new Date();
   const defaultIdx = weekDays.findIndex(

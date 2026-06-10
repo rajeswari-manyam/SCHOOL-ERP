@@ -3,6 +3,7 @@ import type {
   Transaction,
   PaymentModeSummary,
   ReminderStatus,
+  FinancialSummary,
 } from "../types/dashboard.types";
 
 export const statsMock: StatItem[] = [
@@ -96,6 +97,13 @@ export const paymentModesMock: PaymentModeSummary[] = [
   { mode: "CASH", amount: 80000 },
   { mode: "CHEQUE", amount: 40000 },
 ];
+
+export const financialSummaryMock: FinancialSummary = {
+  totalIncome: 258000,
+  totalExpense: 378080,
+  netProfit: -120080,
+  pendingFees: 118000,
+};
 
 export const reminderMock: ReminderStatus = {
   sent: 120,

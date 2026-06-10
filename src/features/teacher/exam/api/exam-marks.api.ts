@@ -20,14 +20,21 @@ function logger(level: "log" | "warn" | "error", ...args: unknown[]) {
 }
 
 export class ExamMarksApiError extends Error {
+  statusCode?: number;
+  endpoint?: string;
+  originalError?: unknown;
+
   constructor(
     message: string,
-    public readonly statusCode?: number,
-    public readonly endpoint?: string,
-    public readonly originalError?: unknown,
+    statusCode?: number,
+    endpoint?: string,
+    originalError?: unknown,
   ) {
     super(message);
     this.name = "ExamMarksApiError";
+    this.statusCode = statusCode;
+    this.endpoint = endpoint;
+    this.originalError = originalError;
   }
 }
 

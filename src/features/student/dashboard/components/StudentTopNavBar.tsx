@@ -58,10 +58,14 @@ const StudentTopNavBar = () => {
             </button>
 
             <Link to="/student/dashboard" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#3525CD] flex items-center justify-center">
-                <span className="text-white text-[11px] font-bold">S</span>
+              <div className="w-7 h-7 overflow-hidden rounded-lg bg-white/5">
+                <img
+                  src="/favicon.png"
+                  alt="VidyaTracker logo"
+                  className="h-full w-full object-cover"
+                />
               </div>
-              <span className="font-bold text-[#0B1C30]">ScholarSlate</span>
+              <span className="font-bold text-[#0B1C30]">VidyaTracker</span>
             </Link>
           </div>
 

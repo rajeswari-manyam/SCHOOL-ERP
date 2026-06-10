@@ -50,3 +50,10 @@ export type TopPayingClassItem = {
   amount: number;
   pct: number; 
 };
+
+export type FinancialSummary = {
+  totalIncome: number;
+  totalExpense: number;
+  netProfit: number;
+  pendingFees: number;
+};

@@ -35,9 +35,8 @@ function useIsMobile() {
   return mobile;
 }
 
-// ─── Mobile card list ────────────────────────────────────────────
 function MobileTransactionList({
-  data,
+  data = [],
   rowSelection,
   onToggle,
   onReminder,
@@ -49,7 +48,7 @@ function MobileTransactionList({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      {data.map((st) => {
+      {(data || []).map((st) => {
         const isSelected = !!rowSelection[st.id];
         return (
           <div
@@ -60,7 +59,6 @@ function MobileTransactionList({
                 : "bg-white border-slate-200"
             }`}
           >
-            {/* Top row: avatar + name + checkbox */}
             <div className="flex items-center gap-2.5">
               <div
                 className={`w-9 h-9 rounded-full ${AVATAR_INDIGO} flex items-center justify-center text-xs font-bold flex-shrink-0`}
@@ -81,7 +79,6 @@ function MobileTransactionList({
               />
             </div>
 
-            {/* Meta grid */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wide">
@@ -107,7 +104,6 @@ function MobileTransactionList({
               </div>
             </div>
 
-            {/* Bottom row: status badge + actions */}
             <div className="flex items-center justify-between">
               <span
                 className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${getTransactionStatusStyle(
@@ -136,14 +132,13 @@ function MobileTransactionList({
   );
 }
 
-// ─── Desktop virtualized table (your original) ───────────────────
 import { TableVirtuoso } from "react-virtuoso";
 
 function DesktopTransactionTable({
-  data,
+  data = [],
   rowSelection,
   onRowSelectionChange,
- 
+
   columns,
 }: {
   data: FeeTransaction[];
@@ -230,14 +225,13 @@ function DesktopTransactionTable({
   );
 }
 
-// ─── Main export ─────────────────────────────────────────────────
-export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
+export const TransactionsTable = ({ data = [] }: { data: FeeTransaction[] }) => {
   const isMobile = useIsMobile();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [reminderStudent, setReminderStudent] = useState<FeeTransaction | null>(null);
   const [showBulkReminder, setShowBulkReminder] = useState(false);
 
-  const selectedIds = Object.keys(rowSelection).filter((k) => rowSelection[k]);
+  const selectedIds = Object.keys(rowSelection || {}).filter((k) => rowSelection[k]);
   const selectedCount = selectedIds.length;
 
   const handleToggle = useCallback((id: string) => {
@@ -343,9 +337,18 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
     []
   );
 
+  if ((data || []).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+        <span className="text-4xl mb-3">📋</span>
+        <p className="text-sm font-medium">No transactions found</p>
+        <p className="text-xs mt-1">Transactions will appear here once recorded</p>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Bulk action bar */}
       {selectedCount > 0 && (
         <div className="flex items-center gap-3 px-4 py-2.5 mb-3 bg-indigo-50 border border-indigo-200 rounded-xl">
           <div className="w-5 h-5 rounded bg-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -378,7 +381,6 @@ export const TransactionsTable = ({ data }: { data: FeeTransaction[] }) => {
         </div>
       )}
 
-      {/* Responsive: cards on mobile, table on desktop */}
       {isMobile ? (
         <MobileTransactionList
           data={data}

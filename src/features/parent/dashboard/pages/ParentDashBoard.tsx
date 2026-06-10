@@ -7,7 +7,7 @@ import { HomeworkCard }       from "../components/HomeWorkCard"
 import { AnnouncementCard }   from "../components/AnnouncamentsCard"
 import { UpcomingExamsTable } from "../components/UpCommingExampleTimeTable"
 
-import { useDashboard }       from "../hooks/usedashboard"
+import { useDashboard }       from "../hooks/useDashboard";
 import { useStudentById }     from "../hooks/useStudent"
 
 type ParentLayoutContext = {

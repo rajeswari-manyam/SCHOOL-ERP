@@ -114,7 +114,10 @@ export const Dashboard = () => {
 
             <span className="flex items-center gap-1">
               <GraduationCap size={14} className="text-slate-400" />
-              Class {studentClass}{studentSection}
+              Class {studentClass}
+              {studentSection && (
+                <span className="text-slate-400">– {studentSection}</span>
+              )}
             </span>
 
             <span className="text-slate-300 hidden sm:inline">•</span>

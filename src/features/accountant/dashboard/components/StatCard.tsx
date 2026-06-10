@@ -1,6 +1,6 @@
-import type { StatItem } from "../types/dashboard.types";
+import type { StatItem, FinancialSummary } from "../types/dashboard.types";
 import { formatCurrency } from "../../../../utils/formatters";
-import { TrendingUp, LayoutGrid, AlertCircle, MessageSquare, Activity, Monitor, CalendarDays } from "lucide-react";
+import { TrendingUp, TrendingDown, LayoutGrid, AlertCircle, MessageSquare, Activity, Monitor, CalendarDays, DollarSign } from "lucide-react";
 const cardConfig = [
   {
     label: "COLLECTED TODAY",
@@ -131,6 +131,104 @@ export const StatCardsSection = ({ data }: { data: StatItem[] }) => {
           </div>
         );
       })}
+    </div>
+  );
+};
+
+const summaryCards = [
+  {
+    label: "TOTAL INCOME",
+    accent: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    icon: <TrendingUp size={18} />,
+    key: "totalIncome" as const,
+    subtitle: "Current session revenue",
+  },
+  {
+    label: "TOTAL EXPENSE",
+    accent: "bg-red-50",
+    iconColor: "text-red-500",
+    icon: <TrendingDown size={18} />,
+    key: "totalExpense" as const,
+    subtitle: "Current session expenditure",
+  },
+  {
+    label: "NET PROFIT",
+    accent: "bg-blue-50",
+    iconColor: "text-blue-600",
+    icon: <DollarSign size={18} />,
+    key: "netProfit" as const,
+    subtitle: "Profit after expenses",
+  },
+  {
+    label: "PENDING FEES",
+    accent: "bg-amber-50",
+    iconColor: "text-amber-500",
+    icon: <AlertCircle size={18} />,
+    key: "pendingFees" as const,
+    subtitle: "Outstanding student fees",
+  },
+];
+
+export const FinancialSummaryCards = ({ summary }: { summary: FinancialSummary }) => {
+  const isLoss = summary.netProfit < 0;
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {summaryCards.map((card) => {
+          const value = summary[card.key];
+          const displayValue = card.key === "netProfit" && isLoss
+            ? formatCurrency(Math.abs(value))
+            : formatCurrency(value);
+
+          return (
+            <div
+              key={card.key}
+              className="bg-white rounded-xl border border-slate-200 px-4 py-3.5 flex items-start gap-3 hover:border-indigo-300 transition-colors"
+            >
+              <div
+                className={`w-9 h-9 rounded-lg ${card.accent} ${card.iconColor} flex items-center justify-center flex-shrink-0`}
+              >
+                {card.icon}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  {card.label}
+                </p>
+
+                <p
+                  className={`text-[17px] font-bold leading-tight truncate ${
+                    card.key === "netProfit" && isLoss
+                      ? "text-red-600"
+                      : "text-slate-900"
+                  }`}
+                >
+                  {card.key === "netProfit" && isLoss ? `-${displayValue}` : displayValue}
+                </p>
+
+                <p className="text-[11px] mt-1 text-slate-500">
+                  {card.subtitle}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          {isLoss ? "Net Loss" : "Net Profit"}
+        </span>
+        <span
+          className={`text-base font-bold ${
+            isLoss ? "text-red-600" : "text-emerald-600"
+          }`}
+        >
+          {isLoss ? "-" : ""}{formatCurrency(Math.abs(summary.netProfit))}
+        </span>
+      </div>
     </div>
   );
 };

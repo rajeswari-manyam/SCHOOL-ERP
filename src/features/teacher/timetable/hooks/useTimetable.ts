@@ -160,7 +160,6 @@ export const useTimetable = (): TeacherTimetableState => {
     enabled: !!teacherId,
   });
 
-  void examsError;
   const data = apiData;
 
   const grid = data?.grid ?? {};

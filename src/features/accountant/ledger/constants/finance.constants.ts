@@ -1,18 +1,26 @@
 
 
 export type ExpenseCategory =
+  | "Salaries"
+  | "Transport"
   | "Maintenance"
   | "Utilities"
   | "Stationery"
-  | "Transport"
-  | "Salaries"
+  | "Events"
+  | "Technology"
+  | "Insurance"
+  | "Food"
   | "Miscellaneous";
 
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  "Salaries",
+  "Transport",
   "Maintenance",
   "Utilities",
   "Stationery",
-  "Transport",
-  "Salaries",
+  "Events",
+  "Technology",
+  "Insurance",
+  "Food",
   "Miscellaneous",
 ];

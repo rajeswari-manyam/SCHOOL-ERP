@@ -4,6 +4,7 @@ import {
   transactionsMock,
   paymentModesMock,
   reminderMock,
+  financialSummaryMock,
 } from "../data/dashboard.data";
 
 export const useDashboardData = () => {
@@ -12,5 +13,6 @@ export const useDashboardData = () => {
     transactions: transactionsMock,
     paymentModes: paymentModesMock,
     reminder: reminderMock,
+    financialSummary: financialSummaryMock,
   };
 };

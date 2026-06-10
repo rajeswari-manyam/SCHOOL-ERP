@@ -39,8 +39,8 @@ export default function LedgerPage() {
     addEntry,
   } = useLedger();
 
-  const incomeEntries  = entries.filter((e) => e.type === "Income");
-  const expenseEntries = entries.filter((e) => e.type === "Expense");
+  const incomeEntries  = (entries || []).filter((e) => e.type === "Income");
+  const expenseEntries = (entries || []).filter((e) => e.type === "Expense");
 
   const handleAddExpense = (data: LedgerEntry) => {
     addEntry(data);
@@ -129,7 +129,30 @@ export default function LedgerPage() {
           <Download className="w-4 h-4" />
           Export
         </Button>
-
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs flex items-center gap-1.5"
+          onClick={() => {
+            console.log("Quick export PDF");
+            setShowExportModal(true);
+          }}
+        >
+          <Download className="w-3.5 h-3.5" />
+          PDF
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs flex items-center gap-1.5"
+          onClick={() => {
+            console.log("Quick export Excel");
+            setShowExportModal(true);
+          }}
+        >
+          <Download className="w-3.5 h-3.5" />
+          Excel
+        </Button>
         <Button
           className="flex-1 sm:flex-none bg-indigo-600 text-white text-xs"
           onClick={() => setShowAddModal(true)}
@@ -178,11 +201,19 @@ export default function LedgerPage() {
               payrollExpense={payrollExpense}
               operatingExpenses={operatingExpenses}
             />
+            {(incomeEntries || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-lg border border-gray-200">
+                <span className="text-4xl mb-3">💰</span>
+                <p className="text-sm font-medium">No income entries found</p>
+                <p className="text-xs mt-1">Income entries will appear here once recorded</p>
+              </div>
+            ) : (
             <LedgerTable
               data={incomeEntries}
               type="income"
               onEdit={handleEdit}
             />
+            )}
           </>
         )}
 
@@ -197,11 +228,19 @@ export default function LedgerPage() {
               payrollExpense={payrollExpense}
               operatingExpenses={operatingExpenses}
             />
+            {(expenseEntries || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-lg border border-gray-200">
+                <span className="text-4xl mb-3">💸</span>
+                <p className="text-sm font-medium">No expense entries found</p>
+                <p className="text-xs mt-1">Expense entries will appear here once recorded</p>
+              </div>
+            ) : (
             <LedgerTable
               data={expenseEntries}
               type="expense"
               onEdit={handleEdit}
             />
+            )}
           </>
         )}
 
@@ -209,9 +248,9 @@ export default function LedgerPage() {
           <BalanceSheet income={income} expense={expense} chartData={chartData} />
         )}
 
-       {activeTab === "petty" && (
+        {activeTab === "petty" && (
   <PettyCash
-    entries={pettyCash}
+    entries={pettyCash || []}
 
   />
 )}

@@ -52,7 +52,9 @@ function SortIcon({ isSorted }: { isSorted: false | "asc" | "desc" }) {
 const columnHelper = createColumnHelper<FeeRow>();
 
 
-export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
+type Props = PendingFeesTableProps & { isLoading?: boolean };
+
+export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
   const [sorting, setSorting]           = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection]  = useState<RowSelectionState>({});
@@ -143,6 +145,20 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
       }),
 
    
+      columnHelper.accessor("lateFee", {
+        header: () => <span className="font-medium text-xs text-gray-600">Late Fee</span>,
+        cell: (info) => {
+          const val = info.getValue() ?? 0;
+          return val > 0 ? (
+            <span className="text-xs font-semibold text-red-600">
+              +{formatCurrency(val)}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">—</span>
+          );
+        },
+      }),
+
       columnHelper.accessor("dueDate", {
         header: ({ column }) => (
           <button
@@ -152,7 +168,20 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
             Due Date <SortIcon isSorted={column.getIsSorted()} />
           </button>
         ),
-        cell: (info) => <span className="text-xs text-gray-600">{info.getValue()}</span>,
+        cell: (info) => {
+          const days = info.row.original.daysOverdue;
+          const isLate = days > 0;
+          return (
+            <div>
+              <span className={`text-xs ${isLate ? "text-red-600 font-medium" : "text-gray-600"}`}>
+                {info.getValue()}
+              </span>
+              {isLate && (
+                <p className="text-[10px] text-red-500 font-medium">{days}d late</p>
+              )}
+            </div>
+          );
+        },
       }),
 
   
@@ -216,6 +245,17 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
 
   const { rows } = table.getRowModel();
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-gray-400">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#3525CD] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm">Loading pending fees...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-auto no-scrollbar scroll-smooth max-h-[520px] rounded-md border border-gray-200">
       {/* ── Mobile View ── */}
@@ -250,6 +290,14 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
         <div>
           <span className="text-gray-400">Amount:</span>{" "}
           {formatCurrency(row.original.amount)}
+        </div>
+        <div>
+          <span className="text-gray-400">Late Fee:</span>{" "}
+          {row.original.lateFee ? (
+            <span className="text-red-600 font-semibold">+{formatCurrency(row.original.lateFee)}</span>
+          ) : (
+            <span className="text-gray-400">—</span>
+          )}
         </div>
         <div>
           <span className="text-gray-400">Due:</span> {row.original.dueDate}
@@ -300,13 +348,20 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
         {/* ── Body ── */}
         <tbody>
           {rows.map((row: Row<FeeRow>) => {
-            const isOverdue = row.original.daysOverdue > 10;
+            const days = row.original.daysOverdue;
+            const isCritical = days > 30;
+            const isWarning = days > 10 && days <= 30;
+            const rowHighlight = isCritical
+              ? "bg-red-50/40 border-l-4 border-l-red-500"
+              : isWarning
+                ? "bg-amber-50/40"
+                : "hover:bg-gray-50/60";
             return (
               <tr
                 key={row.id}
                 className={[
                   "border-t border-gray-100 transition-colors",
-                  isOverdue ? "bg-red-50/30" : "hover:bg-gray-50/60",
+                  rowHighlight,
                   row.getIsSelected() ? "bg-blue-50/40" : "",
                 ].filter(Boolean).join(" ")}
               >
@@ -321,9 +376,11 @@ export const PendingFeesTable = ({ data }: PendingFeesTableProps) => {
         </tbody>
       </table>
 
-      {rows.length === 0 && (
-        <div className="py-16 text-center text-sm text-gray-400">
-          No pending fees found.
+      {(data || []).length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <span className="text-4xl mb-3">📋</span>
+          <p className="text-sm font-medium">No pending fees found</p>
+          <p className="text-xs mt-1">All fees are up to date for this period</p>
         </div>
       )}
 

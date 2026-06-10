@@ -53,8 +53,8 @@ export const getTransactionStatusStyle = (status: string) => {
 
 
 export const getOverdueSeverity = (days: number): OverdueSeverity => {
-  if (days === 0) return "today";
-  if (days <= 5) return "warning";
+  if (days <= 3) return "today";
+  if (days <= 10) return "warning";
   return "critical";
 };
 

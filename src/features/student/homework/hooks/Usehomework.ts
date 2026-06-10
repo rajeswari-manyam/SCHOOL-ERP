@@ -68,7 +68,7 @@ const mapApiHomework = (item: any): Homework => {
   return {
     id:             item.id,
     title:          item.title,
-    subject:        normaliseSubject(item.subjectName ?? ""),
+  subject: normaliseSubject(item.subjectName ?? item.title ?? "Unknown"),
     description:    item.description,
     dueDate,
     dueUrgency,
@@ -88,7 +88,7 @@ const mapApiMaterial = (item: any): StudyMaterial => {
   return {
     id:           item.id,
     title:        item.title ?? item.subjectName ?? "Untitled",
-    subject:      normaliseSubject(item.subjectName ?? ""),
+       subject: normaliseSubject(item.subjectName ?? item.title ?? "Unknown"),
     type:         isLink ? "link" : "pdf",
     uploadedDate: new Date(item.upload_date).toLocaleDateString("en-IN", {
       day: "numeric", month: "short",
@@ -100,11 +100,11 @@ const mapApiMaterial = (item: any): StudyMaterial => {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 interface UseHomeworkOptions {
-  /** Full class string from activeChild e.g. "10A" or "9" */
-  className: string;
+  classId: string;
+  sectionId: string;
 }
 
-export const useHomework = ({ className }: UseHomeworkOptions) => {
+export const useHomework = ({ classId, sectionId }: UseHomeworkOptions) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("week");
   const [homework,  setHomework]  = useState<Homework[]>([]);
   const [materials, setMaterials] = useState<StudyMaterial[]>([]);
@@ -128,23 +128,20 @@ export const useHomework = ({ className }: UseHomeworkOptions) => {
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
-    if (!className) return;
+    if (!classId) return;
     setLoading(true);
     setError(null);
     try {
       // getHomeworkByClass splits "10A" → className=10&section=A internally
-    const [hwRes, matRes] = await Promise.all([
-  getHomeworkByClass(className),
-  getStudyMaterialByClassName(className),
+  const [hwRes, matRes] = await Promise.all([
+getHomeworkByClass({ class_id: classId, section_id: sectionId }),
+  getStudyMaterialByClassName(classId), // temp fix
 ]);
-
 console.log("matRes →", matRes); // 👈 add this line
 
-      setHomework(
-        (hwRes.data ?? [])
-          .filter((item: any) => item.is_published)
-          .map(mapApiHomework)
-      );
+     setHomework(
+  (hwRes.data ?? []).map(mapApiHomework)
+);
 
       setMaterials((matRes.data ?? []).map(mapApiMaterial));
     } catch (err: any) {
@@ -152,7 +149,7 @@ console.log("matRes →", matRes); // 👈 add this line
     } finally {
       setLoading(false);
     }
-  }, [className]);
+  }, [classId, sectionId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

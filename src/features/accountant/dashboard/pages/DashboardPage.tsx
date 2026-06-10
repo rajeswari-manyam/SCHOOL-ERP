@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useDashboardData } from "../hooks/useDashboard";
-import { StatCardsSection } from "../components/StatCard";
+import { StatCardsSection, FinancialSummaryCards } from "../components/StatCard";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { PaymentModeTable } from "../components/PaymentModeTable";
 import { ReminderStatusCard } from "../components/ReminderStatusCard";
@@ -12,7 +12,7 @@ import { TopPayingClasses } from "../components/TopPayingClasses";
 import { PaymentModeBreakdown } from "../components/PaymentModeBreakdown";
 
 export default function DashboardPage() {
-  const { stats, transactions, paymentModes, reminder } = useDashboardData();
+  const { stats, transactions, paymentModes, reminder, financialSummary } = useDashboardData();
 const [viewAllTransactions, setViewAllTransactions] = useState(false);
 
 
@@ -42,6 +42,8 @@ const [viewAllTransactions, setViewAllTransactions] = useState(false);
    <div className="p-2 sm:p-4 md:p-6 space-y-4">
     
         <StatCardsSection data={stats} />
+
+        <FinancialSummaryCards summary={financialSummary} />
 
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 items-start w-full">  
 

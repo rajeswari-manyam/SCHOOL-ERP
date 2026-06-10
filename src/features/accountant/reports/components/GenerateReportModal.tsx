@@ -26,6 +26,8 @@ const generateReportSchema = z.object({
     overdueAmount: z.boolean(),
     daysOverdue: z.boolean(),
     feeBreakdown: z.boolean(),
+    partialPayments: z.boolean(),
+    lateFees: z.boolean(),
   }).refine(
     (data) => Object.values(data).some(Boolean),
     { message: "Select at least one column" }
@@ -51,6 +53,8 @@ const columnLabels: { [key: string]: string } = {
   overdueAmount: "Overdue Amount",
   daysOverdue: "Days Overdue",
   feeBreakdown: "Fee Breakdown",
+  partialPayments: "Partial Payments",
+  lateFees: "Late Fees",
 };
 
 const FigmaCheckbox = ({
@@ -101,6 +105,8 @@ export const GenerateReportModal = ({
         overdueAmount: true,
         daysOverdue: true,
         feeBreakdown: false,
+        partialPayments: false,
+        lateFees: false,
       },
       sendTo: {
         myEmail: true,

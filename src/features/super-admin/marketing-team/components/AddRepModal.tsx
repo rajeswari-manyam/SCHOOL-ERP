@@ -45,7 +45,7 @@ const AddRepModal = ({ open, onClose }: AddRepModalProps) => {
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       name: "",
       email: "",

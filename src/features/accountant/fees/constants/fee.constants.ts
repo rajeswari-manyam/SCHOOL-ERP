@@ -152,9 +152,9 @@ export const AVATAR_INDIGO = "bg-indigo-100 text-indigo-700";
 
 export const OVERDUE_BADGE_STYLES: Record<OverdueSeverity, string> = {
   today:
-    "inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200",
+    "inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200",
   warning:
-    "inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-yellow-50 text-yellow-800 border border-yellow-200",
+    "inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200",
   critical:
     "inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200",
 };

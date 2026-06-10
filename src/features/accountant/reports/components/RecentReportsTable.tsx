@@ -173,13 +173,56 @@ const ROW_HEIGHT = 53;
 const HEADER_HEIGHT = 44;
 const PREVIEW_COUNT = 5;
 
-export const RecentReportsTable = ({ data }: RecentReportsTableProps) => {
+type Props = RecentReportsTableProps & { isLoading?: boolean; error?: string | null };
+
+export const RecentReportsTable = ({ data = [], isLoading, error }: Props) => {
   const [showAll, setShowAll] = useState(false);
 
-  const visibleData = showAll ? data : data.slice(0, PREVIEW_COUNT);
-  const hasMore = data.length > PREVIEW_COUNT;
+  const safeData = data || [];
+  const visibleData = showAll ? safeData : safeData.slice(0, PREVIEW_COUNT);
+  const hasMore = safeData.length > PREVIEW_COUNT;
 
-  const tableHeight = visibleData.length * ROW_HEIGHT + HEADER_HEIGHT;
+  const tableHeight = (visibleData || []).length * ROW_HEIGHT + HEADER_HEIGHT;
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-[#3525CD] border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm">Loading reports...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-red-200 overflow-hidden">
+        <div className="flex flex-col items-center justify-center py-16 text-red-400">
+          <span className="text-4xl mb-3">⚠️</span>
+          <p className="text-sm font-medium text-red-600">Failed to load reports</p>
+          <p className="text-xs mt-1 text-red-400">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if ((data || []).length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50">
+          <h3 className="font-semibold text-gray-800 text-sm">Recently Generated Reports</h3>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <span className="text-4xl mb-3">📊</span>
+          <p className="text-sm font-medium">No reports generated yet</p>
+          <p className="text-xs mt-1">Generate your first report using the options above</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -189,21 +232,21 @@ export const RecentReportsTable = ({ data }: RecentReportsTableProps) => {
         <h3 className="font-semibold text-gray-800 text-sm">Recently Generated Reports</h3>
         {hasMore && (
           <span className="text-xs text-gray-400">
-            Showing {visibleData.length} of {data.length}
+            Showing {(visibleData || []).length} of {(data || []).length}
           </span>
         )}
       </div>
 
       {/* Mobile Card View */}
       <div className="md:hidden divide-y divide-gray-100">
-        {visibleData.map((report) => (
+        {(visibleData || []).map((report) => (
           <MobileReportRow key={report.id} report={report} />
         ))}
       </div>
 
       {/* Desktop Virtual Table */}
       <div className="hidden md:block">
-        <VirtualTable data={visibleData} height={tableHeight} />
+        <VirtualTable data={visibleData || []} height={tableHeight} />
       </div>
 
       {/* Show More / Less */}
@@ -223,8 +266,8 @@ export const RecentReportsTable = ({ data }: RecentReportsTableProps) => {
             ) : (
               <>
                 <ChevronDown className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">View All History ({data.length - PREVIEW_COUNT} more)</span>
-                <span className="sm:hidden">View All ({data.length - PREVIEW_COUNT} more)</span>
+                <span className="hidden sm:inline">View All History ({(data || []).length - PREVIEW_COUNT} more)</span>
+                <span className="sm:hidden">View All ({(data || []).length - PREVIEW_COUNT} more)</span>
               </>
             )}
           </Button>

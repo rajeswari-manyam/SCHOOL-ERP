@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, ChevronDown, Search } from "lucide-react";
+import { X, Search } from "lucide-react";
 import type { PendingFee, PaymentMode } from "../types/fees.types";
 import { formatCurrency, generateReceiptNumber } from "../utils/Fee.utils";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface RecordPaymentModalProps {

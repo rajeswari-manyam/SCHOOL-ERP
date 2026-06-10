@@ -110,6 +110,8 @@ export const useAuthStore = create<AuthState>()(
           phone:      partialUser?.phone       ?? phone,
           userType:   partialUser?.userType    ?? userType,
           schoolcode: partialUser?.schoolcode  ?? schoolcode,
+          class_id:   partialUser?.class_id,
+          section_id: partialUser?.section_id,
         };
 
         set({ user, token, userType: user.userType, role });

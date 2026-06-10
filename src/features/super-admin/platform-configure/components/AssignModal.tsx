@@ -34,7 +34,8 @@ interface AssignModalProps {
 
 const AssignModal = ({ open, template, onClose }: AssignModalProps) => {
   const [search, setSearch] = useState("");
-  const { data: schools, isFetching } = useAllSchools(search);
+  const { data: schoolsData, isFetching } = useAllSchools(search);
+  const schools = schoolsData ?? [];
 
   const { assignTemplateToSchools } = useConfigMutations();
 

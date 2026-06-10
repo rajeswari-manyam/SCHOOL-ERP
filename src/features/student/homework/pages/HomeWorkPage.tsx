@@ -2,10 +2,7 @@ import { useHomework } from "../hooks/useHomework";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
 import SubmitHomeworkModal from "../components/SubmitHomeworkModal";
-
-// 👇 Replace with your auth context e.g. const { user } = useAuth()
-// const CLASS_NAME = user?.className ?? "";
-const CLASS_NAME = "10A";
+import { useAuthStore } from "@/store/authStore";
 
 type Tab = "week" | "all" | "materials";
 
@@ -16,22 +13,25 @@ const TABS = [
 ];
 
 export const HomeworkPage = () => {
+  // ── Pull real UUIDs from auth store ─────────────────────────────────────
+  const authUser = useAuthStore((s) => s.user);
+  const classId   = (authUser as any)?.class_id   ?? (authUser as any)?.classId   ?? "";
+  const sectionId = (authUser as any)?.section_id ?? (authUser as any)?.sectionId ?? "";
+
   const {
     activeTab, setActiveTab,
     homework,
     thisWeekHomework,
     materials,
     loading, error, refetch,
-    // Real calendar week from hook
     weekDays,
     selectedDay, setSelectedDay,
-    // Modal
     submitModalOpen,
     selectedHomework,
     openSubmitModal,
     closeSubmitModal,
     handleSubmit,
-  } = useHomework({ className: CLASS_NAME });
+  } = useHomework({ classId, sectionId });
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
@@ -68,7 +68,7 @@ export const HomeworkPage = () => {
 
   return (
     <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-1">My Homework — Class {CLASS_NAME}</h1>
+      <h1 className="text-2xl font-bold mb-1">My Homework</h1>
       <p className="text-sm text-gray-400 mb-6">Academic Year 2024-25</p>
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
@@ -141,7 +141,6 @@ export const HomeworkPage = () => {
                       {d.label}
                     </span>
                     <span className="text-sm font-medium">{d.date}</span>
-                    {/* dot for today */}
                     <span className={`w-1 h-1 rounded-full
                       ${isActive ? "bg-white/60" : isToday ? "bg-indigo-500" : "bg-transparent"}`}
                     />
@@ -151,7 +150,7 @@ export const HomeworkPage = () => {
             </div>
           </div>
 
-          {/* ── THIS WEEK — filtered by selected calendar day ── */}
+          {/* ── THIS WEEK ── */}
           {activeTab === "week" && (
             <div className="space-y-3">
               {thisWeekHomework.length === 0
@@ -163,7 +162,7 @@ export const HomeworkPage = () => {
             </div>
           )}
 
-          {/* ── ALL HOMEWORK — show every subject from API, no whitelist ── */}
+          {/* ── ALL HOMEWORK ── */}
           {activeTab === "all" && (
             <div className="space-y-3">
               {homework.length === 0
@@ -210,7 +209,7 @@ export const HomeworkPage = () => {
             ? {
                 title:      selectedHomework.title,
                 subject:    selectedHomework.subject,
-                className:  CLASS_NAME,
+                className:  classId,
                 dueLabel:   selectedHomework.dueDate,
                 assignedBy: selectedHomework.assignedBy,
               }

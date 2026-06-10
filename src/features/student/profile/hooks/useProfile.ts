@@ -32,7 +32,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
   const lastName  = s.last_name  ?? "";
   const fullName  = `${firstName} ${lastName}`.trim();
   const initials  = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  const className = s.class ? `Class ${s.class}${s.section ?? ""}` : "";
+  const className = s.class_id ? `Class ${s.class_id}` : "";
 
   return {
     id:             s.id,
@@ -43,9 +43,9 @@ const mapApiStudent = (s: ApiStudent): Student => {
     avatarColor:    "#4f46e5",
     status:         (s.status?.toUpperCase() as StudentStatus) ?? "ACTIVE",
     className,
-    section:        s.section     ?? "",
+    section:        s.sectionId     ?? "",
     schoolCode:     s.school_code ?? "",
-    rawClass:       s.class       ?? "",
+    rawClass:       s.class_id       ?? "",
 
     // placeholder — will be overwritten by useClassTeacher
     classTeacher: {
@@ -58,7 +58,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
     academic: {
       academicYear: STUDENT_DATA.academic.academicYear,
       board:        STUDENT_DATA.academic.board,
-      section:      s.section ?? "",
+      section:      s.sectionId ?? "",
       classroom:    STUDENT_DATA.academic.classroom,
     },
 

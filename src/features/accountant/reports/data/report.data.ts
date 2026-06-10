@@ -7,7 +7,7 @@ export const mockReports: Report[] = [
   {
     id: "1",
     name: "Monthly Fee Collection",
-    type: "monthly",
+    type: "monthly_income",
     generatedAt: new Date().toISOString(),
     format: "PDF",
     generatedBy: "Admin",
@@ -63,7 +63,7 @@ export const mockReports: Report[] = [
 
 export const reportCards = [
   {
-    id: "monthly" as ReportType,
+    id: "monthly_income" as ReportType,
     title: "Monthly Fee Collection",
     description:
       "Total collected, pending, class-wise breakdown, payment mode analysis",

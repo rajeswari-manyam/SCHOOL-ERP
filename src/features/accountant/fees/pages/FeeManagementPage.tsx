@@ -66,7 +66,7 @@ export default function FeeManagementPage() {
     return result;
   })();
 
-  const totalPending = filteredFees.reduce((s, r) => s + r.amount, 0);
+  const totalPending = (filteredFees || []).reduce((s, r) => s + r.amount, 0);
 
   return (
     <div className="space-y-0 bg-[#EFF4FF] min-h-screen">
@@ -133,6 +133,30 @@ export default function FeeManagementPage() {
         <Button variant="outline" size="sm">
           Import Fee
         </Button>
+
+        {/* Export buttons for all transaction-based tabs */}
+        {(isPendingFees || isAllTx) && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-1.5"
+              onClick={() => console.log("Export CSV")}
+            >
+              <Download className="w-3.5 h-3.5" />
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-1.5"
+              onClick={() => console.log("Export PDF")}
+            >
+              <Download className="w-3.5 h-3.5" />
+              PDF
+            </Button>
+          </>
+        )}
 
         <Button
           size="sm"
@@ -233,8 +257,20 @@ export default function FeeManagementPage() {
 
         {/* ── Tab Content ── */}
         <div className="min-h-[200px]">
-          {isPendingFees   && <PendingFeesTable data={filteredFees} />}
-          {isAllTx         && <AllTransactionsTable data={transactions} />}
+          {isPendingFees && (filteredFees || []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <span className="text-4xl mb-3">📋</span>
+              <p className="text-sm font-medium">No pending fees found</p>
+              <p className="text-xs mt-1">All fees are up to date for this period</p>
+            </div>
+          ) : isPendingFees && <PendingFeesTable data={filteredFees} />}
+          {isAllTx && (transactions || []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <span className="text-4xl mb-3">🧾</span>
+              <p className="text-sm font-medium">No transactions found</p>
+              <p className="text-xs mt-1">Transactions will appear here once recorded</p>
+            </div>
+          ) : isAllTx && <AllTransactionsTable data={transactions || []} />}
           {isFeeStructure  && (
             <FeeStructure
               showModal={showFeeHeadModal}
@@ -278,6 +314,7 @@ export default function FeeManagementPage() {
                 variant="outline" 
                 size="sm" 
                 className="text-[11px] sm:text-xs h-8 flex items-center gap-1.5 flex-1 sm:flex-none justify-center"
+                onClick={() => console.log("Export CSV from footer")}
               >
                 <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 CSV
@@ -286,6 +323,7 @@ export default function FeeManagementPage() {
                 variant="outline" 
                 size="sm" 
                 className="text-[11px] sm:text-xs h-8 flex items-center gap-1.5 flex-1 sm:flex-none justify-center"
+                onClick={() => console.log("Export PDF from footer")}
               >
                 <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 PDF

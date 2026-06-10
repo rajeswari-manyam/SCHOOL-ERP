@@ -24,8 +24,8 @@ export function useParentChildren(parentId: string) {
               id: student.id,
               studentId: student.id,
               name: `${student.first_name} ${student.last_name}`,
-              class: student.class,
-              section: student.section,
+              class: student.class_id ?? "",
+              section: student.sectionId ?? "",
               school: student.school_code,
             };
           })

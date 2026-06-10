@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,12 +8,15 @@ import { MonthlyPayrollTab } from "../components/payroll/MonthlyPayRollTab";
 import { SalaryConfigTab } from "../components/salaryconfig/SalaryConfigTab";
 import { PayrollHistoryTab } from "../components/payrollhistory/PayrollHistoryTab";
 import { ProcessPayrollModal } from "../common/ProcessPayroll";
+import { PayslipModal } from "../components/PayslipModal";
 
 import {
   usePayroll,
   useSalaryConfig,
   usePayrollHistory,
 } from "../hooks/usePayrolls";
+
+import type { StaffPayroll } from "../types/payroll.types";
 
 type Tab = "monthly" | "config" | "history";
 
@@ -27,6 +30,8 @@ export default function PayrollPage() {
   const [activeTab, setActiveTab] = useState<Tab>("monthly");
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 3, 1));
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const [showPayslipModal, setShowPayslipModal] = useState(false);
+  const [selectedPayslipStaff, setSelectedPayslipStaff] = useState<StaffPayroll | null>(null);
 
   const {
     staffData,
@@ -71,6 +76,29 @@ export default function PayrollPage() {
     processPayroll(data);
     setShowProcessModal(false);
   };
+
+  const handleViewPayslip = (staff: StaffPayroll) => {
+    setSelectedPayslipStaff(staff);
+    setShowPayslipModal(true);
+  };
+
+  const payslipStaff = useMemo(() => {
+    if (!selectedPayslipStaff) return null;
+    const config = salaryData.find((s) => s.id === selectedPayslipStaff.id);
+    return {
+      name: selectedPayslipStaff.name,
+      role: selectedPayslipStaff.role,
+      basic: config?.basic ?? 0,
+      hra: config?.hra ?? 0,
+      transport: config?.transport ?? 0,
+      other: config?.other ?? 0,
+      pfPercentage: config?.pfPercentage ?? 0,
+      professionalTax: config?.professionalTax ?? 0,
+      gross: selectedPayslipStaff.gross,
+      net: selectedPayslipStaff.net,
+      deductions: selectedPayslipStaff.deductions,
+    };
+  }, [selectedPayslipStaff, salaryData]);
 
   return (
     <div className="space-y-4 p-3 md:p-6 bg-[#EFF4FF] min-h-screen">
@@ -156,6 +184,7 @@ export default function PayrollPage() {
           processedDate={processedDate}
           processedBy={processedBy}
           onStartProcessing={() => setShowProcessModal(true)}
+          onViewPayslip={handleViewPayslip}
         />
       )}
 
@@ -187,6 +216,17 @@ export default function PayrollPage() {
           onSubmit={handleProcessPayroll}
           summary={summary}
           attendanceDeductions={getAttendanceDeductions()}
+        />
+      )}
+
+      {showPayslipModal && payslipStaff && (
+        <PayslipModal
+          staff={payslipStaff}
+          month={formattedMonth}
+          onClose={() => {
+            setShowPayslipModal(false);
+            setSelectedPayslipStaff(null);
+          }}
         />
       )}
     </div>

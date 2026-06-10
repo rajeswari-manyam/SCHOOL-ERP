@@ -79,12 +79,16 @@ const user = {
                         </button>
 
                         <Link to="/parent/dashboard" className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-[#3525CD] flex items-center justify-center shrink-0">
-                                <span className="text-white text-[11px] font-bold">S</span>
-                            </div>
-                            <span className={`${typography.fontSize.lg} font-bold text-[#0B1C30] tracking-tight`}>
-                                ScholarSlate
-                            </span>
+                            <div className="w-7 h-7 shrink-0 overflow-hidden rounded-lg bg-white/5">
+                            <img
+                              src="/favicon.png"
+                              alt="VidyaTracker logo"
+                              className="h-full w-full object-cover"
+                            />
+                        </div>
+                        <span className={`${typography.fontSize.lg} font-bold text-[#0B1C30] tracking-tight`}>
+                            VidyaTracker
+                        </span>
                         </Link>
                     </div>
 
@@ -234,10 +238,10 @@ const user = {
                         <div className="flex items-center justify-between px-4 h-[60px] border-b border-[#E8EBF2] shrink-0">
                             <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-lg bg-[#3525CD] flex items-center justify-center">
-                                    <span className="text-white text-[11px] font-bold">S</span>
+                                    <span className="text-white text-[11px] font-bold">V</span>
                                 </div>
                                 <span className={`${typography.fontSize.lg} font-bold text-[#0B1C30] tracking-tight`}>
-                                    ScholarSlate
+                                    Vidya Track
                                 </span>
                             </div>
                             <button

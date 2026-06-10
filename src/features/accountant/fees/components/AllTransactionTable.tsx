@@ -107,7 +107,9 @@ const MobileCard = ({
 );
 
 // ── Main Component ────────────────────────────────────────────
-export const AllTransactionsTable = ({ data }: AllTransactionsTableProps) => {
+type Props = AllTransactionsTableProps & { isLoading?: boolean };
+
+export const AllTransactionsTable = ({ data = [], isLoading }: Props) => {
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleOne = (id: string) =>
@@ -117,7 +119,7 @@ export const AllTransactionsTable = ({ data }: AllTransactionsTableProps) => {
 
   const toggleAll = () =>
     setSelected((prev) =>
-      prev.length === data.length ? [] : data.map((d) => d.id)
+      prev.length === (data || []).length ? [] : (data || []).map((d) => d.id)
     );
 
   const allSelected = selected.length === data.length && data.length > 0;
@@ -280,6 +282,21 @@ export const AllTransactionsTable = ({ data }: AllTransactionsTableProps) => {
         </div>
       </div>
 
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-[#3525CD] border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm">Loading transactions...</p>
+          </div>
+        </div>
+      ) : (data || []).length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <span className="text-4xl mb-3">🧾</span>
+          <p className="text-sm font-medium">No transactions found</p>
+          <p className="text-xs mt-1">Transactions will appear here once recorded</p>
+        </div>
+      ) : (
+      <>
       {/* ── Mobile: Select All Bar ── */}
       <div className="flex sm:hidden items-center gap-2 mb-3 px-1">
         <input
@@ -382,7 +399,7 @@ export const AllTransactionsTable = ({ data }: AllTransactionsTableProps) => {
       {/* ── Footer ── */}
       <div className="flex justify-between text-xs text-slate-400 mt-2 pt-2">
         <span>
-          Showing 1–{data.length} of {data.length} receipts
+          Showing 1–{(data || []).length} of {(data || []).length} receipts
           {selected.length > 0 && (
             <span className="ml-2 text-[#3525CD] font-medium">
               · {selected.length} selected
@@ -391,6 +408,8 @@ export const AllTransactionsTable = ({ data }: AllTransactionsTableProps) => {
         </span>
         <span className="font-semibold text-slate-700">{formatCurrency(total)} total</span>
       </div>
+      </>
+      )}
     </div>
   );
 };

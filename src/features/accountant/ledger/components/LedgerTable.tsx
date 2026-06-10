@@ -37,7 +37,7 @@ const categoryColors: Record<string, string> = {
 
 const columnHelper = createColumnHelper<LedgerEntry>();
 
-export const LedgerTable = ({ data, type, onEdit, onDelete }: LedgerTableProps) => {
+export const LedgerTable = ({ data = [], type, onEdit, onDelete }: LedgerTableProps) => {
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -169,8 +169,10 @@ const table = useReactTable({
 </div>
       </div>
 <div className="sm:hidden space-y-3 p-3">
-  {rows.map((row) => {
-    const data = row.original;
+  {(rows || []).length === 0 ? (
+    <div className="py-10 text-center text-sm text-gray-400">No entries found.</div>
+  ) : (rows || []).map((row) => {
+    const item = row.original;
 
     return (
       <div
@@ -180,21 +182,21 @@ const table = useReactTable({
         <div className="flex justify-between items-start">
           <div>
             <p className="text-sm font-medium text-gray-800">
-              {data.description}
+              {item.description}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {formatDate(data.date)} • {data.category}
+              {formatDate(item.date)} • {item.category}
             </p>
           </div>
 
           <span
             className={`text-sm font-semibold ${
-              data.type === "Income"
+              item.type === "Income"
                 ? "text-emerald-600"
                 : "text-rose-600"
             }`}
           >
-            {formatCurrency(data.amount)}
+            {formatCurrency(item.amount)}
           </span>
         </div>
 
@@ -202,7 +204,7 @@ const table = useReactTable({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onEdit(data)}
+            onClick={() => onEdit(item)}
             className="h-8 w-8 p-0"
           >
             <Pencil className="w-4 h-4" />
@@ -211,7 +213,7 @@ const table = useReactTable({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onDelete?.(data)}
+            onClick={() => onDelete?.(item)}
             className="h-8 w-8 p-0 text-rose-500"
           >
             <Trash2 className="w-4 h-4" />
@@ -293,7 +295,7 @@ const table = useReactTable({
       {/* FOOTER */}
       <div className="px-3 sm:px-4 py-3 border-t border-gray-100 bg-gray-50/50 text-xs text-gray-500 flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center">
         <span>
-          Showing {rows.length} of {data.length} entries
+          Showing {rows.length} of {(data || []).length} entries
         </span>
         <div className="flex gap-1">
           <Button

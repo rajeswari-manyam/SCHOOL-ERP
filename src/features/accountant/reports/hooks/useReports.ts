@@ -1,49 +1,186 @@
+import { useState, useCallback } from "react";
+import type {
+  Report,
+ 
+  GenerateReportInput,
+  MonthlyIncomeReport,
+  ExpenseReport,
+  StudentFeeReport,
+  ProfitLossReport,
+} from "../types/reports.types";
 
-import { useState } from "react";
-import { mockReports, reportCards } from "../data/report.data";
-import type { Report, GenerateReportInput } from "../types/reports.types";
+// ─── API helpers (replace BASE_URL with your actual backend URL) ──────────────
 
-export const useReports = () => {
-  const [reports, setReports] = useState<Report[]>(mockReports);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+const BASE_URL = "/api/v1/reports";
 
-  const openModal = (reportTypeId: string) => setActiveModal(reportTypeId);
-  const closeModal = () => setActiveModal(null);
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message ?? `API error ${res.status}`);
+  }
+  return res.json();
+}
 
-  const generateReport = (data: GenerateReportInput) => {
-    setIsGenerating(true);
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
-    setTimeout(() => {
-      const newReport: Report = {
-        id: `r${Date.now()}`,
-        name: reportCards.find((c) => c.id === data.reportType)?.title ?? data.reportType,
-        type: data.reportType,
-        generatedAt: new Date().toISOString(),
-        format: data.format,
-        generatedBy: "Admin",
-        period: data.asOfDate,
-        downloadUrl: "#",
-      };
+export function useReports() {
+  const [recentReports, setRecentReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-      setReports((prev) => [newReport, ...prev]);
-      setIsGenerating(false);
-      closeModal();
-    }, 1000);
-  };
+  // ── Monthly income ────────────────────────────────────────────────────
 
-  const deleteReport = (id: string) => {
-    setReports((prev) => prev.filter((r) => r.id !== id));
-  };
+  /**
+   * GET /api/v1/reports/income?fromMonth=YYYY-MM&toMonth=YYYY-MM
+   */
+  const fetchMonthlyIncome = useCallback(
+    async (fromMonth: string, toMonth: string): Promise<MonthlyIncomeReport> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiFetch<MonthlyIncomeReport>(
+          `/income?fromMonth=${fromMonth}&toMonth=${toMonth}`
+        );
+        return data;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setError(msg);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // ── Expense ───────────────────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/reports/expense?fromMonth=YYYY-MM&toMonth=YYYY-MM
+   */
+  const fetchExpenseReport = useCallback(
+    async (fromMonth: string, toMonth: string): Promise<ExpenseReport> => {
+      setLoading(true);
+      setError(null);
+      try {
+        return await apiFetch<ExpenseReport>(
+          `/expense?fromMonth=${fromMonth}&toMonth=${toMonth}`
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setError(msg);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // ── Student fee ───────────────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/reports/student?classId=X&section=Y&academicYear=YYYY
+   */
+  const fetchStudentFeeReport = useCallback(
+    async (params: {
+      classId?: string;
+      section?: string;
+      academicYear: string;
+    }): Promise<StudentFeeReport> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const qs = new URLSearchParams(
+          Object.entries(params).filter(([, v]) => Boolean(v)) as [string, string][]
+        ).toString();
+        return await apiFetch<StudentFeeReport>(`/student?${qs}`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setError(msg);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // ── Profit / Loss ─────────────────────────────────────────────────────
+
+  /**
+   * GET /api/v1/reports/profit-loss?fromMonth=YYYY-MM&toMonth=YYYY-MM
+   */
+  const fetchProfitLoss = useCallback(
+    async (fromMonth: string, toMonth: string): Promise<ProfitLossReport> => {
+      setLoading(true);
+      setError(null);
+      try {
+        return await apiFetch<ProfitLossReport>(
+          `/profit-loss?fromMonth=${fromMonth}&toMonth=${toMonth}`
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setError(msg);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // ── Generate + download ───────────────────────────────────────────────
+
+  /**
+   * POST /api/v1/reports/generate
+   * Creates the report server-side and returns a download URL.
+   */
+  const generateReport = useCallback(
+    async (input: GenerateReportInput): Promise<Report> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const report = await apiFetch<Report>("/generate", {
+          method: "POST",
+          body: JSON.stringify(input),
+        });
+        setRecentReports((prev) => [report, ...prev]);
+        return report;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setError(msg);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  /**
+   * Downloads a previously generated report by its ID.
+   */
+  const downloadReport = useCallback(async (reportId: string) => {
+    const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(
+      `/${reportId}/download`
+    );
+    window.open(downloadUrl, "_blank");
+  }, []);
 
   return {
-    reports,
-    reportCards,
-    isGenerating,
-    activeModal,
-    openModal,
-    closeModal,
+    recentReports,
+    loading,
+    error,
+    fetchMonthlyIncome,
+    fetchExpenseReport,
+    fetchStudentFeeReport,
+    fetchProfitLoss,
     generateReport,
-    deleteReport,
+    downloadReport,
   };
-};
+}

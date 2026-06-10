@@ -7,11 +7,14 @@ import { useAuthStore } from "@/store/authStore";
 // ── API imports ───────────────────────────────────────────────────────────────
 import { getAnnouncementsByType }                      from "../../../../services/announcements.api";
 import { getWeeklyAttendance, getMonthlyAttendance }   from "../../../../services/attendance.api";
-import { getAllHomework }                               from "../../../../services/homework.api";
+import { getHomeworkByClass }                          from "../../../../services/homework.api";
+import type { Homework }                               from "../../../../services/homework.api";
 import { getAllExamTimetable }                          from "../../../../services/examtimetable.api";
 import { getAllResults }                                from "../../../../services/results.api";
 import { getAllTimetable }                              from "../../../../services/timetable.api";
-import { getStudentById } from "../../../../services/student.api";
+import { getStudentById }                              from "../../../../services/student.api";
+import { getClassById }                                from "../../../../services/class.api";
+import { getSectionById }                              from "../../../../services/section.api";
 
 // ── Dashboard-local types ─────────────────────────────────────────────────────
 import type {
@@ -76,13 +79,11 @@ const currentWeek = (): { start: string; end: string } => {
   return { start: fmt(mon), end: fmt(sun) };
 };
 
-const toHomeworkItems = (
-  list: Awaited<ReturnType<typeof getAllHomework>>["data"]
-): HomeworkItem[] => {
+const toHomeworkItems = (list: Homework[]): HomeworkItem[] => {
   const colors: HomeworkItem["colorType"][] = ["blue", "green", "amber"];
   return list.slice(0, 3).map((hw, i) => ({
     id: hw.id,
-    subject: hw.subjectName,
+    subject: "Subject", // until you map subject_id → name
     title: hw.title,
     dueDate: hw.submission_date
       ? new Date(hw.submission_date).toLocaleDateString("en-IN", {
@@ -109,16 +110,16 @@ const toAttendanceDays = (
   }
 
   const lookup: Record<number, "present" | "absent" | "holiday"> = {};
-if (Array.isArray(records?.records)) {
-  for (const r of records.records as { date: string; status: string }[]) {
-    const d = new Date(r.date).getDate();
-    const s = r.status?.toLowerCase();
-    lookup[d] =
-      s === "present" ? "present"
-      : s === "absent" ? "absent"
-      : "holiday";
+  if (Array.isArray(records?.records)) {
+    for (const r of records.records as { date: string; status: string }[]) {
+      const d = new Date(r.date).getDate();
+      const s = r.status?.toLowerCase();
+      lookup[d] =
+        s === "present" ? "present"
+        : s === "absent" ? "absent"
+        : "holiday";
+    }
   }
-}
 
   const today = new Date();
   const isCurrentMonth =
@@ -201,19 +202,42 @@ export const useDashboard = (): DashboardState => {
 
     const load = async () => {
       try {
-        // ── Step 1: student profile — user.id IS the student ID ────────────
+            // Step 1: student profile
         const studentId = authUser.id;
-      const apiStudent = await getStudentById(studentId);
+        const apiStudent = await getStudentById(studentId);
 
         if (!apiStudent) throw new Error("Could not load student profile.");
 
-        const className   = apiStudent.class;
-        const sectionName = apiStudent.section;
-        const schoolCode  = apiStudent.school_code;
-        const rollNumber  = apiStudent.roll_number;
+        const classId    = apiStudent.class_id ?? "";
+        const sectionId  = apiStudent.sectionId ?? "";
+        const schoolCode = apiStudent.school_code;
+        const rollNumber = apiStudent.roll_number;
         const studentName = `${apiStudent.first_name} ${apiStudent.last_name}`;
 
-        // ── Step 3: all widget data in parallel ───────────────────────────
+        // Step 2: resolve human-readable class & section names via dedicated APIs
+        // GET /tenant/getclassById/:id  -> { data: { class_name: "9th" } }
+        // GET /tenant/getsections/:id   -> { data: { sectionName: "A" } }
+        const [classRes, sectionRes] = await Promise.allSettled([
+          classId   ? getClassById(classId)     : Promise.resolve(null),
+          sectionId ? getSectionById(sectionId) : Promise.resolve(null),
+        ]);
+
+        const className =
+          classRes.status === "fulfilled" && classRes.value
+            ? (classRes.value.data?.class_name ?? classId)
+            : classId;
+
+        const sectionName =
+          sectionRes.status === "fulfilled" && sectionRes.value
+            ? (sectionRes.value.sectionName ?? sectionId)
+            : sectionId;
+
+        // classNum/sec still needed for timetable & exam timetable APIs
+        const cleanSection = sectionId.split(":")[0].trim();
+        const classNum = classId.replace(/[A-Za-z]+$/, "");
+        const sec      = classId.match(/[A-Za-z]+$/)?.[0] ?? cleanSection;
+
+                // ── Step 3: all widget data in parallel ───────────────────────────
         const now   = new Date();
         const year  = now.getFullYear();
         const month = now.getMonth() + 1;
@@ -229,12 +253,12 @@ export const useDashboard = (): DashboardState => {
           timetableRes,
         ] = await Promise.allSettled([
           getAnnouncementsByType("All"),
-          getWeeklyAttendance({ studentId, start_date: start, end_date: end }),
-          getMonthlyAttendance({ studentId, month, year }),
-          getAllHomework({ is_published: true }),
-          getAllExamTimetable(className, sectionName),
+          getWeeklyAttendance({ studentId: studentId ?? "", start_date: start, end_date: end }),
+          getMonthlyAttendance({ studentId: studentId ?? "", month, year }),
+          getHomeworkByClass({ class_id: classId, section_id: sectionId }),
+          classNum && sec ? getAllExamTimetable(classNum, sec) : Promise.resolve({ data: [] } as any),
           getAllResults(),
-          getAllTimetable(className, sectionName),
+          classNum && sec ? getAllTimetable(classNum, sec) : Promise.resolve({ data: [] } as any),
         ]);
 
         if (cancelled) return;
@@ -265,10 +289,11 @@ export const useDashboard = (): DashboardState => {
         const todayRecord = weeklyData?.records?.find(
           (r) => r.date.startsWith(todayStr)
         );
-       const todayStatus =
-  todayRecord?.status?.toLowerCase() === "present" ? "Present"
-  : todayRecord?.status?.toLowerCase() === "absent" ? "Absent"
-  : "—";
+        const todayStatus =
+          todayRecord?.status?.toLowerCase() === "present" ? "Present"
+          : todayRecord?.status?.toLowerCase() === "absent"  ? "Absent"
+          : "—";
+
         // ── Monthly attendance calendar ───────────────────────────────────
         const monthlyRaw =
           monthlyAttendanceRes.status === "fulfilled"
@@ -279,7 +304,7 @@ export const useDashboard = (): DashboardState => {
         });
 
         // ── Homework ──────────────────────────────────────────────────────
-        const homeworkData =
+        const homeworkData: Homework[] =
           homeworkRes.status === "fulfilled" ? homeworkRes.value.data : [];
         const homework = toHomeworkItems(homeworkData);
 
@@ -288,8 +313,8 @@ export const useDashboard = (): DashboardState => {
           examTimetableRes.status === "fulfilled"
             ? examTimetableRes.value.data : [];
         const upcomingExams = examData
-          .filter((e) => new Date(e.exam_date) >= now)
-          .sort((a, b) =>
+          .filter((e: any) => new Date(e.exam_date) >= now)
+          .sort((a: any, b: any) =>
             new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime()
           );
         const nextExam    = upcomingExams[0] ?? null;

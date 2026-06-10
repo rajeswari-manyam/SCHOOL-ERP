@@ -12,6 +12,7 @@ export const MonthlyPayrollTab = ({
   processedDate,
   processedBy,
   onStartProcessing,
+  onViewPayslip,
 }: MonthlyPayrollTabProps) => {
   return (
     <div className="space-y-3 md:space-y-4 px-2 sm:px-0">
@@ -85,7 +86,7 @@ export const MonthlyPayrollTab = ({
         {/* Table */}
         <div className="overflow-x-auto">
           <div className="min-w-[700px]">
-            <PayrollTable data={staffData} isProcessed={isProcessed} />
+            <PayrollTable data={staffData} isProcessed={isProcessed} onViewPayslip={onViewPayslip} />
           </div>
         </div>
 

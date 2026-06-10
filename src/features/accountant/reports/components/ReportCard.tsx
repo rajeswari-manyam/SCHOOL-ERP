@@ -7,6 +7,10 @@ import {
   Calendar,
   Users,
   TrendingUp,
+  TrendingDown,
+  BarChart3,
+  GraduationCap,
+  BookOpen,
   Check,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -18,7 +22,11 @@ const iconMap: Record<ReportIconType, LucideIcon> = {
   reconciliation: Wallet,
   annual: Calendar,
   payroll: Users,
-  ledger: TrendingUp,
+  ledger: BookOpen,
+  student: GraduationCap,
+  income: TrendingUp,
+  expense: TrendingDown,
+  profit_loss: BarChart3,
 };
 
 const iconBgMap: Record<ReportIconType, string> = {
@@ -28,6 +36,10 @@ const iconBgMap: Record<ReportIconType, string> = {
   annual:         "bg-violet-50 text-violet-600",
   payroll:        "bg-rose-50 text-rose-600",
   ledger:         "bg-teal-50 text-teal-600",
+  student:        "bg-blue-50 text-blue-600",
+  income:         "bg-green-50 text-green-600",
+  expense:        "bg-red-50 text-red-600",
+  profit_loss:    "bg-purple-50 text-purple-600",
 };
 
 export const ReportCard = ({

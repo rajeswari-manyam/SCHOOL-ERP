@@ -8,15 +8,19 @@ export interface Student {
   blood_group: string;
   address: string;
   photo: string | null;
+
   class_id: string | null;
-  class: string;
-  section: string;
+  sectionId: string;              // ✅ FIXED
+  academicYearId: string;         // ✅ ADDED
+
   roll_number: string;
   admission_number: string;
   admission_date: string | null;
   status: string;
+
   school_id: string;
   school_code: string;
+
   createdAt: string;
   updatedAt: string;
 }

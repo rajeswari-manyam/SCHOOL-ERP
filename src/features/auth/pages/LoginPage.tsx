@@ -61,7 +61,7 @@ const ROLES = [
 
 const LoginPage = () => {
   const navigate      = useNavigate();
-  const setLoginMeta  = useAuthStore((s) => s.setLoginMeta);
+ 
   const login         = useAuthStore((s) => s.login);        // ← add this
 
   const [loading,        setLoading]        = useState(false);
@@ -138,7 +138,7 @@ const LoginPage = () => {
       const response = await sendOtp(payload);
 
       if (response?.status === true) {
-        setLoginMeta(response.userType, values.phone, values.schoolcode);
+     
         localStorage.setItem("phone",      values.phone);
         localStorage.setItem("schoolcode", values.schoolcode);
         localStorage.setItem("userType",   response.userType);
@@ -175,20 +175,30 @@ const LoginPage = () => {
       const response = await axiosInstance.post("/tenant/studentlogin", payload);
 
       if (response.data?.status === true) {
-        const { id, first_name, last_name, school_code } = response.data.data;
+       const { 
+  id, 
+  first_name, 
+  last_name, 
+  school_code,
+  class_id,      // ✅ ADD
+  section_id     // ✅ ADD
+} = response.data.data;
 
         // ✅ Save into Zustand auth store so ProfilePage can read user.id
-        login(
-          response.data.token,
-          {
-            id:         id,
-            name:       `${first_name} ${last_name}`.trim(),
-            userType:   "Student",
-            schoolcode: school_code,
-            phone:      "",
-          },
-          "Student",
-        );
+    login(
+  response.data.token,
+  {
+    id: id,
+    name: `${first_name} ${last_name}`.trim(),
+   
+    schoolcode: school_code,
+    phone: "",
+
+    class_id,        // ✅ ADD
+    section_id,      // ✅ ADD
+  },
+  "Student",
+);
 
         toast.success(response.data.message ?? "Student login successful");
         navigate("/student/dashboard", { replace: true });
@@ -214,8 +224,12 @@ const LoginPage = () => {
           {/* LOGO */}
           <div className="mb-8">
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-200">
-                <GraduationCap size={18} className="text-white" />
+              <div className="w-8 h-8 overflow-hidden rounded-lg bg-white/5 flex items-center justify-center shadow-md shadow-indigo-200">
+                <img
+                  src="/favicon.png"
+                  alt="VidyaTracker logo"
+                  className="h-full w-full object-cover"
+                />
               </div>
               <span className="text-lg font-bold text-slate-900 tracking-tight">
                 Vidya<span className="text-indigo-600">Tracker</span>
