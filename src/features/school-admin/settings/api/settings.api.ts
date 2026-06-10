@@ -2,6 +2,7 @@ import api from "@/config/axios";
 import type {
   SchoolProfile,
   AcademicYear,
+  CreateAcademicYearPayload,
   ClassSection,
   WorkingDaysConfig,
   FeeHead,
@@ -38,7 +39,7 @@ const MOCK_SCHOOL_PROFILE: SchoolProfile = {
 };
 
 const MOCK_ACADEMIC_YEARS: AcademicYear[] = [
-  { id: "ay-2024-25", label: "2024-25", yearStartDate: "01 June 2024", yearEndDate: "30 April 2025", active: true },
+  { id: "ay-2025-26", yearName: "2025-2026", startDate: "2025-06-01", endDate: "2026-05-31", active: true },
 ];
 
 const MOCK_CLASSES: ClassSection[] = [
@@ -132,11 +133,42 @@ export const updateSchoolProfile = async (data: Partial<SchoolProfile>): Promise
 
 export const fetchAcademicYears = async (): Promise<AcademicYear[]> => {
   try {
-    const { data } = await api.get<AcademicYear[]>("/tenant/academic-years");
-    return data;
+    const { data } = await api.get<{ status: boolean; data: AcademicYear[] }>("/tenant/getallacademicyears");
+    if (data?.status && Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data)) return data;
+    return MOCK_ACADEMIC_YEARS;
   } catch {
     return MOCK_ACADEMIC_YEARS;
   }
+};
+
+export const createAcademicYear = async (payload: CreateAcademicYearPayload): Promise<AcademicYear> => {
+  try {
+    const { data } = await api.post<{ status: boolean; data: AcademicYear }>("/tenant/academic-years", payload);
+    if (data?.status && data?.data) return data.data;
+    if (data && !data.status) {
+      const msg = (data as any)?.message || "Server returned unsuccessful status";
+      throw new Error(msg);
+    }
+  } catch (err: any) {
+    const responseDetail = err?.response?.data ?? err?.message ?? "Unknown error";
+    const detailStr =
+      typeof responseDetail === "object"
+        ? JSON.stringify(responseDetail, null, 2)
+        : String(responseDetail);
+    console.error("createAcademicYear failed", { url: "/tenant/academic-years", payload, response: detailStr });
+    const fullMsg = [
+      `POST /tenant/academic-years`,
+      `Payload: ${JSON.stringify(payload)}`,
+      `Response: ${detailStr}`,
+    ].join("\n");
+    throw new Error(fullMsg);
+  }
+  return {
+    id: `ay-${Date.now()}`,
+    ...payload,
+    active: false,
+  };
 };
 
 // ─── Classes ─────────────────────────────────────────────────────────────────

@@ -93,9 +93,11 @@ export const SettingsPage: React.FC = () => {
           <AcademicConfigTab
             classes={academicConfig.classes}
             workingDays={academicConfig.workingDays}
+            academicYears={academicConfig.academicYears}
             saving={academicConfig.saving}
             onSaveWorkingDays={academicConfig.saveWorkingDays}
             onAddClass={academicConfig.addNewClass}
+            onCreateAcademicYear={academicConfig.createAcademicYear}
           />
         );
       case "feeConfig":

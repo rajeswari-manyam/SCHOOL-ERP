@@ -1,8 +1,6 @@
 import api from "@/config/axios";
 
-/* =========================================================
-   📘 CLASS TYPES
-========================================================= */
+
 
 export interface ClassRecord {
   id: string;

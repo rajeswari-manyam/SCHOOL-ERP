@@ -29,17 +29,21 @@ interface UIState {
   sidebarOpen: boolean;
   collapsed: boolean;              // desktop: icon-rail vs full
   theme: "light" | "dark";
+  academicYearId: string | null;   // selected academic year ID
   setSidebarOpen: (v: boolean) => void;
   setCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
   setTheme: (theme: "light" | "dark") => void;
+  setAcademicYearId: (id: string | null) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
   collapsed: false,
   theme: "light",
+  academicYearId: null,
   setSidebarOpen: (v) => set({ sidebarOpen: v }),
   setCollapsed: (v) =>
     set((s) => ({ collapsed: typeof v === "function" ? v(s.collapsed) : v })),
   setTheme: (theme) => set({ theme }),
+  setAcademicYearId: (id) => set({ academicYearId: id }),
 }));

@@ -10,6 +10,7 @@ import { FeesPage as FeeCollectionPage } from "../school-admin/fees";
 import { ReportsPage } from "../school-admin/reports";
 import { SettingsPage } from "./settings";
 import TimetablePage from "../school-admin/timetable";
+import ClassesPage from "../school-admin/classes/ClassesPage";
 
 export default function SchoolAdminRouter() {
   return (
@@ -27,7 +28,8 @@ export default function SchoolAdminRouter() {
           path="admissions"
           element={<AdmissionsPage />}
         />
-      <Route path="staff" element={<StaffManagementPage />} />
+       <Route path="classes" element={<ClassesPage />} />
+       <Route path="staff" element={<StaffManagementPage />} />
          <Route
           path="attendance"
           element={

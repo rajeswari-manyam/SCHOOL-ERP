@@ -30,10 +30,16 @@ export type UpdateSchoolSettingsInput = SchoolSettings;
 
 export interface AcademicYear {
   id: string;
-  label: string;
-  yearStartDate: string; // "01 June 2024"
-  yearEndDate: string;   // "30 April 2025"
+  yearName: string;          // "2025-2026"
+  startDate: string;         // "2025-06-01"
+  endDate: string;           // "2026-05-31"
   active: boolean;
+}
+
+export interface CreateAcademicYearPayload {
+  yearName: string;
+  startDate: string;
+  endDate: string;
 }
 
 // ─── Classes & Sections ───────────────────────────────────────────────────────

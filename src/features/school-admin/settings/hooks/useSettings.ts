@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type {
   SchoolProfile,
+  AcademicYear,
+  CreateAcademicYearPayload,
   ClassSection,
   WorkingDaysConfig,
   FeeHead,
@@ -47,14 +49,16 @@ export function useSchoolProfile() {
 export function useAcademicConfig() {
   const [classes, setClasses] = useState<ClassSection[]>([]);
   const [workingDays, setWorkingDays] = useState<WorkingDaysConfig | null>(null);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.fetchClasses(), api.fetchWorkingDays()]).then(
-      ([cls, wd]) => {
+    Promise.all([api.fetchClasses(), api.fetchWorkingDays(), api.fetchAcademicYears()]).then(
+      ([cls, wd, years]) => {
         setClasses(cls);
         setWorkingDays(wd);
+        setAcademicYears(years);
         setLoading(false);
       }
     );
@@ -72,7 +76,13 @@ export function useAcademicConfig() {
     setClasses(prev => [...prev, newCls]);
   }, []);
 
-  return { classes, workingDays, loading, saving, saveWorkingDays, addNewClass };
+  const createAcademicYear = useCallback(async (payload: CreateAcademicYearPayload) => {
+    const newYear = await api.createAcademicYear(payload);
+    setAcademicYears(prev => [...prev, newYear]);
+    return newYear;
+  }, []);
+
+  return { classes, workingDays, academicYears, loading, saving, saveWorkingDays, addNewClass, createAcademicYear };
 }
 
 // ─── Fee Configuration ────────────────────────────────────────────────────────

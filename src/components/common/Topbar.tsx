@@ -1,7 +1,9 @@
+import { useState, useRef, useEffect } from "react";
 import { FaSearch, FaBell } from "react-icons/fa";
-import { Menu } from "lucide-react";
+import { Menu, Loader2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useUIStore } from "@/store/uiStore";
+import { useAcademicYears } from "./hooks/useAcademicYears";
 
 type Breadcrumb = { label: string; href?: string };
 
@@ -18,6 +20,9 @@ const Topbar = ({
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
   const collapsed      = useUIStore((s) => s.collapsed);
   const setCollapsed   = useUIStore((s) => s.setCollapsed);
+  const { years, activeYear, loading, error, switchYear, retry } = useAcademicYears();
+  const [yearOpen, setYearOpen] = useState(false);
+  const yearRef = useRef<HTMLDivElement>(null);
 
   // Responsive left offset mirrors the sidebar width
   let leftOffset = "left-0 md:left-[260px]";
@@ -26,13 +31,21 @@ const Topbar = ({
 
   const handleToggle = () => {
     if (window.innerWidth < 768) {
-      // Mobile: show/hide the overlay sidebar
       setSidebarOpen(!sidebarOpen);
     } else {
-      // Desktop: collapse/expand the rail
       setCollapsed((prev: boolean) => !prev);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (yearRef.current && !yearRef.current.contains(e.target as Node)) {
+        setYearOpen(false);
+      }
+    };
+    if (yearOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [yearOpen]);
 
   return (
     <header
@@ -114,9 +127,67 @@ const Topbar = ({
 
           <div className="hidden md:block h-5 sm:h-6 border-l border-[#e5e7eb]" />
 
-          <button className="hidden md:flex items-center gap-1 rounded-lg md:rounded-xl bg-[#f4f7fd] px-2 md:px-4 py-1.5 md:py-2 font-semibold text-xs md:text-sm text-[#2d3748] whitespace-nowrap">
-            2024-25 <span className="text-[#6c7380]">▼</span>
-          </button>
+          <div className="relative hidden md:block" ref={yearRef}>
+            <button
+              onClick={() => !loading && setYearOpen(!yearOpen)}
+              disabled={loading && years.length === 0}
+              className="flex items-center gap-1.5 rounded-lg md:rounded-xl bg-[#f4f7fd] px-2 md:px-4 py-1.5 md:py-2 font-semibold text-xs md:text-sm text-[#2d3748] whitespace-nowrap hover:bg-[#e9eef8] transition-colors min-w-0"
+            >
+              {loading ? (
+                <Loader2 size={14} className="animate-spin text-[#6c7380]" />
+              ) : error && years.length === 0 ? (
+                <span className="text-red-500 text-[10px]">Year unavailable</span>
+              ) : (
+                <>
+                  <span className="truncate max-w-[100px]">{activeYear?.yearName || "Select Year"}</span>
+                  <span className="text-[#6c7380] text-[10px]">▼</span>
+                </>
+              )}
+            </button>
+
+            {yearOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
+                {error && (
+                  <div className="px-3 py-2 text-[11px] text-red-500 border-b border-gray-100 flex items-center gap-2">
+                    <span className="flex-1 truncate">{error}</span>
+                    <button onClick={retry} className="text-indigo-600 hover:text-indigo-700 font-semibold shrink-0">Retry</button>
+                  </div>
+                )}
+                <div className="max-h-48 overflow-y-auto">
+                  {years.map((year) => {
+                    const isActive = activeYear?.id === year.id;
+                    return (
+                      <button
+                        key={year.id}
+                        onClick={() => {
+                          switchYear(year);
+                          setYearOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors text-left ${
+                          isActive
+                            ? "bg-indigo-50 text-indigo-700 font-semibold"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          isActive ? "border-indigo-500" : "border-gray-300"
+                        }`}>
+                          {isActive && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
+                        </span>
+                        <span className="flex-1 truncate">{year.yearName}</span>
+                        {year.active && (
+                          <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Active</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {years.length === 0 && !loading && !error && (
+                  <div className="px-3 py-4 text-center text-[11px] text-gray-400">No academic years found</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

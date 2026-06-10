@@ -3,7 +3,6 @@ import type {
   TeacherTimetableQuery,
   TeacherTimetableData,
   TimetablePeriod,
-  ApiPeriodCell,
   TimetableCell,
   ClassColorKey,
   UpcomingExam,

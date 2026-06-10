@@ -49,85 +49,86 @@ const toCamelCase = (obj: any): any => {
   return obj;
 };
 
+import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
+
+export interface ClassOption {
+  id: string;
+  value: string;
+  label: string;
+}
+
+export const fetchClassesList = async (academicYearId: string | null): Promise<ClassOption[]> => {
+  const params = academicYearId ? { academicYearId } : {};
+  const res = await getAllClasses(params);
+  if (!res?.status || !Array.isArray(res.data)) return [];
+  const seen = new Set<string>();
+  const options: ClassOption[] = [];
+  for (const record of res.data) {
+    const name = record.class_name?.trim();
+    if (name && !seen.has(name)) {
+      seen.add(name);
+      options.push({ id: record.id, value: name, label: name });
+    }
+  }
+  return options.sort((a, b) => Number(a.value) - Number(b.value));
+};
+
+export const fetchSectionsList = async (classId: string): Promise<ClassOption[]> => {
+  const res = await getSectionsByClassId(classId);
+  const records = Array.isArray(res)
+    ? res
+    : Array.isArray(res?.data)
+      ? res.data
+      : null;
+  if (!records) return [];
+  return records.map((r) => {
+    const name = (r.sectionName ?? r.section_name ?? "").trim();
+    return { value: name, label: name };
+  }).filter((o) => o.value !== "");
+};
+
 export const studentsApi = {
   getAll: async (): Promise<Student[]> => {
     const { data } = await api.get("/tenant/getallstudents");
-    const rawJson = JSON.stringify(data);
-    console.log("getAll students raw response:", rawJson);
     let list: any[] = [];
     if (Array.isArray(data)) list = data;
     else if (data?.students && Array.isArray(data.students)) list = data.students;
     else if (data?.data && Array.isArray(data.data)) list = data.data;
-    else {
-      console.warn("getAll students: unexpected response shape", data);
-      return [];
-    }
-    const mapped = list.map(toCamelCase).map((s: any) => ({
+    else return [];
+    return list.map(toCamelCase).map((s: any) => ({
       ...s,
       admissionNo: s.admissionNo ?? s.admissionNumber ?? s.admissionId ?? s.admission ?? "",
-      firstName: s.firstName ?? s.first?? s.givenName ?? "",
+      firstName: s.firstName ?? s.first ?? s.givenName ?? "",
       lastName: s.lastName ?? s.last ?? s.familyName ?? s.surName ?? "",
       parentPhone: s.parentPhone ?? s.parentPhoneNumber ?? s.phone ?? s.mobile ?? "",
       feeStatus: s.feeStatus ?? s.fee ?? s.feePaymentStatus ?? "PENDING",
       status: s.status ?? s.studentStatus ?? "ACTIVE",
     })) as Student[];
-    console.log("getAll students mapped count:", mapped.length, "first:", JSON.stringify(mapped[0]));
-    return mapped;
   },
   getById: async (id: string): Promise<Student | undefined> => {
     const { data } = await api.get<Student>(`/tenant/getstudentsById/${id}`);
     return data;
   },
   createStudent: async (payload: CreateStudentPayload): Promise<Student> => {
-    try {
-      const { data } = await api.post<Student>("/tenant/createstudents", payload);
-      console.log("createStudent success", { url: "/tenant/createstudents", payload, response: data });
-      return data;
-    } catch (err: any) {
-      console.error("createStudent failed", {
-        url: "/tenant/createstudents",
-        payload,
-        response: err?.response?.data ?? err?.message,
-      });
-      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to create student";
-      throw new Error(message);
-    }
+    const { data } = await api.post<Student>("/tenant/createstudents", payload);
+    return data;
   },
 
   updateStudent: async (id: string, payload: UpdateStudentPayload): Promise<Student> => {
-    const url = `/tenant/updatestudentById/${id}`;
-    console.log("📤 updateStudent →", url, JSON.stringify(payload, null, 2));
+    const { data: raw } = await api.put(`/tenant/updatestudentById/${id}`, payload);
 
-    try {
-      const { data: raw, status: httpStatus } = await api.put(url, payload);
-      console.log("📥 updateStudent ←", httpStatus, JSON.stringify(raw, null, 2));
-
-      if (raw && typeof raw === "object") {
-        const obj = raw as Record<string, unknown>;
-        if (obj?.status === false) {
-          throw new Error((obj?.message as string) ?? "Update failed");
-        }
-        const item = obj?.data && typeof obj.data === "object" && !Array.isArray(obj.data)
-          ? obj.data as Record<string, unknown>
-          : obj;
-        const camel = toCamelCase(item) as Record<string, unknown>;
-        if (camel.id) return camel as unknown as Student;
+    if (raw && typeof raw === "object") {
+      const obj = raw as Record<string, unknown>;
+      if (obj?.status === false) {
+        throw new Error((obj?.message as string) ?? "Update failed");
       }
-
-      throw new Error("Invalid response from server");
-    } catch (err: unknown) {
-      const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
-      console.error("❌ updateStudent failed", {
-        url, status: error?.response?.status,
-        responseData: error?.response?.data,
-        message: error?.message,
-      });
-      const message =
-        error?.response?.data?.message ??
-        JSON.stringify(error?.response?.data) ??
-        error?.message ??
-        "Failed to update student";
-      throw new Error(message);
+      const item = obj?.data && typeof obj.data === "object" && !Array.isArray(obj.data)
+        ? obj.data as Record<string, unknown>
+        : obj;
+      const camel = toCamelCase(item) as Record<string, unknown>;
+      if (camel.id) return camel as unknown as Student;
     }
+
+    throw new Error("Invalid response from server");
   },
 };
