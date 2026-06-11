@@ -144,7 +144,7 @@ const ClassSectionList = ({
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-semibold text-gray-900">Section {section.name}</span>
                 <span className="text-xs text-gray-500 ml-2">
-                  {section.totalStudents} students · {section.subjects.length} subjects
+                  {section.totalStudents} students · {(section.subjectCount ?? section.subjects.length)} subjects
                 </span>
               </div>
               <span className="text-xs text-gray-500 hidden sm:block">
@@ -213,10 +213,10 @@ const ClassesPage = () => {
               <Users className="w-3.5 h-3.5" />
               {cls.totalStudents}/{cls.capacity}
             </span>
-            <span className="flex items-center gap-1">
+            {/* <span className="flex items-center gap-1">
               <GraduationCap className="w-3.5 h-3.5" />
               {cls.classTeacher || "—"}
-            </span>
+            </span> */}
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
               cls.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
             }`}>

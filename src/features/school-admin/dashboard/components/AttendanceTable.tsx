@@ -38,12 +38,12 @@ export function AttendanceTable({
 
       {/* ─── Table ───────────────────────── */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[700px]">
 
           {/* Head */}
           <thead className="bg-[#e9edf3]">
             <tr>
-              {["CLASS", "TEACHER", "PRESENT", "ABSENT", "STATUS"].map(
+              {["CLASS", "SECTION", "TEACHER", "PRESENT", "ABSENT", "STATUS"].map(
                 (col) => (
                   <th
                     key={col}
@@ -70,6 +70,13 @@ export function AttendanceTable({
                 <td className="px-5 py-4">
                   <span className="text-indigo-900 font-extrabold text-lg">
                     {cls.className}
+                  </span>
+                </td>
+
+                {/* Section */}
+                <td className="px-5 py-4">
+                  <span className="text-gray-500 font-semibold text-sm">
+                    {cls.section || "--"}
                   </span>
                 </td>
 

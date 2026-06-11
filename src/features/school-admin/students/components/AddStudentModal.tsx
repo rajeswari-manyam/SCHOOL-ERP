@@ -40,7 +40,9 @@ const EMPTY_FORM: AddStudentFormData = {
   admissionNo: "",
   gender: "",
   class: "",
+  class_id: "",
   section: "",
+  sectionId: "",
   bloodGroup: "",
   rollNumber: "",
   photo: null,
@@ -172,7 +174,11 @@ const AddStudentModal = ({
         if (field === "class") {
           const matched = classes.find((c) => c.value === value);
           setSelectedClassId(matched?.id ?? null);
-          return { ...prev, section: "", [field]: value };
+          return { ...prev, section: "", sectionId: "", class_id: matched?.id ?? "", [field]: value };
+        }
+        if (field === "section") {
+          const matched = sections.find((c) => c.value === value);
+          return { ...prev, sectionId: matched?.id ?? "", [field]: value };
         }
         return { ...prev, [field]: value };
       });

@@ -45,7 +45,7 @@ const StudentTable = ({ students, onEdit }: StudentTableProps) => {
               <TableHead className="text-left px-4 py-3">Student Name</TableHead>
               <TableHead className="text-left px-4 py-3">Class</TableHead>
               <TableHead className="text-left px-4 py-3">Section</TableHead>
-              <TableHead className="text-left px-4 py-3">Parent Phone</TableHead>
+              {/* <TableHead className="text-left px-4 py-3">Parent Phone</TableHead> */}
               <TableHead className="text-left px-4 py-3">Status</TableHead>
               <TableHead className="text-left px-4 py-3">Fee Status</TableHead>
               <TableHead className="text-left px-4 py-3">Actions</TableHead>
@@ -56,22 +56,22 @@ const StudentTable = ({ students, onEdit }: StudentTableProps) => {
               <TableRow
                 key={s.id}
                 className={`border-b border-gray-50 hover:bg-indigo-50/30 transition-colors cursor-pointer ${i % 2 === 0 ? "" : "bg-gray-50/30"}`}
-                onClick={() => navigate(`/school-admin/students/${s.id}`)}
+                onClick={() => navigate(`/schooladmin/students/${s.id}`)}
               >
                 <TableCell className="px-4 py-3"><Avatar s={s} /></TableCell>
                 <TableCell className="px-4 py-3 text-xs font-semibold text-gray-500">{s.admissionNo ?? (s as any).admissionNumber ?? (s as any).admissionId ?? "—"}</TableCell>
                 <TableCell className="px-4 py-3">
                   <p className="text-sm font-semibold text-gray-900">{s.firstName ?? "—"} {s.lastName ?? ""}</p>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.class ?? "—"}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.section ?? "—"}</TableCell>
-                <TableCell className="px-4 py-3 text-xs text-gray-600">{s.parentPhone ?? "—"}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.class || "—"}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-700">{s.section || "—"}</TableCell>
+                {/* <TableCell className="px-4 py-3 text-xs text-gray-600">{s.parentPhone ?? "—"}</TableCell> */}
                 <TableCell className="px-4 py-3"><StatusBadge status={s.status} /></TableCell>
                 <TableCell className="px-4 py-3"><FeeBadge status={s.feeStatus} /></TableCell>
                 <TableCell className="px-4 py-3" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center gap-2">
                     <Button
-                      onClick={() => navigate(`/school-admin/students/${s.id}`)}
+                onClick={() => navigate(`/schooladmin/students/${s.id}`)}
                       variant="ghost"
                       size="sm"
                       title="View"

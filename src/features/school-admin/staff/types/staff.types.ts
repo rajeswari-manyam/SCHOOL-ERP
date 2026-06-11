@@ -1,4 +1,4 @@
-export type StaffRole = "Class Teacher" | "Subject Teacher" | "Admin" | "Support";
+export type StaffRole = "Teacher" | "Class Teacher" | "Subject Teacher" | "Admin" | "Support" | "Staff";
 
 export type StaffStatus = "ACTIVE" | "ON_LEAVE" | "INACTIVE";
 export type TabKey =

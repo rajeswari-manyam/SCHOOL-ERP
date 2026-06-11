@@ -1,14 +1,18 @@
 import api from "@/config/axios";
-import { getAllClasses, getSectionsByClassId, getSectionById } from "@/services/class.api";
-import { getSubjectsBySectionId } from "@/services/subject.api";
+import { getAllClasses, getSectionsByClassId, getSectionById, getAllStaff } from "@/services/class.api";
+import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "../types/classes.types";
 
 export const fetchClasses = async (academicYearId?: string | null): Promise<ClassItem[]> => {
-  const params = academicYearId ? { academicYearId } : {};
+  const params: import("@/services/class.api").GetAllClassesParams = {};
+  if (academicYearId) params.academic_year = academicYearId;
   const classesRes = await getAllClasses(params);
 
-  if (!classesRes.status || !Array.isArray(classesRes.data)) {
-    return [];
+  if (!classesRes?.status || !Array.isArray(classesRes.data)) {
+    throw new Error(classesRes?.status === false
+      ? "Server returned unsuccessful status for classes"
+      : "Invalid response format from /tenant/getallclasses"
+    );
   }
 
   const grouped = new Map<string, typeof classesRes.data[0][]>();
@@ -18,16 +22,53 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
     grouped.get(key)!.push(record);
   }
 
+  const classSectionTotals = await Promise.all(
+    [...grouped.entries()].map(async ([className, records]) => {
+      const first = records[0];
+      const [sectionRes, subjectsRes] = await Promise.all([
+        getSectionsByClassId(first.id).catch(() => null),
+        getAllSubjects({ class_id: first.id }).catch(() => null),
+      ]);
+      const sectionRecords = asArray<Record<string, unknown>>(sectionRes?.data) ?? [];
+      const subjectRecords = asArray<SubjectRecord>(subjectsRes?.data) ?? [];
+      const subjectCount = subjectsRes?.count ?? subjectRecords.length;
+      const subjectCountBySection = new Map<string, number>();
+      for (const subject of subjectRecords) {
+        const sectionId = String((subject as SubjectRecord & { sectionid?: string }).sectionid ?? subject.section_id ?? "");
+        if (!sectionId) continue;
+        subjectCountBySection.set(sectionId, (subjectCountBySection.get(sectionId) ?? 0) + 1);
+      }
+      const sectionStudentTotal = sectionRecords.reduce((sum, item) => sum + getStudentCount(item), 0);
+      return {
+        className,
+        first,
+        records,
+        sectionStudentTotal,
+        subjectCount,
+        subjectCountBySection,
+      };
+    })
+  );
+
   const classes: ClassItem[] = [];
-  for (const [className, records] of grouped) {
-    const first = records[0];
+  for (const { className, first, records, sectionStudentTotal, subjectCount, subjectCountBySection } of classSectionTotals) {
+    const derivedTotalStudents = sectionStudentTotal || records.reduce((sum, r) => sum + getStudentCount(r as unknown as Record<string, unknown>), 0);
+
     classes.push({
       id: first.id,
       className,
-      sections: [],
-      classTeacher: first.class_teacher,
-      totalStudents: records.reduce((sum, r) => sum + (r.total_strength || 0), 0),
-      capacity: records.reduce((sum, r) => sum + (r.capacity || 0), 0),
+      sections: records.map((r) => ({
+        id: r.id,
+        name: r.section ?? "",
+        classTeacher: r.class_teacher ?? "",
+        totalStudents: getStudentCount(r as unknown as Record<string, unknown>),
+        subjectCount: subjectCountBySection.get(String(r.id)) ?? 0,
+        subjects: [],
+      })),
+      classTeacher: first.class_teacher ?? "",
+      totalStudents: derivedTotalStudents,
+      subjectCount,
+      capacity: records.reduce((sum, r) => sum + (Number(r.capacity) || 0), 0),
       status: "ACTIVE",
     });
   }
@@ -35,58 +76,122 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
   return classes.sort((a, b) => Number(a.className) - Number(b.className));
 };
 
-const toSectionItem = (record: Record<string, unknown>): SectionItem => ({
-  id: (record.id as string) || "",
-  name: (record.sectionName || record.section_name || "") as string,
-  classTeacher: (record.classTeacherId || record.class_teacher_id || "") as string,
-  totalStudents: Number(record.totalStrength ?? record.total_strength ?? 0),
-  subjects: [],
-});
+const getStudentCount = (record: Record<string, unknown>): number => {
+  const value = Number(
+    record.classStrength ??
+    record.class_strength ??
+    record.totalStrength ??
+    record.total_strength ??
+    record.studentCount ??
+    record.student_count ??
+    record.studentsCount ??
+    record.students_count ??
+    record.totalStudents ??
+    record.total_students ??
+    record.strength ??
+    record.students ??
+    0
+  );
+  return Number.isFinite(value) ? value : 0;
+};
+
+const toSectionItem = (record: Record<string, unknown>, teacherMap: Map<string, string> = new Map()): SectionItem => {
+  const teacherId = String(record.classTeacherId ?? record.class_teacher_id ?? "");
+  const teacherName = String(record.classTeacherName ?? record.class_teacher_name ?? record.teacherName ?? record.teacher_name ?? "");
+  const resolvedTeacher = teacherName || teacherMap.get(teacherId) || teacherId;
+  const subjectCount = Number(
+    record.subjectCount ??
+    record.subject_count ??
+    record.totalSubjects ??
+    record.total_subjects ??
+    0
+  );
+
+  return {
+    id: (record.id as string) || "",
+    name: (record.sectionName || record.section_name || "") as string,
+    classTeacher: resolvedTeacher,
+    totalStudents: getStudentCount(record),
+    subjects: [],
+    subjectCount: Number.isFinite(subjectCount) ? subjectCount : 0,
+  };
+};
+
+const asArray = <T>(value: unknown): T[] | null => (Array.isArray(value) ? (value as T[]) : null);
 
 export const fetchSectionsByClassId = async (classId: string): Promise<SectionItem[]> => {
-  const res = await getSectionsByClassId(classId);
-  const records = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.data)
-      ? res.data
-      : Array.isArray((res as Record<string, unknown>)?.sections)
-        ? (res as Record<string, unknown>).sections as Record<string, unknown>[]
-        : null;
-  if (records) {
-    return records.map(toSectionItem);
+  const [sectionRes, subjectsRes, staffRes] = await Promise.all([
+    getSectionsByClassId(classId),
+    getAllSubjects({ class_id: classId }).catch(() => null),
+    getAllStaff({ role: "teacher" }).catch(() => null),
+  ]);
+
+  const records =
+    asArray<Record<string, unknown>>(sectionRes?.data) ??
+    asArray<Record<string, unknown>>((sectionRes as { sections?: unknown } | undefined)?.sections) ??
+    [];
+
+  const teacherMap = new Map<string, string>();
+  const staffRecords = asArray<{ id?: string; name?: string }>(staffRes?.data) ?? [];
+  for (const staff of staffRecords) {
+    if (staff.id && staff.name) teacherMap.set(staff.id, staff.name);
   }
-  return [];
+
+  const subjectsBySection = new Map<string, SubjectItem[]>();
+  const subjectRecords = asArray<SubjectRecord>(subjectsRes?.data) ?? [];
+
+  if (subjectsRes?.status && subjectRecords.length) {
+    for (const r of subjectRecords) {
+      const sid = r.section_id;
+      if (!sid) continue;
+      if (!subjectsBySection.has(sid)) subjectsBySection.set(sid, []);
+      subjectsBySection.get(sid)!.push(toSubjectItem(r));
+    }
+  }
+
+  return records.map((r) => {
+    const section = toSectionItem(r, teacherMap);
+    const sectionSubjects = subjectsBySection.get(String(r.id ?? ""));
+    if (sectionSubjects && sectionSubjects.length) {
+      section.subjects = sectionSubjects;
+      section.subjectCount = section.subjectCount || sectionSubjects.length;
+    }
+    return section;
+  });
 };
 
 export const fetchSectionById = async (sectionId: string): Promise<SectionItem | null> => {
-  const res = await getSectionById(sectionId);
+  const [res, staffRes] = await Promise.all([
+    getSectionById(sectionId),
+    getAllStaff({ role: "teacher" }).catch(() => null),
+  ]);
   const record = res?.data;
   if (record) {
-    return toSectionItem(record as unknown as Record<string, unknown>);
+    const teacherMap = new Map<string, string>();
+    const staffRecords = asArray<{ id?: string; name?: string }>(staffRes?.data) ?? [];
+    for (const staff of staffRecords) {
+      if (staff.id && staff.name) teacherMap.set(staff.id, staff.name);
+    }
+    return toSectionItem(record as unknown as Record<string, unknown>, teacherMap);
   }
   return null;
 };
 
-const toSubjectItem = (record: Record<string, unknown>): SubjectItem => ({
-  id: (record.id as string) || "",
-  name: (record.subject_name as string) || "",
-  subjectCode: (record.subject_code as string) || "",
-  teacher: (record.teacher_name as string) || "",
+const toSubjectItem = (record: SubjectRecord | Record<string, unknown>): SubjectItem => ({
+  id: String((record as Record<string, unknown>).id ?? ""),
+  name: String((record as Record<string, unknown>).subject_name ?? ""),
+  subjectCode: String((record as Record<string, unknown>).subject_code ?? ""),
+  teacher: String((record as Record<string, unknown>).teacher_name ?? ""),
 });
 
 export const fetchSubjectsBySectionId = async (sectionId: string): Promise<SubjectItem[]> => {
   const res = await getSubjectsBySectionId(sectionId);
-  const records = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.data)
-      ? res.data
-      : Array.isArray((res as Record<string, unknown>)?.subjects)
-        ? (res as Record<string, unknown>).subjects as Record<string, unknown>[]
-        : null;
-  if (records) {
-    return records.map(toSubjectItem);
-  }
-  return [];
+  const records =
+    asArray<SubjectRecord>(res?.data) ??
+    asArray<Record<string, unknown>>((res as { subjects?: unknown } | undefined)?.subjects) ??
+    [];
+
+  return records.map((item) => toSubjectItem(item));
 };
 
 export const addClass = async (payload: CreateClassPayload): Promise<ClassItem> => {

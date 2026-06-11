@@ -9,6 +9,8 @@ export const ADMISSIONS_KEYS = {
   interviewList: () => [...ADMISSIONS_KEYS.all, 'interviewList'] as const,
   docsList: () => [...ADMISSIONS_KEYS.all, 'docsList'] as const,
   stats: () => [...ADMISSIONS_KEYS.all, 'stats'] as const,
+  /** Per-enquiry document list — scoped so refetch/invalidate is surgical */
+  documents: (enquiryId: string) => [...ADMISSIONS_KEYS.all, 'documents', enquiryId] as const,
 };
 
 export function useEnquiries() {
@@ -43,6 +45,23 @@ export function usePipelineStats() {
   });
 }
 
+/** Fetch uploaded document records for a single enquiry */
+export function useAdmissionDocuments(
+  enquiryId: string,
+  opts: { enabled?: boolean; retry?: boolean | number } = {},
+) {
+  const { enabled = true, retry = 1 } = opts;
+  return useQuery({
+    queryKey: ADMISSIONS_KEYS.documents(enquiryId),
+    queryFn: () => admissionsApi.getAdmissionDocuments(enquiryId),
+    staleTime: 60_000,
+    enabled: enabled && !!enquiryId,
+    retry,
+    // Return empty array on error so consumers don't need to null-check
+    placeholderData: [],
+  });
+}
+
 export function useAddEnquiry() {
   const qc = useQueryClient();
   return useMutation({
@@ -66,7 +85,7 @@ export function useMoveToStage() {
         default: return Promise.resolve();
       }
     },
-    onSuccess: (_voidResult, { stage }) => {
+    onSuccess: (_void, { stage }) => {
       qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries() });
       qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats() });
       if (stage === 'interview' || stage === 'docs_verified') {

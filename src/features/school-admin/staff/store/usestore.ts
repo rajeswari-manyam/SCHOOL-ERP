@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { StaffMember, TabKey, UpdateStaffPayload } from "../types/staff.types";
-import { fetchStaff, updateStaff as updateStaffApi } from "../api/staff.api";
-import { staffMockData } from "../data/staff.data";
+import { fetchStaff, fetchStaffStats, updateStaff as updateStaffApi } from "../api/staff.api";
 
 interface StaffStats {
   total: number;
@@ -29,7 +28,7 @@ interface StaffState {
   editLoading: boolean;
 
   // Actions
-  loadStaff: () => void;
+  loadStaff: () => Promise<void>;
   setStaffData: (data: StaffMember[]) => void;
   setActiveTab: (tab: TabKey) => void;
   setSearch: (search: string) => void;
@@ -87,8 +86,8 @@ const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: string, ro
 
 export const useStaffStore = create<StaffState>((set, get) => ({
   // Initial data
-  staffData: staffMockData,
-  stats: calculateStats(staffMockData),
+  staffData: [],
+  stats: { total: 0, teachers: 0, nonTeaching: 0, leavePending: 0 },
   loading: false,
   error: null,
 
@@ -104,14 +103,29 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   editLoading: false,
 
   // Actions
-  loadStaff: () => {
+  loadStaff: async () => {
     set({ loading: true, error: null });
-    fetchStaff().then(data => {
-      set({ staffData: data, stats: calculateStats(data), loading: false });
-    }).catch(err => {
+    try {
+      const [staffData, statsData] = await Promise.all([
+        fetchStaff(),
+        fetchStaffStats().catch((err) => {
+          console.warn("Staff stats endpoint unavailable, falling back to derived values", err);
+          return null;
+        }),
+      ]);
+
+      set({
+        staffData,
+        stats: statsData ?? calculateStats(staffData),
+        loading: false,
+      });
+    } catch (err) {
       console.error("Failed to load staff", err);
-      set({ error: err?.message || "Failed to load staff.", loading: false });
-    });
+      set({
+        error: err instanceof Error ? err.message : "Failed to load staff.",
+        loading: false,
+      });
+    }
   },
 
   setStaffData: (data) => set(() => ({

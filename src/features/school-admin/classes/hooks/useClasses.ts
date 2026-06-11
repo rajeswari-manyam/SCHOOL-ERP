@@ -124,7 +124,7 @@ export const useClasses = () => {
   const stats = {
     totalClasses: classes.length,
     totalSections: classes.reduce((sum, c) => sum + (c.sections?.length || 0), 0),
-    totalSubjects: classes.reduce((sum, c) => sum + (c.sections?.reduce((ss, s) => ss + (s.subjects?.length || 0), 0) || 0), 0),
+    totalSubjects: classes.reduce((sum, c) => sum + (c.subjectCount || 0), 0),
     totalStudents: classes.reduce((sum, c) => sum + (c.totalStudents || 0), 0),
   };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { studentsApi, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "../api/students.api";
+import { useUIStore } from "@/store/uiStore";
+import { studentsApi, buildClassSectionMaps, resolveStudentNames, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "../api/students.api";
 import type { Student, AddStudentFormData, CreateStudentPayload, UpdateStudentPayload, Gender } from "../types/student.types";
 
 const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
@@ -35,13 +36,16 @@ export const useStudents = () => {
 
     const doLoad = async () => {
       try {
-        const data = await withTimeout(
-          studentsApi.getAll(),
-          LOAD_TIMEOUT_MS,
-          "getAllStudents"
-        );
+        const [data, { classMap, sectionMap }] = await Promise.all([
+          withTimeout(studentsApi.getAll(), LOAD_TIMEOUT_MS, "getAllStudents"),
+          withTimeout(
+            buildClassSectionMaps(useUIStore.getState().academicYearId),
+            LOAD_TIMEOUT_MS,
+            "buildClassSectionMaps",
+          ),
+        ]);
         if (mountedRef.current) {
-          setStudents(data);
+          setStudents(resolveStudentNames(data, classMap, sectionMap));
           setLoading(false);
         }
       } catch (err: unknown) {
@@ -90,6 +94,8 @@ export const useStudents = () => {
       throw new Error("Unable to create student: missing school code.");
     }
 
+    const academicYearId = useUIStore.getState().academicYearId;
+
     const payload: CreateStudentPayload = {
       first_name: data.firstName.trim(),
       last_name: data.lastName.trim(),
@@ -100,10 +106,11 @@ export const useStudents = () => {
       ...(data.bloodGroup ? { blood_group: data.bloodGroup } : {}),
       ...(data.residentialAddress ? { address: data.residentialAddress } : {}),
       ...(data.photo ? { photo: data.photo as unknown as string } : {}),
-      ...(data.class ? { class: data.class } : {}),
-      ...(data.section ? { section: data.section } : {}),
+      ...(data.class_id ? { class_id: data.class_id } : {}),
+      ...(data.sectionId ? { sectionId: data.sectionId } : {}),
       ...(data.rollNumber ? { roll_number: data.rollNumber } : {}),
       ...(data.admissionNo ? { admission_number: data.admissionNo } : {}),
+      ...(academicYearId ? { academicYearId } : {}),
     } as CreateStudentPayload;
 
     const newS = await withTimeout(
@@ -146,7 +153,7 @@ export const useStudentProfile = (id: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const retry = useCallback(() => {
     const timer = window.setTimeout(async () => {
       setLoading(true);
       setError(null);
@@ -164,11 +171,16 @@ export const useStudentProfile = (id: string) => {
         setLoading(false);
       }
     }, 0);
-    return () => window.clearTimeout(timer);
+    return timer;
   }, [id]);
 
+  useEffect(() => {
+    const timer = retry();
+    return () => window.clearTimeout(timer);
+  }, [retry]);
+
   return {
-    student, loading, error,
+    student, loading, error, retry,
     attendance: MOCK_ATTENDANCE,
     feePayments: MOCK_FEE_PAYMENTS,
     documents: MOCK_DOCUMENTS,

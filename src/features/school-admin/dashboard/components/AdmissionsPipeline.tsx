@@ -25,7 +25,16 @@ const quickActions = [
   { id: 'report',      label: 'Gen. Report',    icon: Table2         },
 ];
 
+const DEFAULT_PIPELINE: AdmissionStageWithActive[] = [
+  { stage: 'ENQUIRY', count: 0 },
+  { stage: 'INTERVIEW', count: 0 },
+  { stage: 'DOCS', count: 0 },
+  { stage: 'CONFIRMED', count: 0, highlight: true },
+  { stage: 'DECLINED', count: 0, danger: true },
+];
+
 export function AdmissionsPipeline({ pipeline }: AdmissionsPipelineProps) {
+  const stages = pipeline.length > 0 ? pipeline : DEFAULT_PIPELINE;
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:gap-5 sm:p-5 md:p-6">
 
@@ -40,7 +49,7 @@ export function AdmissionsPipeline({ pipeline }: AdmissionsPipelineProps) {
           lg:      all stages in one row (auto-fit)
       ── */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5">
-        {pipeline.map((stage, i) => (
+        {stages.map((stage, i) => (
           <motion.div
             key={stage.stage}
             initial={{ opacity: 0, y: 10 }}

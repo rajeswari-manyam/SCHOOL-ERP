@@ -6,7 +6,8 @@ export const StatusBadge = ({ status }: { status: StudentStatus }) => {
     TRANSFERRED: { cls: "bg-blue-50 text-blue-700 border border-blue-200", label: "Transferred" },
     INACTIVE: { cls: "bg-gray-100 text-gray-500 border border-gray-200", label: "Inactive" },
   };
-  const entry = map[status] ?? map[status?.toUpperCase()] ?? { cls: "bg-gray-100 text-gray-500 border border-gray-200", label: status ?? "Unknown" };
+  const str = typeof status === "string" ? status : "";
+  const entry = map[str] ?? map[str.toUpperCase()] ?? { cls: "bg-gray-100 text-gray-500 border border-gray-200", label: str || "Unknown" };
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${entry.cls}`}>{entry.label}</span>;
 };
 
@@ -16,6 +17,7 @@ export const FeeBadge = ({ status }: { status: FeeStatus }) => {
     PENDING: { cls: "bg-amber-50 text-amber-700 border border-amber-200" },
     OVERDUE: { cls: "bg-red-50 text-red-700 border border-red-200" },
   };
-  const entry = map[status] ?? map[status?.toUpperCase()] ?? { cls: "bg-gray-100 text-gray-500 border border-gray-200" };
+  const str = typeof status === "string" ? status : "";
+  const entry = map[str] ?? map[str.toUpperCase()] ?? { cls: "bg-gray-100 text-gray-500 border border-gray-200" };
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${entry.cls}`}>{status}</span>;
 };
