@@ -33,6 +33,12 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+/** GET /tenant/getallsections — filtered client-side by class ID */
+export const getSectionsByClassId = async (classId: string): Promise<Section[]> => {
+  const all = await getAllSections();
+  return all.filter((s) => s.classId === classId);
+};
+
 /** GET /tenant/getsections/:id */
 export const getSectionById = async (sectionId: string): Promise<Section> => {
   const { data } = await api.get<ApiResponse<Section>>(

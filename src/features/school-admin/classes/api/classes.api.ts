@@ -1,5 +1,6 @@
 import api from "@/config/axios";
-import { getAllClasses, getSectionsByClassId, getSectionById, getAllStaff } from "@/services/class.api";
+import { getAllClasses, getAllStaff } from "@/services/class.api";
+import { getSectionsByClassId, getSectionById } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "../types/classes.types";
 
