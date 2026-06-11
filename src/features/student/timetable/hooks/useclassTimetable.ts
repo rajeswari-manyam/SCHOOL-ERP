@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getAllTimetable,
-  getAllExamTimetable,
   type TimetableSlot,
-  type ExamTimetableSlot,
 } from "../../../../services/timetable.api";
+import {
+  getAllExamTimetables,
+  type ExamTimetableListItem,
+} from "../../../../services/examtimetable.api";
 import type {
   ClassTimetable,
   UpcomingExaminations,
@@ -114,7 +116,7 @@ const mapToClassTimetable = (
   const firstSlot = slots[0];
   return {
     className: displayName,
-    academicYear: firstSlot?.academic_year ?? "2024-25",
+    academicYear: firstSlot?.academicYearId ?? "2024-25",
     todayDay: getTodayDay(),
     rows: allRows,
     subjects,
@@ -124,14 +126,12 @@ const mapToClassTimetable = (
 /* ─────────────────────────────────────────────
    Helper: map exam API slots → UpcomingExaminations
 ───────────────────────────────────────────── */
-const mapToUpcomingExaminations = (
-  slots: ExamTimetableSlot[]
-): UpcomingExaminations => {
+const mapToUpcomingExaminations = (slots: ExamTimetableListItem[]): UpcomingExaminations => {
   const exams: ExamEntry[] = slots.map((s) => {
     const dateObj = new Date(s.exam_date);
     return {
       id: s.id,
-      subject: s.subjectname,
+    subject: s.subject.subject_name,
       date: dateObj.toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
@@ -145,7 +145,7 @@ const mapToUpcomingExaminations = (
   });
 
   return {
-    title: slots[0]?.exam_name ?? "Upcoming Exams",
+   title: slots[0]?.exam.exam_name ?? "Upcoming Exams",
     exams,
   };
 };
@@ -192,12 +192,12 @@ export const useUpcomingExaminations = () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await getAllExamTimetable(CLASS_NAME, SECTION_NAME);
-      if (res.status) {
-        setData(mapToUpcomingExaminations(res.data));
-      } else {
-        setError(true);
-      }
+    const data = await getAllExamTimetables({ class_id: CLASS_NAME, section_id: SECTION_NAME });
+if (Array.isArray(data)) {
+  setData(mapToUpcomingExaminations(data));
+} else {
+  setError(true);
+}
     } catch {
       setError(true);
     } finally {

@@ -1,108 +1,114 @@
 import api from "@/config/axios";
 
-/* =========================
-   TYPES
-========================= */
+/** ================= TYPES ================= */
 
-export interface ExamTimetable {
-  id: string;
-  subjectname: string;
-  classname: string;
-  sectionname: string;
-  exam_name: string;
+// Raw DB structure (for CREATE / UPDATE)
+export interface ExamTimetablePayload {
+  class_id: string;
+  subject_id: string;
+  section_id: string;
+  examnameid: string;
   exam_date: string;
   start_time: string;
   end_time: string;
   room_no: string;
-  academic_year: string;
-  school_code: string;
+  academicYearId: string;
+  teacher_id: string;
+}
+
+// GET LIST response structure
+export interface ExamTimetableListItem {
+  id: string;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+
+  class: {
+    id: string;
+    class_name: string;
+  };
+
+  section: {
+    id: string;
+    sectionName: string;
+  };
+
+  subject: {
+    id: string;
+    subject_name: string;
+  };
+
+  exam: {
+    id: string;
+    exam_name: string;
+  };
+
+  teacher: {
+    id: string;
+    name: string;
+  };
+}
+
+// GET BY ID (full DB structure)
+export interface ExamTimetableDetail extends ExamTimetablePayload {
+  id: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface GetAllExamTimetableResponse {
-  status: boolean;
-  count: number;
-  data: ExamTimetable[];
-}
+/** ================= CREATE ================= */
 
-export interface GetExamTimetableByIdResponse {
-  status: boolean;
-  data: ExamTimetable;
-}
-
-export interface CreateExamTimetablePayload {
-  subjectname: string;
-  classname: string;
-  sectionname: string;
-  exam_name: string;
-  exam_date: string;
-  start_time: string;
-  end_time: string;
-  room_no: string;
-  academic_year: string;
-  school_code: string;
-}
-
-export interface UpdateExamTimetablePayload {
-  exam_name?: string;
-  room_no?: string;
-}
-
-/* =========================
-   API FUNCTIONS
-========================= */
-
-// GET /tenant/getAllexams-timetable
-export const getAllExamTimetable = async (
-  classname: string,
-  sectionname: string
-): Promise<GetAllExamTimetableResponse> => {
-  const { data } = await api.get<GetAllExamTimetableResponse>(
-    `/tenant/getAllexams-timetable?classname=${classname}&sectionname=${sectionname}`
-  );
-  return data;
-};
-
-// GET /tenant/getexams-timetableById/:id
-export const getExamTimetableById = async (
-  id: string
-): Promise<GetExamTimetableByIdResponse> => {
-  const { data } = await api.get<GetExamTimetableByIdResponse>(
-    `/tenant/getexams-timetableById/${id}`
-  );
-  return data;
-};
-
-// POST /tenant/createexams-timetable
 export const createExamTimetable = async (
-  payload: CreateExamTimetablePayload
-): Promise<{ status: boolean; data: ExamTimetable }> => {
-  const { data } = await api.post(
-    "/tenant/createexams-timetable",
-    payload
-  );
-  return data;
+  data: Partial<ExamTimetablePayload>
+) => {
+  const res = await api.post("/tenant/createexams-timetable", data);
+  return res.data.data;
 };
 
-// PUT /tenant/updateexams-timetableById/:id
+/** ================= GET ALL ================= */
+
+export const getAllExamTimetables = async (params: {
+  class_id?: string;
+  subject_id?: string;
+  exam_date?: string;
+ academicYearId?: string;
+  section_id?: string;
+}) => {
+  const res = await api.get("/tenant/getallexams-timetable", {
+    params,
+  });
+  return res.data.data as ExamTimetableListItem[];
+};
+
+/** ================= GET BY ID ================= */
+
+export const getExamTimetableById = async (id: string) => {
+  const res = await api.get(`/tenant/getexams-timetableById/${id}`);
+  return res.data.data as ExamTimetableDetail;
+};
+
+/** ================= UPDATE ================= */
+
 export const updateExamTimetable = async (
   id: string,
-  payload: UpdateExamTimetablePayload
-): Promise<{ status: boolean; data: ExamTimetable }> => {
-  const { data } = await api.put(
+  data: {
+    exam_name?: string;
+    room_no?: string;
+  }
+) => {
+  const res = await api.put(
     `/tenant/updateexams-timetableById/${id}`,
-    payload
+    data
   );
-  return data;
+  return res.data.data;
 };
 
-// DELETE /tenant/deleteexams-timetableById/:id
-export const deleteExamTimetable = async (
-  id: string
-): Promise<{ status: boolean; message: string }> => {
-  const { data } = await api.delete(
+/** ================= DELETE ================= */
+
+export const deleteExamTimetable = async (id: string) => {
+  const res = await api.delete(
     `/tenant/deleteexams-timetableById/${id}`
   );
-  return data;
+  return res.data;
 };

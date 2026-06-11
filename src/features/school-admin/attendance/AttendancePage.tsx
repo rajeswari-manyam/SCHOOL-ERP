@@ -1,14 +1,11 @@
-import { useState } from "react";
 import { useAttendanceStore } from "./store";
-import { useAttendanceToday } from "./hooks/useAttendance";
+import { useAllClassesTodayAttendance } from "./hooks/useAttendance";
 import AttendanceToday from "./components/AttendanceToday";
 import AttendanceHistory from "./components/AttendanceHistory";
 import HolidayCalendar from "./components/HolidayCalendar";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import AddHolidayModal from "./components/AddHolidayModal";
 import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Badge } from "../../../components/ui/badge";
 import type { AttendanceTab } from "./types/attendance.types";
 
 const TABS: { key: AttendanceTab; label: string }[] = [
@@ -19,141 +16,82 @@ const TABS: { key: AttendanceTab; label: string }[] = [
 
 const AttendancePage = () => {
   const { activeTab, setActiveTab, openMarkAttendance } = useAttendanceStore();
-  const [activeClass] = useState({ className: "10", section: "B" });
 
-  const { data: todayData, isLoading: todayLoading, error: todayError } = useAttendanceToday(
-    activeClass.className,
-    activeClass.section,
-  );
-
-  const todayLabel = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day:     "numeric",
-    month:   "long",
-    year:    "numeric",
-  });
+  const {
+    data: allClassesData,
+    isLoading: allClassesLoading,
+    error: allClassesError,
+  } = useAllClassesTodayAttendance();
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-6">
 
-        {/* ── Page Header ── */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-
-          {/* Left: title + date badge */}
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
-              Attendance
-            </h1>
-            <div className="mt-2 flex flex-col items-start gap-2 sm:mt-1 sm:flex-row sm:items-center">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700">
-                📅 {todayLabel}
-              </span>
-              {activeTab !== "today" && (
-                <Input
-                  type="date"
-                  placeholder="mm/dd/yyyy"
-                  className="w-full max-w-[170px] border-gray-200 bg-white text-xs text-gray-500"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Right: action buttons */}
-          <div className="flex w-full items-center gap-2 sm:w-auto">
+        {/* Page Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium sm:flex-none sm:px-4 sm:text-sm"
+              className="flex items-center gap-1.5 rounded-lg border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              ↓{" "}
-              <span className="hidden sm:inline">Export CSV</span>
-              <span className="sm:hidden">Export</span>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export CSV
             </Button>
             <Button
               onClick={openMarkAttendance}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 sm:flex-none sm:px-4 sm:text-sm"
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              ✓{" "}
-              <span className="hidden xs:inline">Mark Attendance</span>
-              <span className="xs:hidden">Mark</span>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Mark Attendance
             </Button>
           </div>
         </div>
 
-        {/* ── Tabs ────────────────────────────────────────────────── */}
-        <div className="relative">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-6 bg-gradient-to-r from-gray-50 to-transparent sm:hidden"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-8 bg-gradient-to-l from-gray-50 to-transparent sm:hidden"
-          />
-
-          <div
-            className="overflow-x-auto"
-            style={{ scrollbarWidth: "none" }}
-          >
-            <style>{`
-              .tab-strip::-webkit-scrollbar { display: none; }
-            `}</style>
-
-            <div className="tab-strip flex min-w-max items-center border-b border-gray-200">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={[
-                    "relative flex shrink-0 items-center gap-1.5 whitespace-nowrap",
-                    "border-b-2 px-4 py-3 text-sm font-medium transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400",
-                    "sm:px-5",
-                    activeTab === tab.key
-                      ? "border-indigo-600 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700",
-                  ].join(" ")}
-                  aria-current={activeTab === tab.key ? "page" : undefined}
-                >
-                  {tab.label}
-
-                  {tab.key === "today" && (
-                    <Badge
-                      variant="blue"
-                      className="px-1.5 py-0 text-[10px] font-bold"
-                    >
-                      3
-                    </Badge>
-                  )}
-                </button>
-              ))}
-            </div>
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <div className="flex items-center">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={[
+                  "relative flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+                  activeTab === tab.key
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700",
+                ].join(" ")}
+              >
+                {tab.label}
+                {tab.key === "today" && allClassesData && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+                    {allClassesData.total_classes}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* ── Tab Content ── */}
-        {activeTab === "today"   && (
+        {/* Tab Content */}
+        {activeTab === "today" && (
           <AttendanceToday
-            data={todayData}
-            loading={todayLoading}
-            error={todayError ? (todayError as Error).message : null}
+            allClassesData={allClassesData}
+            allClassesLoading={allClassesLoading}
+            allClassesError={allClassesError ? (allClassesError as Error).message : null}
           />
         )}
         {activeTab === "history" && <AttendanceHistory />}
-        {activeTab === "holiday" && <HolidayCalendar   />}
+        {activeTab === "holiday" && <HolidayCalendar />}
       </div>
 
-      {/* Modals */}
       <MarkAttendanceModal />
       <AddHolidayModal />
-
-      {/* Floating chat button */}
-      <button
-        aria-label="Open chat"
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg transition-colors hover:bg-indigo-700 active:scale-95"
-      >
-        💬
-      </button>
     </div>
   );
 };

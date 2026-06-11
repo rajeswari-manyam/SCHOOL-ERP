@@ -1,7 +1,5 @@
 import api from "@/config/axios";
 
-
-
 export interface ClassRecord {
   id: string;
   class_name: string;
@@ -87,6 +85,41 @@ export const getClassById = async (
 ): Promise<GetClassByIdResponse> => {
   const { data } = await api.get<GetClassByIdResponse>(
     `/tenant/getclassById/${id}`
+  );
+  return data;
+};
+
+/* =========================================================
+   📘 GET SECTIONS BY CLASS ID  ← NEW
+========================================================= */
+
+export interface SectionRecord {
+  id: string;
+  sectionName: string;
+  section_name?: string;
+  classId: string;
+  class_name?: string;
+  capacity?: number;
+  total_strength?: number;
+  class_teacher?: string;
+  classteacherid?: string | null;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GetSectionsByClassIdResponse {
+  status: boolean;
+  count: number;
+  data: SectionRecord[];
+}
+
+export const getSectionsByClassId = async (
+  classId: string
+): Promise<GetSectionsByClassIdResponse> => {
+  const { data } = await api.get<GetSectionsByClassIdResponse>(
+    `/tenant/getallsections`,
+    { params: { class_id: classId } }   // ← query param, not path param
   );
   return data;
 };

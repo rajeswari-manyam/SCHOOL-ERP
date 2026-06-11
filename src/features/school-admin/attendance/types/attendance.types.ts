@@ -110,6 +110,43 @@ export interface CreateHolidayPayload {
   school_code: string;
 }
 
+// ─── GET /tenant/getallclassestodayattendance ─────────────────────────────
+export interface ClassTodayItem {
+  class: { id: string; name: string };
+  section: { id: string; name: string };
+  attendance_status: string;
+  total_students: number;
+  present_students: number;
+  absent_students: number;
+}
+
+export interface GetAllClassesTodayAttendanceResponse {
+  status: boolean;
+  date: string;
+  total_classes: number;
+  data: ClassTodayItem[];
+}
+
+// ─── GET /tenant/getclasstodayattendance?class_id=...&section_id=... ─────
+export interface ClassTodayStudentRecord {
+  id: string;
+  student_name: string;
+  roll_no: string;
+  attendance_status: "present" | "absent" | "late";
+}
+
+export interface GetClassTodayAttendanceResponse {
+  status: boolean;
+  date: string;
+  attendance_status: string;
+  class: { id: string; name: string };
+  section: { id: string; name: string };
+  total_students: number;
+  present_students: number;
+  absent_students: number;
+  students: ClassTodayStudentRecord[];
+}
+
 // ─── Raw item from GET /tenant/getallattendance?className=...&section=... ───
 export interface GetAllAttendanceRawItem {
   student_id?: string;

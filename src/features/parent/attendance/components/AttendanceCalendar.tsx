@@ -37,6 +37,7 @@ export default function AttendanceCalendar({
   const presentSet = new Set<number>()
   const absentMap = new Map<number, string>() // day → record id
   const lateSet = new Set<number>()
+  const holidaySet = new Set<number>()
 
   monthlyDays.forEach((entry) => {
     const d = new Date(entry.date)
@@ -48,6 +49,7 @@ export default function AttendanceCalendar({
       if (entry.status === "present") presentSet.add(day)
       else if (entry.status === "absent") absentMap.set(day, entry.id)
       else if (entry.status === "late") lateSet.add(day)
+      else if (entry.status === "holiday") holidaySet.add(day)
     }
   })
 
@@ -80,6 +82,7 @@ export default function AttendanceCalendar({
     const isAbsent  = absentMap.has(d)
     const isPresent = presentSet.has(d)
     const isLate    = lateSet.has(d)
+    const isHoliday = holidaySet.has(d)
     const isWknd    = isWeekend(year, month, d)
     const isToday   = d === todayNum
 
@@ -109,6 +112,10 @@ export default function AttendanceCalendar({
         <div className={cn(DAY_BASE, "bg-amber-400 text-white cursor-pointer")} onClick={handleClick}>
           {d}
         </div>
+      )
+    } else if (isHoliday) {
+      dayNode = (
+        <div className={cn(DAY_BASE, "bg-gray-200 text-gray-500")}>{d}</div>
       )
     } else if (isPresent) {
       dayNode = (
@@ -152,6 +159,7 @@ export default function AttendanceCalendar({
     { dot: "bg-indigo-600",          label: "Present" },
     { dot: "bg-red-500",             label: "Absent"  },
     { dot: "bg-amber-400",           label: "Late"    },
+    { dot: "bg-gray-300",            label: "Holiday" },
     { dot: "bg-sky-500",             label: "Today"   },
   ]
 

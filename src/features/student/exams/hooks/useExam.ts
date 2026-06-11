@@ -1,9 +1,10 @@
 // hooks/useExamData.ts
 import { useState, useEffect, useCallback } from "react";
 import {
-  getAllExamTimetable,
+  getAllExamTimetables,
   getExamTimetableById,
-  type ExamTimetable,
+  type ExamTimetableListItem,
+  type ExamTimetableDetail,
 } from "../../../../services/examtimetable.api";
 import {
   getAllResults,
@@ -22,9 +23,12 @@ import {
 /* ─────────────────────────────────────────────
    Helper: map API ExamTimetable → local Exam
 ───────────────────────────────────────────── */
-const mapTimetableToExam = (t: ExamTimetable): Exam => ({
+const mapTimetableToExam = (t: ExamTimetableListItem | ExamTimetableDetail): Exam => ({
   id: t.id,
-  subject: t.subjectname as Exam["subject"],
+  subject: (
+    (t as ExamTimetableListItem).subject?.subject_name ??
+    (t as ExamTimetableDetail).subject_id
+  ) as Exam["subject"],
   date: t.exam_date,
   startTime: t.start_time,
   endTime: t.end_time,
@@ -51,16 +55,32 @@ const buildExamResult = (results: ApiResult[]): ExamResult => {
   const mapped = results.map(mapApiResult);
   const obtainedMarks = mapped.reduce((sum, r) => sum + r.marks, 0);
   const totalMarks = mapped.length * TOTAL_MARKS_PER_SUBJECT;
-  const percentage = totalMarks > 0 ? parseFloat(((obtainedMarks / totalMarks) * 100).toFixed(1)) : 0;
+  const percentage =
+    totalMarks > 0 ? parseFloat(((obtainedMarks / totalMarks) * 100).toFixed(1)) : 0;
 
   const firstResult = results[0];
   return {
     examName: firstResult?.examName ?? firstResult?.exam_type ?? "Exam",
-    examDate: firstResult ? new Date(firstResult.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "",
+    examDate: firstResult
+      ? new Date(firstResult.createdAt).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "",
     totalMarks,
     obtainedMarks,
     percentage,
-    grade: percentage >= 90 ? "A+" : percentage >= 75 ? "A" : percentage >= 60 ? "B+" : percentage >= 50 ? "B" : "C",
+    grade:
+      percentage >= 90
+        ? "A+"
+        : percentage >= 75
+        ? "A"
+        : percentage >= 60
+        ? "B+"
+        : percentage >= 50
+        ? "B"
+        : "C",
     rank: "N/A",
     status: percentage >= 35 ? "pass" : "fail",
     results: mapped,
@@ -71,15 +91,15 @@ const buildExamResult = (results: ApiResult[]): ExamResult => {
    Hook
 ───────────────────────────────────────────── */
 export const useExamData = (
-  classname: string,
-  sectionname: string,
+  classId: string,       // ID, not name
+  sectionId: string,     // ID, not name
   studentId: string,
   examType: string,
-  academicYear: string
+  academicYearId: string   // UUID of academic year
 ) => {
-  const [activeTab, setActiveTab] = useState<
-    "upcoming" | "results" | "report" | "syllabus"
-  >("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "results" | "report" | "syllabus">(
+    "upcoming"
+  );
 
   // ── Exam list state ──
   const [exams, setExams] = useState<Exam[]>([]);
@@ -103,32 +123,38 @@ export const useExamData = (
 
   /* ── Fetch all exams ── */
   const fetchAllExams = useCallback(async () => {
-    if (!classname || !sectionname) return;
+  if (!classId) return;
     setExamsLoading(true);
     setExamsError(null);
     try {
-      const response = await getAllExamTimetable(classname, sectionname);
-      if (response.status) {
-        setExams(response.data.map(mapTimetableToExam));
-      } else {
-        setExamsError("Failed to fetch exam timetable.");
-      }
+      const data = await getAllExamTimetables({
+        class_id: classId,
+        section_id: sectionId,
+      
+      });
+     console.log("classId:", classId, "sectionId:", sectionId);
+console.log("exams data:", data);
+if (Array.isArray(data)) {
+  setExams(data.map(mapTimetableToExam));
+} else {
+  setExamsError("Failed to fetch exam timetable.");
+}
     } catch (err) {
       setExamsError("Something went wrong while fetching exams.");
       console.error(err);
     } finally {
       setExamsLoading(false);
     }
-  }, [classname, sectionname]);
+  }, [classId, sectionId, academicYearId]);
 
   /* ── Fetch single exam by ID ── */
   const fetchExamById = useCallback(async (id: string) => {
     setSelectedExamLoading(true);
     setSelectedExamError(null);
     try {
-      const response = await getExamTimetableById(id);
-      if (response.status) {
-        setSelectedExam(mapTimetableToExam(response.data));
+      const data = await getExamTimetableById(id);
+      if (data) {
+        setSelectedExam(mapTimetableToExam(data));
       } else {
         setSelectedExamError("Failed to fetch exam details.");
       }
@@ -142,11 +168,11 @@ export const useExamData = (
 
   /* ── Fetch student results (filtered) ── */
   const fetchStudentResults = useCallback(async () => {
-    if (!studentId || !examType || !academicYear) return;
+    if (!studentId || !examType || !academicYearId) return;
     setResultsLoading(true);
     setResultsError(null);
     try {
-      const response = await getStudentResults(studentId, examType, academicYear);
+      const response = await getStudentResults(studentId, examType, academicYearId);
       if (response.status) {
         setExamResult(buildExamResult(response.data));
       } else {
@@ -158,7 +184,7 @@ export const useExamData = (
     } finally {
       setResultsLoading(false);
     }
-  }, [studentId, examType, academicYear]);
+  }, [studentId, examType, academicYearId]);
 
   /* ── Fetch all results (no filter) ── */
   const fetchAllResults = useCallback(async () => {
@@ -199,16 +225,17 @@ export const useExamData = (
   }, []);
 
   /* ── Auto-fetch on mount / param change ── */
-  useEffect(() => { fetchAllExams(); }, [fetchAllExams]);
+  useEffect(() => {
+    fetchAllExams();
+  }, [fetchAllExams]);
 
   useEffect(() => {
-    // Use student-specific results if params available, else fall back to all results
-    if (studentId && examType && academicYear) {
+    if (studentId && examType && academicYearId) {
       fetchStudentResults();
     } else {
       fetchAllResults();
     }
-  }, [studentId, examType, academicYear, fetchStudentResults, fetchAllResults]);
+  }, [studentId, examType, academicYearId, fetchStudentResults, fetchAllResults]);
 
   return {
     // Tab

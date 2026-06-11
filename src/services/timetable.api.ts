@@ -1,30 +1,85 @@
-import api from "@/config/axios";
+/**
+ * src/services/timetable.api.ts
+ */
 
-/* =========================
-   TYPES  (matches actual API response)
-========================= */
+import api from "@/config/axios";
 
 export interface TimetableSlot {
   id: string;
-  className: string;
-  sectionName: string;
-  class_id: string | null;
-  subject_id: string | null;
-  subjectname: string;
+  class_id: string;
+  section_id: string;
+  subject_id: string;
   teacher_id: string;
-  teachername: string;
   period_no: number;
-  time_sloat: string;           // typo in API intentionally kept
-  day_of_week: string;          // lowercase: "monday", "tuesday" …
-  start_time: string;           // "09:00:00"
-  end_time: string;             // "09:45:00"
+  time_sloat: string;
+  day_of_week: string;
   room_no: string;
-  lunch_start: string;          // "12:30:00"
-  lunch_end: string;            // "01:00:00"
-  academic_year: string;
-  school_code: string;
+  academicYearId: string;
+  break_start: string;
+  break_end: string;
+  lunch_start: string;
+  lunch_end: string;
+  start_time: string;
+  end_time: string;
+  subjectname: string;
+  teachername: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TimetablePayload {
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  teacher_id: string;
+  period_no: number;
+  time_sloat: string;
+  day_of_week: string;
+  room_no: string;
+  academicYearId: string;
+  break_start: string;
+  break_end: string;
+  lunch_start: string;
+  lunch_end: string;
+}
+
+export type CreateTimetablePayload = TimetablePayload;
+
+export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT";
+export type ExamNotifyStatus = "SENT" | "PENDING" | "FAILED";
+
+export interface ExamEntry {
+  id: string;
+  subject: string;
+  className: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  notifyStatus: ExamNotifyStatus;
+}
+
+export interface EditPeriodPayload {
+  classId: string;
+  day: DayOfWeek;
+  periodNo: number;
+  subject: string;
+  teacherName: string;
+  room: string;
+  applyToAllWeeks: boolean;
+}
+
+export interface CreateExamTimetablePayload {
+  subjectname: string;
+  classname: string;
+  sectionname: string;
+  exam_name: string;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+  academic_year: string;
+  school_code: string;
 }
 
 export interface GetAllTimetableResponse {
@@ -36,6 +91,17 @@ export interface GetAllTimetableResponse {
 export interface GetTimetableByIdResponse {
   status: boolean;
   data: TimetableSlot;
+}
+
+export interface CreateUpdateTimetableResponse {
+  status: boolean;
+  message: string;
+  data: TimetableSlot;
+}
+
+export interface DeleteTimetableResponse {
+  status: boolean;
+  message: string;
 }
 
 export interface ExamTimetableSlot {
@@ -61,37 +127,60 @@ export interface GetAllExamTimetableResponse {
 }
 
 /* =========================
-   GET API FUNCTIONS ONLY
+   API FUNCTIONS
 ========================= */
 
-// GET /tenant/getalltimetable?className=10&sectionName=A
-export const getAllTimetable = async (
-  className: string,
-  sectionName: string
-): Promise<GetAllTimetableResponse> => {
-  const { data } = await api.get<GetAllTimetableResponse>(
-    `/tenant/getalltimetable?className=${className}&sectionName=${sectionName}`
+// POST /tenant/createtimetable
+export const createTimetable = async (
+  payload: TimetablePayload,
+): Promise<CreateUpdateTimetableResponse> => {
+  const { data } = await api.post<CreateUpdateTimetableResponse>(
+    "/tenant/createtimetable",
+    payload,
   );
   return data;
 };
 
-// GET /tenant/getTimetableById/:id
+// GET /tenant/getalltimetable?class_id=<UUID>&section_id=<UUID>
+export const getAllTimetable = async (
+  class_id: string,
+  section_id: string,
+  teacher_id?: string,
+): Promise<GetAllTimetableResponse> => {
+  const params: Record<string, string> = { class_id, section_id };
+  if (teacher_id) params.teacher_id = teacher_id;
+  const { data } = await api.get<GetAllTimetableResponse>("/tenant/getalltimetable", { params });
+  return data;
+};
+
+// GET /tenant/gettimetableById/:id
 export const getTimetableById = async (
-  id: string
+  id: string,
 ): Promise<GetTimetableByIdResponse> => {
   const { data } = await api.get<GetTimetableByIdResponse>(
-    `/tenant/getTimetableById/${id}`
+    `/tenant/gettimetableById/${id}`,
   );
   return data;
 };
 
-// GET /tenant/getAllexams-timetable?classname=10&sectionname=A
-export const getAllExamTimetable = async (
-  className: string,
-  sectionName: string
-): Promise<GetAllExamTimetableResponse> => {
-  const { data } = await api.get<GetAllExamTimetableResponse>(
-    `/tenant/getAllexams-timetable?classname=${className}&sectionname=${sectionName}`
+// PUT /tenant/updatetimetableById/:id
+export const updateTimetableById = async (
+  id: string,
+  payload: TimetablePayload,
+): Promise<CreateUpdateTimetableResponse> => {
+  const { data } = await api.put<CreateUpdateTimetableResponse>(
+    `/tenant/updatetimetableById/${id}`,
+    payload,
+  );
+  return data;
+};
+
+// DELETE /tenant/deletetimetableById/:id
+export const deleteTimetableById = async (
+  id: string,
+): Promise<DeleteTimetableResponse> => {
+  const { data } = await api.delete<DeleteTimetableResponse>(
+    `/tenant/deletetimetableById/${id}`,
   );
   return data;
 };

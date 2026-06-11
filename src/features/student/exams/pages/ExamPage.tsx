@@ -1,39 +1,71 @@
 // pages/ExamsPage.tsx
+import { useState } from "react";
 import { useExamData } from "../hooks/useExam";
 import { UpcomingSection } from "../components/UpcomingSection";
 import { ResultsSection } from "../components/ResultSection";
-// import { ReportCardSection } from "../components/ReportCardSection";
-// import { SyllabusSection } from "../components/SyllabusSection";
-
-// ── Change these to come from auth context / route params as needed ──
-const CLASS_NAME = "10";
-const SECTION_NAME = "A";
-const STUDENT_ID = "";
-const EXAM_TYPE = "Midterm";
-const ACADEMIC_YEAR = "2025-2026";
+import { useAuthStore } from "@/store/authStore";
+import { getAllAcademicYears } from "../../../../services/academicYear.api";
+import { getClassById } from "../../../../services/class.api"; // ← adjust path
+import { useQuery } from "@tanstack/react-query";
 
 const tabs = [
   { id: "upcoming", label: "Upcoming Exams" },
   { id: "results", label: "Results" },
-  // { id: "report", label: "Report Card" },
-  // { id: "syllabus", label: "Syllabus" },
 ] as const;
 
 export const ExamsPage = () => {
-  const {
-    activeTab,
-    setActiveTab,
-    exams,
-    examsLoading,
-    examsError,
-    refetchExams,
-    examResult,
-    // report,
-    // syllabus,
-    // unitTestSyllabus,
-    // deadlines,
-  } = useExamData(CLASS_NAME, SECTION_NAME, STUDENT_ID, EXAM_TYPE, ACADEMIC_YEAR);
+const { user } = useAuthStore();
+console.log("section_id value:", user?.section_id);
 
+  const classId = user?.class_id ?? "";
+ const sectionId = user?.section_id ?? "";
+  const studentId = user?.id ?? "";
+  const sectionName = user?.section_id?.split(":")[1] ?? ""; // name part after ":"
+
+  // ── Fetch class name ──
+  const { data: classData } = useQuery({
+    queryKey: ["class", classId],
+    queryFn: () => getClassById(classId),
+    enabled: !!classId,
+    staleTime: 10 * 60 * 1000,
+  });
+  const className = classData?.data?.class_name ?? "";
+
+  // ── Academic years ──
+  const { data: academicYearsData } = useQuery({
+    queryKey: ["academicYears"],
+    queryFn: getAllAcademicYears,
+    staleTime: 10 * 60 * 1000,
+  });
+  const academicYears = academicYearsData?.data ?? [];
+  const defaultYear =
+    academicYears.find((y) => y.active)?.yearName ??
+    academicYears[0]?.yearName ??
+    "2024-2025";
+
+  const defaultYearId =
+    academicYears.find((y) => y.active)?.id ??
+    academicYears[0]?.id ??
+    "";
+
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedYearId, setSelectedYearId] = useState<string>("");
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+
+  const activeYear = selectedYear || defaultYear;
+  const activeYearId = selectedYearId || defaultYearId;
+
+  console.log("classId:", classId, "sectionId:", sectionId);
+
+const {
+  activeTab,
+  setActiveTab,
+  exams,
+  examsLoading,
+  examsError,
+  refetchExams,
+  examResult,
+} = useExamData(classId, sectionId, studentId, "Midterm", activeYearId);
   return (
     <div className="mx-auto max-w-7xl px-2 sm:px-3 py-3 sm:py-4 space-y-4">
 
@@ -41,29 +73,49 @@ export const ExamsPage = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-indigo-700">
-            My Exams & Results
+            My Exams &amp; Results
           </h1>
           <p className="text-sm text-gray-500">
-            Class {CLASS_NAME}{SECTION_NAME} | Academic Year 2024-25
+            {className && sectionName
+              ? `Class ${className} - ${sectionName}`
+              : className
+              ? `Class ${className}`
+              : "Loading class…"}{" "}
+            | Academic Year {activeYear}
           </p>
         </div>
 
-        <div className="
-          flex items-center gap-1
-          rounded-lg border border-gray-200 bg-white
-          px-3 py-1.5 text-sm text-gray-700
-          transition hover:border-indigo-200 hover:shadow-sm
-        ">
-          2024-25
-          <svg
-            className="h-4 w-4 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+        {/* Academic Year Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setYearDropdownOpen((o) => !o)}
+            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:border-indigo-200 hover:shadow-sm"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+            {activeYear}
+            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {yearDropdownOpen && academicYears.length > 0 && (
+            <div className="absolute right-0 z-20 mt-1 w-36 rounded-lg border border-gray-200 bg-white shadow-lg">
+              {academicYears.map((y) => (
+                <button
+                  key={y.id}
+                  onClick={() => {
+                    setSelectedYear(y.yearName);
+                    setSelectedYearId(y.id);
+                    setYearDropdownOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-sm transition hover:bg-indigo-50 hover:text-indigo-600 first:rounded-t-lg last:rounded-b-lg ${
+                    activeYear === y.yearName ? "text-indigo-600 font-medium" : "text-gray-700"
+                  }`}
+                >
+                  {y.yearName}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -75,11 +127,7 @@ export const ExamsPage = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`
               relative px-4 py-3 text-sm font-medium transition whitespace-nowrap
-              ${
-                activeTab === tab.id
-                  ? "text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }
+              ${activeTab === tab.id ? "text-indigo-600" : "text-gray-500 hover:text-gray-700"}
             `}
           >
             {tab.label}
@@ -93,11 +141,9 @@ export const ExamsPage = () => {
       {/* ================= CONTENT AREA ================= */}
       <div className="pt-2 transition-all duration-200 space-y-4">
 
-        {/* ── Upcoming Exams (API-driven) ── */}
         <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
           {activeTab === "upcoming" && (
             <>
-              {/* Loading */}
               {examsLoading && (
                 <div className="flex items-center justify-center py-12 text-sm text-gray-400">
                   <svg className="animate-spin h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24">
@@ -108,7 +154,6 @@ export const ExamsPage = () => {
                 </div>
               )}
 
-              {/* Error */}
               {!examsLoading && examsError && (
                 <div className="flex flex-col items-center gap-3 py-12 text-sm text-red-500">
                   <span>{examsError}</span>
@@ -121,7 +166,6 @@ export const ExamsPage = () => {
                 </div>
               )}
 
-              {/* Data */}
               {!examsLoading && !examsError && (
                 <UpcomingSection exams={exams} />
               )}
@@ -134,22 +178,6 @@ export const ExamsPage = () => {
             <ResultsSection examResult={examResult} />
           )}
         </div>
-
-        {/* <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
-          {activeTab === "report" && report && (
-            <ReportCardSection report={report} />
-          )}
-        </div> */}
-
-        {/* <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
-          {activeTab === "syllabus" && (
-            <SyllabusSection
-              syllabus={syllabus}
-              unitTestSyllabus={unitTestSyllabus}
-              deadlines={deadlines}
-            />
-          )}
-        </div> */}
       </div>
     </div>
   );

@@ -16,6 +16,8 @@ type AttStatus = "PRESENT" | "ABSENT" | "HALF_DAY";
 
 interface TodayTabProps {
   today: TodayAttendance;
+  isHoliday?: boolean;
+  holidayName?: string;
   onOpenCorrectionModal: (prefill?: { date: string; studentId: string; studentName: string; rollNo: string; currentMark: "P" | "A" | "H" }) => void;
 }
 
@@ -289,8 +291,18 @@ const WebForm = ({
 };
 
 // ── TodayTab ──────────────────────────────────────────────────────────────────
-const TodayTab = ({ today, onOpenCorrectionModal }: TodayTabProps) => {
+const TodayTab = ({ today, isHoliday, holidayName, onOpenCorrectionModal }: TodayTabProps) => {
   const [showWebForm, setShowWebForm] = useState(false);
+
+  if (isHoliday) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-10 text-center">
+        <span className="text-3xl">🎉</span>
+        <p className="text-lg font-bold text-gray-700">{holidayName ?? "Holiday"}</p>
+        <p className="text-sm text-gray-500">Today is a holiday — no attendance to mark.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5">

@@ -9,7 +9,7 @@ import {AdmissionsPage} from "../school-admin/admissions/AdmissionsPage";
 import { FeesPage as FeeCollectionPage } from "../school-admin/fees";
 import { ReportsPage } from "../school-admin/reports";
 import { SettingsPage } from "./settings";
-import TimetablePage from "../school-admin/timetable";
+import TimetablePage from "../school-admin/timetable/TimetablePage";
 import ClassesPage from "../school-admin/classes/ClassesPage";
 
 export default function SchoolAdminRouter() {

@@ -1,6 +1,7 @@
 // teacher/attendance/hooks/useAttendance.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { attendanceApi } from "../api/attendance.api";
+import { getAllHolidays } from "../../../../services/holidays.api";
 import type {
   MarkAttendancePayload,
   CorrectionRequestPayload,
@@ -15,6 +16,7 @@ export const ATTENDANCE_KEYS = {
   students:    () => [...ATTENDANCE_KEYS.all, "students"] as const,
   myHistory:   () => [...ATTENDANCE_KEYS.all, "my-history"] as const,
   corrections: () => [...ATTENDANCE_KEYS.all, "corrections"] as const,
+  holidays:    () => [...ATTENDANCE_KEYS.all, "holidays"] as const,
 };
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -45,6 +47,16 @@ export const useMyCorrectionRequests = () =>
     queryKey: ATTENDANCE_KEYS.corrections(),
     queryFn:  attendanceApi.getMyCorrectionRequests,
     staleTime: 1000 * 60 * 5,
+  });
+
+// ── Holidays ───────────────────────────────────────────────────────────────────
+export const useAllHolidays = () =>
+  useQuery({
+    queryKey: ATTENDANCE_KEYS.holidays(),
+    queryFn:  () => getAllHolidays(),
+    staleTime: 10 * 60_000,
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
 // ── Mutations ─────────────────────────────────────────────────────────────────

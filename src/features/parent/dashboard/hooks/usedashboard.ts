@@ -7,7 +7,7 @@ import {
 } from "../../../../services/attendance.api"
 
 import { getHomeworkByClass } from "../../../../services/homework.api"
-import { getAllExamTimetable } from "../../../../services/examtimetable.api"
+import { getAllExamTimetables } from "../../../../services/examtimetable.api"
 import { getAnnouncementsByType } from "../../../../services/announcements.api"
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -145,7 +145,7 @@ export function useDashboard() {
         const numericClass = className.replace(/[^0-9]/g, "")
         const finalClass = numericClass || className
 
-        const res = await getHomeworkByClass(finalClass)
+       const res = await getHomeworkByClass({ class_id: finalClass })
 
         console.log("Homework API:", res)
 
@@ -173,19 +173,14 @@ export function useDashboard() {
       store.setLoadingExams(true)
 
       try {
-        const res = await getAllExamTimetable(
-          className,
-          sectionName
-        )
+       const res = await getAllExamTimetables({
+  class_id: className,
+  section_id: sectionName,
+})
 
         console.log("Exams API:", res)
 
-        const exams = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res)
-          ? res
-          : []
-
+     const exams = Array.isArray(res) ? res : []
         store.setExams(exams)
       } catch (err) {
         console.error("fetchExams:", err)

@@ -5,6 +5,7 @@ import {
   getYearlyAttendance,
   getAttendanceById,
 } from "../../../../services/attendance.api";
+import { getAllHolidays } from "../../../../services/holidays.api";
 import type { DayEntry, MonthSummary, YearlySummary } from "../store/attedance.store"
 
 const SHORT_MONTHS = [
@@ -21,15 +22,18 @@ export function useAttendance() {
       store.setLoadingMonthly(true)
       store.setMonthlyError(null)
       try {
-        const res = await getMonthlyAttendance({ studentId, month, year })
+        const [attRes, holidaysRes] = await Promise.all([
+          getMonthlyAttendance({ studentId, month, year }),
+          getAllHolidays(),
+        ]);
 
-        // Normalise: API may return { records: [...] }, { data: [...] } or bare array
-        const records: any[] = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.records)
-          ? res.records
-          : Array.isArray(res?.data)
-          ? res.data
+        // Normalise attendance records
+        const records: any[] = Array.isArray(attRes)
+          ? attRes
+          : Array.isArray(attRes?.records)
+          ? attRes.records
+          : Array.isArray(attRes?.data)
+          ? attRes.data
           : []
 
         const days: DayEntry[] = records.map((r: any) => ({
@@ -39,11 +43,43 @@ export function useAttendance() {
           reason: r.reason ?? null,
         }))
 
+        // Merge holidays into the calendar days
+        const existingDates = new Set(days.map((d) => d.date));
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const monthStr = pad(month);
+        const yearStr = String(year);
+
+        const rawHolidays: any[] = Array.isArray(holidaysRes?.data)
+          ? holidaysRes.data
+          : Array.isArray(holidaysRes?.holidays)
+          ? holidaysRes.holidays
+          : (holidaysRes?.data && Array.isArray((holidaysRes.data as any).holidays))
+          ? (holidaysRes.data as any).holidays
+          : [];
+
+        rawHolidays.forEach((h: any) => {
+          const dateStr = h.date;
+          if (
+            dateStr &&
+            dateStr.startsWith(`${yearStr}-${monthStr}`) &&
+            !existingDates.has(dateStr)
+          ) {
+            days.push({
+              id: h.id,
+              date: dateStr,
+              status: "holiday",
+              reason: h.holidayname ?? h.name ?? "Holiday",
+            });
+          }
+        });
+
+        days.sort((a, b) => a.date.localeCompare(b.date));
+
         const summary: MonthSummary = {
           present: days.filter((d) => d.status === "present").length,
           absent:  days.filter((d) => d.status === "absent").length,
           late:    days.filter((d) => d.status === "late").length,
-          total:   days.length,
+          total:   days.filter((d) => d.status !== "holiday").length,
         }
 
         store.setMonthlyDays(days, summary)

@@ -1,240 +1,238 @@
-import { useAttendanceStore } from "../store";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { Card } from "../../../../components/ui/card";
-import { Input } from "../../../../components/ui/input";
-import { Select } from "../../../../components/ui/select";
-import { Button } from "../../../../components/ui/button";
-import { Badge } from "../../../../components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "../../../../components/ui/table";
+import { useState } from "react";
+import { Phone, MessageSquare, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { useChronicAbsentees } from "../hooks/useAttendance";
 
-const classOptions = [
-  { label: "All Classes", value: "All Classes" },
-  { label: "6A", value: "6A" },
-  { label: "6B", value: "6B" },
-  { label: "7A", value: "7A" },
-  { label: "8A", value: "8A" },
-  { label: "9A", value: "9A" },
-  { label: "10A", value: "10A" },
+// ─── Avatar helpers ───────────────────────────────────────────────────────────
+const COLORS = [
+  "#6366F1", "#EF4444", "#F59E0B", "#10B981",
+  "#8B5CF6", "#EC4899", "#06B6D4", "#14B8A6",
 ];
+const avatarBg = (name: string) => COLORS[name.charCodeAt(0) % COLORS.length];
+const initials = (name: string) =>
+  name
+    .trim()
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
 
-const severityVariant: Record<string, "red" | "amber" | "orange"> = {
-  high: "red",
-  medium: "orange",
-  low: "amber",
+// ─── Absent days badge color ──────────────────────────────────────────────────
+const badgeStyle = (days: number) => {
+  if (days >= 8) return "bg-red-100 text-red-700";
+  if (days >= 6) return "bg-orange-100 text-orange-700";
+  return "bg-amber-100 text-amber-700";
 };
 
+// ─── Types from the API ───────────────────────────────────────────────────────
+interface ChronicStudent {
+  id: string;
+  student_name: string;
+  class_name?: string;
+  section_name?: string;
+  absent_days: number;
+  last_absent_date?: string;
+  parent_phone?: string;
+  parent_name?: string;
+  // fallback fields your backend might use
+  name?: string;
+  className?: string;
+  absentDays?: number;
+  lastAbsent?: string;
+  parentPhone?: string;
+}
+
+const PAGE_SIZE = 8;
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const AttendanceHistory = () => {
-  const {
-    historyData,
-    historyDateFrom,
-    historyDateTo,
-    historyClass,
-    setHistoryDateFrom,
-    setHistoryDateTo,
-    setHistoryClass,
-  } = useAttendanceStore();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, error } = useChronicAbsentees();
+
+  // Normalise field names — handles different possible backend shapes
+  const raw: ChronicStudent[] = Array.isArray(data?.data)
+    ? data.data
+    : Array.isArray(data)
+    ? (data as ChronicStudent[])
+    : [];
+
+  const students = raw.map((s) => ({
+    id:        s.id,
+    name:      s.student_name ?? s.name ?? "Unknown",
+    className: s.class_name ?? s.className ?? "—",
+    section:   s.section_name ?? "",
+    absentDays:s.absent_days  ?? s.absentDays ?? 0,
+    lastAbsent:s.last_absent_date
+      ? new Date(s.last_absent_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+      : s.lastAbsent ?? "—",
+    parentPhone: s.parent_phone ?? s.parentPhone ?? "—",
+  }));
+
+  const totalPages = Math.max(1, Math.ceil(students.length / PAGE_SIZE));
+  const paginated  = students.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <Card className="p-5">
-        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-          <div className="w-full lg:w-auto">
-            <label className="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">
-              Date Range
-            </label>
-            <div className="flex flex-col sm:flex-row items-stretch gap-2">
-              <Input
-                type="date"
-                value={historyDateFrom}
-                onChange={(e) => setHistoryDateFrom(e.target.value)}
-                className="w-full sm:w-[180px] min-w-0"
-              />
-              <span className="text-gray-400 text-sm">to</span>
-              <Input
-                type="date"
-                value={historyDateTo}
-                onChange={(e) => setHistoryDateTo(e.target.value)}
-                className="w-full sm:w-[180px] min-w-0"
-              />
-            </div>
-          </div>
+    <div className="space-y-5">
 
+      {/* ── Chronic Absentees card ─────────────────────────────────────── */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <label className="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">
-              Class
-            </label>
-            <Select
-              value={historyClass}
-              onValueChange={(value) => setHistoryClass(value)}
-              options={classOptions}
-            />
+            <h2 className="text-sm font-bold text-gray-900">Chronic Absentees</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Students absent more than 5 days this month
+            </p>
           </div>
-
-          <Button className="h-10 px-4">
-            <span>⚙</span> Apply Filters
-          </Button>
-        </div>
-      </Card>
-
-      {/* Trend Chart + Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-4">Attendance Trend — Last 30 Days</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={historyData.trendData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9CA3AF" }} />
-              <YAxis domain={[70, 100]} tick={{ fontSize: 10, fill: "#9CA3AF" }} />
-              <Tooltip
-                contentStyle={{ fontSize: "12px", borderRadius: "8px", border: "1px solid #e5e7eb" }}
-              />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
-              <Line
-                type="monotone"
-                dataKey="class6A"
-                stroke="#6366F1"
-                strokeWidth={2}
-                dot={false}
-                name="6A"
-              />
-              <Line
-                type="monotone"
-                dataKey="class7A"
-                stroke="#F59E0B"
-                strokeWidth={2}
-                dot={false}
-                name="7A"
-              />
-              <Line
-                type="monotone"
-                dataKey="class8A"
-                stroke="#10B981"
-                strokeWidth={2}
-                dot={false}
-                name="8A"
-              />
-              <Line
-                type="monotone"
-                dataKey="avg"
-                stroke="#9CA3AF"
-                strokeWidth={1.5}
-                strokeDasharray="5 5"
-                dot={false}
-                name="AVG"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <div className="flex flex-col gap-4">
-          <Card className="p-5 flex-1">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Monthly Average</p>
-            <p className="text-5xl font-black text-gray-900 mt-2">{historyData.monthlyAverage}%</p>
-            <p className="text-xs text-gray-500 mt-1">Across all classes</p>
-            <div className="flex items-center gap-1 mt-2">
-              <span className="text-green-500 text-xs font-medium">
-                ↑ {historyData.improvementFromLastMonth}% improvement from last month
-              </span>
-            </div>
-          </Card>
-
-          {historyData.actionRequired && (
-            <Card className="bg-amber-50 border-amber-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-amber-600">⚡</span>
-                <span className="text-xs font-semibold text-amber-800">Action Required</span>
-              </div>
-              <p className="text-xs text-amber-700 leading-relaxed">
-                {historyData.actionRequired.message}
-              </p>
-              <Button variant="outline" className="mt-3 w-full text-amber-700 border-amber-300 hover:bg-amber-100">
-                Generate {historyData.actionRequired.className} Detailed Report
-              </Button>
-            </Card>
+          {!isLoading && students.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
+              <AlertTriangle className="w-3 h-3" />
+              {students.length} student{students.length !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
-      </div>
 
-      {/* Chronic Absentees */}
-      <Card className="overflow-hidden">
-        <div className="p-5 border-b border-gray-100">
-          <h2 className="text-base font-bold text-gray-900">Chronic Absentees</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Students absent more than 5 days this month</p>
-        </div>
-
-      <div className="overflow-x-auto">
-        <Table className="min-w-[720px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Absent Days</TableHead>
-              <TableHead>Last Absent</TableHead>
-              <TableHead className="hidden sm:table-cell">Parent Contact</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {historyData.chronicAbsentees.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                      style={{ backgroundColor: student.avatarColor }}
-                    >
-                      {student.initials}
-                    </div>
-                    <span className="font-medium text-gray-900">{student.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-gray-600">{student.className}</TableCell>
-                <TableCell>
-                  <Badge variant={severityVariant[student.absentSeverity] ?? "amber"} className="px-2 py-0.5 text-xs font-bold">
-                    {student.absentDays} days
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-gray-600">{student.lastAbsent}</TableCell>
-                <TableCell className="hidden sm:table-cell text-gray-600 font-mono text-xs">{student.parentPhone}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="w-8 h-8 p-0">
-                      📞
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-8 h-8 p-0">
-                      💬
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+        {/* Loading */}
+        {isLoading && (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 bg-gray-100 rounded animate-pulse w-36" />
+                  <div className="h-2.5 bg-gray-100 rounded animate-pulse w-20" />
+                </div>
+                <div className="w-16 h-6 bg-gray-100 rounded-full animate-pulse" />
+              </div>
             ))}
-          </TableBody>
-        </Table>
-      </div>
+          </div>
+        )}
 
-        <div className="p-4 text-center border-t border-gray-100">
-          <Button variant="link" className="text-indigo-600 hover:text-indigo-700">
-            View All Absentees
-          </Button>
-        </div>
-      </Card>
+        {/* Error */}
+        {error && !isLoading && (
+          <div className="p-8 text-center">
+            <p className="text-sm text-red-500 font-medium">Failed to load absentee data.</p>
+            <p className="text-xs text-gray-400 mt-1">{(error as Error).message}</p>
+          </div>
+        )}
+
+        {/* Empty */}
+        {!isLoading && !error && students.length === 0 && (
+          <div className="p-10 text-center">
+            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">✅</span>
+            </div>
+            <p className="text-sm font-semibold text-gray-700">No chronic absentees</p>
+            <p className="text-xs text-gray-400 mt-1">All students have good attendance this month.</p>
+          </div>
+        )}
+
+        {/* Table */}
+        {!isLoading && !error && paginated.length > 0 && (
+          <>
+            {/* Column headers */}
+            <div className="grid grid-cols-[1fr_6rem_7rem_8rem_10rem_6rem] gap-3 px-5 py-2.5 bg-gray-50/60 border-b border-gray-100">
+              {["Student", "Class", "Absent Days", "Last Absent", "Parent Contact", "Actions"].map((h) => (
+                <span key={h} className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            <div className="divide-y divide-gray-50">
+              {paginated.map((student) => (
+                <div
+                  key={student.id}
+                  className="grid grid-cols-[1fr_6rem_7rem_8rem_10rem_6rem] gap-3 px-5 py-3.5 items-center hover:bg-gray-50/50 transition-colors"
+                >
+                  {/* Name + avatar */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ring-2 ring-white"
+                      style={{ backgroundColor: avatarBg(student.name) }}
+                    >
+                      {initials(student.name)}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 truncate">
+                      {student.name}
+                    </span>
+                  </div>
+
+                  {/* Class */}
+                  <span className="text-sm text-gray-600">
+                    {student.className}{student.section}
+                  </span>
+
+                  {/* Absent days badge */}
+                  <div>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${badgeStyle(student.absentDays)}`}>
+                      {student.absentDays} days
+                    </span>
+                  </div>
+
+                  {/* Last absent */}
+                  <span className="text-sm text-gray-600">{student.lastAbsent}</span>
+
+                  {/* Parent contact */}
+                  <span className="text-sm text-gray-600 font-mono text-xs">{student.parentPhone}</span>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      title="Call parent"
+                      className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      title="WhatsApp parent"
+                      className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-green-50 hover:text-green-600 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, students.length)} of {students.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
+                      p === page
+                        ? "bg-indigo-600 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

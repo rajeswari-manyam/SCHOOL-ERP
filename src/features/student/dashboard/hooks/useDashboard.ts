@@ -9,7 +9,7 @@ import { getAnnouncementsByType }                      from "../../../../service
 import { getWeeklyAttendance, getMonthlyAttendance }   from "../../../../services/attendance.api";
 import { getHomeworkByClass }                          from "../../../../services/homework.api";
 import type { Homework }                               from "../../../../services/homework.api";
-import { getAllExamTimetable }                          from "../../../../services/examtimetable.api";
+import { getAllExamTimetables } from "../../../../services/examtimetable.api"
 import { getAllResults }                                from "../../../../services/results.api";
 import { getAllTimetable }                              from "../../../../services/timetable.api";
 import { getStudentById }                              from "../../../../services/student.api";
@@ -256,7 +256,7 @@ export const useDashboard = (): DashboardState => {
           getWeeklyAttendance({ studentId: studentId ?? "", start_date: start, end_date: end }),
           getMonthlyAttendance({ studentId: studentId ?? "", month, year }),
           getHomeworkByClass({ class_id: classId, section_id: sectionId }),
-          classNum && sec ? getAllExamTimetable(classNum, sec) : Promise.resolve({ data: [] } as any),
+         classNum && sec ? getAllExamTimetables({ class_id: classNum, section_id: sec }) : Promise.resolve({ data: [] } as any),
           getAllResults(),
           classNum && sec ? getAllTimetable(classNum, sec) : Promise.resolve({ data: [] } as any),
         ]);

@@ -21,7 +21,8 @@ interface Props {
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
-  onAddExam: () => void;
+  onAddExam?: () => void;          // optional — omit to hide the button
+  onAddExamTimetable?: () => void;
   onEditExam: (entry: ExamEntry) => void;
   onDeleteExam: (id: string) => void;
 }
@@ -77,6 +78,7 @@ const ExamTimetableTable: React.FC<Props> = ({
   error,
   onRetry,
   onAddExam,
+  onAddExamTimetable,
   onEditExam,
   onDeleteExam,
 }) => {
@@ -93,9 +95,18 @@ const ExamTimetableTable: React.FC<Props> = ({
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="flex flex-col gap-3 p-4 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5 sm:pb-4">
           <h2 className="truncate text-sm font-bold text-gray-900 sm:text-base">Exam Timetable</h2>
-          <Button onClick={onAddExam} className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
-            + Add Exam
-          </Button>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {onAddExam && (
+              <Button onClick={onAddExam} className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700">
+                + Add Exam
+              </Button>
+            )}
+            {onAddExamTimetable && (
+              <Button onClick={onAddExamTimetable} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-indigo-600 bg-white px-4 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50">
+                + Add Exam Timetable
+              </Button>
+            )}
+          </div>
         </div>
         <ExamErrorBanner message={error} onRetry={onRetry} />
       </div>
@@ -114,12 +125,22 @@ const ExamTimetableTable: React.FC<Props> = ({
           <p className="mt-0.5 text-xs text-gray-400">{exam.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <Button
-            onClick={onAddExam}
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 xs:w-auto sm:h-auto sm:py-2"
-          >
-            + Add Exam
-          </Button>
+          {onAddExam && (
+            <Button
+              onClick={onAddExam}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 xs:w-auto sm:h-auto sm:py-2"
+            >
+              + Add Exam
+            </Button>
+          )}
+          {onAddExamTimetable && (
+            <Button
+              onClick={onAddExamTimetable}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-indigo-600 bg-white px-4 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50 xs:w-auto sm:h-auto sm:py-2"
+            >
+              + Add Exam Timetable
+            </Button>
+          )}
         </div>
       </div>
 

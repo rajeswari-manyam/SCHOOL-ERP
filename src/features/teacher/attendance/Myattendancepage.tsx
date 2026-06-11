@@ -5,6 +5,7 @@ import { AlertCircle, Edit3, Send } from "lucide-react";
 import {
   useTodayAttendance,
   useMyAttendanceHistory,
+  useAllHolidays,
   MOCK_TODAY_MARKED,
   MOCK_HISTORY,
 } from "./hooks/useAttendance";
@@ -61,6 +62,7 @@ type TabKey = "today" | "history";
 const MyAttendancePage = () => {
   const { data: todayData }   = useTodayAttendance();
   const { data: historyData } = useMyAttendanceHistory();
+  const { data: holidaysRaw } = useAllHolidays();
 
   const today = todayData ?? MOCK_TODAY_MARKED; // swap to MOCK_TODAY for not-marked state
   const history = Array.isArray(historyData)
@@ -68,6 +70,29 @@ const MyAttendancePage = () => {
     : typeof historyData === "object" && historyData !== null && Array.isArray((historyData as { data: AttendanceHistoryEntry[] }).data)
     ? (historyData as { data: AttendanceHistoryEntry[] }).data
     : MOCK_HISTORY;
+
+  // Normalise holidays into a lookup set and date→name map
+  const rawHolidayList: any[] = Array.isArray(holidaysRaw?.data)
+    ? holidaysRaw.data
+    : Array.isArray(holidaysRaw?.holidays)
+    ? holidaysRaw.holidays
+    : (holidaysRaw?.data && Array.isArray((holidaysRaw.data as any).holidays))
+    ? (holidaysRaw.data as any).holidays
+    : [];
+
+  const holidayDateSet = new Set<string>();
+  const holidayNameMap = new Map<string, string>();
+  rawHolidayList.forEach((h: any) => {
+    const d = h.date;
+    if (d) {
+      holidayDateSet.add(d);
+      holidayNameMap.set(d, h.holidayname ?? h.name ?? "Holiday");
+    }
+  });
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isTodayHoliday = holidayDateSet.has(todayStr);
+  const todayHolidayName = holidayNameMap.get(todayStr);
 
   const [activeTab, setActiveTab] = useState<TabKey>("today");
 
@@ -141,14 +166,32 @@ const MyAttendancePage = () => {
         ))}
       </div>
 
+      {/* Holiday banner: shown when today is a holiday */}
+      {isTodayHoliday && (
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-center">
+          <p className="text-base font-bold text-gray-700">
+            🎉 {todayHolidayName ?? "Holiday"}
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Today is a holiday — attendance is not expected.
+          </p>
+        </div>
+      )}
+
       {/* Tab content */}
       {activeTab === "today" && (
-        <TodayTab today={today} onOpenCorrectionModal={openCorrectionFromToday} />
+        <TodayTab
+          today={today}
+          isHoliday={isTodayHoliday}
+          holidayName={todayHolidayName}
+          onOpenCorrectionModal={openCorrectionFromToday}
+        />
       )}
 
       {activeTab === "history" && (
         <MyHistoryTab
           history={history}
+          holidays={rawHolidayList}
           onRequestCorrection={openCorrectionFromHistory}
         />
       )}

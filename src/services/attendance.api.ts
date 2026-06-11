@@ -1,5 +1,3 @@
-// src/features/attendance/api/attendance.api.ts
-
 import api from "@/config/axios";
 
 /* ================= TYPES ================= */
@@ -28,19 +26,6 @@ export interface SingleAttendanceResponse {
   data: AttendanceRecord;
 }
 
-export interface CreateAttendancePayload {
-  class: string;
-  section: string;
-  date: string;
-  school_code: string;
-  attendance: {
-    studentId: string;
-    roll: string;
-    name: string;
-    status: string;
-  }[];
-}
-
 export interface UpdateAttendancePayload {
   status: string;
   remarks?: string;
@@ -56,7 +41,6 @@ export interface YearlyAttendanceParams {
   studentId: string;
   year: number;
 }
-
 
 export interface WeeklyAttendanceSummary {
   present: number;
@@ -78,41 +62,113 @@ export interface WeeklyAttendanceParams {
   start_date: string;
   end_date: string;
 }
-/* ================= API CALLS ================= */
 
-// GET /tenant/getallattendance
+export interface CreateAttendancePayload {
+  class_id: string;
+  section_id: string;
+  teacher_id: string;
+  academicYearId: string;
+  date: string;
+  attendance: {
+    studentId: string;
+    status: "present" | "absent";
+  }[];
+}
+
+export interface CreateAttendanceResponse {
+  status: boolean;
+  class_id: string;
+  section_id: string;
+  date: string;
+  total: number;
+  present: number;
+  absent: number;
+  data: any[];
+}
+
+export interface StudentByClassSection {
+  id: string;
+  first_name: string;
+  last_name: string;
+  roll_number: string;
+  admission_number: string;
+  class_id: string;
+  sectionId: string;
+}
+
+export interface StudentsByClassSectionResponse {
+  status: boolean;
+  count: number;
+  class_id: string;
+  section_id: string;
+  data: StudentByClassSection[];
+}
+
+export interface ClassTodayStudentRecord {
+  id: string;
+  student_name: string;
+  roll_no: string;
+  attendance_status: "present" | "absent" | "late";
+}
+
+export interface GetClassTodayAttendanceResponse {
+  status: boolean;
+  date: string;
+  attendance_status: string;
+  class: { id: string; name: string };
+  section: { id: string; name: string };
+  total_students: number;
+  present_students: number;
+  absent_students: number;
+  students: ClassTodayStudentRecord[];
+}
+
+export interface ChronicAbsenteeRecord {
+  id: string;
+  student_name: string;
+  class_name?: string;
+  section_name?: string;
+  absent_days: number;
+  last_absent_date?: string;
+  parent_phone?: string;
+  parent_name?: string;
+}
+
+export interface AbsentMoreThan5DaysResponse {
+  status: boolean;
+  data: ChronicAbsenteeRecord[];
+}
+
+/* ================= APIs ================= */
+
+// GET all attendance
 export const getAllAttendance = async (
   student_id: string,
   date: string
 ): Promise<GetAllAttendanceResponse> => {
-  const { data } = await api.get<GetAllAttendanceResponse>(
-    `/tenant/getallattendance`,
-    {
-      params: { student_id, date },
-    }
-  );
+  const { data } = await api.get(`/tenant/getallattendance`, {
+    params: { student_id, date },
+  });
   return data;
 };
 
-// GET /tenant/getattendanceById/:id
+// GET by ID
 export const getAttendanceById = async (
   id: string
 ): Promise<SingleAttendanceResponse> => {
-  const { data } = await api.get<SingleAttendanceResponse>(
-    `/tenant/getattendanceById/${id}`
-  );
+  const { data } = await api.get(`/tenant/getattendanceById/${id}`);
   return data;
 };
 
-// POST /tenant/createattendance
+// CREATE
 export const createAttendance = async (
   payload: CreateAttendancePayload
-): Promise<any> => {
+): Promise<CreateAttendanceResponse> => {
   const { data } = await api.post(`/tenant/createattendance`, payload);
   return data;
 };
 
-// PUT /tenant/updateattendanceById/:id
+// UPDATE
 export const updateAttendanceById = async (
   id: string,
   payload: UpdateAttendancePayload
@@ -124,13 +180,13 @@ export const updateAttendanceById = async (
   return data;
 };
 
-// POST /tenant/attendance/bulk
+// BULK
 export const bulkAttendance = async (payload: any): Promise<any> => {
   const { data } = await api.post(`/tenant/attendance/bulk`, payload);
   return data;
 };
 
-// GET /tenant/getMonthlyAttendanceByStudentId
+// MONTHLY
 export const getMonthlyAttendance = async (
   params: MonthlyAttendanceParams
 ): Promise<any> => {
@@ -141,51 +197,80 @@ export const getMonthlyAttendance = async (
   return data;
 };
 
-// GET /tenant/getYearlyAttendance
+// YEARLY
 export const getYearlyAttendance = async (
   params: YearlyAttendanceParams
 ): Promise<any> => {
-  const { data } = await api.get(`/tenant/getYearlyAttendance/`, {
+  const { data } = await api.get(`/tenant/getYearlyAttendance`, {
     params,
   });
   return data;
 };
 
-// GET /tenant/getclasstodayattendance
-export const getClassTodayAttendance = async (
-  className: string,
-  section: string
-): Promise<any> => {
-  const { data } = await api.get(
-    `/tenant/getclasstodayattendance`,
-    {
-      params: { className, section },
-    }
-  );
+// GET all classes today attendance summary
+export const getAllClassesTodayAttendance = async (): Promise<{
+  status: boolean;
+  date: string;
+  total_classes: number;
+  data: {
+    class: { id: string; name: string };
+    section: { id: string; name: string };
+    teacher?: { id: string; name: string };
+    attendance_status: string;
+    total_students: number;
+    present_students: number;
+    absent_students: number;
+  }[];
+}> => {
+  const { data } = await api.get(`/tenant/getallclassestodayattendance`);
   return data;
 };
 
-// POST /tenant/attendance/roster
+// GET single class today attendance with per-student status
+export const getClassTodayAttendance = async (
+  class_id: string,
+  section_id: string
+): Promise<GetClassTodayAttendanceResponse> => {
+  const { data } = await api.get(`/tenant/getclasstodayattendance`, {
+    params: { class_id, section_id },
+  });
+  return data;
+};
+
 export const getAttendanceRoster = async (payload: {
   className: string;
   section: string;
   date: string;
 }): Promise<any> => {
-  const { data } = await api.post(
-    `/tenant/attendance/roster`,
-    payload
-  );
+  const { data } = await api.post(`/tenant/attendance/roster`, payload);
   return data;
 };
-// GET /tenant/getWeeklyAttendanceByStudentId
+
+// WEEKLY
 export const getWeeklyAttendance = async (
   params: WeeklyAttendanceParams
 ): Promise<WeeklyAttendanceResponse> => {
-  const { data } = await api.get<WeeklyAttendanceResponse>(
+  const { data } = await api.get(
     `/tenant/getWeeklyAttendanceByStudentId`,
-    {
-      params,
-    }
+    { params }
   );
   return data;
 };
+
+// STUDENTS by class + section
+export const getStudentsByClassSection = async (
+  class_id: string,
+  section_id: string
+): Promise<StudentsByClassSectionResponse> => {
+  const { data } = await api.get(`/tenant/studentsbyclasssection`, {
+    params: { class_id, section_id },
+  });
+  return data;
+};
+
+// GET students absent more than 5 days
+export const getAbsentMoreThan5Days =
+  async (): Promise<AbsentMoreThan5DaysResponse> => {
+    const { data } = await api.get(`/tenant/absentmorethan5days`);
+    return data;
+  };

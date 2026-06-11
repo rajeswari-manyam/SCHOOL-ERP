@@ -62,6 +62,12 @@ export interface EditPeriodPayload {
 // ─── Exam Timetable ─────────────────────────────────────────────────────────────
 export interface ExamEntry {
   id: string;
+  class_id?: string;
+  subject_id?: string;
+  section_id?: string;
+  examnameid?: string;
+  teacher_id?: string;
+  academicYearId?: string;
   subject: string;
   className: string;        // "10A"
   date: string;             // ISO date string
@@ -105,6 +111,12 @@ export interface GetAllExamsTimetableRawItem {
   exam_id?: string;
   id?: string;
   _id?: string;
+  class_id?: string;
+  subject_id?: string;
+  section_id?: string;
+  examnameid?: string;
+  teacher_id?: string;
+  academicYearId?: string;
   subject_name?: string;
   subjectname?: string;
   subject?: string;
@@ -136,18 +148,18 @@ export interface GetAllExamsTimetableResponse {
   result?: GetAllExamsTimetableRawItem[];
 }
 
-// ─── Create Exam Timetable (POST /tenant/exams-timetable) ─────────────────────
+// ─── Create Exam Timetable (POST /tenant/createexams-timetable) ──────────────
 export interface CreateExamTimetablePayload {
-  subjectname: string;
-  classname: string;
-  sectionname: string;
-  exam_name: string;
+  class_id: string;
+  subject_id: string;
+  section_id: string;
+  examnameid: string;
   exam_date: string;
   start_time: string;
   end_time: string;
   room_no: string;
-  academic_year: string;
-  school_code: string;
+  academicYearId: string;
+  teacher_id: string;
 }
 
 export interface CreateExamTimetableResponse {
@@ -155,36 +167,57 @@ export interface CreateExamTimetableResponse {
   message?: string;
   data?: {
     id: string;
-    subjectname: string;
-    classname: string;
-    sectionname: string;
-    exam_name: string;
+    class_id: string;
+    subject_id: string;
+    section_id: string;
+    examnameid: string;
     exam_date: string;
     start_time: string;
     end_time: string;
     room_no: string;
+    academicYearId: string;
+    teacher_id: string;
   };
 }
 
 // ─── GET /tenant/getalltimetable?className=...&sectionName=...&academic_year=... ─
 export interface GetAllTimetableRawItem {
+  // Response fields from actual API
+  id?: string;
+  period_no?: number | string;
+  day_of_week?: string;
+  room_no?: string;
+  class?: {
+    id: string;
+    class_name: string;
+  };
+  section?: {
+    id: string;
+    sectionName: string;
+  };
+  subject?: {
+    id: string;
+    subject_name: string;
+  };
+  teacher?: {
+    id: string;
+    name: string;
+  };
+  
+  // Legacy flat fields (for backward compatibility)
   className?: string;
   sectionName?: string;
   subjectname?: string;
   teacher_id?: string;
   teachername?: string;
-  period_no?: string;
   time_sloat?: string;
-  day_of_week?: string;
   start_time?: string;
   end_time?: string;
-  room_no?: string;
   lunch_start?: string;
   lunch_end?: string;
   academic_year?: string;
   school_code?: string;
   _id?: string;
-  id?: string;
 }
 
 export interface GetAllTimetableResponse {
@@ -198,6 +231,11 @@ export interface GetAllTimetableResponse {
 
 // ─── Create Timetable Period (POST /tenant/createtimetable) ────────────────────
 export interface CreateTimetablePayload {
+  // IDs (from API-driven dropdowns)
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  // Display names (kept for backward compat / timetable grid display)
   className: string;
   sectionName: string;
   subjectname: string;
@@ -211,6 +249,8 @@ export interface CreateTimetablePayload {
   room_no: string;
   lunch_start: string;
   lunch_end: string;
+  break_start: string;
+  break_end: string;
   academic_year: string;
   school_code: string;
 }

@@ -3,16 +3,26 @@ import { useMemo } from "react";
 import { format, getDaysInMonth, getDay, startOfMonth } from "date-fns";
 import type { AttendanceHistoryEntry } from "../types/attendance.types";
 
+interface HolidayItem {
+  id: string;
+  date: string;
+  holidayname?: string;
+  name?: string;
+  type?: string;
+}
+
 interface MyHistoryTabProps {
   history?: AttendanceHistoryEntry[];
+  holidays?: HolidayItem[];
   onRequestCorrection: (entry: AttendanceHistoryEntry) => void;
 }
 
 // Calendar cell color
-const calColor = (entry: AttendanceHistoryEntry | undefined, day: number, month: number, year: number): string => {
+const calColor = (entry: AttendanceHistoryEntry | undefined, isHoliday: boolean, day: number, month: number, year: number): string => {
   const d = new Date(year, month, day);
   const dow = d.getDay();
   if (dow === 0 || dow === 6) return "bg-gray-50 text-gray-300";       // weekend
+  if (isHoliday) return "bg-gray-200 text-gray-500";                  // holiday
   if (!entry || entry.status === null) return "bg-gray-100 text-gray-400"; // no data / future
   if (entry.status === "on_time")  return "bg-emerald-100 text-emerald-700 font-bold";
   if (entry.status === "late")     return "bg-amber-100 text-amber-600 font-bold";
@@ -27,7 +37,7 @@ const STATUS_PILL: Record<string, string> = {
   missed:  "bg-red-50 text-red-600 border border-red-200",
 };
 
-const MyHistoryTab = ({ history = [], onRequestCorrection }: MyHistoryTabProps) => {
+const MyHistoryTab = ({ history = [], holidays = [], onRequestCorrection }: MyHistoryTabProps) => {
   // Show current month calendar
   const now    = new Date();
   const year   = now.getFullYear();
@@ -46,9 +56,25 @@ const MyHistoryTab = ({ history = [], onRequestCorrection }: MyHistoryTabProps) 
     return map;
   }, [safeHistory]);
 
+  // Build holiday set for current month
+  const holidayDates = useMemo(() => {
+    const s = new Set<string>();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const prefix = `${year}-${pad(month + 1)}`;
+    (Array.isArray(holidays) ? holidays : []).forEach((h) => {
+      if (h.date && h.date.startsWith(prefix)) s.add(h.date);
+    });
+    return s;
+  }, [holidays, year, month]);
+
   const getEntry = (d: number) => {
     const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     return byDate[iso];
+  };
+
+  const isHoliday = (d: number) => {
+    const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    return holidayDates.has(iso);
   };
 
   const today = now.getDate();
@@ -67,6 +93,7 @@ const MyHistoryTab = ({ history = [], onRequestCorrection }: MyHistoryTabProps) 
               { color: "bg-emerald-100", label: "On time" },
               { color: "bg-amber-100",   label: "Late" },
               { color: "bg-red-100",     label: "Missed" },
+              { color: "bg-gray-200",    label: "Holiday" },
             ].map((l) => (
               <span key={l.label} className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-500">
                 <span className={`w-3 h-3 rounded-sm ${l.color}`} />
@@ -95,13 +122,14 @@ const MyHistoryTab = ({ history = [], onRequestCorrection }: MyHistoryTabProps) 
 
             {days.map((d) => {
               const entry = getEntry(d);
+              const isHolidayDate = isHoliday(d);
               const isToday = d === today;
               return (
                 <div
                   key={d}
-                  title={entry ? `${entry.presentCount}P ${entry.absentCount}A · ${entry.status ?? ""}` : undefined}
+                  title={isHolidayDate ? "Holiday" : entry ? `${entry.presentCount}P ${entry.absentCount}A · ${entry.status ?? ""}` : undefined}
                   className={`aspect-square flex items-center justify-center text-xs rounded-xl transition-all
-                    ${calColor(entry, d, month, year)}
+                    ${calColor(entry, isHolidayDate, d, month, year)}
                     ${isToday ? "ring-2 ring-indigo-400 ring-offset-1" : ""}
                   `}
                 >
