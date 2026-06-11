@@ -75,8 +75,9 @@ export interface CreateStudentPayload {
   blood_group?: BloodGroup;
   address?: string;
   photo?: string;
-  class?: string;
-  section?: string;
+  class_id?: string;
+  sectionId?: string;
+  academicYearId?: string;
   roll_number?: string;
   admission_number?: string;
   admission_date?: string;
@@ -99,7 +100,9 @@ export interface AddStudentFormData {
   admissionNo: string;
   gender: Gender | "";
   class: string;
+  class_id: string;
   section: string;
+  sectionId: string;
   bloodGroup: BloodGroup | "";
   rollNumber: string;
   photo?: File | null;

@@ -7,6 +7,12 @@ export type DocumentStatus = 'verified' | 'pending' | 'missing';
 export interface Document {
   name: string;
   status: DocumentStatus;
+  /** ID for fetching full file record via /tenant/getadmissiondocument/{id} */
+  id?: string;
+  /** Display filename */
+  file_name?: string;
+  /** Direct URL to open/download the file */
+  file_url?: string;
 }
 
 export interface StatusHistoryEntry {
@@ -63,7 +69,6 @@ export interface NewEnquiryFormData {
   source: EnquirySource;
   referredBy?: string;
   notes?: string;
-
 }
 
 export interface ConfirmAdmissionFormData {
@@ -79,6 +84,40 @@ export interface PipelineColumn {
   color: string;
   badgeColor: string;
   count: number;
+}
+
+// ─── Document upload / fetch ─────────────────────────────────────────────────
+
+/** One uploaded file record returned by GET /tenant/getadmissiondocument/ */
+export interface AdmissionDocumentRecord {
+  id: string;
+  enquiry_id: string;
+  file_name: string;
+  file_url: string;
+  file_type?: string;
+  uploaded_at?: string;
+  size_bytes?: number;
+}
+
+export interface GetAdmissionDocumentResponse {
+  status?: boolean;
+  message?: string;
+  data?: AdmissionDocumentRecord | { document?: AdmissionDocumentRecord };
+  document?: AdmissionDocumentRecord;
+}
+
+export interface GetAdmissionDocumentsResponse {
+  status?: boolean;
+  message?: string;
+  data?: AdmissionDocumentRecord[] | { documents?: AdmissionDocumentRecord[] };
+  documents?: AdmissionDocumentRecord[];
+  files?: AdmissionDocumentRecord[];
+}
+
+export interface UploadAdmissionDocumentResponse {
+  status?: boolean;
+  message?: string;
+  data?: AdmissionDocumentRecord[];
 }
 
 // ─── Raw API response shapes (snake_case) ────────────────────────────────────

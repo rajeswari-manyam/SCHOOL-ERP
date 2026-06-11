@@ -41,7 +41,7 @@ export const AddSectionModal = ({ classId, className, onClose, onSubmit }: Props
     setError,
     formState: { errors },
   } = useForm<SectionFormData>({
-    resolver: zodResolver(sectionSchema),
+    resolver: zodResolver(sectionSchema as never),
     defaultValues: {
       sectionName: "",
       classTeacherId: "",

@@ -32,7 +32,7 @@ const InfoRow = ({ label, value }: { label: string; value?: string | number }) =
 const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, loading, attendance, feePayments, documents } = useStudentProfile(id!);
+  const { student, loading, error, attendance, feePayments, documents, retry } = useStudentProfile(id!);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showEdit, setShowEdit] = useState(false);
 
@@ -44,11 +44,30 @@ const StudentProfilePage = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <p className="text-sm text-red-700">{error}</p>
+          <button
+            onClick={retry}
+            className="rounded-lg bg-red-100 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors"
+          >
+            Retry
+          </button>
+          <Button onClick={() => navigate("/schooladmin/students")} variant="link" className="text-xs text-gray-400 hover:text-gray-600">
+            ← Back to Students
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!student) {
     return (
       <div className="text-center py-20">
         <p className="text-gray-400 text-sm">Student not found.</p>
-        <Button onClick={() => navigate("/school-admin/students")} variant="link" className="mt-4 text-indigo-600 text-sm font-semibold hover:underline">← Back to Students</Button>
+        <Button onClick={() => navigate("/schooladmin/students")} variant="link" className="mt-4 text-indigo-600 text-sm font-semibold hover:underline">← Back to Students</Button>
       </div>
     );
   }
@@ -69,7 +88,7 @@ const StudentProfilePage = () => {
     <div className="space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-gray-400">
-        <Link to="/school-admin/students" className="hover:text-indigo-600 transition-colors font-medium">Students</Link>
+        <Link to="/schooladmin/students" className="hover:text-indigo-600 transition-colors font-medium">Students</Link>
         <span>›</span>
         <span className="text-gray-700 font-semibold">{fullName}</span>
       </div>

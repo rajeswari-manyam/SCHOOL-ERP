@@ -4,6 +4,7 @@ export interface ClassItem {
   sections: SectionItem[];
   classTeacher: string;
   totalStudents: number;
+  subjectCount?: number;
   capacity: number;
   status: "ACTIVE" | "INACTIVE";
 }
@@ -14,6 +15,7 @@ export interface SectionItem {
   classTeacher: string;
   totalStudents: number;
   subjects: SubjectItem[];
+  subjectCount?: number;
 }
 
 export interface SubjectItem {
@@ -91,6 +93,9 @@ export interface GetSectionsByClassIdResponse {
     class_teacher_id?: string;
     totalStrength?: number;
     total_strength?: number;
+    subjectCount?: number;
+    subject_count?: number;
+    totalSubjects?: number;
     classId?: string;
     class_id?: string;
     academicYearId?: string;

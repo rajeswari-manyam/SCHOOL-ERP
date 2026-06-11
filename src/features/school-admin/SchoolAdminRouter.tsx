@@ -4,7 +4,9 @@ import SchoolAdminLayout from "../../layouts/SchoolAdminLayout";
 import{ DashboardPage }from "../school-admin/dashboard/DashboardPage";
 import AttendancePage from "../school-admin/attendance/AttendancePage";
 import StaffManagementPage from "../school-admin/staff/pages/StaffPage";
+import StaffProfilePage from "../school-admin/staff/pages/StaffProfilePage";
 import StudentsPage from "../school-admin/students/StudentsPage";
+import StudentProfilePage from "../school-admin/students/components/StudentProfilePage";
 import {AdmissionsPage} from "../school-admin/admissions/AdmissionsPage";
 import { FeesPage as FeeCollectionPage } from "../school-admin/fees";
 import { ReportsPage } from "../school-admin/reports";
@@ -30,15 +32,19 @@ export default function SchoolAdminRouter() {
         />
        <Route path="classes" element={<ClassesPage />} />
        <Route path="staff" element={<StaffManagementPage />} />
+       <Route path="staff/:id" element={<StaffProfilePage />} />
          <Route
           path="attendance"
           element={
         <AttendancePage/>
           }
         />
-         <Route
+          <Route
           path="students"
           element={ <StudentsPage/> }/>
+          <Route
+          path="students/:id"
+          element={ <StudentProfilePage/> }/>
          
        
           

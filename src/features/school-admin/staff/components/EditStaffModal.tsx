@@ -62,7 +62,10 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    setForm(toForm(staff));
+    const timer = window.setTimeout(() => {
+      setForm(toForm(staff));
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [staff]);
 
   const handleChange = (field: keyof FormState, value: string) => {

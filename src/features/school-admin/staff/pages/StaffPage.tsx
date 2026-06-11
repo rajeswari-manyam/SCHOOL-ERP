@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import type { TabKey } from "../types/staff.types";
 import { useStaffStore } from "../store/usestore";
 import { StatsCards } from "../components/StatCards";
@@ -26,6 +27,8 @@ const buildTabs = (
 ];
 
 export default function StaffManagementPage() {
+  const navigate = useNavigate();
+
   const {
     activeTab,
     search,
@@ -41,7 +44,6 @@ export default function StaffManagementPage() {
     setRoleFilter,
     setStatusFilter,
     setShowModal,
-    getFilteredStaff,
     loadStaff,
     editStaffMember,
     setEditStaffMember,
@@ -51,10 +53,7 @@ export default function StaffManagementPage() {
     loadStaff();
   }, []);
 
-  const filteredStaff = useMemo(
-    () => getFilteredStaff(),
-    [getFilteredStaff, activeTab, search, roleFilter, statusFilter, staffData]
-  );
+  const filteredStaff = useMemo(() => staffData, [staffData]);
 
   const tabs = useMemo(
     () => buildTabs(stats.teachers, stats.nonTeaching, stats.leavePending),
@@ -112,15 +111,6 @@ export default function StaffManagementPage() {
           <StaffTabs activeTab={activeTab} tabs={tabs} onChange={setActiveTab} />
         </div>
 
-        {staffData.length > 0 && (
-          <details className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs">
-            <summary className="cursor-pointer font-semibold text-blue-700">Raw API Response ({staffData.length} records)</summary>
-            <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-blue-900">
-              {JSON.stringify(staffData[0], null, 2)}
-            </pre>
-          </details>
-        )}
-
         {error && (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
             <p className="text-sm text-red-700">{error}</p>
@@ -156,7 +146,7 @@ export default function StaffManagementPage() {
             />
             {/* Table scrolls horizontally on mobile */}
             <div className="w-full overflow-x-auto">
-              <StaffTable staff={filteredStaff} total={staffData.length} onEdit={setEditStaffMember} />
+              <StaffTable staff={filteredStaff} total={staffData.length} onEdit={setEditStaffMember} onView={(s) => navigate(`/schooladmin/staff/${s.id}`)} />
             </div>
           </>
         ) : null}

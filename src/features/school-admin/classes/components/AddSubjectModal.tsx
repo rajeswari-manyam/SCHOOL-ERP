@@ -37,6 +37,7 @@ export const AddSubjectModal = ({ classId, className, sectionId, sectionName, ac
     handleSubmit,
     setValue,
     watch,
+    setError,
     formState: { errors },
   } = useForm<SubjectFormData>({
     resolver: zodResolver(subjectSchema),

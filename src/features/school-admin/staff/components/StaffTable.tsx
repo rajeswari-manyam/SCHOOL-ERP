@@ -11,11 +11,12 @@ interface Props {
   staff: StaffMember[];
   total: number;
   onEdit?: (staff: StaffMember) => void;
+  onView?: (staff: StaffMember) => void;
 }
 
-const COLUMNS = ["Name & Contact", "Role", "Classes / Subjects", "Status", "Leave Bal.", "Actions"];
+const COLUMNS = ["Name & Contact", "Role", "Status", "Leave Bal.", "Actions"];
 
-export const StaffTable = ({ staff, total, onEdit }: Props) => (
+export const StaffTable = ({ staff, total, onEdit, onView }: Props) => (
   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
     <Table>
       <TableHeader>
@@ -45,13 +46,13 @@ export const StaffTable = ({ staff, total, onEdit }: Props) => (
                 </div>
               </TableCell>
               <TableCell className="text-slate-600">{s.role ?? "—"}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 <div className="flex flex-wrap gap-1">
                   {s.subjects && s.subjects.length > 0
                     ? s.subjects.map((sub) => <SubjectPill key={sub} label={sub} />)
                     : <span className="text-slate-400 text-xs">—</span>}
                 </div>
-              </TableCell>
+              </TableCell> */}
               <TableCell>
                 <StatusBadge status={s.status} />
               </TableCell>
@@ -62,7 +63,7 @@ export const StaffTable = ({ staff, total, onEdit }: Props) => (
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="outline" size="sm">View</Button>
+                  <Button variant="outline" size="sm" onClick={() => onView?.(s)}>View</Button>
                   <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
                     onClick={() => onEdit?.(s)}>
                     Edit

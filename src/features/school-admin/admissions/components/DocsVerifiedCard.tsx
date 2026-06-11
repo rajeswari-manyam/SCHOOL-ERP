@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertCircle, FileText, User } from 'lucide-react';
+import { CheckCircle2, AlertCircle, FileText, User, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Enquiry } from '../types';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
@@ -38,11 +38,29 @@ const DocProgress = ({ verified, total }: { verified: number; total: number }) =
   );
 };
 
+function prettifyFileName(name: string): string {
+  try {
+    const decoded = decodeURIComponent(name);
+    const parts = decoded.split(/[/\\]/);
+    return parts[parts.length - 1] ?? decoded;
+  } catch {
+    return name;
+  }
+}
+
 export function DocsVerifiedCard({ enquiry, index }: Props) {
   const { setSelectedEnquiry, openConfirmAdmission } = useAdmissionsStore();
+
+  // All document records from the enquiry data — now includes id/file_url/file_name
+  // when the backend returns them embedded in the enquiry response
   const docs = enquiry.documents ?? [];
-  const verifiedCount = docs.filter((d) => d.status === 'verified').length;
-  const allVerified = docs.length > 0 && verifiedCount === docs.length;
+
+  // Separate checklist items (status only) from uploaded files (have file_url)
+  const checklist = docs.filter((d) => !d.file_url);
+  const uploadedFiles = docs.filter((d): d is typeof d & { file_url: string } => !!d.file_url);
+
+  const verifiedCount = checklist.filter((d) => d.status === 'verified').length;
+  const allVerified = checklist.length > 0 && verifiedCount === checklist.length;
 
   return (
     <motion.div
@@ -65,10 +83,10 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
               <UnknownStudent id={enquiry.id} />
             )}
           </div>
-          {docs.length > 0 && (
+          {checklist.length > 0 && (
             <Badge variant={allVerified ? 'emerald' : 'amber'} className="shrink-0">
               <FileText size={10} className="mr-1" />
-              {allVerified ? 'Complete' : `${verifiedCount}/${docs.length}`}
+              {allVerified ? 'Complete' : `${verifiedCount}/${checklist.length}`}
             </Badge>
           )}
         </div>
@@ -89,12 +107,12 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
           </div>
         </div>
 
-        {/* Documents list or empty state */}
-        {docs.length > 0 ? (
+        {/* ── Document checklist ─────────────────────────────────────────── */}
+        {checklist.length > 0 ? (
           <div className="mb-3">
-            <DocProgress verified={verifiedCount} total={docs.length} />
+            <DocProgress verified={verifiedCount} total={checklist.length} />
             <ul className="mt-2 space-y-1">
-              {docs.map((doc) => {
+              {checklist.map((doc) => {
                 const cfg = DOC_STATUS[doc.status] ?? DOC_STATUS.pending;
                 const Icon = cfg.icon;
                 return (
@@ -102,7 +120,9 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
                     <Icon size={12} className={`shrink-0 ${cfg.color}`} />
                     <span className={cfg.label ? 'font-medium text-amber-600' : 'text-gray-700'}>
                       {doc.name}
-                      {cfg.label && <span className="ml-1 font-normal text-gray-400">({cfg.label})</span>}
+                      {cfg.label && (
+                        <span className="ml-1 font-normal text-gray-400">({cfg.label})</span>
+                      )}
                     </span>
                   </li>
                 );
@@ -111,7 +131,38 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
           </div>
         ) : (
           <div className="mb-3 rounded-lg bg-gray-50 py-2 text-center text-[11px] text-gray-400">
-            No documents listed
+            No document checklist
+          </div>
+        )}
+
+        {/* ── Uploaded files (embedded in enquiry response) ──────────────── */}
+        {uploadedFiles.length > 0 && (
+          <div className="mb-3">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+              Uploaded Files
+            </p>
+            <ul className="space-y-1">
+              {uploadedFiles.map((rec) => (
+                <li key={rec.id ?? rec.file_url} className="flex items-center gap-2">
+                  <FileText size={11} className="shrink-0 text-blue-400" />
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-gray-600">
+                    {prettifyFileName(rec.file_name ?? rec.name)}
+                  </span>
+                  {rec.file_url && (
+                    <a
+                      href={rec.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="shrink-0 rounded text-gray-400 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-300"
+                      aria-label={`Open ${prettifyFileName(rec.file_name ?? rec.name)}`}
+                    >
+                      <ExternalLink size={11} />
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
