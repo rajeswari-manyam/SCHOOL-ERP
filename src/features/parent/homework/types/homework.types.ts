@@ -1,4 +1,4 @@
-export type HomeworkTab = "week" | "all" | "materials";
+export type HomeworkTab = "homeworks" | "materials";
 export type HomeworkStatus = "PENDING" | "SUBMITTED" | "NOT TRACKED";
 export type MaterialType = "pdf" | "jpg" | "link" | "doc";
 
@@ -13,7 +13,7 @@ export interface Homework {
   teacher: string;
   teacherInitials: string;
   day: number;
-  submissionDate?: Date;   // full Date for accurate day-filter matching
+  submissionDate?: Date;
   status: HomeworkStatus;
   attachment?: { name: string; url?: string };
   whatsappNotified?: string;

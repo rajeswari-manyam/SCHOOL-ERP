@@ -63,14 +63,14 @@ export function StudyMaterialCard({ item }: { item: StudyMaterial }) {
           </div>
         </div>
 
-        {/* Title — use subjectName as title fallback */}
+        {/* Title — use subject name */}
         <h3 className={combineTypography(typography.body.small, "font-semibold text-[#0B1C30] leading-snug group-hover:text-[#3525CD]")}>
-          {item.subjectName}
+          {item.subject?.name ?? item.title}
         </h3>
 
         <p className={combineTypography(typography.body.xs, "text-gray-400 group-hover:text-[#3525CD]/70")}>
-          {item.className}
-          {item.section ? ` • ${item.section}` : ""}
+          {item.class?.name}
+          {item.section?.name ? ` • ${item.section.name}` : ""}
         </p>
 
         {/* Download count badge */}

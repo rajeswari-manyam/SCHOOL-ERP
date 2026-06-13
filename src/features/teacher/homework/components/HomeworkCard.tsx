@@ -1,30 +1,56 @@
+import { useState } from "react";
 import type { HomeworkItem } from "../types/homework.types";
 import { Button } from "@/components/ui/button";
-import { Edit3, Trash2, Link as LinkIcon, MessageCircle } from "lucide-react";
-
+import { Edit3, Trash2, MessageCircle, Paperclip, Eye } from "lucide-react";
 import WABadge from "./WABadge";
 import DueBadge from "./DueBadge";
 import SubjectPill from "./SubjectPill";
+import SubmissionDrawer from "./SubmissionDrawer";
+import { useQuery } from "@tanstack/react-query";
+import { getSubmissionsByHomeworkId } from "@/services/homework.api";
 
-// ── Progress bar ──────────────────────────────────────────────────────────
-const SubmissionBar = ({ submitted, total }: { submitted: number; total: number }) => {
+// ── Progress bar ──────────────────────────────────────────────────────────────
+const SubmissionBar = ({
+  submitted,
+  total,
+  loading,
+}: {
+  submitted: number;
+  total: number;
+  loading?: boolean;
+}) => {
   const pct = total > 0 ? Math.round((submitted / total) * 100) : 0;
-  const bar  = pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-400" : "bg-red-400";
-  const txt  = pct >= 80 ? "text-emerald-600" : pct >= 50 ? "text-amber-600" : "text-red-500";
+  const bar = pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-400" : "bg-red-400";
+  const txt = pct >= 80 ? "text-emerald-600" : pct >= 50 ? "text-amber-500" : "text-red-500";
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Submissions</span>
-        <span className={`text-xs font-extrabold ${txt}`}>{submitted}/{total} <span className="font-normal text-gray-400">({pct}%)</span></span>
+      <div className="flex items-center justify-between mb-[5px]">
+        <span className="text-[11px] font-bold uppercase tracking-[.06em] text-slate-400">
+          Submissions
+        </span>
+        {loading ? (
+          <span className="text-[11px] text-slate-300">Loading…</span>
+        ) : (
+          <span className={`text-xs font-bold ${txt}`}>
+            {submitted}/{total}{" "}
+            <span className="font-normal text-slate-400">({pct}%)</span>
+          </span>
+        )}
       </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-500 ${bar}`} style={{ width: `${pct}%` }} />
+
+      {/* Progress bar */}
+      <div className="h-[5px] bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${loading ? "bg-slate-200 animate-pulse" : bar}`}
+          style={{ width: loading ? "100%" : `${pct}%` }}
+        />
       </div>
     </div>
   );
 };
 
-// ── Main Card ─────────────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
   hw: HomeworkItem;
   onEdit: () => void;
@@ -33,104 +59,139 @@ interface Props {
   reminderSent?: boolean;
 }
 
+// ── Card ──────────────────────────────────────────────────────────────────────
 const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Props) => {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const isHwPast = hw.status === "PAST";
-  const pendingCount = hw.totalCount - hw.submittedCount;
+
+  // ── Fetch live submission counts ─────────────────────────────────────────
+  const { data: subData, isLoading: subLoading } = useQuery({
+    queryKey: ["submissions", hw.id],
+    queryFn: () => getSubmissionsByHomeworkId(hw.id),
+    staleTime: 1000 * 60 * 2,
+    enabled: !!hw.id,
+  });
+
+  const students      = subData?.data ?? [];
+  const totalCount    = students.length;
+  const submittedCount = students.filter((s) => s.status === "submitted").length;
+  const pendingCount  = totalCount - submittedCount;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
-
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+    <>
+      <div
+        className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 hover:shadow-[0_4px_18px_rgba(15,23,42,0.07)] hover:border-slate-300"
+        style={{ opacity: isHwPast ? 0.82 : 1 }}
+      >
+        {/* ── Header row ── */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-[6px]">
             <SubjectPill subject={hw.subject} />
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-gray-50 text-gray-600 border-gray-200">
-              {hw.className}
+            <span className="inline-flex items-center px-2.5 py-[3px] rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+              {hw.className}{hw.section ? ` – ${hw.section}` : ""}
             </span>
             <WABadge status={hw.waNotifyStatus} notifiedAt={hw.waNotifiedAt} />
           </div>
-          <h3 className="text-sm font-extrabold text-gray-900 leading-snug">{hw.title}</h3>
+
+          {/* Edit / Delete */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            {!isHwPast && (
+              <>
+                <Button
+                  type="button"
+                  onClick={onEdit}
+                  variant="ghost"
+                  size="sm"
+                  className="p-[6px] h-auto rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                >
+                  <Edit3 size={13} />
+                </Button>
+                <Button
+                  type="button"
+                  onClick={onDelete}
+                  variant="ghost"
+                  size="sm"
+                  className="p-[6px] h-auto rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 size={13} />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ── Title + due badge ── */}
+        <div>
+          <h3 className="text-[15px] font-bold text-slate-900 leading-snug mb-1.5">
+            {hw.title}
+          </h3>
           <DueBadge dateStr={hw.dueDate} isPast={isHwPast} />
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          
-          {/* Menu */}
-          {!isHwPast && (
-            <div className="flex items-center gap-1 ml-1">
-              <Button
-                type="button"
-                onClick={onEdit}
-                title="Edit"
-                variant="ghost"
-                size="sm"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
-              >
-                <Edit3 size={13} className="text-current" />
-              </Button>
-              <Button
-                type="button"
-                onClick={onDelete}
-                title="Delete"
-                variant="ghost"
-                size="sm"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
-              >
-                <Trash2 size={13} className="text-current" />
-              </Button>
-            </div>
+
+        {/* ── Description ── */}
+        <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-2">
+          {hw.description}
+        </p>
+
+        {/* ── Attachment ── */}
+        {hw.attachmentName && (
+          <a
+            href={hw.attachmentUrl ?? "#"}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-[5px] text-[11px] font-bold text-indigo-600 bg-indigo-50 px-[10px] py-[4px] rounded-lg hover:bg-indigo-100 transition-colors w-fit"
+          >
+            <Paperclip size={12} />
+            {hw.attachmentName}
+          </a>
+        )}
+
+        {/* ── Submission bar (live) ── */}
+        <SubmissionBar
+          submitted={submittedCount}
+          total={totalCount}
+          loading={subLoading}
+        />
+
+        {/* ── Footer actions ── */}
+        <div className="flex items-center gap-2 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setDrawerOpen(true)}
+            className="flex-1 h-9 rounded-xl text-[13px] font-semibold bg-white border-slate-200 text-slate-800 hover:bg-slate-50 gap-1.5"
+          >
+            <Eye size={14} />
+            View Submissions
+          </Button>
+
+          {!isHwPast && pendingCount > 0 && !subLoading && (
+            <Button
+              type="button"
+              onClick={onSendReminder}
+              disabled={reminderSent}
+              size="sm"
+              className={`flex items-center gap-1.5 h-9 px-4 rounded-xl text-[13px] font-bold transition-all ${
+                reminderSent
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default hover:bg-emerald-50"
+                  : "bg-amber-400 hover:bg-amber-500 text-white border-none shadow-sm"
+              }`}
+            >
+              <MessageCircle size={13} strokeWidth={2.5} />
+              {reminderSent ? "Reminded!" : `Remind (${pendingCount})`}
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Description */}
-      <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{hw.description}</p>
-
-      {/* Attachment */}
-      {hw.attachmentName && (
-        <a
-          href={hw.attachmentUrl ?? "#"}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors w-fit"
-        >
-          <LinkIcon size={13} className="text-current" />
-          {hw.attachmentName}
-        </a>
-      )}
-
-      {/* Submission bar */}
-      <SubmissionBar submitted={hw.submittedCount} total={hw.totalCount} />
-
-      {/* Footer actions */}
-      <div className="flex items-center gap-2 pt-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="flex-1 h-9 rounded-xl text-xs font-semibold"
-        >
-          View Submissions
-        </Button>
-        {!isHwPast && pendingCount > 0 && (
-          <Button
-            type="button"
-            onClick={onSendReminder}
-            disabled={reminderSent}
-            variant={reminderSent ? "outline" : "default"}
-            size="sm"
-            className={`flex items-center gap-1.5 h-9 px-4 rounded-xl text-xs font-bold transition-all ${
-              reminderSent
-                ? "bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-default"
-                : "bg-amber-500 text-white hover:bg-amber-600 shadow-sm"
-            }`}
-          >
-            <MessageCircle size={11} className="text-current" strokeWidth={2.5} />
-            {reminderSent ? "Reminded!" : `Remind (${pendingCount})`}
-          </Button>
-        )}
-      </div>
-    </div>
+      {/* ── Submission drawer ── */}
+      <SubmissionDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        hw={hw}
+      />
+    </>
   );
 };
 

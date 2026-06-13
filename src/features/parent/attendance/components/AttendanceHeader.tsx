@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { AttendanceHeaderProps } from "../types/attendance.types"
 
 const MONTH_NAMES = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ]
 
 export default function AttendanceHeader({ currentDate, onPrev, onNext, child }: AttendanceHeaderProps) {
@@ -12,12 +12,15 @@ export default function AttendanceHeader({ currentDate, onPrev, onNext, child }:
   return (
     <div className="flex items-center justify-between">
       <div>
-   <h1 className="text-xl font-bold text-gray-900">
-  Attendance — {child.name}
-</h1>
-<p className="text-xs text-gray-400 mt-0.5">
-  Class {child.class} | Academic Year 2024–25
-</p>
+        <h1 className="text-xl font-bold text-gray-900">
+          Attendance — {child.name}
+        </h1>
+        {/* ✅ show resolved class, section, and academic year */}
+        <p className="text-xs text-gray-400 mt-0.5">
+          {child.class && `Class ${child.class}`}
+          {child.section && ` · ${child.section}`}
+          {child.academicYear && ` · ${child.academicYear}`}
+        </p>
       </div>
 
       <div className="flex items-center gap-2">

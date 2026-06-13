@@ -24,7 +24,7 @@ type ModalState = "none" | "pay" | "success";
 type ParentLayoutContext = {
   activeChild: {
     id: number;
-    student_id?: string;
+    studentId?: string;
     name: string;
     class: string;
     school: string;
@@ -51,7 +51,7 @@ export default function FeesPage() {
 
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
-  const studentId = activeChild.student_id ?? "";
+  const studentId = activeChild.studentId ?? "";
   const {
     history, pending, allPaid, selectedFee, setSelectedFee,
     loading, error, fetchFees,

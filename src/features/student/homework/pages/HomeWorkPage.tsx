@@ -1,23 +1,66 @@
+import { useEffect, useState } from "react";
 import { useHomework } from "../hooks/useHomework";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
 import SubmitHomeworkModal from "../components/SubmitHomeworkModal";
-import { useAuthStore } from "@/store/authStore";
+import { GraduationCap } from "lucide-react";
+import { getAllAcademicYears, type AcademicYearRecord } from "@/services/academicYear.api";
 
 type Tab = "week" | "all" | "materials";
 
 const TABS = [
-  { key: "week"      as Tab, label: "This Week",       icon: "📅" },
-  { key: "all"       as Tab, label: "All Homework",    icon: "📋" },
+  { key: "week" as Tab, label: "This Week", icon: "📅" },
+  { key: "all" as Tab, label: "All Homework", icon: "📋" },
   { key: "materials" as Tab, label: "Study Materials", icon: "📚" },
 ];
 
-export const HomeworkPage = () => {
-  // ── Pull real UUIDs from auth store ─────────────────────────────────────
-  const authUser = useAuthStore((s) => s.user);
-  const classId   = (authUser as any)?.class_id   ?? (authUser as any)?.classId   ?? "";
-  const sectionId = (authUser as any)?.section_id ?? (authUser as any)?.sectionId ?? "";
+interface ShowMoreButtonProps {
+  shown: number;
+  total: number;
+  onShowMore: () => void;
+  onShowLess: () => void;
+}
 
+const ShowMoreLessButton = ({ shown, total, onShowMore, onShowLess }: ShowMoreButtonProps) => {
+  const remaining = total - shown;
+  const canShowMore = shown < total;
+  const canShowLess = shown > 4;
+
+  return (
+    <div className="flex items-center gap-2">
+      {canShowMore && (
+        <button
+          onClick={onShowMore}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl
+                     border border-dashed border-indigo-200 bg-indigo-50/50
+                     text-sm font-medium text-indigo-600
+                     hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+        >
+          Show {remaining} more
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+      {canShowLess && (
+        <button
+          onClick={onShowLess}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl
+                     border border-dashed border-gray-200 bg-gray-50/50
+                     text-sm font-medium text-gray-500
+                     hover:bg-gray-100 hover:border-gray-300 transition-colors"
+        >
+          Show less
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 9l5-5 5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+};
+
+export const HomeworkPage = () => {
   const {
     activeTab, setActiveTab,
     homework,
@@ -31,9 +74,26 @@ export const HomeworkPage = () => {
     openSubmitModal,
     closeSubmitModal,
     handleSubmit,
-  } = useHomework({ classId, sectionId });
+    studentId,
+    studentName,
+    studentClass,
+    studentSection,
+  } = useHomework();
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  const [activeAcademicYear, setActiveAcademicYear] = useState<AcademicYearRecord | null>(null);
+  const [visibleCount, setVisibleCount] = useState(4);
+
+  useEffect(() => {
+    getAllAcademicYears().then(({ data }) => {
+      const active = data.find((y) => y.active) ?? data[0] ?? null;
+      setActiveAcademicYear(active);
+    });
+  }, []);
+
+  useEffect(() => {
+    setVisibleCount(4);
+  }, [activeTab]);
+
   if (loading) {
     return (
       <div className="p-3 sm:p-6 bg-gray-50 min-h-screen flex items-center justify-center">
@@ -45,7 +105,6 @@ export const HomeworkPage = () => {
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="p-3 sm:p-6 bg-gray-50 min-h-screen flex items-center justify-center">
@@ -62,18 +121,42 @@ export const HomeworkPage = () => {
     );
   }
 
-  // ── Month/year label from the real week ────────────────────────────────────
-  const firstDay  = weekDays[0].fullDate;
+  const firstDay = weekDays[0].fullDate;
   const monthYear = firstDay.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
   return (
     <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-1">My Homework</h1>
-      <p className="text-sm text-gray-400 mb-6">Academic Year 2024-25</p>
+
+      {/* PAGE HEADER */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#0B1C30]">My Homework</h1>
+        <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-400">
+          {studentName && (
+            <span className="font-medium text-gray-600">{studentName}</span>
+          )}
+          {studentClass && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="flex items-center gap-1">
+                <GraduationCap size={13} className="text-gray-400" />
+                Class {studentClass}
+                {studentSection && (
+                  <span className="text-gray-400">– {studentSection}</span>
+                )}
+              </span>
+            </>
+          )}
+          <span className="text-gray-300">•</span>
+          <span>
+            Academic Year{" "}
+            {activeAcademicYear ? activeAcademicYear.yearName : "…"}
+          </span>
+        </div>
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
 
-        {/* ── SIDEBAR ── */}
+        {/* SIDEBAR */}
         <aside className="w-full lg:w-48 flex-shrink-0 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible">
           <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">
@@ -103,10 +186,10 @@ export const HomeworkPage = () => {
           </div>
         </aside>
 
-        {/* ── MAIN ── */}
+        {/* MAIN */}
         <div className="flex-1 flex flex-col gap-4 min-w-0">
 
-          {/* ── Real calendar strip — Mon–Fri of current week ── */}
+          {/* Calendar strip */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
@@ -116,15 +199,15 @@ export const HomeworkPage = () => {
             <div className="flex gap-2 overflow-x-auto">
               {weekDays.map((d) => {
                 const isActive =
-                  d.date  === selectedDay.date &&
+                  d.date === selectedDay.date &&
                   d.month === selectedDay.month &&
-                  d.year  === selectedDay.year;
+                  d.year === selectedDay.year;
 
-                const today = new Date();
+                const todayDate = new Date();
                 const isToday =
-                  d.date  === today.getDate() &&
-                  d.month === today.getMonth() &&
-                  d.year  === today.getFullYear();
+                  d.date === todayDate.getDate() &&
+                  d.month === todayDate.getMonth() &&
+                  d.year === todayDate.getFullYear();
 
                 return (
                   <button
@@ -150,39 +233,68 @@ export const HomeworkPage = () => {
             </div>
           </div>
 
-          {/* ── THIS WEEK ── */}
+          {/* This Week */}
           {activeTab === "week" && (
             <div className="space-y-3">
-              {thisWeekHomework.length === 0
-                ? <p className="text-sm text-gray-400 p-4">No homework from this day onwards 🎉</p>
-                : thisWeekHomework.map((hw) => (
+              {thisWeekHomework.length === 0 ? (
+                <p className="text-sm text-gray-400 p-4">No homework from this day onwards 🎉</p>
+              ) : (
+                <>
+                  {thisWeekHomework.slice(0, visibleCount).map((hw) => (
                     <HomeworkCard key={hw.id} item={hw} onSubmit={openSubmitModal} />
-                  ))
-              }
+                  ))}
+                  {thisWeekHomework.length > 4 && (
+                    <ShowMoreLessButton
+                      shown={visibleCount}
+                      total={thisWeekHomework.length}
+                      onShowMore={() => setVisibleCount((p) => p + 4)}
+                      onShowLess={() => setVisibleCount(4)}
+                    />
+                  )}
+                </>
+              )}
             </div>
           )}
 
-          {/* ── ALL HOMEWORK ── */}
+          {/* All Homework */}
           {activeTab === "all" && (
             <div className="space-y-3">
-              {homework.length === 0
-                ? <p className="text-sm text-gray-400 p-4">No homework found.</p>
-                : homework.map((hw) => (
+              {homework.length === 0 ? (
+                <p className="text-sm text-gray-400 p-4">No homework found.</p>
+              ) : (
+                <>
+                  {homework.slice(0, visibleCount).map((hw) => (
                     <HomeworkCard key={hw.id} item={hw} onSubmit={openSubmitModal} />
-                  ))
-              }
+                  ))}
+                  {homework.length > 4 && (
+                    <ShowMoreLessButton
+                      shown={visibleCount}
+                      total={homework.length}
+                      onShowMore={() => setVisibleCount((p) => p + 4)}
+                      onShowLess={() => setVisibleCount(4)}
+                    />
+                  )}
+                </>
+              )}
             </div>
           )}
 
-          {/* ── STUDY MATERIALS ── */}
+          {/* Study Materials */}
           {activeTab === "materials" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {materials.map((m) => (
+                {materials.slice(0, visibleCount).map((m) => (
                   <StudyMaterialCard key={m.id} item={m} />
                 ))}
               </div>
-
+              {materials.length > 4 && (
+                <ShowMoreLessButton
+                  shown={visibleCount}
+                  total={materials.length}
+                  onShowMore={() => setVisibleCount((p) => p + 4)}
+                  onShowLess={() => setVisibleCount(4)}
+                />
+              )}
               <div className="flex items-center justify-between gap-4 bg-indigo-50 border border-indigo-100 rounded-xl px-5 py-4">
                 <div>
                   <p className="text-sm font-semibold text-gray-800">Need something else?</p>
@@ -199,20 +311,27 @@ export const HomeworkPage = () => {
         </div>
       </div>
 
-      {/* ── SUBMIT MODAL ── */}
+      {/* Submit Modal */}
       <SubmitHomeworkModal
         open={submitModalOpen}
         onClose={closeSubmitModal}
-        onSubmit={() => { if (selectedHomework) handleSubmit(selectedHomework.id); }}
+        homeworkId={selectedHomework?.id ?? ""}
+        studentId={studentId}
+        onSuccess={(submissionId) => {
+          if (selectedHomework) {
+            handleSubmit(selectedHomework.id, submissionId);
+            refetch();
+          }
+        }}
         assignment={
           selectedHomework
             ? {
-                title:      selectedHomework.title,
-                subject:    selectedHomework.subject,
-                className:  classId,
-                dueLabel:   selectedHomework.dueDate,
-                assignedBy: selectedHomework.assignedBy,
-              }
+              title: selectedHomework.title,
+              subject: selectedHomework.subject,
+              className: studentClass,
+              dueLabel: selectedHomework.dueDate,
+              assignedBy: selectedHomework.assignedBy,
+            }
             : undefined
         }
       />

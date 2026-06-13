@@ -5,7 +5,7 @@ import { UpcomingSection } from "../components/UpcomingSection";
 import { ResultsSection } from "../components/ResultSection";
 import { useAuthStore } from "@/store/authStore";
 import { getAllAcademicYears } from "../../../../services/academicYear.api";
-import { getClassById } from "../../../../services/class.api"; // ← adjust path
+import { getClassById } from "../../../../services/class.api";
 import { useQuery } from "@tanstack/react-query";
 
 const tabs = [
@@ -14,13 +14,12 @@ const tabs = [
 ] as const;
 
 export const ExamsPage = () => {
-const { user } = useAuthStore();
-console.log("section_id value:", user?.section_id);
+  const { user } = useAuthStore();
 
   const classId = user?.class_id ?? "";
- const sectionId = user?.section_id ?? "";
+  const sectionId = user?.section_id ?? "";
   const studentId = user?.id ?? "";
-  const sectionName = user?.section_id?.split(":")[1] ?? ""; // name part after ":"
+  const sectionName = user?.section_id?.split(":")[1] ?? "";
 
   // ── Fetch class name ──
   const { data: classData } = useQuery({
@@ -42,7 +41,6 @@ console.log("section_id value:", user?.section_id);
     academicYears.find((y) => y.active)?.yearName ??
     academicYears[0]?.yearName ??
     "2024-2025";
-
   const defaultYearId =
     academicYears.find((y) => y.active)?.id ??
     academicYears[0]?.id ??
@@ -55,19 +53,25 @@ console.log("section_id value:", user?.section_id);
   const activeYear = selectedYear || defaultYear;
   const activeYearId = selectedYearId || defaultYearId;
 
-  console.log("classId:", classId, "sectionId:", sectionId);
+  const {
+    activeTab,
+    setActiveTab,
+    exams,
+    examsLoading,
+    examsError,
+    refetchExams,
+    examResult,
+    resultsLoading,
+    resultsError,
+    refetchResults,
+    examList,
+    examListLoading,
+    selectedResultExamId,
+    setSelectedResultExamId,
+  } = useExamData(classId, sectionId, studentId, "", activeYearId);
 
-const {
-  activeTab,
-  setActiveTab,
-  exams,
-  examsLoading,
-  examsError,
-  refetchExams,
-  examResult,
-} = useExamData(classId, sectionId, studentId, "Midterm", activeYearId);
   return (
-    <div className="mx-auto max-w-7xl px-2 sm:px-3 py-3 sm:py-4 space-y-4">
+    <div className="mx-auto max-w-7xl px-3 sm:px-3 py-3 sm:py-4 space-y-4">
 
       {/* ================= HEADER ================= */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -89,7 +93,7 @@ const {
         <div className="relative">
           <button
             onClick={() => setYearDropdownOpen((o) => !o)}
-            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition hover:border-indigo-200 hover:shadow-sm"
+            className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition"
           >
             {activeYear}
             <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -107,8 +111,10 @@ const {
                     setSelectedYearId(y.id);
                     setYearDropdownOpen(false);
                   }}
-                  className={`w-full px-3 py-2 text-left text-sm transition hover:bg-indigo-50 hover:text-indigo-600 first:rounded-t-lg last:rounded-b-lg ${
-                    activeYear === y.yearName ? "text-indigo-600 font-medium" : "text-gray-700"
+                  className={`w-full px-3 py-2 text-left text-sm transition first:rounded-t-lg last:rounded-b-lg ${
+                    activeYear === y.yearName
+                      ? "text-indigo-600 font-medium"
+                      : "text-gray-700"
                   }`}
                 >
                   {y.yearName}
@@ -141,43 +147,47 @@ const {
       {/* ================= CONTENT AREA ================= */}
       <div className="pt-2 transition-all duration-200 space-y-4">
 
-        <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
-          {activeTab === "upcoming" && (
-            <>
-              {examsLoading && (
-                <div className="flex items-center justify-center py-12 text-sm text-gray-400">
-                  <svg className="animate-spin h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Loading exam timetable…
-                </div>
-              )}
+        {activeTab === "upcoming" && (
+          <div className="rounded-xl border border-transparent transition-all duration-200">
+            {examsLoading && (
+              <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+                <svg className="animate-spin h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Loading exam timetable…
+              </div>
+            )}
+            {!examsLoading && examsError && (
+              <div className="flex flex-col items-center gap-3 py-12 text-sm text-red-500">
+                <span>{examsError}</span>
+                <button
+                  onClick={refetchExams}
+                  className="rounded-lg border border-red-200 px-4 py-1.5 text-xs text-red-500 transition"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            {!examsLoading && !examsError && <UpcomingSection exams={exams} />}
+          </div>
+        )}
 
-              {!examsLoading && examsError && (
-                <div className="flex flex-col items-center gap-3 py-12 text-sm text-red-500">
-                  <span>{examsError}</span>
-                  <button
-                    onClick={refetchExams}
-                    className="rounded-lg border border-red-200 px-4 py-1.5 text-xs text-red-500 hover:bg-red-50 transition"
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
+        {activeTab === "results" && (
+          <div className="rounded-xl border border-transparent transition-all duration-200">
+            <ResultsSection
+              examResult={examResult}
+              resultsLoading={resultsLoading}
+              resultsError={resultsError}
+              onRetry={refetchResults}
+              examList={examList}
+              examListLoading={examListLoading}
+              selectedResultExamId={selectedResultExamId}
+              onSelectExam={setSelectedResultExamId}
+            />
+          </div>
+        )}
 
-              {!examsLoading && !examsError && (
-                <UpcomingSection exams={exams} />
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-sm">
-          {activeTab === "results" && examResult && (
-            <ResultsSection examResult={examResult} />
-          )}
-        </div>
       </div>
     </div>
   );

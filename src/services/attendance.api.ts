@@ -37,9 +37,13 @@ export interface MonthlyAttendanceParams {
   year: number;
 }
 
+// ✅ Updated — API requires class_id, section_id, academicYearId
 export interface YearlyAttendanceParams {
   studentId: string;
   year: number;
+  class_id: string;
+  section_id: string;
+  academicYearId: string;
 }
 
 export interface WeeklyAttendanceSummary {
@@ -139,6 +143,19 @@ export interface AbsentMoreThan5DaysResponse {
   data: ChronicAbsenteeRecord[];
 }
 
+// ✅ Updated to match actual API response shape
+export interface YearlyAttendanceResponse {
+  status: boolean;
+  studentId: string;
+  academicYearId: string;
+  summary: {
+    present: number;
+    absent: number;
+    total: number;
+  };
+  records: AttendanceRecord[];
+}
+
 /* ================= APIs ================= */
 
 // GET all attendance
@@ -186,10 +203,25 @@ export const bulkAttendance = async (payload: any): Promise<any> => {
   return data;
 };
 
+export interface MonthlyAttendanceResponse {
+  status: boolean;
+  studentId: string;
+  month: number;
+  year: number;
+  summary: {
+    total: number;
+    present: number;
+    absent: number;
+    present_dates: string[];
+    absent_dates: string[];
+  };
+  records: any[];
+}
+
 // MONTHLY
 export const getMonthlyAttendance = async (
   params: MonthlyAttendanceParams
-): Promise<any> => {
+): Promise<MonthlyAttendanceResponse> => {
   const { data } = await api.get(
     `/tenant/getMonthlyAttendanceByStudentId`,
     { params }
@@ -197,10 +229,10 @@ export const getMonthlyAttendance = async (
   return data;
 };
 
-// YEARLY
+// ✅ YEARLY — updated to send class_id, section_id, academicYearId
 export const getYearlyAttendance = async (
   params: YearlyAttendanceParams
-): Promise<any> => {
+): Promise<YearlyAttendanceResponse> => {
   const { data } = await api.get(`/tenant/getYearlyAttendance`, {
     params,
   });
@@ -274,3 +306,25 @@ export const getAbsentMoreThan5Days =
     const { data } = await api.get(`/tenant/absentmorethan5days`);
     return data;
   };
+
+export interface StudentTodayAttendanceResponse {
+  status: boolean;
+  studentId: string;
+  date: string;
+  summary: {
+    present: number;
+    absent: number;
+    total: number;
+  };
+  records: AttendanceRecord[];
+}
+
+export const getStudentTodayAttendance = async (
+  studentId: string
+): Promise<StudentTodayAttendanceResponse> => {
+  const { data } = await api.get(
+    `/tenant/getstudenttodayattendance/`,
+    { params: { studentId } }
+  );
+  return data;
+};

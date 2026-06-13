@@ -7,24 +7,44 @@ export interface Student {
   date_of_birth: string;
   blood_group: string;
   address: string;
-  photo: string | null;
+  photo?: string;
 
-  class_id: string | null;
-  sectionId: string;              // ✅ FIXED
-  academicYearId: string;         // ✅ ADDED
+  class_id: string;
+  sectionId: string;
+  academicYearId: string;
 
   roll_number: string;
   admission_number: string;
-  admission_date: string | null;
-  status: string;
+  admission_date: string;
+  status: "active" | "inactive";
 
   school_id: string;
   school_code: string;
 
   createdAt: string;
   updatedAt: string;
+
+  classDetail?: {
+    id: string;
+    class_name: string;
+  };
+
+  sectionDetail?: {
+    id: string;
+    sectionName: string;
+  };
 }
-export const getStudentById = async (studentId: string): Promise<Student> => {
-  const { data } = await api.get(`/tenant/getstudentsById/${studentId}`);
-  return data.data;
+
+export interface ApiResponse<T> {
+  status: boolean;
+  data: T;
+}
+
+export const getStudentById = async (
+  studentId: string
+): Promise<Student> => {
+  const response = await api.get<ApiResponse<Student>>(
+    `/tenant/getstudentsById/${studentId}`
+  );
+  return response.data.data;
 };

@@ -50,7 +50,7 @@ export const DashboardStatCard = ({
 
   const wrappedIcon = icon ? (
     <span
-      className="w-6 h-6 sm:w-7 sm:h-7 rounded-[6px] flex items-center justify-center shrink-0"
+      className="w-5 h-5 rounded-[4px] flex items-center justify-center shrink-0"
       style={{ background: iconBg, color: iconColor }}
     >
       {icon}
@@ -61,9 +61,9 @@ export const DashboardStatCard = ({
     <div
       onClick={onClick}
       className={cn(
-        "flex flex-col gap-1.5 sm:gap-2",
-        "px-4 sm:px-5 py-4 sm:py-[18px]",
-        "bg-white rounded-xl sm:rounded-2xl",
+        "flex flex-col gap-1",
+        "px-3 py-3",
+        "bg-white rounded-xl",
         "cursor-pointer transition-all duration-150",
 
         // inactive state (desktop hover only)
@@ -84,7 +84,7 @@ export const DashboardStatCard = ({
     >
       {/* Label + Icon */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.06em] text-[#8A91A8] leading-none">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#8A91A8] leading-none">
           {label}
         </p>
         {wrappedIcon}
@@ -94,14 +94,14 @@ export const DashboardStatCard = ({
       {value && (
         <div className="flex items-baseline gap-1 flex-wrap">
           <p
-            className="text-[18px] sm:text-[22px] font-semibold leading-tight"
+            className="text-[16px] font-semibold leading-tight"
             style={{ color: valueColor }}
           >
             {value}
           </p>
 
           {suffixLabel && (
-            <span className="text-[10px] sm:text-xs text-gray-400">
+            <span className="text-[10px] text-gray-400">
               {suffixLabel}
             </span>
           )}
@@ -113,7 +113,7 @@ export const DashboardStatCard = ({
         <span
           className={cn(
             "inline-flex items-center gap-1.5",
-            "text-[10px] sm:text-[11px] font-medium",
+            "text-[10px] font-medium",
             "px-2 py-1 rounded-full w-fit max-w-full",
 
             badge.variant === "green" && "bg-[#E6F4EF] text-[#00714D]",
@@ -139,7 +139,7 @@ export const DashboardStatCard = ({
 
       {/* Sub text */}
       {sub && (
-        <p className="text-[11px] sm:text-[12px] text-[#8A91A8] leading-snug">
+        <p className="text-[10px] text-[#8A91A8] leading-snug">
           {sub}
         </p>
       )}

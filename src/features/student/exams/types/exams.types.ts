@@ -4,9 +4,10 @@ export type Subject =
   | "Mathematics"
   | "Science"
   | "Social Studies"
-  | "Hindi";
+  | "Hindi"
+  | (string & {}); // allow any subject_name from API
 
-export type ExamType = 'ut1' | 'ut2' | 'midterm' | 'ut3' | 'final';
+export type ExamType = "ut1" | "ut2" | "midterm" | "ut3" | "final";
 export type Venue = "Hall A" | "Hall B" | "Lab 1";
 
 export interface Exam {
@@ -23,7 +24,7 @@ export interface Result {
   marks: number;
   total: number;
   grade: string;
-  status: 'pass' | 'fail';
+  status: "pass" | "fail";
   scores?: Record<ExamType, number | null>;
 }
 
@@ -35,7 +36,7 @@ export interface ExamResult {
   percentage: number;
   grade: string;
   rank: string;
-  status: 'pass' | 'fail';
+  status: "pass" | "fail";
   results: Result[];
 }
 
@@ -47,8 +48,8 @@ export interface ReportCard {
 }
 
 export interface Syllabus {
-  subject: Subject;      // ← use Subject union type
-  fileName: string;      // ← added
+  subject: Subject;
+  fileName: string;
   fileUrl: string;
   uploadedBy: string;
   uploadDate: string;

@@ -1,36 +1,33 @@
-// HomeworkPage.tsx
 import { useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { HelpCircle, Loader2, AlertCircle } from "lucide-react";
 import { useHomeworkStore } from "../store/HomeWork.store";
-import {
-  filterHomeworkByDay,
-  groupBySubject,
-  sortByDueDate,
-  mapApiHomework,
-} from "../utils/homework.utils";
-import { getAllHomework, getHomeworkByClass } from "../../../../services/homework.api";
+import { groupBySubject, sortByDueDate, mapApiHomework } from "../utils/homework.utils";
+import { getHomeworkByClass } from "../../../../services/homework.api";
 import { useStudyMaterials } from "../hooks/useStudymaterial";
-import { DayFilter } from "../components/DayFilter";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
 import { HomeworkProgress } from "../components/HomeWorkProgress";
 import { RecommendedResources } from "../components/RecommendedResources";
 import typography, { combineTypography } from "@/styles/typography";
+import { useStudentById } from "../../dashboard/hooks/useStudent";
 
 type ParentLayoutContext = {
   activeChild: {
     id: number;
     name: string;
     class: string;
+    section?: string;
     school: string;
     avatar: string;
+    studentId?: string;
+    classDetail?: { id: string; className: string } | null;
+    sectionDetail?: { id: string; sectionName: string } | null;
   };
 };
 
 const TABS = [
-  { id: "week"      as const, label: "This Week"       },
-  { id: "all"       as const, label: "All Homework"    },
+  { id: "homeworks" as const, label: "Homeworks" },
   { id: "materials" as const, label: "Study Materials" },
 ];
 
@@ -81,32 +78,44 @@ const NeedHelpCard = () => (
 export default function HomeworkPage() {
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
+  const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "");
+  const { student } = useStudentById(studentId);
+
+  // Use context data immediately (already fetched by ParentLayout), fall back to API
+  const classIdForApi   = activeChild?.classDetail?.id   ?? student?.classDetail?.id ?? "";
+  const sectionIdForApi = activeChild?.sectionDetail?.id ?? student?.sectionDetail?.id ?? "";
+
+  const displayClass   = student?.classDetail?.class_name ?? activeChild?.classDetail?.className ?? activeChild?.class ?? "";
+  const displaySection = student?.sectionDetail?.sectionName ?? activeChild?.sectionDetail?.sectionName ?? activeChild?.section ?? "";
+
   const {
     tab, setTab,
-    selectedDate,                       // ← now using full Date
     allHomeworks, allLoading, allError,
     setAllHomeworks, setAllLoading, setAllError,
-    weekHomeworks, weekLoading, weekError,
-    setWeekHomeworks, setWeekLoading, setWeekError,
   } = useHomeworkStore();
-
-  const classNameForApi =
-    activeChild?.class?.replace(/[A-Za-z]+$/, "")?.trim() ?? "";
 
   const {
     materials,
     loading: materialsLoading,
     error: materialsError,
-  } = useStudyMaterials(tab === "materials" ? classNameForApi : "");
+  } = useStudyMaterials(
+    tab === "materials" ? classIdForApi : "",
+    tab === "materials" ? sectionIdForApi : ""
+  );
 
-  // Fetch All Homework
+  // Fetch homeworks — waits for classIdForApi to resolve before calling API
   useEffect(() => {
-    if (tab !== "all") return;
+    if (tab !== "homeworks") return;
+    if (!classIdForApi) return; // prevents 400 — waits until student data loads
+
     let cancelled = false;
     setAllLoading(true);
     setAllError(null);
 
-    getAllHomework({ is_published: true })
+    getHomeworkByClass({
+      class_id: classIdForApi,
+      section_id: sectionIdForApi || undefined,
+    })
       .then((res) => {
         if (cancelled) return;
         if (res.status && Array.isArray(res.data)) {
@@ -122,41 +131,13 @@ export default function HomeworkPage() {
         if (!cancelled) setAllLoading(false);
       });
 
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+    return () => {
+      cancelled = true;
+    };
+    // re-fires once classIdForApi resolves from ""
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, classIdForApi, sectionIdForApi]);
 
-  // Fetch This Week homework
-  useEffect(() => {
-    if (tab !== "week") return;
-    let cancelled = false;
-    setWeekLoading(true);
-    setWeekError(null);
-
-    getHomeworkByClass(classNameForApi)
-      .then((res) => {
-        if (cancelled) return;
-        if (res.status && Array.isArray(res.data)) {
-          setWeekHomeworks(res.data.map(mapApiHomework));
-        } else {
-          setWeekError(res.message ?? "Failed to load homework.");
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) setWeekError(err?.message ?? "Something went wrong.");
-      })
-      .finally(() => {
-        if (!cancelled) setWeekLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, activeChild.id]);
-
-  // Derived — use selectedDate (full Date) for accurate filtering
-  const thisWeekHomework = sortByDueDate(
-    filterHomeworkByDay(weekHomeworks ?? [], selectedDate)
-  );
   const allGrouped = groupBySubject(sortByDueDate(allHomeworks ?? []));
 
   return (
@@ -175,7 +156,7 @@ export default function HomeworkPage() {
           Homework &amp; Study Materials
         </h1>
         <p className={combineTypography(typography.body.small, "text-gray-400 mt-0.5")}>
-          {activeChild.name} — Class {activeChild.class}
+          {activeChild.name} — {displayClass}{displaySection ? ` · ${displaySection}` : ""}
         </p>
       </div>
 
@@ -196,44 +177,17 @@ export default function HomeworkPage() {
         ))}
       </div>
 
-      {/* THIS WEEK TAB */}
-      {tab === "week" && (
-        <div className="flex flex-col gap-4">
-          {/* DayFilter — now shows real current-week dates from the calendar */}
-          <div className="overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-            <DayFilter />
-          </div>
-
-          {weekLoading ? (
-            <LoadingState />
-          ) : weekError ? (
-            <ErrorState message={weekError} />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {thisWeekHomework.length === 0 ? (
-                <EmptyState message="No homework for this day 🎉" />
-              ) : (
-                thisWeekHomework.map((hw) => (
-                  <HomeworkCard key={hw.id} hw={hw} variant="week" />
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ALL HOMEWORK TAB */}
-      {tab === "all" && (
+      {/* HOMEWORKS TAB */}
+      {tab === "homeworks" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-2 flex flex-col gap-5">
             {allLoading ? (
               <LoadingState />
             ) : allError ? (
               <ErrorState message={allError} />
-            ) : (allHomeworks ?? []).length === 0 ? (
+            ) : allHomeworks.length === 0 ? (
               <EmptyState message="No homework found." />
             ) : (
-              // Show SUBJECT_ORDER subjects first, then any other subjects from the API
               [
                 ...SUBJECT_ORDER.filter((s) => allGrouped[s]),
                 ...Object.keys(allGrouped).filter((s) => !SUBJECT_ORDER.includes(s)),

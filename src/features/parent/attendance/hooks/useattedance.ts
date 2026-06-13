@@ -13,6 +13,15 @@ const SHORT_MONTHS = [
   "Jul","Aug","Sep","Oct","Nov","Dec",
 ]
 
+// Extra params needed by getYearlyAttendance
+export interface YearlyFetchParams {
+  studentId: string
+  year: number
+  class_id: string
+  section_id: string
+  academicYearId: string
+}
+
 export function useAttendance() {
   const store = useAttendanceStore()
 
@@ -28,14 +37,11 @@ export function useAttendance() {
         ]);
 
         // Normalise attendance records
-        const records: any[] = Array.isArray(attRes)
-          ? attRes
-          : Array.isArray(attRes?.records)
-          ? attRes.records
-          : Array.isArray(attRes?.data)
-          ? attRes.data
-          : []
-
+       const records: any[] = Array.isArray(attRes?.records)
+  ? attRes.records
+  : Array.isArray(attRes)
+  ? attRes
+  : []
         const days: DayEntry[] = records.map((r: any) => ({
           id: r.id,
           date: r.date,
@@ -94,22 +100,27 @@ export function useAttendance() {
   )
 
   // ─── Fetch yearly attendance ─────────────────────────────
+  // Now accepts class_id, section_id, academicYearId as required by the API
   const fetchYearly = useCallback(
-    async (studentId: string, year: number) => {
+    async (params: YearlyFetchParams) => {
+      const { studentId, year, class_id, section_id, academicYearId } = params
       store.setLoadingYearly(true)
       store.setYearlyError(null)
       try {
-        const res = await getYearlyAttendance({ studentId, year })
+        const res = await getYearlyAttendance({
+          studentId,
+          year,
+          class_id,
+          section_id,
+          academicYearId,
+        })
 
-        // Normalise
-        const records: any[] = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.records)
-          ? res.records
-          : Array.isArray(res?.data)
-          ? res.data
-          : []
-
+        // Normalise — API returns { status, studentId, academicYearId, summary, records }
+      const records: any[] = Array.isArray(res?.records)
+  ? res.records
+  : Array.isArray(res)
+  ? res
+  : []
         // Build month-level trend buckets
         const buckets: Record<number, { present: number; total: number }> = {}
         for (let m = 1; m <= 12; m++) buckets[m] = { present: 0, total: 0 }
@@ -130,13 +141,17 @@ export function useAttendance() {
             attendance: Math.round((v.present / v.total) * 100),
           }))
 
-        const totalPresent = records.filter(
-          (r) => (r.status as string).toLowerCase() === "present" || (r.status as string).toLowerCase() === "late"
+        // Use API summary if available, else derive from records
+        const apiSummary = res?.summary
+        const totalPresent = apiSummary?.present ?? records.filter(
+          (r) => (r.status as string).toLowerCase() === "present" ||
+                 (r.status as string).toLowerCase() === "late"
         ).length
+        const totalRecords = apiSummary?.total ?? records.length
 
         const yearly: YearlySummary = {
           present: totalPresent,
-          total: records.length,
+          total: totalRecords,
           monthlyTrend,
         }
 

@@ -55,7 +55,7 @@ export const StudyMaterialCard = ({ item }: Props) => {
 
       {/* Meta */}
       <p className="text-[11px] sm:text-xs text-gray-400 leading-relaxed">
-        Class 10A • {item.subject}
+        {item.className}{item.section ? ` - ${item.section}` : ""} • {item.subject}
         <br />
         {isLink ? "Added" : "Uploaded"} {item.uploadedDate}
       </p>
@@ -63,7 +63,10 @@ export const StudyMaterialCard = ({ item }: Props) => {
       {/* Action */}
       <div className="mt-auto pt-3 border-t border-gray-100">
         {isLink ? (
-          <button
+          <a
+            href={item.open_link ?? item.url ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center justify-center gap-1.5 w-full
                        py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-700
                        active:scale-[0.98]
@@ -72,9 +75,12 @@ export const StudyMaterialCard = ({ item }: Props) => {
           >
             <ExternalLink size={13} />
             Open Link
-          </button>
+          </a>
         ) : (
-          <button
+          <a
+            href={item.pdf ?? item.url ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center justify-center gap-1.5 w-full
                        py-2.5 sm:py-2 border border-gray-200
                        hover:bg-gray-50 active:scale-[0.98]
@@ -83,7 +89,7 @@ export const StudyMaterialCard = ({ item }: Props) => {
           >
             <Download size={13} />
             Download
-          </button>
+          </a>
         )}
       </div>
     </div>

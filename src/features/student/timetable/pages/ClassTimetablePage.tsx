@@ -2,27 +2,38 @@ import {
   useClassTimetable,
   useUpcomingExaminations,
   useAddExamsToCalendar,
-} from "../hooks/useclassTimetable";
+} from "../hooks/useClassTimetable";
 
 import TimetableGrid from "../components/Timetablegrid";
 import SubjectLegend from "../components/Subjectlegend";
 import ExaminationTable from "../components/Examinationtable";
+import { GraduationCap } from "lucide-react";
 
 const ClassTimetablePage = () => {
-  const { data: timetable, isLoading, isError } = useClassTimetable();
+  const { data: timetable, meta, isLoading, isError } = useClassTimetable();
 
-  const { data: examinations } = useUpcomingExaminations();
+  // Pass real IDs to exam hook once timetable loads
+  // (class_id / section_id are encoded inside timetable rows — we get them from meta)
+  const { data: examinations } = useUpcomingExaminations(
+    timetable?.rows?.[0] ? (timetable as any)._classId : undefined,
+    timetable?.rows?.[0] ? (timetable as any)._sectionId : undefined,
+  );
 
   const { addAll } = useAddExamsToCalendar();
 
+  // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] px-4">
-        <div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+          <p className="text-sm text-gray-400 font-medium">Loading timetable…</p>
+        </div>
       </div>
     );
   }
 
+  // ── Error ────────────────────────────────────────────────────────────────
   if (isError || !timetable) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center px-6 text-gray-500">
@@ -48,30 +59,39 @@ const ClassTimetablePage = () => {
       py-4 sm:py-6
     ">
 
-      {/* ================= HEADER ================= */}
-      <div className="flex flex-col gap-2">
-
+      {/* ── HEADER ── */}
+      <div className="flex flex-col gap-1">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
           My Class Timetable
         </h1>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+        {/* Student info row — consistent with HomeworkPage & AttendancePage */}
+        <div className="flex flex-wrap items-center gap-2 mt-0.5 text-sm text-gray-400">
 
-          <p className="text-sm font-semibold text-indigo-600">
-            {timetable.className}
-          </p>
+          {meta?.studentName && (
+            <span className="font-medium text-gray-600">{meta.studentName}</span>
+          )}
 
-          <span className="hidden sm:block text-gray-300">•</span>
+          {meta?.className && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="flex items-center gap-1">
+                <GraduationCap size={13} className="text-gray-400" />
+                Class {meta.className}
+                {meta.sectionName && (
+                  <span className="text-gray-400">– {meta.sectionName}</span>
+                )}
+              </span>
+            </>
+          )}
 
-          <p className="text-xs sm:text-sm text-gray-400">
-            Academic Year {timetable.academicYear}
-          </p>
+          <span className="text-gray-300">•</span>
+          <span>Academic Year {meta?.academicYear ?? timetable.academicYear}</span>
 
         </div>
-
       </div>
 
-      {/* ================= TIMETABLE ================= */}
+      {/* ── TIMETABLE GRID ── */}
       <div className="
         w-full overflow-hidden
         rounded-2xl border border-gray-100
@@ -85,7 +105,7 @@ const ClassTimetablePage = () => {
         />
       </div>
 
-      {/* ================= LEGEND ================= */}
+      {/* ── SUBJECT LEGEND ── */}
       <div className="
         w-full overflow-hidden
         rounded-xl border border-gray-100
@@ -96,7 +116,7 @@ const ClassTimetablePage = () => {
         <SubjectLegend subjects={timetable.subjects} />
       </div>
 
-      {/* ================= EXAMS ================= */}
+      {/* ── UPCOMING EXAMS ── */}
       {examinations && (
         <div className="
           w-full overflow-hidden

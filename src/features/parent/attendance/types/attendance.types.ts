@@ -9,6 +9,7 @@ export interface ChildInfo {
   name: string
   class: string
   section?: string
+  academicYear?: string
 }
 
 export interface AttendanceHeaderProps {

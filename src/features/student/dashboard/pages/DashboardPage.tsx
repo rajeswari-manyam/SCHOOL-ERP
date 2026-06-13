@@ -1,38 +1,37 @@
-// src/features/dashboard/pages/DashboardPage.tsx
-// No config needed — all data is derived from the Zustand auth store automatically.
+// src/features/student/dashboard/pages/DashboardPage.tsx
 
 import { useNavigate } from "react-router-dom";
-import { useDashboard }                                from "../hooks/useDashboard";
-import { DashboardStatCard, DashboardStatGrid }        from "../components/DashboardStatCard";
-import { ScheduleTable }                               from "../components/ScheduleTable";
-import { HomeworkList }                                from "../components/Homeworklist";
-import { AttendanceCalendar }                          from "../components/Attendancecalendar";
-import { RecentResults }                               from "../components/Recentresults";
-import { LatestAnnouncements }                         from "../components/Latestannouncements";
-import type { StatItem }                               from "../types/dashboard.types";
+import { useDashboard } from "../hooks/useDashboard";
+import { DashboardStatCard, DashboardStatGrid } from "../components/DashboardStatCard";
+import { ScheduleTable } from "../components/ScheduleTable";
+import { HomeworkList } from "../components/Homeworklist";
+import { AttendanceCalendar } from "../components/Attendancecalendar";
+import { RecentResults } from "../components/Recentresults";
+import { LatestAnnouncements } from "../components/Latestannouncements";
+import type { StatItem } from "../types/dashboard.types";
 import {
   CalendarDays, Percent, BookOpen, FileText,
   GraduationCap, Loader2,
 } from "lucide-react";
 import { MdLocationCity } from "react-icons/md";
-import { TbListNumbers }  from "react-icons/tb";
+import { TbListNumbers } from "react-icons/tb";
 
 // ─── Icon helpers ──────────────────────────────────────────────────────────────
 const iconColorMap: Record<string, string> = {
   attendance: "#00714D",
-  percent:    "#3525CD",
-  homework:   "#854F0B",
-  exam:       "#3525CD",
+  percent: "#3525CD",
+  homework: "#854F0B",
+  exam: "#3525CD",
 };
 
 const getIcon = (type: StatItem["iconType"]) => {
   const color = iconColorMap[type ?? ""] ?? "#3525CD";
   switch (type) {
     case "attendance": return <CalendarDays size={15} color={color} />;
-    case "percent":    return <Percent      size={15} color={color} />;
-    case "homework":   return <BookOpen     size={15} color={color} />;
-    case "exam":       return <FileText     size={15} color={color} />;
-    default:           return null;
+    case "percent": return <Percent size={15} color={color} />;
+    case "homework": return <BookOpen size={15} color={color} />;
+    case "exam": return <FileText size={15} color={color} />;
+    default: return null;
   }
 };
 
@@ -41,10 +40,10 @@ const getVariant = (
 ): "default" | "success" | "warning" | "info" => {
   switch (type) {
     case "attendance": return "success";
-    case "homework":   return "warning";
+    case "homework": return "warning";
     case "percent":
-    case "exam":       return "info";
-    default:           return "default";
+    case "exam": return "info";
+    default: return "default";
   }
 };
 
@@ -86,19 +85,19 @@ export const Dashboard = () => {
     attendanceMonthLabel,
     recentResult,
     announcements,
-  } = useDashboard(); // ← no config arg; reads from auth store internally
+  } = useDashboard();
 
   const navigate = useNavigate();
 
   const cardRoutes: Record<string, string> = {
     attendance: "/student/attendance",
-    percent:    "/student/attendance",
-    homework:   "/student/homework",
-    exam:       "/student/exams",
+    percent: "/student/attendance",
+    homework: "/student/homework",
+    exam: "/student/exams",
   };
 
   if (loading) return <LoadingSkeleton />;
-  if (error)   return <ErrorState message={error} />;
+  if (error) return <ErrorState message={error} />;
 
   return (
     <div className="min-h-screen">
@@ -111,7 +110,6 @@ export const Dashboard = () => {
           </h1>
 
           <div className="text-xs sm:text-sm flex flex-wrap items-center gap-2 mt-1 text-slate-500">
-
             <span className="flex items-center gap-1">
               <GraduationCap size={14} className="text-slate-400" />
               Class {studentClass}
@@ -136,35 +134,37 @@ export const Dashboard = () => {
                 </span>
               </>
             )}
-
           </div>
         </div>
 
-        {/* ── STATS ── */}
-        <DashboardStatGrid>
-          {stats.map((item, i) => (
-            <DashboardStatCard
-              key={i}
-              label={item.title}
-              value={item.value}
-              sub={item.extra}
-              icon={getIcon(item.iconType)}
-              variant={getVariant(item.iconType)}
-              active={item.iconType === "homework"}
-              onClick={() => {
-                const route = cardRoutes[item.iconType ?? ""];
-                if (route) navigate(route);
-              }}
-            />
-          ))}
-        </DashboardStatGrid>
+        {/* ── STATS — below greeting ── */}
+        {stats.length > 0 && (
+          <DashboardStatGrid>
+            {stats.map((item: StatItem, i: number) => (
+              <DashboardStatCard
+                key={i}
+                label={item.title}
+                value={item.value}
+                sub={item.extra}
+                badge={item.badge}
+                icon={getIcon(item.iconType)}
+                variant={getVariant(item.iconType)}
+                active={item.iconType === "homework"}
+                onClick={() => {
+                  const route = cardRoutes[item.iconType ?? ""];
+                  if (route) navigate(route);
+                }}
+              />
+            ))}
+          </DashboardStatGrid>
+        )}
 
         {/* ── MAIN LAYOUT ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 sm:gap-5">
 
           <div className="space-y-4 sm:space-y-5">
             <ScheduleTable data={schedule} />
-            <HomeworkList  data={homework} />
+            <HomeworkList data={homework} />
           </div>
 
           <div className="space-y-4 sm:space-y-5">

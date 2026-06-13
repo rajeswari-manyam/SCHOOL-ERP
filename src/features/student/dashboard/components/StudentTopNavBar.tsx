@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   LogOut,
-
   Menu,
   X,
   LayoutDashboard,
@@ -13,12 +12,14 @@ import {
   User,
 } from "lucide-react";
 
+import { useDashboard } from "../hooks/useDashboard";
+
 const navLinks = [
   { label: "Dashboard", path: "/student/dashboard", icon: LayoutDashboard },
   { label: "Attendance", path: "/student/attendance", icon: CalendarCheck },
   { label: "Homework", path: "/student/homework", icon: BookOpen },
   { label: "Exams", path: "/student/exams", icon: ClipboardList },
-  {label: "Timetable", path: "/student/timetable", icon: CalendarCheck},
+  { label: "Timetable", path: "/student/timetable", icon: CalendarCheck },
   { label: "Profile", path: "/student/profile", icon: User },
 ];
 
@@ -27,14 +28,24 @@ const StudentTopNavBar = () => {
   const navigate = useNavigate();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const user = {
-    name: "Ravi Kumar",
-    initials: "RK",
-    className: "Class 10A",
-  };
+  // ✅ Correct hook usage
+  const {
+    studentName,
+    studentClass,
+    studentSection,
+    rollNumber,
+    loading,
+  } = useDashboard();
+
+  // ✅ initials
+  const initials =
+    studentName
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2) || "ST";
 
   const handleLogout = () => {
     localStorage.clear();
@@ -44,28 +55,24 @@ const StudentTopNavBar = () => {
 
   return (
     <>
-      {/* ───── HEADER ───── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#E8EBF2]">
-        <div className="max-w-[1650px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 bg-white border-b border-[#E8EBF2] shadow-sm">
+        <div className="max-w-[1650px] mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
 
           {/* LEFT */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
             <button
-              className="md:hidden p-2 rounded-md hover:bg-[#F4F6FA]"
+              className="md:hidden p-2 rounded-md hover:bg-gray-100"
               onClick={() => setMobileOpen(true)}
             >
               <Menu size={20} />
             </button>
 
             <Link to="/student/dashboard" className="flex items-center gap-2">
-              <div className="w-7 h-7 overflow-hidden rounded-lg bg-white/5">
-                <img
-                  src="/favicon.png"
-                  alt="VidyaTracker logo"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <span className="font-bold text-[#0B1C30]">VidyaTracker</span>
+              <img src="/favicon.png" className="w-8 h-8 rounded-md" />
+              <span className="font-bold text-[#0B1C30] text-lg">
+                VidyaTracker
+              </span>
             </Link>
           </div>
 
@@ -75,11 +82,10 @@ const StudentTopNavBar = () => {
               <Link
                 key={l.path}
                 to={l.path}
-                className={`text-sm font-medium ${
-                  location.pathname === l.path
-                    ? "text-[#3525CD]"
-                    : "text-gray-500 hover:text-black"
-                }`}
+                className={`text-sm font-medium ${location.pathname === l.path
+                  ? "text-[#3525CD]"
+                  : "text-gray-500 hover:text-black"
+                  }`}
               >
                 {l.label}
               </Link>
@@ -87,13 +93,10 @@ const StudentTopNavBar = () => {
           </nav>
 
           {/* RIGHT */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
 
-            {/* NOTIFICATIONS */}
-            <button
-              onClick={() => setNotifOpen(!notifOpen)}
-              className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F6FA]"
-            >
+            {/* NOTIFICATION */}
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
               <Bell size={16} />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             </button>
@@ -101,14 +104,32 @@ const StudentTopNavBar = () => {
             {/* PROFILE */}
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-[#F4F6FA]"
+              className="flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-gray-100"
             >
-              <div className="w-7 h-7 rounded-full bg-[#3525CD] flex items-center justify-center text-white text-xs">
-                {user.initials}
+              {/* Avatar */}
+              <div className="w-9 h-9 rounded-full bg-[#3525CD] flex items-center justify-center text-white text-xs font-bold">
+                {initials}
+              </div>
+
+              {/* Info */}
+              <div className="hidden sm:flex flex-col text-left leading-tight">
+                <span className="text-sm font-semibold text-gray-800">
+                  {loading ? "Loading..." : studentName}
+                </span>
+
+                <span className="text-xs text-gray-500">
+                  {studentClass && studentSection
+                    ? `Class ${studentClass} • Section ${studentSection}`
+                    : ""}
+                </span>
+
+                <span className="text-xs text-[#3525CD] font-medium">
+                  {rollNumber ? `Roll No: ${rollNumber}` : ""}
+                </span>
               </div>
             </button>
 
-            {/* LOGOUT (desktop only) */}
+            {/* LOGOUT */}
             <button
               onClick={handleLogout}
               className="hidden md:flex items-center gap-1 text-red-500"
@@ -119,7 +140,7 @@ const StudentTopNavBar = () => {
         </div>
       </header>
 
-      {/* ───── MOBILE DRAWER ───── */}
+      {/* MOBILE DRAWER */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
@@ -129,7 +150,6 @@ const StudentTopNavBar = () => {
 
           <div className="relative w-[270px] h-full bg-white shadow-xl flex flex-col">
 
-            {/* HEADER */}
             <div className="flex items-center justify-between p-4 border-b">
               <span className="font-bold">Menu</span>
               <button onClick={() => setMobileOpen(false)}>
@@ -137,7 +157,6 @@ const StudentTopNavBar = () => {
               </button>
             </div>
 
-            {/* NAV */}
             <div className="flex-1 p-3 space-y-1">
               {navLinks.map((l) => {
                 const Icon = l.icon;
@@ -148,9 +167,10 @@ const StudentTopNavBar = () => {
                     key={l.path}
                     to={l.path}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${
-                      active ? "bg-[#EEF2FF] text-[#3525CD]" : "text-gray-600"
-                    }`}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${active
+                      ? "bg-[#EEF2FF] text-[#3525CD]"
+                      : "text-gray-600"
+                      }`}
                   >
                     <Icon size={16} />
                     {l.label}
@@ -159,7 +179,6 @@ const StudentTopNavBar = () => {
               })}
             </div>
 
-            {/* FOOTER */}
             <div className="p-3 border-t">
               <button
                 onClick={handleLogout}

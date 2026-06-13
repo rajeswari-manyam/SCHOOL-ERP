@@ -1,6 +1,7 @@
 import api from "@/config/axios";
 import type { CreateStudentPayload, UpdateStudentPayload, Student, FeePayment, StudentDocument, StudentAttendanceDay } from "../types/student.types";
-import { getAllClasses, getSectionsByClassId, getAllSections } from "@/services/class.api";
+import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
+import { getAllSections } from "@/services/section.api";
 
 export const MOCK_ATTENDANCE: StudentAttendanceDay[] = [
   { date: "2025-03-31", status: null },
@@ -66,7 +67,7 @@ export interface ClassOption {
 
 export const fetchClassesList = async (academicYearId: string | null): Promise<ClassOption[]> => {
   const params: import("@/services/class.api").GetAllClassesParams = {};
-  if (academicYearId) params.academic_year = academicYearId;
+  if (academicYearId) params.academicYearId = academicYearId;
   const res = await getAllClasses(params);
   if (!res?.status || !Array.isArray(res.data)) return [];
   const seen = new Set<string>();
@@ -101,7 +102,7 @@ export const buildClassSectionMaps = async (academicYearId: string | null): Prom
   sectionMap: Record<string, string>;
 }> => {
   const classParams: import("@/services/class.api").GetAllClassesParams = {};
-  if (academicYearId) classParams.academic_year = academicYearId;
+  if (academicYearId) classParams.academicYearId = academicYearId;
   const classMap: Record<string, string> = {};
   const sectionMap: Record<string, string> = {};
 
@@ -118,15 +119,11 @@ export const buildClassSectionMaps = async (academicYearId: string | null): Prom
 
   try {
     const sectionRes = await getAllSections();
-    const sectionData = Array.isArray(sectionRes)
-      ? sectionRes
-      : Array.isArray(sectionRes?.data)
-        ? sectionRes.data
-        : null;
+    const sectionData = Array.isArray(sectionRes) ? sectionRes : null;
     if (sectionData) {
       for (const r of sectionData) {
         const sid = (r.id ?? "") as string;
-        const name = (r.sectionName ?? r.section_name ?? "").trim();
+        const name = (r.sectionName ?? "").trim();
         if (sid && name) sectionMap[sid] = name;
       }
     }
@@ -144,8 +141,8 @@ export const resolveStudentNames = (
 ): Student[] =>
   students.map((s) => ({
     ...s,
-    class: classMap[s.class] ?? classMap[s.class_id] ?? (s.class || ""),
-    section: sectionMap[s.section] ?? sectionMap[s.sectionId] ?? (s.section || ""),
+    class: classMap[s.class] ?? classMap[(s as any).class_id] ?? (s.class || ""),
+    section: sectionMap[s.section] ?? sectionMap[(s as any).sectionId] ?? (s.section || ""),
   }));
 
 export const studentsApi = {

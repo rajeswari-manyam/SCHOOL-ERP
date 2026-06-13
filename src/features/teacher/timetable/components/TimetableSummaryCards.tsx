@@ -1,5 +1,4 @@
-
-import { Calendar, Clock, User, Users } from "lucide-react";
+import { Calendar, Clock, Coffee } from "lucide-react";
 import type { TimetableSummary } from "../types/timetable.types";
 import SummaryCard from "./SummaryCard";
 
@@ -8,24 +7,24 @@ interface Props {
 }
 
 const TimetableSummaryCards = ({ summary }: Props) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
     <SummaryCard
-      label="Total Periods / Week"
+      label="Total Periods"
       value={summary.totalPeriods}
-      sub="across all classes"
-      accentClass="text-indigo-600"
-      iconBg="bg-indigo-50"
-      iconColor="text-indigo-500"
+      sub="per week"
+      accentClass="text-blue-600"
+      iconBg="bg-blue-50"
+      iconColor="text-blue-500"
       icon={<Calendar />}
     />
     <SummaryCard
       label="Teaching Hours"
       value={`${summary.teachingHours}h`}
-      sub="45 min per period"
+      sub="45 min/period"
       accentClass="text-violet-600"
       iconBg="bg-violet-50"
       iconColor="text-violet-500"
-      icon={<Clock  />}
+      icon={<Clock />}
     />
     <SummaryCard
       label="Free Periods"
@@ -34,16 +33,7 @@ const TimetableSummaryCards = ({ summary }: Props) => (
       accentClass="text-amber-500"
       iconBg="bg-amber-50"
       iconColor="text-amber-500"
-      icon={<User  />}
-    />
-    <SummaryCard
-      label="Classes Taught"
-      value={summary.classesTaught}
-      sub="distinct classes"
-      accentClass="text-emerald-600"
-      iconBg="bg-emerald-50"
-      iconColor="text-emerald-500"
-      icon={<Users />}
+      icon={<Coffee />}
     />
   </div>
 );

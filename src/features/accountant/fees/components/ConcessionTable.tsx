@@ -132,7 +132,7 @@ export function Concessions({ onAddConcession }: { onAddConcession: () => void }
 
   return (
     <div className="space-y-5 pb-8">
-      {/* ── STATS ── */}
+    
       <div className="mx-5 mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="Total Concessions"

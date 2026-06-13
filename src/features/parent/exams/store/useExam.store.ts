@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { ExamTab } from "../types/exam.types";
 import type { ExamTimetableListItem } from "../../../../services/examtimetable.api";
-import type { Result } from "../../../../services/results.api";
+import type { Mark } from "../../../../services/marks.api";
 
 interface ExamsState {
   tab: ExamTab;
@@ -16,13 +16,11 @@ interface ExamsState {
   setUpcomingLoading: (v: boolean) => void;
   setUpcomingError: (e: string | null) => void;
 
-  // Results (from API)
-  selectedExamType: string;
-  setSelectedExamType: (v: string) => void;
-  results: Result[];
+  // Results (from marks API)
+  results: Mark[];
   resultsLoading: boolean;
   resultsError: string | null;
-  setResults: (data: Result[]) => void;
+  setResults: (data: Mark[]) => void;
   setResultsLoading: (v: boolean) => void;
   setResultsError: (e: string | null) => void;
 }
@@ -38,9 +36,6 @@ export const useExamsStore = create<ExamsState>((set) => ({
   setUpcomingLoading: (v) => set({ upcomingLoading: v }),
   setUpcomingError: (e) => set({ upcomingError: e }),
 
-  // Default exam_type — user can switch via dropdown
-  selectedExamType: "Unit Test 1",
-  setSelectedExamType: (v) => set({ selectedExamType: v }),
   results: [],
   resultsLoading: false,
   resultsError: null,

@@ -3,44 +3,52 @@ export type WANotifyStatus = "SENT" | "NOT_SENT" | "SENDING";
 export type MaterialType = "FILE" | "LINK";
 export type MaterialFileType = "PDF" | "DOC" | "PPT" | "IMAGE" | "LINK";
 
-// ─── API request payloads ────────────────────────────────────────────────────
+// ─── API request payloads ─────────────────────────────────────────────────────
 
 export interface CreateHomeworkPayload {
-  className: string;
-  sectionName: string;
-  subjectName: string;
-  teacher_id: string;
-  title: string;
-  description: string;
-  submission_date: string;
-  attachments: string[];
-  // is_published: boolean;
-  school_code: string;
-}
-
-export type UpdateHomeworkPayload = Partial<CreateHomeworkPayload>;
-
-export interface HomeworkListQuery {
-  teacher_id: string;
-}
-
-// ─── API response types ──────────────────────────────────────────────────────
-
-export interface HomeworkApiItem {
-  id: string;
-  className: string;
-  sectionName: string;
-  subjectName: string;
+  class_id: string;
+  section_id: string;
+  subject_id: string;
   teacher_id: string;
   title: string;
   description: string;
   submission_date: string;
   attachments: string[];
   is_published: boolean;
-  school_code: string;
-  submittedCount: number;
-  totalCount: number;
+  academicYearId: string;
+}
+
+export type UpdateHomeworkPayload = Partial<{
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  title: string;
+  description: string;
+  submission_date: string;
+  attachments: string[];
+  is_published: boolean;
+}>;
+
+// ─── API response shapes ──────────────────────────────────────────────────────
+
+/** Matches the actual server response from /tenant/getallhomework & /tenant/gethomeworkById */
+export interface HomeworkApiItem {
+  id: string;
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  teacher_id: string;
+  title: string;
+  description: string;
+  submission_date: string;
+  attachments: string[];
+  is_published: boolean;
+  academicYearId: string;
   createdAt: string;
+  updatedAt: string;
+  // optional enrichment fields (may be added by server later)
+  submittedCount?: number;
+  totalCount?: number;
   waNotifyStatus?: WANotifyStatus;
   waNotifiedAt?: string;
 }
@@ -48,17 +56,21 @@ export interface HomeworkApiItem {
 export interface HomeworkApiResponse {
   status: boolean;
   message?: string;
+  count?: number;
   data?: HomeworkApiItem | HomeworkApiItem[];
 }
 
-// ─── UI models (transformed) ─────────────────────────────────────────────────
+// ─── UI models (transformed) ──────────────────────────────────────────────────
 
 export interface HomeworkItem {
   id: string;
   title: string;
-  subject: string;
-  className: string;
-  section: string;
+  classId: string;
+  sectionId: string;
+  subjectId: string;
+  subject: string;        // display name
+  className: string;      // display name
+  section: string;        // display name
   dueDate: string;
   description: string;
   attachmentName?: string;
@@ -71,12 +83,17 @@ export interface HomeworkItem {
   status: HomeworkStatus;
   createdAt: string;
   isPublished: boolean;
+  academicYearId: string;
+  teacher_id: string;
 }
+
+// ─── Study Material types ─────────────────────────────────────────────────────
 
 export interface StudyMaterial {
   id: string;
   title: string;
   subject: string;
+  subjectName?: string;
   className: string;
   section: string;
   type: MaterialType;
@@ -86,46 +103,36 @@ export interface StudyMaterial {
   description?: string;
   uploadedAt: string;
   size?: string;
-  download?: string;
+  download?: number;
   openLink?: string;
+  pdf?: string | null;
+  open_link?: string;
+  upload_type?: string;
+  class?: { id: string; name: string };
+  teacher?: { id: string; name: string };
+  upload_date?: string;
 }
-
-// ─── Study Material API payloads ──────────────────────────────────────────
 
 export interface CreateStudyMaterialPayload {
-  className: string;
-  section: string;
-  subjectName: string;
-  upload_date: string;
-  title?: string;
-  description?: string;
-  download?: string;
-  downloadFile?: File;
-  open_link?: string;
-  school_code: string;
-}
-
-export interface MaterialApiItem {
-  id: string;
-  className: string;
-  section: string;
-  subjectName: string;
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  teacher_id: string;
   title: string;
   description?: string;
   upload_date: string;
-  download?: string;
+  upload_type: string;
   open_link?: string;
-  fileType?: MaterialFileType;
-  school_code: string;
-  createdAt: string;
+  pdf?: File | null;
 }
 
-// ─── Form schemas (for react-hook-form / zod) ─────────────────────────────
+// ─── Form schemas ─────────────────────────────────────────────────────────────
 
 export interface AssignHomeworkFormValues {
-  className: string;
-  sectionName: string;
-  subjectName: string;
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  academicYearId: string;
   title: string;
   submission_date: string;
   description: string;
@@ -135,9 +142,9 @@ export interface AssignHomeworkFormValues {
 }
 
 export interface UploadMaterialFormValues {
-  className: string;
-  section: string;
-  subjectName: string;
+  classId: string;
+  sectionId: string;
+  subjectId: string;
   title: string;
   materialType: MaterialType;
   file?: FileList;
@@ -145,7 +152,7 @@ export interface UploadMaterialFormValues {
   description?: string;
 }
 
-// ─── Hook state ──────────────────────────────────────────────────────────────
+// ─── Hook state ───────────────────────────────────────────────────────────────
 
 export interface HomeworkState {
   tab: "active" | "past" | "materials";

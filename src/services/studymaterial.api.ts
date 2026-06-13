@@ -1,23 +1,29 @@
-// src/features/studymaterial/api/studymaterial.api.ts
+// src/services/studymaterial.api.ts
 
 import api from "@/config/axios";
 
 /* ================= TYPES ================= */
 
+export interface StudyMaterialNestedRef {
+  id: string;
+  name: string;
+}
+
 export interface StudyMaterial {
   id: string;
-  class_id: string | null;
-  className: string;
-  section: string;
-  subject_id: string | null;
-  subjectName: string;
-  pdf: string | null;
+  class: StudyMaterialNestedRef | null;
+  section: StudyMaterialNestedRef | null;
+  subject: StudyMaterialNestedRef | null;
+  teacher: StudyMaterialNestedRef | null;
+  title: string;
+  description?: string;
   upload_date: string;
+  upload_type: string;
+  pdf: string | null;
+  open_link?: string;
   download: number;
-  open_link: string;
-  school_code: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface StudyMaterialResponse {
@@ -30,6 +36,12 @@ export interface StudyMaterialListResponse {
   status: boolean;
   count: number;
   data: StudyMaterial[];
+}
+
+export interface StudyMaterialFilterParams {
+  class_id?: string;
+  section_id?: string;
+  teacher_id?: string;
 }
 
 /* ================= API CALLS ================= */
@@ -68,6 +80,17 @@ export const getStudyMaterialById = async (
   return data;
 };
 
+// GET Study Materials By Filter (class_id, section_id, teacher_id)
+export const getStudyMaterialsByFilter = async (
+  params: StudyMaterialFilterParams
+): Promise<StudyMaterialListResponse> => {
+  const { data } = await api.get<StudyMaterialListResponse>(
+    "/tenant/getstudymaterialsbyfilter/",
+    { params }
+  );
+  return data;
+};
+
 // UPDATE Study Material
 export const updateStudyMaterial = async (
   id: string,
@@ -89,19 +112,6 @@ export const updateStudyMaterial = async (
 export const deleteStudyMaterial = async (id: string): Promise<{ status: boolean; message: string }> => {
   const { data } = await api.delete(
     `/tenant/deletestudymaterialById/${id}`
-  );
-  return data;
-};
-
-// GET Study Materials By Class Name
-export const getStudyMaterialByClassName = async (
-  className: string
-): Promise<StudyMaterialListResponse> => {
-  const { data } = await api.get<StudyMaterialListResponse>(
-    `/tenant/getstudymaterialByClassName`,
-    {
-      params: { className },
-    }
   );
   return data;
 };

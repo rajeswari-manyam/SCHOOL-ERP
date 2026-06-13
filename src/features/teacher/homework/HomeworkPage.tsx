@@ -1,4 +1,5 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useHomework } from "./hooks/useHomework";
 import { Plus, Upload, AlertCircle, ClipboardList, RefreshCw } from "lucide-react";
@@ -13,7 +14,55 @@ import type {
   CreateStudyMaterialPayload,
   UpdateHomeworkPayload,
   UploadMaterialFormValues,
+  HomeworkItem,
 } from "./types/homework.types";
+
+import { getAllClasses, getSectionsByClassId } from "../../../services/class.api";
+import { getAllSubjects } from "../../../services/subject.api";
+import { getHomeworkByClass } from "@/services/homework.api";
+import type { Homework } from "@/services/homework.api";
+import type { ClassRecord, SectionRecord } from "../../../services/class.api";
+import type { SubjectRecord } from "../../../services/subject.api";
+
+// ── Transform for gethomeworkByClass response shape ──────────────────────────
+// This endpoint returns { class: { id, name }, section: { id, name }, subject: { id, name } }
+// whereas getallhomework returns { class: { id, class_name }, section: { id, sectionName }, ... }
+
+type WANotifyStatus = "SENT" | "NOT_SENT" | "SENDING";
+
+const toStatus = (dueDate: string, isPublished: boolean) => {
+  if (!isPublished) return "PAST" as const;
+  const due = new Date(dueDate);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return due >= now ? "ACTIVE" as const : "PAST" as const;
+};
+
+const transformByClass = (h: Homework): HomeworkItem => ({
+  id:    h.id,
+  title: h.title,
+  classId:    h.class_id    ?? "",
+  sectionId:  h.section_id  ?? "",
+  subjectId:  h.subject_id  ?? "",
+  subject:   h.subject?.name ?? h.subject?.subject_name ?? h.subject_id  ?? "",
+  className: h.class?.name   ?? h.class?.class_name     ?? h.class_id    ?? "",
+  section:   h.section?.name ?? h.section?.sectionName  ?? h.section_id  ?? "",
+  dueDate:        h.submission_date,
+  description:    h.description,
+  attachmentName: h.attachments?.[0]?.split("/").pop(),
+  attachmentUrl:  h.attachments?.[0],
+  attachments:    h.attachments ?? [],
+  submittedCount: 0,
+  totalCount:     0,
+  waNotifyStatus: "NOT_SENT" as WANotifyStatus,
+  status:         toStatus(h.submission_date, h.is_published),
+  createdAt:      h.createdAt,
+  isPublished:    h.is_published,
+  academicYearId: h.academicYearId,
+  teacher_id:     h.teacher_id,
+});
+
+// ─── Skeletons / States ───────────────────────────────────────────────────────
 
 const HomeworkSkeleton = () => (
   <div className="flex flex-col gap-6 animate-pulse">
@@ -22,12 +71,15 @@ const HomeworkSkeleton = () => (
         <div className="h-7 w-40 bg-gray-200 rounded-lg" />
         <div className="h-4 w-64 bg-gray-100 rounded" />
       </div>
-      <div className="h-10 w-40 bg-gray-200 rounded-xl" />
+      <div className="flex gap-2">
+        <div className="h-9 w-36 bg-gray-200 rounded-[10px]" />
+        <div className="h-9 w-36 bg-gray-200 rounded-[10px]" />
+      </div>
     </div>
     <div className="flex gap-2 mb-2">
       {[...Array(3)].map((_, i) => <div key={i} className="h-8 w-28 bg-gray-100 rounded-lg" />)}
     </div>
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {[...Array(4)].map((_, i) => (
         <div key={i} className="h-52 bg-gray-100 rounded-2xl" />
       ))}
@@ -44,7 +96,10 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
       <h2 className="text-lg font-bold text-gray-900 mb-1">Failed to load homework</h2>
       <p className="text-sm text-gray-500">{message}</p>
     </div>
-    <Button onClick={onRetry} className="gap-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm">
+    <Button
+      onClick={onRetry}
+      className="gap-2 px-5 py-2 rounded-[10px] bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm"
+    >
       <RefreshCw size={15} strokeWidth={2} />
       Try Again
     </Button>
@@ -52,25 +107,32 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
 );
 
 const EmptyState = ({ onAssign }: { onAssign: () => void }) => (
-  <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-    <div className="h-14 w-14 rounded-full bg-gray-50 flex items-center justify-center">
-      <ClipboardList size={28} className="text-gray-300" strokeWidth={1.5} />
+  <div className="bg-white border border-slate-200 rounded-2xl py-12 px-6 flex flex-col items-center gap-3 text-center">
+    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+      <ClipboardList size={22} className="text-slate-400" strokeWidth={1.5} />
     </div>
-    <div className="text-center max-w-sm">
-      <h2 className="text-lg font-bold text-gray-900 mb-1">No homework assigned</h2>
-      <p className="text-sm text-gray-500">Click the button below to assign your first homework.</p>
+    <div>
+      <p className="text-[15px] font-bold text-slate-900">No homework assigned</p>
+      <p className="text-[13px] text-slate-500 mt-1 max-w-[260px]">
+        Click the button below to assign your first homework.
+      </p>
     </div>
-    <Button onClick={onAssign} className="gap-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm">
-      <Plus size={15} strokeWidth={2} />
+    <Button
+      onClick={onAssign}
+      className="mt-1 gap-2 h-9 px-4 rounded-[10px] bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold shadow-sm"
+    >
+      <Plus size={14} strokeWidth={2.5} />
       Assign Homework
     </Button>
   </div>
 );
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 const HomeworkPage = () => {
   const {
     tab, setTab,
-    teacherId, schoolCode,
+    teacherId,
     activeHomework, pastHomework, materials,
     isLoading, isError, error, refetch,
     modal, setModal,
@@ -80,6 +142,78 @@ const HomeworkPage = () => {
     isCreating, isUpdating,
   } = useHomework();
 
+  // ── Filter dropdown data ──────────────────────────────────────────────────
+  const [classes,  setClasses]  = useState<ClassRecord[]>([]);
+  const [sections, setSections] = useState<SectionRecord[]>([]);
+  const [subjects, setSubjects] = useState<SubjectRecord[]>([]);
+
+  // ── Selected filter values (IDs) ──────────────────────────────────────────
+  const [filterClassId,   setFilterClassId]   = useState("");
+  const [filterSectionId, setFilterSectionId] = useState("");
+  const [filterSubjectId, setFilterSubjectId] = useState("");
+  const [filterDate,      setFilterDate]      = useState(""); // YYYY-MM-DD
+
+  // Load classes on mount
+  useEffect(() => {
+    getAllClasses().then((res) => setClasses(res.data ?? [])).catch(() => {});
+  }, []);
+
+  // Load sections when class filter changes
+  useEffect(() => {
+    setSections([]);
+    setFilterSectionId("");
+    setSubjects([]);
+    setFilterSubjectId("");
+    if (!filterClassId) return;
+    getSectionsByClassId(filterClassId)
+      .then((res) => setSections(res.data ?? []))
+      .catch(() => {});
+  }, [filterClassId]);
+
+  // Load subjects when section filter changes
+  useEffect(() => {
+    setSubjects([]);
+    setFilterSubjectId("");
+    if (!filterSectionId) return;
+    getAllSubjects({ class_id: filterClassId, section_id: filterSectionId })
+      .then((res) => setSubjects(res.data ?? []))
+      .catch(() => {});
+  }, [filterSectionId]);
+
+  // ── Server-side filtered query (fires only when class is selected) ─────────
+  const isFiltering = !!filterClassId;
+
+  const {
+    data: filteredRaw,
+    isLoading: isFilterLoading,
+    isError: isFilterError,
+  } = useQuery({
+    queryKey: ["homework", "byClass", filterClassId, filterSectionId, filterSubjectId, filterDate],
+    queryFn: async () => {
+      const res = await getHomeworkByClass({
+        class_id:   filterClassId,
+        section_id: filterSectionId || undefined,
+        subject_id: filterSubjectId || undefined,
+        date:       filterDate      || undefined,
+      });
+      return (res.data ?? []).map(transformByClass);
+    },
+    staleTime: 1000 * 60 * 2,
+    enabled: isFiltering,
+  });
+
+  // ── Merge: use server-filtered results when filtering, else hook data ──────
+  const displayActive = useMemo(() => {
+    if (isFiltering) return (filteredRaw ?? []).filter((h) => h.status === "ACTIVE");
+    return activeHomework;
+  }, [isFiltering, filteredRaw, activeHomework]);
+
+  const displayPast = useMemo(() => {
+    if (isFiltering) return (filteredRaw ?? []).filter((h) => h.status === "PAST");
+    return pastHomework;
+  }, [isFiltering, filteredRaw, pastHomework]);
+
+  // ── Modal helpers ─────────────────────────────────────────────────────────
   const editingHw = useMemo(() => {
     if (modal.type !== "edit") return null;
     return [...activeHomework, ...pastHomework].find((h) => h.id === modal.id) ?? null;
@@ -95,30 +229,33 @@ const HomeworkPage = () => {
     return materials.find((m) => m.id === modal.id) ?? null;
   }, [modal, materials]);
 
+  // ── Payload builders ──────────────────────────────────────────────────────
   const toCreatePayload = useCallback(
     (values: AssignHomeworkFormValues): CreateHomeworkPayload => ({
-      className: values.className,
-      sectionName: values.sectionName,
-      subjectName: values.subjectName,
-      teacher_id: teacherId,
-      title: values.title,
-      description: values.description,
+      class_id:       values.class_id,
+      section_id:     values.section_id,
+      subject_id:     values.subject_id,
+      academicYearId: values.academicYearId,
+      teacher_id:     teacherId,
+      title:          values.title,
+      description:    values.description,
       submission_date: values.submission_date,
-      attachments: values.attachments ?? [],
-      school_code: schoolCode,
+      attachments:    values.attachments ?? [],
+      is_published:   values.is_published,
     }),
-    [teacherId, schoolCode],
+    [teacherId],
   );
 
   const toUpdatePayload = useCallback(
     (values: AssignHomeworkFormValues): UpdateHomeworkPayload => ({
-      className: values.className,
-      sectionName: values.sectionName,
-      subjectName: values.subjectName,
-      title: values.title,
-      description: values.description,
+      class_id:        values.class_id,
+      section_id:      values.section_id,
+      subject_id:      values.subject_id,
+      title:           values.title,
+      description:     values.description,
       submission_date: values.submission_date,
-      attachments: values.attachments ?? [],
+      attachments:     values.attachments ?? [],
+      is_published:    values.is_published,
     }),
     [],
   );
@@ -149,17 +286,18 @@ const HomeworkPage = () => {
 
   const toCreateStudyMaterialPayload = useCallback(
     (values: UploadMaterialFormValues): CreateStudyMaterialPayload => ({
-      className: values.className,
-      section: values.section,
-      subjectName: values.subjectName,
-      upload_date: new Date().toISOString().split("T")[0],
-      title: values.title,
-      description: values.description,
-      downloadFile: values.materialType === "FILE" ? values.file?.[0] : undefined,
-      open_link: values.materialType === "LINK" ? values.url : undefined,
-      school_code: schoolCode,
+      class_id:     values.classId,
+      section_id:   values.sectionId,
+      subject_id:   values.subjectId,
+      teacher_id:   teacherId,
+      upload_date:  new Date().toISOString().split("T")[0],
+      title:        values.title,
+      description:  values.description,
+      upload_type:  values.materialType === "LINK" ? "link" : "pdf",
+      open_link:    values.materialType === "LINK" ? values.url : undefined,
+      pdf:          values.materialType === "FILE" ? values.file?.[0] ?? null : null,
     }),
-    [schoolCode],
+    [teacherId],
   );
 
   const handleUploadMaterial = useCallback(async (values: UploadMaterialFormValues) => {
@@ -181,106 +319,262 @@ const HomeworkPage = () => {
     }
   }, [modal, deleteMaterial]);
 
+  const CARDS_PER_PAGE = 4;
+  const [showAllActive, setShowAllActive] = useState(false);
+  const [showAllPast,   setShowAllPast]   = useState(false);
+
+  const visibleActive = showAllActive ? displayActive : displayActive.slice(0, CARDS_PER_PAGE);
+  const visiblePast   = showAllPast   ? displayPast   : displayPast.slice(0, CARDS_PER_PAGE);
+
   const TABS = [
-    { id: "active"    as const, label: "Active Homework",  count: activeHomework.length },
-    { id: "past"      as const, label: "Past Homework",    count: pastHomework.length },
-    { id: "materials" as const, label: "Study Materials",  count: materials.length },
+    { id: "active"    as const, label: "Active",          count: displayActive.length },
+    { id: "past"      as const, label: "Past",            count: displayPast.length },
+    { id: "materials" as const, label: "Study materials", count: materials.length },
   ];
 
-  if (isLoading) return <HomeworkSkeleton />;
+  const selectCls = "h-[34px] bg-white border border-slate-200 rounded-[10px] px-[10px] pr-7 text-[12px] text-slate-900 outline-none cursor-pointer appearance-none";
 
-  if (isError) {
-    return <ErrorState message={error?.message ?? "An unexpected error occurred"} onRetry={refetch} />;
-  }
+  if (isLoading) return <HomeworkSkeleton />;
+  if (isError && !isFiltering) return <ErrorState message={error?.message ?? "An unexpected error occurred"} onRetry={refetch} />;
 
   const isSubmitting = isCreating || isUpdating;
 
   return (
     <div className="flex flex-col gap-0 min-h-full">
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5 flex-wrap">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Homework</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Manage assignments and study materials</p>
+          <h1 className="text-[20px] font-bold text-slate-900 tracking-[-0.3px]">
+            Homework & Study Materials
+          </h1>
+          <p className="text-[13px] text-slate-500 mt-[3px]">
+            Manage assignments, track submissions and share resources
+          </p>
         </div>
-        <Button onClick={() => setModal({ type: "assign" })} className="flex items-center gap-2 h-10 px-5 rounded-xl shadow-sm">
-          <Plus size={14} className="text-current" strokeWidth={2.5} />
-          Assign Homework
-        </Button>
+        <div className="flex gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            onClick={() => setModal({ type: "uploadMaterial" })}
+            className="flex items-center gap-[6px] h-9 px-4 rounded-[10px] text-[13px] font-semibold border-slate-200 text-slate-900 hover:bg-slate-50"
+          >
+            <Upload size={15} className="text-current" />
+            Upload Material
+          </Button>
+          <Button
+            onClick={() => setModal({ type: "assign" })}
+            className="flex items-center gap-[6px] h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+          >
+            <Plus size={15} strokeWidth={2.5} className="text-current" />
+            Assign Homework
+          </Button>
+        </div>
       </div>
 
-      <div className="flex gap-0.5 border-b border-gray-200 mb-6 overflow-x-auto flex-nowrap">
+      {/* Filters */}
+      <div className="flex gap-2 mb-5 flex-wrap items-center">
+
+        {/* Class */}
+        <select
+          className={selectCls}
+          value={filterClassId}
+          onChange={(e) => setFilterClassId(e.target.value)}
+        >
+          <option value="">All classes</option>
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>{c.class_name}</option>
+          ))}
+        </select>
+
+        {/* Section — only shown when a class is selected */}
+        {filterClassId && (
+          <select
+            className={selectCls}
+            value={filterSectionId}
+            onChange={(e) => setFilterSectionId(e.target.value)}
+          >
+            <option value="">All sections</option>
+            {sections.map((s) => (
+              <option key={s.id} value={s.id}>{s.sectionName}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Subject — shown when section is selected */}
+        {filterSectionId && (
+          <select
+            className={selectCls}
+            value={filterSubjectId}
+            onChange={(e) => setFilterSubjectId(e.target.value)}
+          >
+            <option value="">All subjects</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>{s.subject_name}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Date picker */}
+        <input
+          type="date"
+          className={selectCls + " pr-2"}
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+        />
+
+        {/* Clear filters */}
+        {isFiltering && (
+          <button
+            onClick={() => {
+              setFilterClassId("");
+              setFilterSectionId("");
+              setFilterSubjectId("");
+              setFilterDate("");
+            }}
+            className="h-[34px] px-3 text-[12px] font-semibold text-slate-500 hover:text-red-500 border border-slate-200 rounded-[10px] bg-white hover:border-red-200 transition-colors"
+          >
+            Clear
+          </button>
+        )}
+
+        {/* Filter loading indicator */}
+        {isFiltering && isFilterLoading && (
+          <span className="text-[11px] text-slate-400 animate-pulse">Loading…</span>
+        )}
+
+        {/* Filter error */}
+        {isFiltering && isFilterError && (
+          <span className="text-[11px] text-red-500">Failed to load filtered results</span>
+        )}
+      </div>
+
+      {/* Pill Tabs */}
+      <div className="inline-flex bg-indigo-50 rounded-xl p-[3px] gap-0.5 mb-5 self-start">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
+            className={`flex items-center gap-[6px] px-[14px] py-[7px] rounded-[9px] text-[13px] font-semibold transition-all border-none cursor-pointer ${
               tab === t.id
-                ? "text-indigo-600 border-indigo-600"
-                : "text-gray-400 border-transparent hover:text-gray-700"
+                ? "bg-white text-indigo-600 shadow-[0_1px_3px_rgba(79,70,229,0.12)]"
+                : "bg-transparent text-indigo-400 hover:text-indigo-600"
             }`}
           >
             {t.label}
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-              tab === t.id ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400"
-            }`}>{t.count}</span>
+            <span className={`text-[11px] font-bold px-[7px] py-[1px] rounded-full ${
+              tab === t.id
+                ? "bg-indigo-50 text-indigo-600"
+                : "bg-indigo-100/60 text-indigo-500"
+            }`}>
+              {t.count}
+            </span>
           </button>
         ))}
       </div>
 
+      {/* Active Panel */}
       {tab === "active" && (
         <div className="flex flex-col gap-4">
-          {activeHomework.length === 0 ? (
+          {displayActive.length === 0 ? (
             <EmptyState onAssign={() => setModal({ type: "assign" })} />
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {activeHomework.map((hw) => (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {visibleActive.map((hw) => (
+                  <HomeworkCard
+                    key={hw.id}
+                    hw={hw}
+                    onEdit={() => setModal({ type: "edit", id: hw.id })}
+                    onDelete={() => setModal({ type: "deleteHomework", id: hw.id })}
+                    onSendReminder={() => sendReminder(hw.id)}
+                    reminderSent={reminderSent.has(hw.id)}
+                  />
+                ))}
+              </div>
+              {displayActive.length > CARDS_PER_PAGE && (
+                <button
+                  onClick={() => setShowAllActive((v) => !v)}
+                  className="mx-auto flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-semibold text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                >
+                  {showAllActive
+                    ? "Show less"
+                    : `Show ${displayActive.length - CARDS_PER_PAGE} more`}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round"
+                    className={`transition-transform duration-200 ${showAllActive ? "rotate-180" : ""}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Past Panel */}
+      {tab === "past" && (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {displayPast.length === 0 ? (
+              <div className="col-span-full bg-white border border-slate-200 rounded-2xl py-12 flex flex-col items-center gap-3 text-center">
+                <p className="text-[15px] font-bold text-slate-500">No past homework</p>
+              </div>
+            ) : (
+              visiblePast.map((hw) => (
                 <HomeworkCard
                   key={hw.id}
                   hw={hw}
                   onEdit={() => setModal({ type: "edit", id: hw.id })}
                   onDelete={() => setModal({ type: "deleteHomework", id: hw.id })}
-                  onSendReminder={() => sendReminder(hw.id)}
-                  reminderSent={reminderSent.has(hw.id)}
+                  onSendReminder={() => {}}
                 />
-              ))}
-            </div>
+              ))
+            )}
+          </div>
+          {displayPast.length > CARDS_PER_PAGE && (
+            <button
+              onClick={() => setShowAllPast((v) => !v)}
+              className="mx-auto flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-semibold text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+            >
+              {showAllPast
+                ? "Show less"
+                : `Show ${displayPast.length - CARDS_PER_PAGE} more`}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2.5"
+                strokeLinecap="round" strokeLinejoin="round"
+                className={`transition-transform duration-200 ${showAllPast ? "rotate-180" : ""}`}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
           )}
         </div>
       )}
 
-      {tab === "past" && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {pastHomework.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <p className="text-sm font-semibold text-gray-500">No past homework</p>
-            </div>
-          ) : (
-            pastHomework.map((hw) => (
-              <HomeworkCard
-                key={hw.id}
-                hw={hw}
-                onEdit={() => setModal({ type: "edit", id: hw.id })}
-                onDelete={() => setModal({ type: "deleteHomework", id: hw.id })}
-                onSendReminder={() => {}}
-              />
-            ))
-          )}
-        </div>
-      )}
-
+      {/* Study Materials Panel */}
       {tab === "materials" && (
         <div className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setModal({ type: "uploadMaterial" })} className="flex items-center gap-2 h-10 px-5 rounded-xl shadow-sm">
-              <Upload size={14} className="text-current" strokeWidth={2.5} />
-              Upload Study Material
-            </Button>
+          <div className="flex items-center justify-between">
+            <p className="text-[15px] font-bold text-slate-900">
+              Study materials{" "}
+              <span className="text-slate-400 font-medium">({materials.length} resources)</span>
+            </p>
           </div>
           {materials.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
-              <div className="text-4xl mb-3">📁</div>
-              <p className="text-sm font-semibold text-gray-500">No materials uploaded yet</p>
+            <div className="bg-white border border-slate-200 rounded-2xl py-12 flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-2xl">
+                📁
+              </div>
+              <p className="text-[15px] font-bold text-slate-900">No materials uploaded yet</p>
+              <p className="text-[13px] text-slate-500 max-w-[260px]">
+                Upload PDFs, documents, presentations, or links for your students.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -296,6 +590,7 @@ const HomeworkPage = () => {
         </div>
       )}
 
+      {/* ── Modals ── */}
       <AssignHomeworkModal
         open={modal.type === "assign" || modal.type === "edit"}
         mode={modal.type === "edit" ? "edit" : "assign"}
@@ -304,14 +599,15 @@ const HomeworkPage = () => {
         initialValues={
           modal.type === "edit" && editingHw
             ? {
-                className: editingHw.className,
-                sectionName: editingHw.section,
-                subjectName: editingHw.subject,
-                title: editingHw.title,
+                class_id:        editingHw.classId,
+                section_id:      editingHw.sectionId,
+                subject_id:      editingHw.subjectId,
+                academicYearId:  editingHw.academicYearId,
+                title:           editingHw.title,
                 submission_date: editingHw.dueDate,
-                description: editingHw.description,
-                is_published: editingHw.isPublished,
-                attachments: editingHw.attachments,
+                description:     editingHw.description,
+                is_published:    editingHw.isPublished,
+                attachments:     editingHw.attachments,
               }
             : undefined
         }
@@ -336,7 +632,11 @@ const HomeworkPage = () => {
         open={modal.type === "uploadMaterial"}
         onClose={() => setModal({ type: "none" })}
         onUpload={handleUploadMaterial}
+        classes={classes.map((c) => ({ id: c.id, name: c.class_name }))}
+        sections={sections.map((s) => ({ id: s.id, name: s.sectionName }))}
+        subjects={subjects.map((s) => ({ id: s.id, name: s.subject_name }))}
       />
+
     </div>
   );
 };

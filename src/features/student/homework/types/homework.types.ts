@@ -13,16 +13,30 @@ export interface Homework {
   assignedBy: string;
   submitted: boolean;
   attachment?: string;
-  weekDay?: string;        // "MON" | "TUE" etc.
+  attachments: string[];
+  className: string;
+  sectionName: string;
+  subjectId: string;
+  classId: string;
+  sectionId: string;
+  isPublished: boolean;
+  weekDay?: string;
   weekDate?: number;
-  submissionDate?: Date;  // full Date for accurate day-filter matching
+  submissionDate?: Date;
 }
 
 export interface StudyMaterial {
   id: string;
   title: string;
-  subject: Subject;
+  subject: string;
+  subjectName?: string;
+  className?: string;
+  section?: string;
   type: MaterialType;
   uploadedDate: string;
   url?: string;
+  pdf?: string | null;
+  open_link?: string;
+  download?: number;
+  description?: string;
 }

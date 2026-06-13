@@ -6,11 +6,10 @@ import { useDropzone } from "react-dropzone";
 import { X, Upload, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { createHomeworkSubmission } from "@/services/homework.api";
 
-// ── Utility ──────────────────────────────────────────────────────────────────
 const cn = (...inputs: Parameters<typeof clsx>) => twMerge(clsx(inputs));
 
-// ── Zod Schema ───────────────────────────────────────────────────────────────
 const ACCEPTED_MIME_TYPES: string[] = [
   "application/pdf",
   "application/msword",
@@ -18,58 +17,36 @@ const ACCEPTED_MIME_TYPES: string[] = [
   "image/jpeg",
   "image/png",
 ];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-const submitHomeworkSchema = z
-  .object({
-    submitAs: z.enum(["upload", "text"]),
-    file: z
-      .instanceof(File)
-      .refine((f) => ACCEPTED_MIME_TYPES.includes(f.type), {
-        message: "Only PDF, DOC, JPG or PNG files are accepted.",
-      })
-      .refine((f) => f.size <= MAX_FILE_SIZE, {
-        message: "File size must not exceed 10 MB.",
-      })
-      .nullable()
-      .optional(),
-    textResponse: z.string().optional(),
-    notes: z.string().max(500, "Notes must be under 500 characters.").optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.submitAs === "upload" && !data.file) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["file"],
-        message: "Please attach a file before submitting.",
-      });
-    }
-    if (
-      data.submitAs === "text" &&
-      (!data.textResponse || data.textResponse.trim().length < 10)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["textResponse"],
-        message: "Please write at least 10 characters.",
-      });
-    }
-  });
+const submitHomeworkSchema = z.object({
+  file: z
+    .instanceof(File)
+    .refine((f) => ACCEPTED_MIME_TYPES.includes(f.type), {
+      message: "Only PDF, DOC, JPG or PNG files are accepted.",
+    })
+    .refine((f) => f.size <= MAX_FILE_SIZE, {
+      message: "File size must not exceed 10 MB.",
+    })
+    .nullable()
+    .optional(),
+  notes: z.string().max(500, "Notes must be under 500 characters.").optional(),
+});
 
 type SubmitHomeworkFormValues = z.infer<typeof submitHomeworkSchema>;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// ── Props ─────────────────────────────────────────────────────────────────────
 interface SubmitHomeworkModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit?: (values: SubmitHomeworkFormValues) => void | Promise<void>;
+  homeworkId: string;
+  studentId: string;
+  onSuccess?: (submissionId?: string) => void;
   assignment?: {
     title?: string;
     subject?: string;
@@ -79,11 +56,12 @@ interface SubmitHomeworkModalProps {
   };
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
 export default function SubmitHomeworkModal({
   open,
   onClose,
-  onSubmit,
+  homeworkId,
+  studentId,
+  onSuccess,
   assignment = {
     title: "English Essay — My Favourite Festival",
     subject: "English",
@@ -93,6 +71,7 @@ export default function SubmitHomeworkModal({
   },
 }: SubmitHomeworkModalProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     control,
@@ -103,24 +82,15 @@ export default function SubmitHomeworkModal({
     formState: { errors, isSubmitting },
   } = useForm<SubmitHomeworkFormValues>({
     resolver: zodResolver(submitHomeworkSchema),
-    defaultValues: {
-      submitAs: "upload",
-      file: null,
-      textResponse: "",
-      notes: "",
-    },
+    defaultValues: { file: null, notes: "" },
   });
 
-  const submitAs = watch("submitAs");
   const currentFile = watch("file");
   const notesValue = watch("notes") ?? "";
 
-  // ── Dropzone ────────────────────────────────────────────────────────────────
   const onDrop = useCallback(
     (accepted: File[]) => {
-      if (accepted[0]) {
-        setValue("file", accepted[0], { shouldValidate: true });
-      }
+      if (accepted[0]) setValue("file", accepted[0], { shouldValidate: true });
     },
     [setValue]
   );
@@ -138,10 +108,35 @@ export default function SubmitHomeworkModal({
     multiple: false,
   });
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleFormSubmit = async (values: SubmitHomeworkFormValues) => {
-    await onSubmit?.(values);
-    setIsSubmitted(true);
+    try {
+      setSubmitError(null);
+      const response = await createHomeworkSubmission({
+        homework_id: homeworkId,
+        student_id: studentId,
+        submission_date: new Date().toISOString().split("T")[0],
+        remarks: values.notes || "",
+        file: values.file ?? null,   // ← file sent as multipart
+      });
+      setIsSubmitted(true);
+      onSuccess?.(response?.data?.id);
+      scheduleClose();
+    } catch (err: any) {
+      if (err?.response?.status === 409) {
+        const existingId = err?.response?.data?.data?.id;
+        setIsSubmitted(true);
+        onSuccess?.(existingId);
+        scheduleClose();
+      } else {
+        setSubmitError(
+          err?.response?.data?.message ?? err?.message ?? "Submission failed. Please try again."
+        );
+      }
+    }
+  };
+
+  const scheduleClose = () => {
     setTimeout(() => {
       setIsSubmitted(false);
       reset();
@@ -149,42 +144,29 @@ export default function SubmitHomeworkModal({
     }, 1800);
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+  const handleClose = () => { reset(); onClose(); };
 
   if (!open) return null;
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-        onClick={handleClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
 
-      {/* Modal */}
- <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/40 backdrop-blur-sm">
-       <div
-  className={cn(
-    "relative w-full sm:max-w-lg bg-white shadow-2xl",
-"rounded-2xl",
-  "max-h-[90vh] overflow-y-auto",
-    "animate-in fade-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
-  )}
->
-        
+      <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/40 backdrop-blur-sm">
+        <div
+          className={cn(
+            "relative w-full sm:max-w-lg bg-white shadow-2xl",
+            "rounded-2xl",
+            "max-h-[90vh] overflow-y-auto",
+            "animate-in fade-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+          )}
+        >
           <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-            {/* ── Header ── */}
+            {/* Header */}
             <div className="flex items-start justify-between px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Submit Homework
-                </h2>
-                <p className="mt-0.5 text-sm text-gray-500">
-                  {assignment.title}
-                </p>
+                <h2 className="text-xl font-bold text-gray-900">Submit Homework</h2>
+                <p className="mt-0.5 text-sm text-gray-500">{assignment.title}</p>
               </div>
               <button
                 type="button"
@@ -195,186 +177,100 @@ export default function SubmitHomeworkModal({
               </button>
             </div>
 
-            {/* ── Meta ── */}
-   <div className="mx-4 sm:mx-6 mb-4 flex flex-wrap gap-x-2 gap-y-1 rounded-xl bg-indigo-50 px-3 sm:px-4 py-3 text-[11px] sm:text-xs">
+            {/* Meta */}
+            <div className="mx-4 sm:mx-6 mb-4 flex flex-wrap gap-x-2 gap-y-1 rounded-xl bg-indigo-50 px-3 sm:px-4 py-3 text-[11px] sm:text-xs">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-indigo-500" />
                 <span className="text-gray-500">Subject:</span>
-                <span className="font-semibold text-indigo-600">
-                  {assignment.subject}
-                </span>
+                <span className="font-semibold text-indigo-600">{assignment.subject}</span>
               </span>
               <span className="text-gray-300">·</span>
               <span className="flex items-center gap-1.5">
                 <span className="text-gray-500">Class:</span>
-                <span className="font-semibold text-gray-700">
-                  {assignment.className}
-                </span>
+                <span className="font-semibold text-gray-700">{assignment.className}</span>
               </span>
               <span className="text-gray-300">·</span>
               <span className="flex items-center gap-1.5">
                 <span className="text-gray-500">Due:</span>
-                <span className="font-semibold text-red-500">
-                  {assignment.dueLabel}
-                </span>
+                <span className="font-semibold text-red-500">{assignment.dueLabel}</span>
               </span>
               <span className="text-gray-300">·</span>
               <span className="text-gray-500">
                 Assigned by:{" "}
-                <span className="font-semibold text-gray-700">
-                  {assignment.assignedBy}
-                </span>
+                <span className="font-semibold text-gray-700">{assignment.assignedBy}</span>
               </span>
             </div>
 
-         <div className="space-y-4 sm:space-y-5 px-4 sm:px-6 pb-6">
-              {/* ── Submit As Tabs ── */}
+            <div className="space-y-4 sm:space-y-5 px-4 sm:px-6 pb-6">
+              {/* Upload Zone */}
               <Controller
-                name="submitAs"
+                name="file"
                 control={control}
-                render={({ field }) => (
+                render={() => (
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
-                      Submit As
-                    </p>
-                    <div className="flex gap-2">
-                      {(
-                        [
-                          { value: "upload", label: "Upload File", icon: <Upload size={14} /> },
-                          { value: "text", label: "Text Response", icon: <FileText size={14} /> },
-                        ] as const
-                      ).map((tab) => (
+                    {currentFile ? (
+                      <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+                            <FileText size={18} className="text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="max-w-[200px] truncate text-sm font-semibold text-gray-800">
+                              {currentFile.name}
+                            </p>
+                            <p className="text-xs text-gray-400">{formatBytes(currentFile.size)}</p>
+                          </div>
+                        </div>
                         <button
-                          key={tab.value}
                           type="button"
-                          onClick={() => {
-                            field.onChange(tab.value);
-                            setValue("file", null);
-                            setValue("textResponse", "");
-                          }}
+                          onClick={() => setValue("file", null, { shouldValidate: true })}
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        {...getRootProps()}
+                        className={cn(
+                          "cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all duration-200",
+                          isDragActive
+                            ? "border-indigo-500 bg-indigo-50"
+                            : errors.file
+                            ? "border-red-400 bg-red-50"
+                            : "border-gray-300 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50"
+                        )}
+                      >
+                        <input {...getInputProps()} />
+                        <div
                           className={cn(
-                            "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200",
-                            field.value === tab.value
-                              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            "mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl",
+                            isDragActive ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400"
                           )}
                         >
-                          {tab.icon}
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
+                          <Upload size={22} />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-700">
+                          {isDragActive ? "Drop your file here" : "Drag your completed assignment here"}
+                        </p>
+                        <p className="my-2 text-xs text-gray-400">or</p>
+                        <span className="inline-block rounded-lg border border-indigo-500 px-4 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50">
+                          Browse File
+                        </span>
+                        <p className="mt-3 text-xs text-gray-400">PDF, DOC, JPG, PNG &nbsp;|&nbsp; Max 10MB</p>
+                      </div>
+                    )}
+                    {errors.file && (
+                      <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <AlertCircle size={12} />
+                        {errors.file.message}
+                      </p>
+                    )}
                   </div>
                 )}
               />
 
-              {/* ── Upload Zone ── */}
-              {submitAs === "upload" && (
-                <Controller
-                  name="file"
-                  control={control}
-                  render={() => (
-                    <div>
-                      {currentFile ? (
-                        /* File preview */
-                        <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-                              <FileText size={18} className="text-indigo-600" />
-                            </div>
-                            <div>
-                              <p className="max-w-[200px] truncate text-sm font-semibold text-gray-800">
-                                {currentFile.name}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {formatBytes(currentFile.size)}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setValue("file", null, { shouldValidate: true })}
-                            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                      ) : (
-                        /* Drop zone */
-                        <div
-                          {...getRootProps()}
-                          className={cn(
-                            "cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all duration-200",
-                            isDragActive
-                              ? "border-indigo-500 bg-indigo-50"
-                              : errors.file
-                              ? "border-red-400 bg-red-50"
-                              : "border-gray-300 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50"
-                          )}
-                        >
-                          <input {...getInputProps()} />
-                          <div
-                            className={cn(
-                              "mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl",
-                              isDragActive ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400"
-                            )}
-                          >
-                            <Upload size={22} />
-                          </div>
-                          <p className="text-sm font-semibold text-gray-700">
-                            {isDragActive
-                              ? "Drop your file here"
-                              : "Drag your completed assignment here"}
-                          </p>
-                          <p className="my-2 text-xs text-gray-400">or</p>
-                          <span className="inline-block rounded-lg border border-indigo-500 px-4 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50">
-                            Browse File
-                          </span>
-                          <p className="mt-3 text-xs text-gray-400">
-                            PDF, DOC, JPG, PNG &nbsp;|&nbsp; Max 10MB
-                          </p>
-                        </div>
-                      )}
-
-                      {errors.file && (
-                        <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500">
-                          <AlertCircle size={12} />
-                          {errors.file.message}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                />
-              )}
-
-              {/* ── Text Response ── */}
-              {submitAs === "text" && (
-                <Controller
-                  name="textResponse"
-                  control={control}
-                  render={({ field }) => (
-                    <div>
-                      <textarea
-                        {...field}
-                        rows={5}
-                        placeholder="Write your assignment response here…"
-                        className={cn(
-                          "w-full resize-none rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500",
-                          errors.textResponse ? "border-red-400" : "border-gray-200"
-                        )}
-                      />
-                      {errors.textResponse && (
-                        <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500">
-                          <AlertCircle size={12} />
-                          {errors.textResponse.message}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                />
-              )}
-
-              {/* ── Notes ── */}
+              {/* Notes */}
               <Controller
                 name="notes"
                 control={control}
@@ -402,15 +298,20 @@ export default function SubmitHomeworkModal({
                       ) : (
                         <span />
                       )}
-                      <p className="text-xs text-gray-400">
-                        {notesValue.length}/500
-                      </p>
+                      <p className="text-xs text-gray-400">{notesValue.length}/500</p>
                     </div>
                   </div>
                 )}
               />
 
-              {/* ── Actions ── */}
+              {submitError && (
+                <p className="flex items-center gap-1 text-xs text-red-500">
+                  <AlertCircle size={12} />
+                  {submitError}
+                </p>
+              )}
+
+              {/* Actions */}
               <div className="flex items-center justify-between pt-1">
                 <button
                   type="button"

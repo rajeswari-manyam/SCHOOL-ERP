@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import type { Fee } from "../../../../services/fee.api";
 import type { Homework } from "../../../../services/homework.api";
-import type { ExamTimetable } from "../../../../services/examtimetable.api";
+import type { ExamTimetableListItem } from "../../../../services/examtimetable.api";
 import type { Announcement } from "../../../../services/announcements.api";
 
 
@@ -19,14 +19,14 @@ interface DashboardState {
   monthlyPct: number
   todayStatus: "present" | "absent" | "not_marked"  // today's actual status
 
- 
+  
   fees: Fee[]
   isPaid: boolean
 
   homework: Homework[]
 
   // Exams
-  exams: ExamTimetable[]
+  exams: ExamTimetableListItem[]
 
   // Announcements
   announcements: Announcement[]
@@ -44,16 +44,18 @@ interface DashboardState {
   setTodayStatus: (s: "present" | "absent" | "not_marked") => void
   setFees: (fees: Fee[]) => void
   setHomework: (hw: Homework[]) => void
-  setExams: (exams: ExamTimetable[]) => void
+  setExams: (exams: ExamTimetableListItem[]) => void
   setAnnouncements: (a: Announcement[]) => void
   setLoadingAttendance: (v: boolean) => void
   setLoadingFees: (v: boolean) => void
   setLoadingHomework: (v: boolean) => void
   setLoadingExams: (v: boolean) => void
   setLoadingAnnouncements: (v: boolean) => void
+
+  reset: () => void
 }
 
-export const useDashboardStore = create<DashboardState>((set) => ({
+const initialState = {
   weekDays: [],
   weeklyPct: 0,
   monthlyPct: 0,
@@ -71,6 +73,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   isLoadingHomework: false,
   isLoadingExams: false,
   isLoadingAnnouncements: false,
+}
+
+export const useDashboardStore = create<DashboardState>((set) => ({
+  ...initialState,
 
   setWeekDays: (days, pct) => set({ weekDays: days, weeklyPct: pct }),
   setMonthlyPct: (pct) => set({ monthlyPct: pct }),
@@ -87,4 +93,5 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setLoadingHomework: (v) => set({ isLoadingHomework: v }),
   setLoadingExams: (v) => set({ isLoadingExams: v }),
   setLoadingAnnouncements: (v) => set({ isLoadingAnnouncements: v }),
+  reset: () => set({ ...initialState }),
 }))

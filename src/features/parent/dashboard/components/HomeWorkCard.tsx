@@ -60,7 +60,7 @@ export const HomeworkCard = ({ variant = "card" }: HomeworkCardProps) => {
     )
   }
 
-  const pendingHw = homework.filter((h) => !h.is_published === false || true) // show all
+  const pendingHw = homework
 
   // ─── SIMPLE VARIANT ────────────────────────────────────
   if (variant === "simple") {
@@ -83,14 +83,14 @@ export const HomeworkCard = ({ variant = "card" }: HomeworkCardProps) => {
                 className="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#F8F9FF] hover:bg-[#EEF2FF] transition-colors"
               >
                 <div className="w-9 h-9 rounded-lg bg-white border border-[#E8EBF2] flex items-center justify-center shrink-0">
-                  {simpleIcons[item.subjectName] ?? <FileText size={16} />}
+                  {simpleIcons[item.subject?.subject_name ?? ""] ?? <FileText size={16} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold text-[#0B1C30] truncate">
                     {item.title}
                   </p>
                   <p className="text-[11px] text-gray-400 truncate">
-                    {item.subjectName}
+                    {(item.subject?.subject_name ?? "")}
                   </p>
                 </div>
                 {item.attachments?.[0] && (
@@ -142,7 +142,7 @@ export const HomeworkCard = ({ variant = "card" }: HomeworkCardProps) => {
           </p>
         ) : (
           pendingHw.map((item) => {
-            const subjectKey = item.subjectName?.toUpperCase()
+            const subjectKey = (item.subject?.subject_name ?? "")?.toUpperCase()
             const config = subjectConfig[subjectKey] ?? {
               bg: "bg-gray-50",
               iconBg: "bg-gray-200",
@@ -161,7 +161,7 @@ export const HomeworkCard = ({ variant = "card" }: HomeworkCardProps) => {
                     {item.title}
                   </p>
                   <p className="text-[11px] text-gray-400 truncate">
-                    {item.subjectName} · Due {new Date(item.submission_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    {(item.subject?.subject_name ?? "")} · Due {new Date(item.submission_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </p>
                 </div>
                 {item.attachments?.[0] && (

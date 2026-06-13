@@ -20,7 +20,9 @@ function normaliseSubject(raw: string): string {
 
 /** Map API homework shape → local UI shape */
 export function mapApiHomework(hw: ApiHomework): Homework {
-  const subjectRaw = normaliseSubject(hw.subjectName ?? "ENGLISH");
+const subjectRaw = normaliseSubject(
+  hw.subject?.name ?? "ENGLISH"
+);
 
   const dateObj = new Date(hw.submission_date);
   const dayNum  = isNaN(dateObj.getTime()) ? 0 : dateObj.getDate();
@@ -38,7 +40,7 @@ export function mapApiHomework(hw: ApiHomework): Homework {
   if (diff === 1)  dueLabel = "Tomorrow";
   if (diff === -1) dueLabel = "Yesterday";
 
-  const teacherInitials = (hw.teacher_id ?? "T")
+  const teacherInitials = (hw.teacher?.name ?? hw.teacher_id ?? "T")
     .split(" ")
     .map((w: string) => w[0])
     .join("")
@@ -53,7 +55,7 @@ export function mapApiHomework(hw: ApiHomework): Homework {
     description:    hw.description,
     due:            dueStr,
     dueLabel,
-    teacher:        hw.teacher_id ?? "",
+    teacher:        hw.teacher?.name ?? hw.teacher_id ?? "",
     teacherInitials,
     day:            dayNum,
     // Store the full submission date so DayFilter can match properly

@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useHomeworkStore } from "../store/HomeWork.store";
 import {
-  getStudyMaterialByClassName,
+  getStudyMaterialsByFilter,
   getStudyMaterialById,
 } from "../../../../services/studymaterial.api";
 
-export function useStudyMaterials(className: string) {
+export function useStudyMaterials(classId: string, sectionId: string) {
   const {
     studyMaterials,
     materialsLoading,
@@ -16,19 +16,15 @@ export function useStudyMaterials(className: string) {
   } = useHomeworkStore();
 
   useEffect(() => {
-    if (!className) return;
+    if (!classId || !sectionId) return;
 
     let cancelled = false;
     setMaterialsLoading(true);
     setMaterialsError(null);
 
-    // 🔍 DEBUG: log exactly what className value is being sent to the API
-    console.log("[useStudyMaterials] fetching for className:", JSON.stringify(className));
-
-    getStudyMaterialByClassName(className)
+    getStudyMaterialsByFilter({ class_id: classId, section_id: sectionId })
       .then((res) => {
         if (cancelled) return;
-        console.log("[useStudyMaterials] response:", res);
         if (res.status && Array.isArray(res.data)) {
           setStudyMaterials(res.data);
         } else {
@@ -49,7 +45,7 @@ export function useStudyMaterials(className: string) {
       cancelled = true;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [className]);
+  }, [classId, sectionId]);
 
   const fetchById = (id: string) => getStudyMaterialById(id);
 

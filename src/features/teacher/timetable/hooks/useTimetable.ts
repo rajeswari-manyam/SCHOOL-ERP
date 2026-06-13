@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
-import { timetableApi } from "../api/timetable.api";
+import { timetableService } from "../../../../services/timetable.api";
 import type {
   WeeklyGrid,
   TimetablePeriod,
@@ -9,6 +9,7 @@ import type {
   TeacherTimetableState,
   TeacherTimetableQuery,
   UpcomingExam,
+  TeacherTimetableData,
 } from "../types/timetable.types";
 
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
@@ -22,6 +23,8 @@ export const TIMETABLE_KEYS = {
     [...TIMETABLE_KEYS.all, teacherId, academicYear] as const,
   exams:     (teacherId: string, academicYear: string) =>
     [...TIMETABLE_KEYS.all, "exams", teacherId, academicYear] as const,
+  stats:     (teacherId: string) =>
+    [...TIMETABLE_KEYS.all, "stats", teacherId] as const,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -134,6 +137,7 @@ export const useTimetable = (): TeacherTimetableState => {
     [teacherId, academicYear],
   );
 
+  // ── Timetable grid query ───────────────────────────────────────────────
   const {
     data: apiData,
     isLoading,
@@ -142,34 +146,47 @@ export const useTimetable = (): TeacherTimetableState => {
     refetch,
   } = useQuery({
     queryKey: TIMETABLE_KEYS.timetable(teacherId, academicYear),
-    queryFn: () => timetableApi.getTeacherTimetable(queryParams),
+    queryFn: () => timetableService.getTeacherTimetable(queryParams),
     staleTime: 1000 * 60 * 5,
     retry: 2,
     enabled: !!teacherId,
   });
 
+  // ── Exams query ────────────────────────────────────────────────────────
   const {
     data: examsData,
     isLoading: isExamsLoading,
     isError: isExamsError,
   } = useQuery({
     queryKey: TIMETABLE_KEYS.exams(teacherId, academicYear),
-    queryFn: () => timetableApi.getExamsTimetable({ teacher_id: teacherId, academic_year: academicYear }),
+    queryFn: () => timetableService.getExamsTimetable({ teacher_id: teacherId, academic_year: academicYear }),
     staleTime: 1000 * 60 * 5,
     retry: 2,
     enabled: !!teacherId,
   });
 
-  const data = apiData;
+  // ── Stats query (powers the 3 summary cards) ───────────────────────────
+  // Calls /getfreeperiods, /getteachinghours, /totalperiodsperweek in parallel
+  const { data: statsData } = useQuery({
+    queryKey: TIMETABLE_KEYS.stats(teacherId),
+    queryFn: () => timetableService.getTeacherStats(teacherId),
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
+    enabled: !!teacherId,
+  });
 
-  const grid = data?.grid ?? {};
+  const data = apiData as TeacherTimetableData | undefined;
+
+  const grid = (data?.grid ?? {}) as WeeklyGrid;
   const periods = data?.periods ?? [];
   const exams: UpcomingExam[] = examsData ?? data?.exams ?? [];
 
-  const summary = useMemo(() => {
+  // Priority: real API stats → grid-derived data → computed fallback
+  const summary = useMemo((): TimetableSummary => {
+    if (statsData) return statsData;
     if (data?.summary) return data.summary;
     return computeSummary(grid, DAYS);
-  }, [data, grid]);
+  }, [statsData, data, grid]);
 
   const classLabel = data?.classLabel ?? "";
   const section = data?.section ?? "";

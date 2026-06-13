@@ -34,7 +34,6 @@ export default function FeeManagementPage() {
   const isTransportFees = activeTab === "Transport Fees";
   const isConcessions   = activeTab === "Concessions";
 
-  
   const hideFilterBar      = isFeeStructure || isTransportFees || isConcessions;
   const hideStandardHeader = isFeeStructure || isTransportFees || isConcessions || isAllTx;
 
@@ -69,7 +68,7 @@ export default function FeeManagementPage() {
   const totalPending = (filteredFees || []).reduce((s, r) => s + r.amount, 0);
 
   return (
-    <div className="space-y-0 bg-[#EFF4FF] min-h-screen">
+    <div className="flex flex-col w-full min-h-screen bg-[#EFF4FF] overflow-hidden">
       {showPaymentModal && (
         <RecordFeePaymentModal onClose={() => setShowPaymentModal(false)} />
       )}
@@ -79,7 +78,7 @@ export default function FeeManagementPage() {
 
       {/* ── Stats Cards ── */}
       {!hideStandardHeader && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 px-3 sm:px-4 md:px-6 pt-4 sm:pt-5 pb-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 md:px-6 pt-5 pb-2">
           {FEE_STATS.map((s) => (
             <StatCard
               key={s.label}
@@ -91,147 +90,127 @@ export default function FeeManagementPage() {
       )}
 
       {/* ── Main Card ── */}
-      <div className="mx-0 sm:mx-3 md:sm:mx-6 my-2 sm:my-4 bg-white rounded-none sm:rounded-xl border-y sm:border border-gray-200 overflow-hidden">
+      <div className="mx-4 md:mx-6 my-4 bg-white rounded-xl border border-gray-200 flex flex-col min-w-0 max-w-full overflow-hidden">
 
         {/* Header */}
-        <div className="flex flex-col gap-3 px-3 sm:px-4 md:px-5 pt-4 sm:pt-5 pb-3">
-          {/* Title Row */}
-        {/* Header Row (Title + Actions side by side) */}
-<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="px-4 md:px-5 pt-5 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
 
-  {/* LEFT: Title */}
-  <div className="min-w-0">
-    <h2 className={`${typography.heading.h6} font-medium text-gray-900 text-sm sm:text-base`}>
-      Fee Management
-    </h2>
-    <p className={`${typography.body.xs} text-gray-500 mt-0.5 text-[11px] sm:text-xs`}>
-      April 2025 — Academic Year 2024–25
-    </p>
-  </div>
+            {/* LEFT: Title */}
+            <div className="min-w-0 shrink-0">
+              <h2 className={`${typography.heading.h6} font-medium text-gray-900 text-sm sm:text-base`}>
+                Fee Management
+              </h2>
+              <p className={`${typography.body.xs} text-gray-500 mt-0.5 text-[11px] sm:text-xs`}>
+                April 2025 — Academic Year 2024–25
+              </p>
+            </div>
 
-  {/* RIGHT: ALL ACTIONS (context-aware) */}
-  <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            {/* RIGHT: Actions */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
 
-    {/* Pending / All Transactions */}
-    {(isPendingFees || isAllTx) && (
-      <>
-        {/* Month */}
-        <div className="flex items-center px-3 sm:px-4 h-9 sm:h-8 rounded-full gap-2 bg-[#3525CD] text-white">
-          <button onClick={handlePrevMonth}>
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+              {(isPendingFees || isAllTx) && (
+                <>
+                  {/* Month navigator */}
+                  <div className="flex items-center h-8 px-3 rounded-full gap-2 bg-[#3525CD] text-white">
+                    <button onClick={handlePrevMonth}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-xs whitespace-nowrap">{formattedMonth}</span>
+                    <button onClick={handleNextMonth}>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
 
-          <span className="text-xs whitespace-nowrap">
-            {formattedMonth}
-          </span>
+                  <Button variant="outline" size="sm" className="text-xs h-8">
+                    Import Fee
+                  </Button>
 
-          <button onClick={handleNextMonth}>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 flex items-center gap-1.5"
+                    onClick={() => console.log("Export CSV")}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    CSV
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 flex items-center gap-1.5"
+                    onClick={() => console.log("Export PDF")}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    PDF
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs bg-[#3525CD] text-white"
+                    onClick={() => setShowPaymentModal(true)}
+                  >
+                    Record Payment
+                  </Button>
+                </>
+              )}
+
+              {isFeeStructure && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 text-[#3525CD] border-[#3525CD]"
+                  >
+                    Copy from Last Year
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8"
+                    onClick={() => setShowFeeHeadModal(true)}
+                  >
+                    + Add Fee Head
+                  </Button>
+                  <Button size="sm" className="h-8 text-xs bg-[#3525CD] text-white">
+                    Save Structure
+                  </Button>
+                </>
+              )}
+
+              {isTransportFees && (
+                <>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs bg-[#3525CD] text-white"
+                    onClick={() => setTriggerAddSlab(true)}
+                  >
+                    + Add Slab
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs text-[#3525CD]"
+                    onClick={() => setTriggerEditSlabs(true)}
+                  >
+                    Edit Slabs
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <Button variant="outline" size="sm">
-          Import Fee
-        </Button>
-
-        {/* Export buttons for all transaction-based tabs */}
-        {(isPendingFees || isAllTx) && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs flex items-center gap-1.5"
-              onClick={() => console.log("Export CSV")}
-            >
-              <Download className="w-3.5 h-3.5" />
-              CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs flex items-center gap-1.5"
-              onClick={() => console.log("Export PDF")}
-            >
-              <Download className="w-3.5 h-3.5" />
-              PDF
-            </Button>
-          </>
-        )}
-
-        <Button
-          size="sm"
-          className="bg-[#3525CD] text-white"
-          onClick={() => setShowPaymentModal(true)}
-        >
-          Record Payment
-        </Button>
-      </>
-    )}
-
-    {/* ✅ Fee Structure INLINE buttons (FIXED) */}
-    {isFeeStructure && (
-      <>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-[11px] sm:text-xs font-semibold text-[#3525CD] border-[#3525CD]"
-        >
-          Copy from Last Year
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-[11px] sm:text-xs font-semibold text-slate-700 border-slate-300"
-          onClick={() => setShowFeeHeadModal(true)}
-        >
-          + Add Fee Head
-        </Button>
-
-        <Button
-          size="sm"
-          className="text-[11px] sm:text-xs font-semibold bg-[#3525CD] text-white"
-        >
-          Save Structure
-        </Button>
-      </>
-    )}
-
-    {/* Transport */}
-    {isTransportFees && (
-      <>
-        <Button
-          size="sm"
-          className="bg-[#3525CD] text-white"
-          onClick={() => setTriggerAddSlab(true)}
-        >
-          + Add Slab
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-[#3525CD]"
-          onClick={() => setTriggerEditSlabs(true)}
-        >
-          Edit Slabs
-        </Button>
-      </>
-    )}
-
-  </div>
-</div>
-         </div>
-
         {/* ── Tabs ── */}
-        <div className="px-3 sm:px-5 border-b border-gray-100 mt-1 sm:mt-2 overflow-x-auto scrollbar-hide">
+        <div className="px-4 md:px-5 border-b border-gray-100 overflow-x-auto scrollbar-hide">
           <FeeTabs active={activeTab} setActive={setActiveTab} />
         </div>
 
         {/* ── Filter Bar ── */}
         {!hideFilterBar && (
-          <div className="mx-3 sm:mx-5 mt-3 sm:mt-4 mb-3 sm:mb-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="p-3 sm:p-4">
+          <div className="mx-4 md:mx-5 mt-4 mb-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="p-3 md:p-4">
               <FilterBar
                 onSearch={setActiveFilters}
                 showDueStatus={isPendingFees}
@@ -242,21 +221,17 @@ export default function FeeManagementPage() {
 
         {/* ── Count Row ── */}
         {isPendingFees && (
-          <div className="px-3 sm:px-5 py-2 text-[11px] sm:text-xs text-gray-500">
+          <div className="px-4 md:px-5 py-2 text-xs text-gray-500">
             Showing{" "}
-            <span className={`${typography.body.xs} text-gray-800 font-medium`}>
-              {filteredFees.length} students
-            </span>{" "}
+            <span className="text-gray-800 font-medium">{filteredFees.length} students</span>{" "}
             |{" "}
-            <span className={`${typography.body.xs} font-bold`}>
-              ₹{totalPending.toLocaleString("en-IN")}
-            </span>{" "}
+            <span className="font-bold">₹{totalPending.toLocaleString("en-IN")}</span>{" "}
             total pending
           </div>
         )}
 
         {/* ── Tab Content ── */}
-        <div className="min-h-[200px]">
+        <div className="min-h-[200px] overflow-x-auto">
           {isPendingFees && (filteredFees || []).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <span className="text-4xl mb-3">📋</span>
@@ -264,6 +239,7 @@ export default function FeeManagementPage() {
               <p className="text-xs mt-1">All fees are up to date for this period</p>
             </div>
           ) : isPendingFees && <PendingFeesTable data={filteredFees} />}
+
           {isAllTx && (transactions || []).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <span className="text-4xl mb-3">🧾</span>
@@ -271,7 +247,8 @@ export default function FeeManagementPage() {
               <p className="text-xs mt-1">Transactions will appear here once recorded</p>
             </div>
           ) : isAllTx && <AllTransactionsTable data={transactions || []} />}
-          {isFeeStructure  && (
+
+          {isFeeStructure && (
             <FeeStructure
               showModal={showFeeHeadModal}
               setShowModal={setShowFeeHeadModal}
@@ -292,49 +269,47 @@ export default function FeeManagementPage() {
 
         {/* ── Footer ── */}
         {isPendingFees && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-5 py-3 border-t border-gray-100 gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 md:px-5 py-3 border-t border-gray-100 gap-3">
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-[11px] sm:text-xs h-8 text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5 flex-1 sm:flex-none justify-center"
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
               >
-                <Send className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="whitespace-nowrap">Overdue (29)</span>
+                <Send className="w-3.5 h-3.5" />
+                Overdue (29)
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-[11px] sm:text-xs h-8 flex items-center gap-1.5 flex-1 sm:flex-none justify-center"
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs flex items-center gap-1.5"
               >
-                <Send className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="whitespace-nowrap">Due Today (12)</span>
+                <Send className="w-3.5 h-3.5" />
+                Due Today (12)
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-[11px] sm:text-xs h-8 flex items-center gap-1.5 flex-1 sm:flex-none justify-center"
-                onClick={() => console.log("Export CSV from footer")}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs flex items-center gap-1.5"
               >
-                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <Download className="w-3.5 h-3.5" />
                 CSV
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-[11px] sm:text-xs h-8 flex items-center gap-1.5 flex-1 sm:flex-none justify-center"
-                onClick={() => console.log("Export PDF from footer")}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs flex items-center gap-1.5"
               >
-                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <Download className="w-3.5 h-3.5" />
                 PDF
               </Button>
             </div>
 
-            <div className="flex gap-1 items-center self-center sm:self-auto">
+            <div className="flex gap-1 items-center">
               {["‹", "1", "2", "3", "›"].map((p) => (
                 <button
                   key={p}
-                  className={`w-8 h-8 sm:w-7 sm:h-7 text-xs rounded border flex items-center justify-center ${
+                  className={`w-7 h-7 text-xs rounded border flex items-center justify-center ${
                     p === "1"
                       ? "bg-blue-600 text-white border-blue-600"
                       : "border-gray-200 text-gray-600 hover:bg-gray-50"

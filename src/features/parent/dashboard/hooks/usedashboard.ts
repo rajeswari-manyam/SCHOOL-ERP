@@ -2,13 +2,16 @@ import { useCallback } from "react"
 import { useDashboardStore } from "../store/uistore"
 
 import {
+  getStudentTodayAttendance,
   getWeeklyAttendance,
   getMonthlyAttendance,
-} from "../../../../services/attendance.api"
+} from "../../../../services/attendance.api";
 
-import { getHomeworkByClass } from "../../../../services/homework.api"
-import { getAllExamTimetables } from "../../../../services/examtimetable.api"
-import { getAnnouncementsByType } from "../../../../services/announcements.api"
+import { getHomeworkByClass } from "../../../../services/homework.api";
+
+import { getAllExamTimetables } from "../../../../services/examtimetable.api";
+
+import { getAnnouncementsByType } from "../../../../services/announcements.api";
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -23,14 +26,43 @@ function isoDate(offsetDays = 0) {
 const getStatus = (status: any) => (status ?? "").toLowerCase()
 
 export function useDashboard() {
-  const store = useDashboardStore()
+  // ✅ FIX: Select each action individually so they have stable references.
+  // Previously `const store = useDashboardStore()` returned a new object every
+  // render, causing all useCallbacks to re-create → fetchAll changed → the
+  // useEffect in DashboardPage re-fired → infinite API loop → browser freeze.
+  const setLoadingAttendance  = useDashboardStore((s) => s.setLoadingAttendance)
+  const setLoadingHomework    = useDashboardStore((s) => s.setLoadingHomework)
+  const setLoadingExams       = useDashboardStore((s) => s.setLoadingExams)
+  const setLoadingAnnouncements = useDashboardStore((s) => s.setLoadingAnnouncements)
+  const setWeekDays           = useDashboardStore((s) => s.setWeekDays)
+  const setMonthlyPct         = useDashboardStore((s) => s.setMonthlyPct)
+  const setTodayStatus        = useDashboardStore((s) => s.setTodayStatus)
+  const setHomework           = useDashboardStore((s) => s.setHomework)
+  const setExams              = useDashboardStore((s) => s.setExams)
+  const setAnnouncements      = useDashboardStore((s) => s.setAnnouncements)
+
+  // Read-only state (used by consumers via spread)
+  const weekDays              = useDashboardStore((s) => s.weekDays)
+  const weeklyPct             = useDashboardStore((s) => s.weeklyPct)
+  const monthlyPct            = useDashboardStore((s) => s.monthlyPct)
+  const todayStatus           = useDashboardStore((s) => s.todayStatus)
+  const fees                  = useDashboardStore((s) => s.fees)
+  const isPaid                = useDashboardStore((s) => s.isPaid)
+  const homework              = useDashboardStore((s) => s.homework)
+  const exams                 = useDashboardStore((s) => s.exams)
+  const announcements         = useDashboardStore((s) => s.announcements)
+  const isLoadingAttendance   = useDashboardStore((s) => s.isLoadingAttendance)
+  const isLoadingFees         = useDashboardStore((s) => s.isLoadingFees)
+  const isLoadingHomework     = useDashboardStore((s) => s.isLoadingHomework)
+  const isLoadingExams        = useDashboardStore((s) => s.isLoadingExams)
+  const isLoadingAnnouncements = useDashboardStore((s) => s.isLoadingAnnouncements)
 
   // ─────────────────────────────────────────────
   // 📅 Weekly Attendance
   // ─────────────────────────────────────────────
   const fetchWeeklyAttendance = useCallback(
     async (studentId: string) => {
-      store.setLoadingAttendance(true)
+      setLoadingAttendance(true)
 
       try {
         const res = await getWeeklyAttendance({
@@ -41,55 +73,34 @@ export function useDashboard() {
 
         console.log("Weekly API:", res)
 
-        const records: any[] = Array.isArray(res?.records)
-          ? res.records
-          : Array.isArray(res)
-          ? res
-          : []
+        const records: any[] = res?.records ?? []
 
         const days = records.map((r) => {
           const d = new Date(r?.date)
           const isValid = !isNaN(d.getTime())
-
           const statusLower = getStatus(r?.status)
-
           return {
             label: isValid ? SHORT_DAYS[d.getDay()] : "",
             present: statusLower === "present" || statusLower === "late",
           }
         })
 
-        const present = records.filter((r) => {
+        const summary = res?.summary
+        const total = summary?.total ?? records.length
+        const present = summary?.present ?? records.filter((r) => {
           const s = getStatus(r?.status)
           return s === "present" || s === "late"
         }).length
-
-        const total = records.length
         const pct = total > 0 ? Math.round((present / total) * 100) : 0
 
-        const todayISO = isoDate(0)
-
-        const todayRecord = records.find(
-          (r) => r?.date === todayISO
-        )
-
-        const todayStatus: "present" | "absent" | "not_marked" =
-          todayRecord
-            ? getStatus(todayRecord?.status) === "present" ||
-              getStatus(todayRecord?.status) === "late"
-              ? "present"
-              : "absent"
-            : "not_marked"
-
-        store.setWeekDays(days, pct)
-        store.setTodayStatus(todayStatus)
+        setWeekDays(days, pct)
       } catch (err) {
         console.error("fetchWeeklyAttendance:", err)
       } finally {
-        store.setLoadingAttendance(false)
+        setLoadingAttendance(false)
       }
     },
-    [store]
+    [setLoadingAttendance, setWeekDays]
   )
 
   // ─────────────────────────────────────────────
@@ -108,44 +119,63 @@ export function useDashboard() {
 
         console.log("Monthly API:", res)
 
-        const records: any[] = Array.isArray(res?.records)
-          ? res.records
-          : Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res)
-          ? res
-          : []
-
-        const present = records.filter((r) => {
-          const s = getStatus(r?.status)
-          return s === "present" || s === "late"
-        }).length
+        const summary = res?.summary
+        const totalDays = summary?.total ?? 0
 
         const pct =
-          records.length > 0
-            ? Math.round((present / records.length) * 100)
+          totalDays > 0
+            ? Math.round((summary.present / totalDays) * 100)
             : 0
 
-        store.setMonthlyPct(pct)
+        setMonthlyPct(pct)
       } catch (err) {
         console.error("fetchMonthlyAttendance:", err)
       }
     },
-    [store]
+    [setMonthlyPct]
+  )
+
+  // ─────────────────────────────────────────────
+  // ✅ Today Attendance (stat card)
+  // ─────────────────────────────────────────────
+  const fetchTodayAttendance = useCallback(
+    async (studentId: string) => {
+      setLoadingAttendance(true)
+
+      try {
+        const res = await getStudentTodayAttendance(studentId)
+
+        console.log("Today Attendance API:", res)
+
+        const todayStatus: "present" | "absent" | "not_marked" =
+          res?.records?.[0]
+            ? getStatus(res.records[0].status) === "present" ||
+              getStatus(res.records[0].status) === "late"
+              ? "present"
+              : "absent"
+            : "not_marked"
+
+        setTodayStatus(todayStatus)
+      } catch (err) {
+        console.error("fetchTodayAttendance:", err)
+        setTodayStatus("not_marked")
+      } finally {
+        setLoadingAttendance(false)
+      }
+    },
+    [setLoadingAttendance, setTodayStatus]
   )
 
   // ─────────────────────────────────────────────
   // 📚 Homework
   // ─────────────────────────────────────────────
   const fetchHomework = useCallback(
-    async (className: string) => {
-      store.setLoadingHomework(true)
+    async (classId: string, sectionId?: string) => {
+      if (!classId) return
+      setLoadingHomework(true)
 
       try {
-        const numericClass = className.replace(/[^0-9]/g, "")
-        const finalClass = numericClass || className
-
-       const res = await getHomeworkByClass({ class_id: finalClass })
+        const res = await getHomeworkByClass({ class_id: classId, section_id: sectionId })
 
         console.log("Homework API:", res)
 
@@ -155,47 +185,48 @@ export function useDashboard() {
           ? res
           : []
 
-        store.setHomework(hw)
+        setHomework(hw)
       } catch (err) {
         console.error("fetchHomework:", err)
       } finally {
-        store.setLoadingHomework(false)
+        setLoadingHomework(false)
       }
     },
-    [store]
+    [setLoadingHomework, setHomework]
   )
 
   // ─────────────────────────────────────────────
   // 📝 Exams
   // ─────────────────────────────────────────────
   const fetchExams = useCallback(
-    async (className: string, sectionName: string) => {
-      store.setLoadingExams(true)
+    async (classId: string, sectionId?: string) => {
+      if (!classId) return
+      setLoadingExams(true)
 
       try {
-       const res = await getAllExamTimetables({
-  class_id: className,
-  section_id: sectionName,
-})
+        const res = await getAllExamTimetables({
+          class_id: classId,
+          section_id: sectionId,
+        })
 
         console.log("Exams API:", res)
 
-     const exams = Array.isArray(res) ? res : []
-        store.setExams(exams)
+        const exams = Array.isArray(res) ? res : []
+        setExams(exams)
       } catch (err) {
         console.error("fetchExams:", err)
       } finally {
-        store.setLoadingExams(false)
+        setLoadingExams(false)
       }
     },
-    [store]
+    [setLoadingExams, setExams]
   )
 
   // ─────────────────────────────────────────────
   // 📢 Announcements
   // ─────────────────────────────────────────────
   const fetchAnnouncements = useCallback(async () => {
-    store.setLoadingAnnouncements(true)
+    setLoadingAnnouncements(true)
 
     try {
       const res = await getAnnouncementsByType("All")
@@ -208,13 +239,13 @@ export function useDashboard() {
         ? res
         : []
 
-      store.setAnnouncements(list)
+      setAnnouncements(list)
     } catch (err) {
       console.error("fetchAnnouncements:", err)
     } finally {
-      store.setLoadingAnnouncements(false)
+      setLoadingAnnouncements(false)
     }
-  }, [store])
+  }, [setLoadingAnnouncements, setAnnouncements])
 
   // ─────────────────────────────────────────────
   // 🚀 Fetch All
@@ -222,16 +253,18 @@ export function useDashboard() {
   const fetchAll = useCallback(
     async (params: {
       studentId: string
-      className: string
-      sectionName: string
+      classId: string
+      sectionId?: string
       academicYear?: string
     }) => {
+      useDashboardStore.getState().reset()
       try {
         await Promise.all([
+          fetchTodayAttendance(params.studentId),
           fetchWeeklyAttendance(params.studentId),
           fetchMonthlyAttendance(params.studentId),
-          fetchHomework(params.className),
-          fetchExams(params.className, params.sectionName),
+          fetchHomework(params.classId, params.sectionId),
+          fetchExams(params.classId, params.sectionId),
           fetchAnnouncements(),
         ])
       } catch (err) {
@@ -239,6 +272,7 @@ export function useDashboard() {
       }
     },
     [
+      fetchTodayAttendance,
       fetchWeeklyAttendance,
       fetchMonthlyAttendance,
       fetchHomework,
@@ -248,8 +282,22 @@ export function useDashboard() {
   )
 
   return {
-    ...store,
+    weekDays,
+    weeklyPct,
+    monthlyPct,
+    todayStatus,
+    fees,
+    isPaid,
+    homework,
+    exams,
+    announcements,
+    isLoadingAttendance,
+    isLoadingFees,
+    isLoadingHomework,
+    isLoadingExams,
+    isLoadingAnnouncements,
     fetchAll,
+    fetchTodayAttendance,
     fetchWeeklyAttendance,
     fetchMonthlyAttendance,
     fetchHomework,

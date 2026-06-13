@@ -30,28 +30,30 @@ export const useAttendance = (options: UseAttendanceOptions) => {
       // Fetch monthly and yearly attendance in parallel
       const [monthlyRes, yearlyRes] = await Promise.all([
         getMonthlyAttendance({ studentId, month: month + 1, year }), // API uses 1-indexed months
-        getYearlyAttendance({ studentId, year }),
+        getYearlyAttendance({ studentId, year, class_id: "", section_id: "", academicYearId: "" }),
       ]);
 
-      // ── Map monthly records → AttendanceDay[] ──────────────────────────
-     const days: AttendanceDay[] = (monthlyRes?.records ?? []).map(
-        (record: any): AttendanceDay => ({
-          date: record.date,
-          // API statuses: "present" | "absent" | "late" → map "late" → "present"
-        status:
-  record.status === "absent" || record.status === "Absent"
-    ? "absent"
-    : record.status === "holiday" || record.status === "Holiday"
-    ? "holiday"
-    : "present",
-          whatsappTime: record.whatsappAlertTime ?? undefined,
-        })
-      );
+      const summary = monthlyRes?.summary;
 
-      // ── Derive monthly summary from records ────────────────────────────
-      const presentDays = days.filter((d) => d.status === "present").length;
-      const absentDays = days.filter((d) => d.status === "absent").length;
-      const totalDays = presentDays + absentDays;
+      // ── Build AttendanceDay[] from summary.present_dates / absent_dates ─
+      const presentDates: string[] = summary?.present_dates ?? [];
+      const absentDates: string[] = summary?.absent_dates ?? [];
+
+      const days: AttendanceDay[] = [
+        ...presentDates.map((date: string): AttendanceDay => ({
+          date,
+          status: "present",
+        })),
+        ...absentDates.map((date: string): AttendanceDay => ({
+          date,
+          status: "absent",
+        })),
+      ];
+
+      // ── Monthly summary from API ───────────────────────────────────────
+      const totalDays = summary?.total ?? 0;
+      const presentDays = summary?.present ?? 0;
+      const absentDays = summary?.absent ?? 0;
       const monthPercentage =
         totalDays > 0 ? parseFloat(((presentDays / totalDays) * 100).toFixed(1)) : 0;
 

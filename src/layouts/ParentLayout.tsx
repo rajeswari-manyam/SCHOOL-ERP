@@ -9,10 +9,16 @@ import { useParentChildren } from "./hooks/useParentChildren";
 const ParentLayout = () => {
   const authUser = useAuthStore((s) => s.user);
 
-  const parentId =
-    localStorage.getItem("parentId") || authUser?.id;
+  // ✅ Always derive parentId — no early return before hooks
+  const parentId = localStorage.getItem("parentId") || authUser?.id || "";
 
-  // ✅ FIX: Ensure parentId exists
+  // ✅ Hooks always called unconditionally
+  const { children, activeChild, setActiveChild, loading } =
+    useParentChildren(parentId);
+
+  const [showChildModal, setShowChildModal] = useState(false);
+
+  // ✅ Guards AFTER all hooks
   if (!parentId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -21,16 +27,6 @@ const ParentLayout = () => {
     );
   }
 
-  const {
-    children,
-    activeChild,
-    setActiveChild,
-    loading,
-  } = useParentChildren(parentId);
-
-  const [showChildModal, setShowChildModal] = useState(false);
-
-  // ✅ Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -39,7 +35,6 @@ const ParentLayout = () => {
     );
   }
 
-  // ✅ No child found
   if (!activeChild) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -50,55 +45,42 @@ const ParentLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#F4F6FA]">
-      {/* Top Navbar */}
       <ParentTopNavBar
         activeChild={activeChild}
         onSwitchChild={() => setShowChildModal(true)}
       />
 
-      {/* Main Content */}
       <main
         className={
-          showChildModal
-            ? "blur-sm pointer-events-none select-none"
-            : ""
+          showChildModal ? "blur-sm pointer-events-none select-none" : ""
         }
       >
-        <Outlet
-          context={{ activeChild }}
-          key={activeChild.studentId}
-        />
+        <Outlet context={{ activeChild }} key={activeChild.studentId} />
       </main>
 
-      {/* Child Switch Modal */}
       {showChildModal && (
         <>
-          {/* Overlay */}
           <div
             className="fixed inset-0 z-40 bg-black/40"
             onClick={() => setShowChildModal(false)}
           />
-
-          {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div className="w-full max-w-sm bg-white rounded-xl shadow-lg">
-              {/* Header */}
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            onClick={() => setShowChildModal(false)}
+          >
+            <div
+              className="w-full max-w-sm bg-white rounded-xl shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-between items-center p-4 border-b">
                 <h2 className="font-semibold">Select Child</h2>
-                <button
-                  onClick={() => setShowChildModal(false)}
-                >
+                <button onClick={() => setShowChildModal(false)}>
                   <X size={18} />
                 </button>
               </div>
-
-              {/* List */}
               <div className="p-4 space-y-2">
                 {children.map((child) => {
-                  const isActive =
-                    activeChild.studentId ===
-                    child.studentId;
-
+                  const isActive = activeChild.studentId === child.studentId;
                   return (
                     <button
                       key={child.studentId}
@@ -112,11 +94,10 @@ const ParentLayout = () => {
                           : "hover:bg-gray-100"
                       }`}
                     >
-                      <p className="font-medium">
-                        {child.name}
-                      </p>
+                      <p className="font-medium">{child.name}</p>
                       <p className="text-sm text-gray-500">
-                        Class {child.class} {child.section}
+                        Class {child.classDetail?.className || "-"}{" "}
+                        {child.sectionDetail?.sectionName || "-"}
                       </p>
                     </button>
                   );
@@ -127,7 +108,6 @@ const ParentLayout = () => {
         </>
       )}
 
-      {/* WhatsApp Button */}
       <WhatsAppFAB />
     </div>
   );

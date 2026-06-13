@@ -137,12 +137,45 @@ export type FeeOption = {
 
 export interface FeeHeadFormValues {
   name: string;
-  code: string;
   description?: string;
-  mandatory: boolean;
-  taxable: boolean;
-  billingCycle: BillingCycle;
   displayOrder: string;
+}
+
+export interface FeeStructureAssignment {
+  id: string;
+  feeHeadId: string;
+  feeHeadName: string;
+  classId: string;
+  className: string;
+  sectionId: string | null;
+  sectionName: string | null;
+  mandatory: boolean;
+  billingCycle: BillingCycle;
+  dueDate: string;
+  amount: number | null;
+  annualTotal: number | null;
+  studentIds?: string[];
+}
+
+export interface FeeStructureFormValues {
+  feeHeadId: string;
+  classId: string;
+  sectionId: string;
+  mandatory: boolean;
+  billingCycle: BillingCycle;
+  dueDate: string;
+  amount: string;
+  annualTotal: string;
+  studentIds: string[];
+}
+
+export interface StudentWithFee {
+  studentId: string;
+  studentName: string;
+  admissionNo: string;
+  className: string;
+  sectionName: string;
+  selected: boolean;
 }
 
 export type FeeHeadStatus = "ACTIVE" | "INACTIVE";
@@ -150,12 +183,11 @@ export type FeeHeadStatus = "ACTIVE" | "INACTIVE";
 export type FeeHead = {
   id: string;
   name: string;
-  code: string;
-  description: string;
-  mandatory: boolean;
-  taxable: boolean;
-  gst: string;
-  status: FeeHeadStatus;
+  code?: string;
+  description?: string;
+  displayOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 // ─── Class / fee structure ────────────────────────────────────────────────────

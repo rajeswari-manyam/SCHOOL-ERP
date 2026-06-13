@@ -15,7 +15,7 @@ const AccountantReceipts = lazy(() => import("../features/accountant/receipts/pa
 const AccountantPayroll = lazy(() => import("../features/accountant/payroll/pages/PayrollPage"));
 const SchoolAdminSettings = lazy(() => import("../features/school-admin/settings").then(m => ({ default: m.SettingsPage })));
 const SchoolAdminReports = lazy(() => import("../features/school-admin/reports").then(m => ({ default: m.ReportsPage })));
-const SchoolAdminTimetable = lazy(() => import("../features/school-admin/timetable"));
+const SchoolAdminTimetable = lazy(() => import("../features/school-admin/timetable/TimetablePage"));
 const SchoolAdminStaff = lazy(() => import("../features/school-admin/staff/pages/StaffPage"));
 
 

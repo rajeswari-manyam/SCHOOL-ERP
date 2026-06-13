@@ -1,11 +1,12 @@
 import api from "@/config/axios";
-import { getAllClasses, getSectionsByClassId, getSectionById, getAllStaff } from "@/services/class.api";
+import { getAllClasses, getSectionsByClassId, getAllStaff } from "@/services/class.api";
+import { getSectionById } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "../types/classes.types";
 
 export const fetchClasses = async (academicYearId?: string | null): Promise<ClassItem[]> => {
   const params: import("@/services/class.api").GetAllClassesParams = {};
-  if (academicYearId) params.academic_year = academicYearId;
+  if (academicYearId) params.academicYearId = academicYearId;
   const classesRes = await getAllClasses(params);
 
   if (!classesRes?.status || !Array.isArray(classesRes.data)) {
@@ -123,7 +124,7 @@ export const fetchSectionsByClassId = async (classId: string): Promise<SectionIt
   const [sectionRes, subjectsRes, staffRes] = await Promise.all([
     getSectionsByClassId(classId),
     getAllSubjects({ class_id: classId }).catch(() => null),
-    getAllStaff({ role: "teacher" }).catch(() => null),
+    getAllStaff({ role: "teacher" } as Record<string, string>).catch(() => null),
   ]);
 
   const records =
@@ -163,9 +164,9 @@ export const fetchSectionsByClassId = async (classId: string): Promise<SectionIt
 export const fetchSectionById = async (sectionId: string): Promise<SectionItem | null> => {
   const [res, staffRes] = await Promise.all([
     getSectionById(sectionId),
-    getAllStaff({ role: "teacher" }).catch(() => null),
+    getAllStaff({ role: "teacher" } as Record<string, string>).catch(() => null),
   ]);
-  const record = res?.data;
+  const record = res;
   if (record) {
     const teacherMap = new Map<string, string>();
     const staffRecords = asArray<{ id?: string; name?: string }>(staffRes?.data) ?? [];

@@ -112,3 +112,42 @@ export const deleteExamTimetable = async (id: string) => {
   );
   return res.data;
 };
+
+/** ================= GET BY TEACHER ID ================= */
+
+export interface ExamTimetableByTeacherResponse {
+  status: boolean;
+  count: number;
+  data: ExamTimetableByTeacherItem[];
+}
+
+export interface ExamTimetableByTeacherItem {
+  id: string;
+  class_id: string;
+  subject_id: string;
+  section_id: string;
+  examnameid: string;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+  academicYearId: string;
+  teacher_id: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Optional populated nested objects */
+  class?: { id: string; name: string };
+  subject?: { id: string; name: string };
+  section?: { id: string; name: string };
+  exam?: { id: string; name: string };
+  teacher?: { id: string; name: string };
+}
+
+export const getExamTimetableByTeacherId = async (
+  teacherId: string,
+): Promise<ExamTimetableByTeacherResponse> => {
+  const { data } = await api.get<ExamTimetableByTeacherResponse>(
+    `/tenant/examtimetableByTeacherId/${teacherId}`,
+  );
+  return data;
+};

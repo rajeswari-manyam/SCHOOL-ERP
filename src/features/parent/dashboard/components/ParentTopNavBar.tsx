@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     Bell,
@@ -17,15 +17,15 @@ import {
     MessageSquareWarning,
 } from "lucide-react";
 import typography from "@/styles/typography";
+import { useStudentById } from "../hooks/useStudent";
 
 const navLinks = [
-    { label: "Dashboard",  path: "/parent/dashboard",   icon: LayoutDashboard },
-    { label: "Attendance", path: "/parent/attendance",  icon: CalendarCheck },
-    { label: "Fees",       path: "/parent/fees",        icon: Wallet },
-    { label: "Homework",   path: "/parent/homework",    icon: BookOpen },
-    { label: "Exams",      path: "/parent/exams",       icon: ClipboardList },
-    { label: "Profile",    path: "/parent/profile",     icon: User },
-
+    { label: "Dashboard", path: "/parent/dashboard", icon: LayoutDashboard },
+    { label: "Attendance", path: "/parent/attendance", icon: CalendarCheck },
+    { label: "Fees", path: "/parent/fees", icon: Wallet },
+    { label: "Homework", path: "/parent/homework", icon: BookOpen },
+    { label: "Exams", path: "/parent/exams", icon: ClipboardList },
+    { label: "Profile", path: "/parent/profile", icon: User },
 ];
 
 interface ParentTopNavBarProps {
@@ -35,8 +35,8 @@ interface ParentTopNavBarProps {
         class?: string;
         school?: string;
         avatar?: string;
-    }
-    onSwitchChild: () => void
+    };
+    onSwitchChild: () => void;
 }
 
 const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) => {
@@ -46,23 +46,40 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
     const [notifOpen, setNotifOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
 
+    const studentId = activeChild?.id ? String(activeChild.id) : "";
+    const { student } = useStudentById(studentId);
+
+    // ✅ Close all dropdowns on route change — prevents overlay blocking clicks
+    useEffect(() => {
+        setNotifOpen(false);
+        setProfileOpen(false);
+        setMobileOpen(false);
+    }, [location.pathname]);
+
     const handleLogout = () => {
         navigate("/login");
     };
-const name = activeChild?.name ?? "";
 
-const user = {
-    name: name || "Student",
-    initials: name
-        ? name
-              .split(" ")
-              .map((n) => n?.[0] ?? "")
-              .join("")
-              .slice(0, 2)
-              .toUpperCase()
-        : "ST",
-    className: `Class ${activeChild?.class ?? "-"}`,
-};
+    const name = activeChild?.name ?? "";
+
+    const user = {
+        name: name || "Student",
+        initials: name
+            ? name
+                .split(" ")
+                .map((n) => n?.[0] ?? "")
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()
+            : "ST",
+        className: student?.classDetail?.class_name && student?.sectionDetail?.sectionName
+            ? `${student.classDetail.class_name} - ${student.sectionDetail.sectionName}`
+            : student?.classDetail?.class_name
+                ? student.classDetail.class_name
+                : activeChild?.class
+                    ? `Class ${activeChild.class}`
+                    : "—",
+    };
 
     return (
         <>
@@ -80,27 +97,27 @@ const user = {
 
                         <Link to="/parent/dashboard" className="flex items-center gap-2">
                             <div className="w-7 h-7 shrink-0 overflow-hidden rounded-lg bg-white/5">
-                            <img
-                              src="/favicon.png"
-                              alt="VidyaTracker logo"
-                              className="h-full w-full object-cover"
-                            />
-                        </div>
-                        <span className={`${typography.fontSize.lg} font-bold text-[#0B1C30] tracking-tight`}>
-                            VidyaTracker
-                        </span>
+                                <img
+                                    src="/favicon.png"
+                                    alt="VidyaTracker logo"
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
+                            <span className={`${typography.fontSize.lg} font-bold text-[#0B1C30] tracking-tight`}>
+                                VidyaTracker
+                            </span>
                         </Link>
                     </div>
 
-                    {/* CENTER: desktop nav */}
-                    <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center">
+                    {/* CENTER: desktop nav — z-10 ensures links stay above any background layers */}
+<nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center relative z-50">
                         {navLinks.map((link) => {
                             const isActive = location.pathname === link.path;
                             return (
                                 <Link
                                     key={link.path}
                                     to={link.path}
-                                    className={`relative px-3.5 py-4 ${typography.body.base}
+                                    className={`relative z-10 px-3.5 py-4 ${typography.body.base}
                                         ${isActive
                                             ? "text-[#3525CD]"
                                             : "text-[#6B7280] hover:text-[#0B1C30]"
@@ -143,9 +160,9 @@ const user = {
                                         Notifications
                                     </p>
                                     {[
-                                        { title: "Fee reminder",    desc: "Tuition fee due on 9 Apr",        time: "2h ago",  dot: "bg-red-500"    },
-                                        { title: "Attendance alert", desc: "Anjali was absent today",        time: "4h ago",  dot: "bg-amber-400"  },
-                                        { title: "New homework",    desc: "Maths: Quadratic Equations",      time: "1d ago",  dot: "bg-indigo-500" },
+                                        { title: "Fee reminder", desc: "Tuition fee due on 9 Apr", time: "2h ago", dot: "bg-red-500" },
+                                        { title: "Attendance alert", desc: "Anjali was absent today", time: "4h ago", dot: "bg-amber-400" },
+                                        { title: "New homework", desc: "Maths: Quadratic Equations", time: "1d ago", dot: "bg-indigo-500" },
                                     ].map((n) => (
                                         <div key={n.title} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F4F6FA] cursor-pointer">
                                             <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.dot}`} />
@@ -309,12 +326,13 @@ const user = {
                 </div>
             )}
 
-            {(notifOpen || profileOpen) && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
-                />
-            )}
+       
+{(notifOpen || profileOpen) && (
+  <div
+    className="fixed inset-0 z-20"
+    onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
+  />
+)}
         </>
     );
 };

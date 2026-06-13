@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,10 +6,27 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useDashboardStore } from "../store/uistore"
-import type { ExamTimetable } from "../../../../services/examtimetable.api";
+import { getAllExamTimetables } from "../../../../services/examtimetable.api"
+import type { ExamTimetableListItem } from "../../../../services/examtimetable.api"
+import { useStudentById } from "../../dashboard/hooks/useStudent"
+import { useOutletContext } from "react-router-dom"
 
-const columnHelper = createColumnHelper<ExamTimetable>()
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type ParentLayoutContext = {
+  activeChild: {
+    id: number;
+    name: string;
+    class: string;
+    school: string;
+    avatar: string;
+    studentId?: string;
+  };
+};
+
+const columnHelper = createColumnHelper<ExamTimetableListItem>()
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function SkeletonRow() {
   return (
@@ -46,22 +63,64 @@ function fmtDay(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { weekday: "long" })
 }
 
-export const UpcomingExamsTable = () => {
-  const { exams, isLoadingExams } = useDashboardStore()
+// ── Component ─────────────────────────────────────────────────────────────────
 
-  // Only show upcoming exams (today or future)
+export const UpcomingExamsTable = () => {
+  const { activeChild } = useOutletContext<ParentLayoutContext>()
+
+  // ✅ Resolve real UUIDs from student detail
+  const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "")
+  const { student } = useStudentById(studentId)
+
+  const [exams, setExams] = useState<ExamTimetableListItem[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const classId = student?.classDetail?.id
+    const sectionId = student?.sectionDetail?.id
+
+    // class_id is required — wait until student resolves
+    if (!classId) return
+
+    let cancelled = false
+    setIsLoading(true)
+    setError(null)
+
+    getAllExamTimetables({
+      class_id: classId,
+      section_id: sectionId, // optional
+    })
+      .then((res) => {
+        if (cancelled) return
+        if (Array.isArray(res)) setExams(res)
+        else setError("Failed to load exams.")
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err?.message ?? "Something went wrong.")
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [student?.classDetail?.id, student?.sectionDetail?.id])
+
+  // ── Filter: only today or future, sorted ascending ────────────────────────
   const today = new Date().setHours(0, 0, 0, 0)
   const upcoming = exams
     .filter((e) => new Date(e.exam_date).getTime() >= today)
     .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())
 
+  // ── Columns ───────────────────────────────────────────────────────────────
   const columns = useMemo(
     () => [
-      columnHelper.accessor("subjectname", {
+      columnHelper.accessor("subject", {
         header: "Subject",
         cell: (info) => (
           <span className="font-semibold text-[#0B1C30] text-sm">
-            {info.getValue()}
+            {info.getValue().subject_name}
           </span>
         ),
       }),
@@ -103,6 +162,7 @@ export const UpcomingExamsTable = () => {
     getCoreRowModel: getCoreRowModel(),
   })
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Card className="w-full rounded-xl border border-[#E8EBF2] shadow-none hover:border-[#3525CD] transition-colors">
       <CardHeader className="px-5 sm:px-6 pt-5 pb-3 border-none">
@@ -118,7 +178,7 @@ export const UpcomingExamsTable = () => {
 
       <CardContent className="px-5 sm:px-6 pb-5">
 
-        {/* DESKTOP */}
+        {/* ── DESKTOP ── */}
         <div className="hidden md:block w-full">
           <table className="w-full table-fixed border-separate border-spacing-y-1">
             <colgroup>
@@ -143,8 +203,15 @@ export const UpcomingExamsTable = () => {
               ))}
             </thead>
             <tbody>
-              {isLoadingExams ? (
+              {/* Show skeleton while student resolves OR while fetching */}
+              {!student?.classDetail?.id || isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : error ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-6 text-[12px] text-red-400">
+                    {error}
+                  </td>
+                </tr>
               ) : upcoming.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-6 text-[12px] text-gray-400">
@@ -169,12 +236,14 @@ export const UpcomingExamsTable = () => {
           </table>
         </div>
 
-        {/* MOBILE */}
+        {/* ── MOBILE ── */}
         <div className="md:hidden flex flex-col gap-2">
-          {isLoadingExams ? (
+          {!student?.classDetail?.id || isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-20 rounded-lg bg-gray-100 animate-pulse" />
             ))
+          ) : error ? (
+            <p className="text-center text-[12px] text-red-400 py-4">{error}</p>
           ) : upcoming.length === 0 ? (
             <p className="text-center text-[12px] text-gray-400 py-4">
               No upcoming exams scheduled
@@ -186,7 +255,9 @@ export const UpcomingExamsTable = () => {
                 className="border border-[#E8EBF2] rounded-lg p-3 bg-white hover:border-[#3525CD] hover:bg-[#F8F9FF] transition-all cursor-pointer"
               >
                 <div className="flex justify-between items-start gap-2">
-                  <p className="font-semibold text-[#0B1C30] text-sm">{e.subjectname}</p>
+                  <p className="font-semibold text-[#0B1C30] text-sm">
+                    {e.subject.subject_name}
+                  </p>
                   <span className="text-[11px] font-medium text-[#374151] bg-[#F4F6FA] border border-[#E8EBF2] px-2.5 py-1 rounded-md whitespace-nowrap">
                     {e.room_no || "—"}
                   </span>

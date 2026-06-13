@@ -1,97 +1,172 @@
 // components/ResultsSection.tsx
 import { ResultTable } from "./Resultstable";
 import { Download, ChevronDown, CheckCircle2, AlertCircle } from "lucide-react";
+import { useState } from "react";
 import type { ExamResult } from "../types/exams.types";
+import type { ExamRecord } from "../../../../services/exam.api";
 
 interface ResultsSectionProps {
-  examResult: ExamResult;
+  examResult: ExamResult | null;
+  resultsLoading: boolean;
+  resultsError: string | null;
+  onRetry: () => void;
+  examList: ExamRecord[];
+  examListLoading: boolean;
+  selectedResultExamId: string;
+  onSelectExam: (id: string) => void;
 }
 
-export const ResultsSection = ({ examResult }: ResultsSectionProps) => {
-  const { examName, totalMarks, obtainedMarks, percentage, grade, rank, status, results } = examResult;
+export const ResultsSection = ({
+  examResult,
+  resultsLoading,
+  resultsError,
+  onRetry,
+  examList,
+  examListLoading,
+  selectedResultExamId,
+  onSelectExam,
+}: ResultsSectionProps) => {
+  const [examDropdownOpen, setExamDropdownOpen] = useState(false);
+
+  const selectedExamName =
+    examList.find((e) => e.id === selectedResultExamId)?.exam_name ??
+    examResult?.examName ??
+    "Exam";
 
   return (
-   <div className="space-y-4 sm:space-y-6">
-      {/* Header: Dropdown + Download Button */}
-   <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-      <div className="w-full sm:w-auto space-y-1">
-  <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
-    Select Examination
-  </p>
+    <div className="space-y-3">
 
-  <button className="w-full sm:w-auto flex items-center justify-between gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-800 hover:border-indigo-300 hover:shadow-sm transition-all active:scale-[0.99]">
-    <span className="truncate">{examName}</span>
-    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-  </button>
-</div>
-     <button className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:scale-[0.98] transition-all">
-  <Download className="w-4 h-4" />
-  Download Result PDF
-</button>
-      </div>
+      {/* Header: Dropdown + Download */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="space-y-0.5">
+          <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+            Select Examination
+          </p>
 
-      {/* Overall Performance Card */}
-     <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 text-center hover:border-indigo-300 hover:shadow-md transition-all duration-300">
-        <p className="text-xs font-semaibold text-gray-500 uppercase tracking-wider mb-3">
-          Overall Performance
-        </p>
-       <h2 className="text-2xl sm:text-3xl font-bold text-indigo-700 mb-4">
-          {obtainedMarks} / {totalMarks}
-        </h2>
-      <div className="flex items-center justify-center gap-2 flex-wrap px-2">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-            {percentage}%
-          </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
-            {grade}
-          </span>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-            status === 'pass' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}>
-            {status === 'pass' ? (
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-            ) : (
-              <AlertCircle className="w-3 h-3 mr-1" />
+          {/* Exam dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setExamDropdownOpen((o) => !o)}
+              disabled={examListLoading}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-800 transition-all min-w-[140px]"
+            >
+              <span className="truncate">
+                {examListLoading ? "Loading…" : selectedExamName}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </button>
+
+            {examDropdownOpen && examList.length > 0 && (
+              <div className="absolute left-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg">
+                {examList.map((exam) => (
+                  <button
+                    key={exam.id}
+                    onClick={() => {
+                      onSelectExam(exam.id);
+                      setExamDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm transition first:rounded-t-lg last:rounded-b-lg ${
+                      selectedResultExamId === exam.id
+                        ? "text-indigo-600 font-medium bg-indigo-50"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {exam.exam_name}
+                  </button>
+                ))}
+              </div>
             )}
-            {status.toUpperCase()}
-          </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-            Rank {rank}
-          </span>
+
+            {examDropdownOpen && examList.length === 0 && !examListLoading && (
+              <div className="absolute left-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg px-3 py-2 text-sm text-gray-400">
+                No exams found
+              </div>
+            )}
+          </div>
         </div>
+
+        <button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg transition-all">
+          <Download className="w-3.5 h-3.5" />
+          Download Result PDF
+        </button>
       </div>
 
-      {/* Results Table */}
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-indigo-300 hover:shadow-sm transition-all duration-300">
-        <ResultTable results={results} />
-      </div>
+      {/* Loading state */}
+      {resultsLoading && (
+        <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+          <svg className="animate-spin h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+          Loading results…
+        </div>
+      )}
 
-      {/* Footer */}
-    {/* Footer */}
-<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs bg-white rounded-xl border border-gray-200 p-3 transition-all">
-  
-  {/* Info */}
-  <div className="flex items-center gap-1.5 text-gray-500">
-    <AlertCircle className="w-3.5 h-3.5" />
-    <span>
-      Results published on 05 Feb 2025. This is a computer-generated report.
-    </span>
-  </div>
+      {/* Error state */}
+      {!resultsLoading && resultsError && (
+        <div className="flex flex-col items-center gap-3 py-12 text-sm text-red-500">
+          <AlertCircle className="h-8 w-8 text-red-300" />
+          <p>{resultsError}</p>
+          <button
+            onClick={onRetry}
+            className="rounded-lg border border-red-200 px-4 py-1.5 text-xs text-red-500 transition hover:bg-red-50"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
-  {/* Action Cards */}
-  <div className="flex flex-wrap gap-2 sm:gap-3">
-    
-    <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-300 text-gray-700 hover:text-indigo-700 transition-all shadow-sm active:scale-[0.98]">
-      <span className="font-medium">Raise a Dispute</span>
-    </button>
+      {/* No result state */}
+      {!resultsLoading && !resultsError && !examResult && (
+        <div className="flex flex-col items-center gap-2 py-12 text-sm text-gray-400">
+          <AlertCircle className="h-8 w-8 text-gray-300" />
+          <p>No results found for this exam.</p>
+        </div>
+      )}
 
-    <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-300 text-gray-700 hover:text-indigo-700 transition-all shadow-sm active:scale-[0.98]">
-      <span className="font-medium">View Subject Analysis</span>
-    </button>
+      {/* Overall Performance */}
+      {!resultsLoading && !resultsError && examResult && (
+        <>
+          <div className="bg-white rounded-xl border border-gray-200 py-4 px-3 sm:px-4 text-center max-w-md mx-auto w-full">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
+              Overall Performance
+            </p>
+            <h2 className="text-2xl font-bold text-indigo-700 mb-2">
+              {examResult.obtainedMarks} / {examResult.totalMarks}
+            </h2>
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                {examResult.percentage}%
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+                {examResult.grade}
+              </span>
+              <span
+                className={`inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  examResult.status === "pass"
+                    ? "bg-green-50 text-green-700"
+                    : "bg-red-50 text-red-700"
+                }`}
+              >
+                {examResult.status === "pass" ? (
+                  <CheckCircle2 className="w-3 h-3" />
+                ) : (
+                  <AlertCircle className="w-3 h-3" />
+                )}
+                {examResult.status.toUpperCase()}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                Rank {examResult.rank}
+              </span>
+            </div>
+          </div>
 
-  </div>
-
-      </div>
+          {/* Results Table */}
+          <div className="max-w-5xl mx-auto w-full">
+            <ResultTable results={examResult.results} />
+          </div>
+        </>
+      )}
     </div>
   );
 };

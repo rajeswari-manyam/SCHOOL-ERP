@@ -3,6 +3,7 @@ import { getStudentById } from "../../../../services/student.api";
 import type { Student as ApiStudent } from "../../../../services/student.api";
 import { getAllClasses, getAllStaff } from "../../../../services/class.api";
 import type { ClassRecord, StaffRecord } from "../../../../services/class.api";
+import { getAcademicYearById } from "../../../../services/academicYear.api";
 
 import type { Student, StudentStatus, Gender } from "../types/profile.types";
 import { STUDENT_DATA } from "../data/profile.mock";
@@ -32,7 +33,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
   const lastName  = s.last_name  ?? "";
   const fullName  = `${firstName} ${lastName}`.trim();
   const initials  = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  const className = s.class_id ? `Class ${s.class_id}` : "";
+  const className = s.classDetail?.class_name ?? "";
 
   return {
     id:             s.id,
@@ -43,9 +44,9 @@ const mapApiStudent = (s: ApiStudent): Student => {
     avatarColor:    "#4f46e5",
     status:         (s.status?.toUpperCase() as StudentStatus) ?? "ACTIVE",
     className,
-    section:        s.sectionId     ?? "",
+    section:        s.sectionDetail?.sectionName ?? "",
     schoolCode:     s.school_code ?? "",
-    rawClass:       s.class_id       ?? "",
+    rawClass:       s.classDetail?.class_name ?? "",
 
     // placeholder — will be overwritten by useClassTeacher
     classTeacher: {
@@ -58,7 +59,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
     academic: {
       academicYear: STUDENT_DATA.academic.academicYear,
       board:        STUDENT_DATA.academic.board,
-      section:      s.sectionId ?? "",
+      section:      s.sectionDetail?.sectionName ?? "",
       classroom:    STUDENT_DATA.academic.classroom,
     },
 
@@ -97,7 +98,16 @@ export function useStudent(studentId: string): {
 
     try {
       const apiStudent = await getStudentById(studentId);
-      setStudent(mapApiStudent(apiStudent));
+      const mapped = mapApiStudent(apiStudent);
+
+      if (apiStudent.academicYearId) {
+        const aca = await getAcademicYearById(apiStudent.academicYearId);
+        if (aca) {
+          mapped.academic.academicYear = aca.yearName;
+        }
+      }
+
+      setStudent(mapped);
     } catch (err) {
       console.error("[useStudent] failed →", err);
       setError("Failed to load profile.");
@@ -163,7 +173,7 @@ export function useClassId(params: UseClassIdParams): {
     setClassLoading(true);
     setClassError(null);
 
-    getAllClasses({ class: class_name, section, school_code, academic_year, status: "active" })
+    getAllClasses({ class_name, section, status: "active" })
       .then((res) => {
         if (cancelled) return;
         if (res.status && res.data.length > 0) {
@@ -206,7 +216,7 @@ export function useClassTeacher(params: {
     setTeacherLoading(true);
     setTeacherError(null);
 
-    getAllStaff({ class: class_name, section })
+    getAllStaff({ class_name, section })
       .then((res) => {
         if (cancelled) return;
 

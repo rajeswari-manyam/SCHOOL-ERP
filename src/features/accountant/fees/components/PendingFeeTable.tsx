@@ -257,7 +257,7 @@ export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
   }
 
   return (
-    <div className="overflow-auto no-scrollbar scroll-smooth max-h-[520px] rounded-md border border-gray-200">
+    <div className="overflow-x-auto w-full max-w-full no-scrollbar scroll-smooth max-h-[520px] rounded-md border border-gray-200">
       {/* ── Mobile View ── */}
 <div className="md:hidden space-y-3 p-3">
   {rows.map((row) => (

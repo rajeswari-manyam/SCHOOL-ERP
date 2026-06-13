@@ -1,159 +1,29 @@
-// src/features/dashboard/hooks/useDashboard.ts
-// user.id from auth store IS the studentId — used directly with getstudentsById.
+// src/features/student/dashboard/hooks/useDashboard.ts
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
-
-// ── API imports ───────────────────────────────────────────────────────────────
-import { getAnnouncementsByType }                      from "../../../../services/announcements.api";
-import { getWeeklyAttendance, getMonthlyAttendance }   from "../../../../services/attendance.api";
-import { getHomeworkByClass }                          from "../../../../services/homework.api";
-import type { Homework }                               from "../../../../services/homework.api";
-import { getAllExamTimetables } from "../../../../services/examtimetable.api"
-import { getAllResults }                                from "../../../../services/results.api";
-import { getAllTimetable }                              from "../../../../services/timetable.api";
-import { getStudentById }                              from "../../../../services/student.api";
-import { getClassById }                                from "../../../../services/class.api";
-import { getSectionById }                              from "../../../../services/section.api";
-
-// ── Dashboard-local types ─────────────────────────────────────────────────────
+import { getStudentById } from "../../../../services/student.api";
+import { getHomeworkByClass } from "../../../../services/homework.api";
+import { getAllTimetable } from "../../../../services/timetable.api";
+import { getAllExamTimetables } from "../../../../services/examtimetable.api";
+import { getMonthlyAttendance, getStudentTodayAttendance } from "../../../../services/attendance.api";
 import type {
   StatItem,
+  AttendanceDay,
   ScheduleItem,
   HomeworkItem,
-  AttendanceDay,
   RecentResult,
   Announcement,
 } from "../types/dashboard.types";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const toScheduleItems = (
-  slots: Awaited<ReturnType<typeof getAllTimetable>>["data"],
-  today: string
-): ScheduleItem[] => {
-  const daySlots = slots
-    .filter((s) => s.day_of_week.toLowerCase() === today.toLowerCase())
-    .sort((a, b) => a.period_no - b.period_no);
-
-  const rows: ScheduleItem[] = [];
-  for (let i = 0; i < daySlots.length; i++) {
-    const slot = daySlots[i];
-    if (
-      i > 0 &&
-      slot.lunch_start &&
-      slot.start_time >= slot.lunch_start &&
-      daySlots[i - 1].end_time <= slot.lunch_start
-    ) {
-      rows.push({
-        period: "",
-        time: `${slot.lunch_start} – ${slot.lunch_end}`,
-        subject: "",
-        teacher: "",
-        isBreak: true,
-        breakLabel: `Lunch Interval (${slot.lunch_start} – ${slot.lunch_end})`,
-      });
-    }
-    rows.push({
-      period: `P${slot.period_no}`,
-      time: `${slot.start_time} – ${slot.end_time}`,
-      subject: slot.subjectname,
-      teacher: slot.teachername,
-    });
-  }
-  return rows;
-};
-
-const todayDow = (): string =>
-  new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
-
-const fmt = (d: Date) => d.toISOString().split("T")[0];
-
-const currentWeek = (): { start: string; end: string } => {
-  const now = new Date();
-  const day = now.getDay();
-  const mon = new Date(now);
-  mon.setDate(now.getDate() - ((day + 6) % 7));
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
-  return { start: fmt(mon), end: fmt(sun) };
-};
-
-const toHomeworkItems = (list: Homework[]): HomeworkItem[] => {
-  const colors: HomeworkItem["colorType"][] = ["blue", "green", "amber"];
-  return list.slice(0, 3).map((hw, i) => ({
-    id: hw.id,
-    subject: "Subject", // until you map subject_id → name
-    title: hw.title,
-    dueDate: hw.submission_date
-      ? new Date(hw.submission_date).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : "—",
-    colorType: colors[i % colors.length],
-  }));
-};
-
-const toAttendanceDays = (
-  records: any,
-  year: number,
-  month: number
-): AttendanceDay[] => {
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const firstDow = new Date(year, month - 1, 1).getDay();
-
-  const days: AttendanceDay[] = [];
-  for (let i = 0; i < firstDow; i++) {
-    days.push({ day: 0, status: "empty" });
-  }
-
-  const lookup: Record<number, "present" | "absent" | "holiday"> = {};
-  if (Array.isArray(records?.records)) {
-    for (const r of records.records as { date: string; status: string }[]) {
-      const d = new Date(r.date).getDate();
-      const s = r.status?.toLowerCase();
-      lookup[d] =
-        s === "present" ? "present"
-        : s === "absent" ? "absent"
-        : "holiday";
-    }
-  }
-
-  const today = new Date();
-  const isCurrentMonth =
-    today.getFullYear() === year && today.getMonth() + 1 === month;
-  const todayDate = today.getDate();
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dow = new Date(year, month - 1, d).getDay();
-    if (dow === 0 || dow === 6) {
-      days.push({ day: d, status: "holiday" });
-    } else if (isCurrentMonth && d > todayDate) {
-      days.push({ day: d, status: "empty" });
-    } else {
-      days.push({ day: d, status: lookup[d] ?? "empty" });
-    }
-  }
-
-  return days;
-};
-
-// ── State shape ───────────────────────────────────────────────────────────────
-
 interface DashboardState {
   loading: boolean;
   error: string | null;
-
-  // Student info (from API)
   studentName: string;
   rollNumber: string;
   studentClass: string;
   studentSection: string;
   studentSchoolCode: string;
-
-  // Widget data
   stats: StatItem[];
   schedule: ScheduleItem[];
   homework: HomeworkItem[];
@@ -164,10 +34,78 @@ interface DashboardState {
   announcements: Announcement[];
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
+const SUBJECT_COLOR: Record<string, "blue" | "green" | "amber"> = {
+  Mathematics: "blue",
+  English: "green",
+  Science: "amber",
+  SST: "blue",
+  Hindi: "green",
+};
+
+const DAY_MAP: Record<string, string> = {
+  sun: "SUN", mon: "MON", tue: "TUE", wed: "WED", thu: "THU", fri: "FRI", sat: "SAT",
+  sunday: "SUN", monday: "MON", tuesday: "TUE", wednesday: "WED", thursday: "THU",
+  friday: "FRI", saturday: "SAT",
+};
+
+const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+// ── Build AttendanceDay[] from monthly API summary ──────────────────────
+// API returns summary with present_dates and absent_dates arrays.
+// We pad with `empty` cells for leading weekday offset, then fill
+// the rest of the month with present / absent / holiday.
+const buildCalendarDays = (
+  presentDates: string[],
+  absentDates: string[],
+  year: number,
+  month: number // 1-based
+): AttendanceDay[] => {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstWeekday = new Date(year, month - 1, 1).getDay(); // 0=Sun
+
+  const presentSet = new Set(presentDates);
+  const absentSet = new Set(absentDates);
+
+  const today = new Date();
+  const isCurrentMonth =
+    today.getFullYear() === year && today.getMonth() + 1 === month;
+
+  const days: AttendanceDay[] = [];
+
+  // Leading empty cells
+  for (let i = 0; i < firstWeekday; i++) {
+    days.push({ day: 0, status: "empty" });
+  }
+
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    if (presentSet.has(dateStr)) {
+      days.push({ day: d, status: "present" });
+    } else if (absentSet.has(dateStr)) {
+      days.push({ day: d, status: "absent" });
+    } else if (isCurrentMonth && d > today.getDate()) {
+      // Future day — show as holiday (greyed out)
+      days.push({ day: d, status: "holiday" });
+    } else {
+      // Past day with no record — treat as holiday / school-off
+      days.push({ day: d, status: "holiday" });
+    }
+  }
+
+  return days;
+};
+
+// ── Compute monthly % from calendar days ──────────────────────────────────────
+const calcMonthlyPercent = (days: AttendanceDay[]): number | null => {
+  const present = days.filter((d) => d.status === "present").length;
+  const absent = days.filter((d) => d.status === "absent").length;
+  const total = present + absent;
+  if (total === 0) return null;
+  return Math.round((present / total) * 1000) / 10; // 1 decimal place
+};
 
 export const useDashboard = (): DashboardState => {
-  // Pull logged-in user from Zustand auth store
   const authUser = useAuthStore((s) => s.user);
 
   const [state, setState] = useState<DashboardState>({
@@ -182,205 +120,182 @@ export const useDashboard = (): DashboardState => {
     schedule: [],
     homework: [],
     attendance: [],
-    attendanceToday: new Date().getDate(),
+    attendanceToday: 0,
     attendanceMonthLabel: "",
     recentResult: null,
     announcements: [],
   });
 
   useEffect(() => {
-    if (!authUser?.id) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: "Not authenticated.",
-      }));
-      return;
-    }
-
-    let cancelled = false;
+    if (!authUser?.id) return;
 
     const load = async () => {
       try {
-            // Step 1: student profile
-        const studentId = authUser.id;
-        const apiStudent = await getStudentById(studentId);
+        const student = await getStudentById(authUser.id);
 
-        if (!apiStudent) throw new Error("Could not load student profile.");
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // 1-based
+        const currentYear = now.getFullYear();
 
-        const classId    = apiStudent.class_id ?? "";
-        const sectionId  = apiStudent.sectionId ?? "";
-        const schoolCode = apiStudent.school_code;
-        const rollNumber = apiStudent.roll_number;
-        const studentName = `${apiStudent.first_name} ${apiStudent.last_name}`;
-
-        // Step 2: resolve human-readable class & section names via dedicated APIs
-        // GET /tenant/getclassById/:id  -> { data: { class_name: "9th" } }
-        // GET /tenant/getsections/:id   -> { data: { sectionName: "A" } }
-        const [classRes, sectionRes] = await Promise.allSettled([
-          classId   ? getClassById(classId)     : Promise.resolve(null),
-          sectionId ? getSectionById(sectionId) : Promise.resolve(null),
-        ]);
-
-        const className =
-          classRes.status === "fulfilled" && classRes.value
-            ? (classRes.value.data?.class_name ?? classId)
-            : classId;
-
-        const sectionName =
-          sectionRes.status === "fulfilled" && sectionRes.value
-            ? (sectionRes.value.sectionName ?? sectionId)
-            : sectionId;
-
-        // classNum/sec still needed for timetable & exam timetable APIs
-        const cleanSection = sectionId.split(":")[0].trim();
-        const classNum = classId.replace(/[A-Za-z]+$/, "");
-        const sec      = classId.match(/[A-Za-z]+$/)?.[0] ?? cleanSection;
-
-                // ── Step 3: all widget data in parallel ───────────────────────────
-        const now   = new Date();
-        const year  = now.getFullYear();
-        const month = now.getMonth() + 1;
-        const { start, end } = currentWeek();
-
-        const [
-          announcementsRes,
-          weeklyAttendanceRes,
-          monthlyAttendanceRes,
-          homeworkRes,
-          examTimetableRes,
-          resultsRes,
-          timetableRes,
-        ] = await Promise.allSettled([
-          getAnnouncementsByType("All"),
-          getWeeklyAttendance({ studentId: studentId ?? "", start_date: start, end_date: end }),
-          getMonthlyAttendance({ studentId: studentId ?? "", month, year }),
-          getHomeworkByClass({ class_id: classId, section_id: sectionId }),
-         classNum && sec ? getAllExamTimetables({ class_id: classNum, section_id: sec }) : Promise.resolve({ data: [] } as any),
-          getAllResults(),
-          classNum && sec ? getAllTimetable(classNum, sec) : Promise.resolve({ data: [] } as any),
-        ]);
-
-        if (cancelled) return;
-
-        // ── Announcements ─────────────────────────────────────────────────
-        const announcementData =
-          announcementsRes.status === "fulfilled"
-            ? announcementsRes.value.data : [];
-        const announcements: Announcement[] = announcementData.map((a) => ({
-          id: a.id,
-          title: a.title,
-          timeAgo: new Date(a.created_at).toLocaleDateString("en-IN", {
-            day: "numeric", month: "short",
-          }),
-          type: "info" as const,
-        }));
-
-        // ── Weekly attendance (stat card) ─────────────────────────────────
-        const weeklyData =
-          weeklyAttendanceRes.status === "fulfilled"
-            ? weeklyAttendanceRes.value : null;
-        const presentCount = weeklyData?.summary?.present ?? 0;
-        const totalCount   = weeklyData?.summary?.total   ?? 5;
-        const attendancePct =
-          totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
-
-        const todayStr    = fmt(now);
-        const todayRecord = weeklyData?.records?.find(
-          (r) => r.date.startsWith(todayStr)
-        );
-        const todayStatus =
-          todayRecord?.status?.toLowerCase() === "present" ? "Present"
-          : todayRecord?.status?.toLowerCase() === "absent"  ? "Absent"
-          : "—";
-
-        // ── Monthly attendance calendar ───────────────────────────────────
-        const monthlyRaw =
-          monthlyAttendanceRes.status === "fulfilled"
-            ? monthlyAttendanceRes.value : null;
-        const attendanceDays = toAttendanceDays(monthlyRaw, year, month);
         const monthLabel = now.toLocaleDateString("en-IN", {
-          month: "long", year: "numeric",
+          month: "long",
+          year: "numeric",
         });
 
-        // ── Homework ──────────────────────────────────────────────────────
-        const homeworkData: Homework[] =
-          homeworkRes.status === "fulfilled" ? homeworkRes.value.data : [];
-        const homework = toHomeworkItems(homeworkData);
+        // Resolve class / section IDs — cascade through all shapes
+        const classId =
+          student.classDetail?.id ??
+          (student as any).class?.id ??
+          student.class_id ??
+          "";
 
-        // ── Next exam ─────────────────────────────────────────────────────
-        const examData =
-          examTimetableRes.status === "fulfilled"
-            ? examTimetableRes.value.data : [];
-        const upcomingExams = examData
-          .filter((e: any) => new Date(e.exam_date) >= now)
-          .sort((a: any, b: any) =>
-            new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime()
+        const rawSectionId: string =
+          student.sectionDetail?.id ??
+          (student as any).section?.id ??
+          student.sectionId ??
+          "";
+        const sectionId = rawSectionId.includes(":")
+          ? rawSectionId.split(":")[1]
+          : rawSectionId;
+
+        const studentId = student.id ?? authUser.id;
+
+        // ── Parallel fetches ──────────────────────────────────────────────
+        let hwItems: HomeworkItem[] = [];
+        let scheduleItems: ScheduleItem[] = [];
+        let calendarDays: AttendanceDay[] = [];
+
+        const fetches: Promise<any>[] = [
+          // Monthly attendance — always try
+          getMonthlyAttendance({
+            studentId,
+            month: currentMonth,
+            year: currentYear,
+          }).catch(() => null),
+          // Today's attendance — always try
+          getStudentTodayAttendance(studentId).catch(() => null),
+        ];
+
+        if (classId && sectionId) {
+          fetches.push(
+            getHomeworkByClass({ class_id: classId, section_id: sectionId }).catch(() => ({ data: [] })),
+            getAllTimetable(classId, sectionId).catch(() => ({ data: [] })),
+            getAllExamTimetables({ class_id: classId, section_id: sectionId }).catch(() => []),
           );
-        const nextExam    = upcomingExams[0] ?? null;
-        const daysToExam  = nextExam
-          ? Math.ceil(
-              (new Date(nextExam.exam_date).getTime() - now.getTime()) /
-              (1000 * 60 * 60 * 24)
-            )
-          : null;
+        }
 
-        // ── Results ───────────────────────────────────────────────────────
-        const resultsData =
-          resultsRes.status === "fulfilled" ? resultsRes.value.data : [];
-        const studentResults = resultsData.filter(
-          (r) => r.student_id === studentId
-        );
-        const latestResult = studentResults[studentResults.length - 1] ?? null;
-        const recentResult: RecentResult | null = latestResult
-          ? {
-              testName: latestResult.examName ?? latestResult.exam_type,
-              date: new Date(latestResult.createdAt).toLocaleDateString(
-                "en-IN", { month: "short", year: "numeric" }
-              ),
-              score: latestResult.marks,
-              total: 100,
-              passed: latestResult.grade !== "F" && !latestResult.absent,
-              rank: 0,
-            }
-          : null;
+        const [attendanceRes, todayAttendanceRes, hwRes, ttRes, examRes] = await Promise.all(fetches);
 
-        // ── Timetable ─────────────────────────────────────────────────────
-        const timetableData =
-          timetableRes.status === "fulfilled" ? timetableRes.value.data : [];
-        const schedule = toScheduleItems(timetableData, todayDow());
+        // ── Map monthly attendance → calendar days ────────────────────────
+        if (attendanceRes?.summary) {
+          const { present_dates = [], absent_dates = [] } = attendanceRes.summary;
+          calendarDays = buildCalendarDays(present_dates, absent_dates, currentYear, currentMonth);
+        }
 
-        // ── Stat cards ────────────────────────────────────────────────────
+        // ── Map homework ──────────────────────────────────────────────────
+        if (hwRes) {
+          const todayStr = now.toISOString().slice(0, 10);
+          hwItems = (hwRes.data ?? [])
+            .filter((h: any) => h.is_published)
+            .sort((a: any, b: any) => new Date(a.submission_date).getTime() - new Date(b.submission_date).getTime())
+            .slice(0, 5)
+            .map((h: any) => {
+              const subName = h.subject?.name ?? "";
+              return {
+                id: h.id,
+                subject: subName,
+                title: h.title,
+                dueDate: h.submission_date < todayStr ? "Overdue" : h.submission_date,
+                colorType: SUBJECT_COLOR[subName] ?? "blue",
+              };
+            });
+        }
+
+        // ── Map today's timetable ─────────────────────────────────────────
+        if (ttRes) {
+          const todayDay = WEEKDAYS[now.getDay()];
+          const todaySlots = (ttRes.data ?? [])
+            .filter((s: any) => {
+              const day = DAY_MAP[s.day_of_week?.toLowerCase()] ?? "";
+              return day === todayDay;
+            })
+            .sort((a: any, b: any) => (a.period_no ?? 0) - (b.period_no ?? 0));
+
+          scheduleItems = todaySlots.map((s: any) => ({
+            period: `P${s.period_no}`,
+            time: s.time_sloat ?? `${s.start_time ?? ""}–${s.end_time ?? ""}`,
+            subject: s.subject?.subject_name ?? s.subjectname ?? "",
+            teacher: s.teacher?.name ?? s.teachername ?? "",
+          }));
+        }
+
+        // ── Find nearest upcoming exam ────────────────────────────────────
+        let nextExamValue = "—";
+        let nextExamExtra = "Upcoming";
+        if (Array.isArray(examRes) && examRes.length > 0) {
+          const todayStr = now.toISOString().slice(0, 10);
+          const upcoming = examRes
+            .filter((e: any) => e.exam_date >= todayStr)
+            .sort((a: any, b: any) => a.exam_date.localeCompare(b.exam_date));
+          if (upcoming.length > 0) {
+            const next = upcoming[0];
+            const examDate = new Date(next.exam_date);
+            const dateStr = examDate.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+            nextExamValue = next.subject?.subject_name ?? "Exam";
+            nextExamExtra = dateStr;
+          }
+        }
+
+        // ── Today's attendance ──────────────────────────────────────────
+        const todayStatus =
+          todayAttendanceRes?.records?.[0]
+            ? ["present", "late"].includes(
+                (todayAttendanceRes.records[0].status ?? "").toLowerCase()
+              )
+              ? "Present"
+              : "Absent"
+            : "—";
+        const todayExtra =
+          todayStatus === "Present"
+            ? "You're marked present today"
+            : todayStatus === "Absent"
+            ? "You're marked absent today"
+            : "Attendance status";
+
+        // ── Compute stats ─────────────────────────────────────────────────
+        const monthlyPct = calcMonthlyPercent(calendarDays);
+        const presentDays = calendarDays.filter((d) => d.status === "present").length;
+        const absentDays = calendarDays.filter((d) => d.status === "absent").length;
+        const totalDays = presentDays + absentDays;
+
         const stats: StatItem[] = [
           {
-            title: "Today's Status",
+            title: "TODAY'S STATUS",
             value: todayStatus,
-            extra: todayRecord
-              ? `Recorded for ${new Date(todayRecord.date).toLocaleDateString(
-                  "en-IN", { day: "2-digit", month: "short" }
-                )}`
-              : "No record today",
-            type: "attendance",
+            extra: todayExtra,
             iconType: "attendance",
+            badge: { text: "Live", variant: "green" },
           },
           {
-            title: "Attendance This Week",
-            value: `${attendancePct}%`,
-            extra: `${presentCount} of ${totalCount} days present`,
+            title: "ATTENDANCE MONTH",
+            value: monthlyPct !== null ? `${monthlyPct}%` : "—",
+            extra: `${presentDays}/${totalDays} days present`,
             iconType: "percent",
           },
           {
-            title: "Homework Due",
-            value: homework.length > 0 ? `${homework.length} this week` : "None due",
-            extra: homework.length > 0 ? `Next: ${homework[0].subject}` : "All caught up!",
+            title: "HOMEWORK DUE",
+            value: hwItems.length > 0 ? String(hwItems.length) : "—",
+            extra: "Pending tasks",
             iconType: "homework",
+            badge: {
+              text: hwItems.length > 0 ? "Due soon" : "All done",
+              variant: hwItems.length > 0 ? "amber" : "green",
+            },
           },
           {
-            title: "Next Exam",
-            value: daysToExam !== null ? `${daysToExam} days` : "No exams",
-            extra: nextExam
-              ? `${nextExam.subjectname} – ${nextExam.exam_name}`
-              : "Schedule clear",
+            title: "NEXT EXAM",
+            value: nextExamValue,
+            extra: nextExamExtra,
             iconType: "exam",
           },
         ];
@@ -388,33 +303,36 @@ export const useDashboard = (): DashboardState => {
         setState({
           loading: false,
           error: null,
-          studentName,
-          rollNumber,
-          studentClass: className,
-          studentSection: sectionName,
-          studentSchoolCode: schoolCode,
+          studentName: `${student.first_name} ${student.last_name}`,
+          rollNumber: student.roll_number || "",
+          studentClass:
+            student.classDetail?.class_name ??
+            (student as any).class?.class_name ??
+            "",
+          studentSection:
+            student.sectionDetail?.sectionName ??
+            (student as any).section?.sectionName ??
+            "",
+          studentSchoolCode: student.school_code || "",
           stats,
-          schedule,
-          homework,
-          attendance: attendanceDays,
+          schedule: scheduleItems,
+          homework: hwItems,
+          attendance: calendarDays,
           attendanceToday: now.getDate(),
-          attendanceMonthLabel: `My Attendance – ${monthLabel}`,
-          recentResult,
-          announcements,
+          attendanceMonthLabel: `My Attendance — ${monthLabel}`,
+          recentResult: null,
+          announcements: [],
         });
-      } catch (err: any) {
-        if (!cancelled) {
-          setState((prev) => ({
-            ...prev,
-            loading: false,
-            error: err?.message ?? "Failed to load dashboard.",
-          }));
-        }
+      } catch (error: any) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error?.message || "Failed to load",
+        }));
       }
     };
 
     load();
-    return () => { cancelled = true; };
   }, [authUser?.id]);
 
   return state;

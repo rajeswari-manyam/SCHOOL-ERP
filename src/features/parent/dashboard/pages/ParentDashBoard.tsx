@@ -1,26 +1,30 @@
 import { useEffect } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 
-import { StatCard }           from "../../../../components/ui/statcard"
-import { AttendanceWidget }   from "../components/AttendanceWidge"
-import { HomeworkCard }       from "../components/HomeWorkCard"
-import { AnnouncementCard }   from "../components/AnnouncamentsCard"
+import { StatCard } from "../../../../components/ui/statcard"
+import { AttendanceWidget } from "../components/AttendanceWidge"
+import { HomeworkCard } from "../components/HomeWorkCard"
+import { AnnouncementCard } from "../components/AnnouncamentsCard"
 import { UpcomingExamsTable } from "../components/UpCommingExampleTimeTable"
 
-import { useDashboard }       from "../hooks/useDashboard";
-import { useStudentById }     from "../hooks/useStudent"
+import { useDashboard } from "../hooks/usedashboard";
+import { useStudentById } from "../hooks/useStudent"
 
 type ParentLayoutContext = {
   activeChild: {
-    id: number
+    id: string
+    studentId: string
     name: string
+    firstName: string
+    lastName: string
     class: string
     school: string
     avatar: string
     section?: string
-    studentId?: string
     parentName?: string
     parentId?: string
+    classDetail?: { id: string; className: string } | null
+    sectionDetail?: { id: string; sectionName: string } | null
   }
 }
 
@@ -28,11 +32,15 @@ const DashboardPage = () => {
   const { activeChild } = useOutletContext<ParentLayoutContext>()
   const navigate = useNavigate()
 
-  const studentId   = String(activeChild?.studentId ?? activeChild?.id ?? "")
-  const className   = activeChild?.class   ?? ""
+  const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "")
+  const className = activeChild?.class ?? ""
   const sectionName = activeChild?.section ?? "A"
 
   const { student } = useStudentById(studentId)
+
+  // Use context data immediately (already fetched by ParentLayout), fall back to API
+  const classId   = activeChild?.classDetail?.id   ?? student?.classDetail?.id
+  const sectionId = activeChild?.sectionDetail?.id ?? student?.sectionDetail?.id
 
   const {
     homework,
@@ -46,31 +54,36 @@ const DashboardPage = () => {
 
   const parentName = activeChild?.parentName ?? ""
 
-  // ── Fetch all dashboard data when student / class / section changes ───────
+  // ── Fetch all dashboard data — classId is available immediately from context ──
   useEffect(() => {
     if (!studentId) return
+    if (!classId) return
+
     fetchAll({
       studentId,
-      className,
-      sectionName,
+      classId,
+      sectionId,
       academicYear: "2025-2026",
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentId, className, sectionName])
+  }, [studentId, classId, sectionId])
 
   // ── Map real API fields → display values ──────────────────────────────────
   const studentName = student
     ? `${student.first_name} ${student.last_name}`.trim()
     : (activeChild?.name ?? "")
 
-  const displayClass   = student?.class   ?? className
-  const displaySection = student?.section ?? sectionName
-  const schoolName     = activeChild?.school ?? ""
+  const displayClass =
+    student?.classDetail?.class_name ?? activeChild?.classDetail?.className ?? className
+
+  const displaySection =
+    student?.sectionDetail?.sectionName ?? activeChild?.sectionDetail?.sectionName ?? sectionName
+  const rollNumber = student?.roll_number ?? ""
 
   // ── Stat calculations ─────────────────────────────────────────────────────
   const pendingHwCount = homework.length
 
-  const now      = new Date().setHours(0, 0, 0, 0)
+  const now = new Date().setHours(0, 0, 0, 0)
   const nextExam = [...exams]
     .filter((e) => new Date(e.exam_date).getTime() >= now)
     .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())[0]
@@ -86,16 +99,16 @@ const DashboardPage = () => {
         text: isLoadingAttendance
           ? "Loading…"
           : todayStatus === "present"
-          ? "Present"
-          : todayStatus === "absent"
-          ? "Absent"
-          : "Not Marked",
+            ? "Present"
+            : todayStatus === "absent"
+              ? "Absent"
+              : "Not Marked",
         variant: (
           isLoadingAttendance || todayStatus === "not_marked"
             ? "red"
             : todayStatus === "present"
-            ? "green"
-            : "red"
+              ? "green"
+              : "red"
         ) as "green" | "red",
       },
       sub: new Date().toLocaleDateString("en-IN", {
@@ -121,12 +134,12 @@ const DashboardPage = () => {
       value: isLoadingExams
         ? undefined
         : daysToExam !== null
-        ? `${daysToExam} day${daysToExam !== 1 ? "s" : ""}`
-        : "None scheduled",
+          ? `${daysToExam} day${daysToExam !== 1 ? "s" : ""}`
+          : "None scheduled",
       badge: nextExam
-        ? { text: nextExam.subjectname, variant: "blue" as const }
+        ? { text: nextExam.subject?.subject_name ?? "", variant: "blue" as const }
         : undefined,
-      sub: nextExam?.exam_name ?? undefined,
+      sub: nextExam?.exam?.exam_name ?? undefined,
       path: "/parent/exams",
     },
   ]
@@ -142,7 +155,7 @@ const DashboardPage = () => {
           </h1>
           <p className="text-white/75 text-[13px] mt-1">
             {studentName
-              ? `${studentName} · Class ${displayClass}${displaySection ? ` ${displaySection}` : ""}${schoolName ? ` · ${schoolName}` : ""}`
+              ? `${studentName} · Class ${displayClass}${displaySection ? ` ${displaySection}` : ""}${rollNumber ? ` · Roll No: ${rollNumber}` : ""}`
               : "Loading…"}
           </p>
         </div>
