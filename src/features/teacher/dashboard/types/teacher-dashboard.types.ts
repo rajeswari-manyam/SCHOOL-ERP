@@ -45,6 +45,72 @@ export interface HomeworkItem {
   title: string;
 }
 
+// ── Pending Homework (dedicated endpoint) ─────────────────────────────────
+
+export interface PendingHomeworkApiItem {
+  id: string;
+  className: string;
+  sectionName: string;
+  subjectName: string;
+  teacher_id: string;
+  title: string;
+  description: string;
+  submission_date: string;
+  attachments: string[];
+  is_published: boolean;
+  school_code: string;
+  submittedCount: number;
+  totalCount: number;
+  createdAt: string;
+}
+
+export interface PendingHomeworkResponse {
+  status: boolean;
+  message?: string;
+  data?: PendingHomeworkApiItem | PendingHomeworkApiItem[];
+}
+
+// ── All Homework (GET /tenant/getallhomework) ──────────────────────────
+
+export interface AllHomeworkApiItem {
+  id: string;
+  className: string;
+  sectionName: string;
+  subjectName: string;
+  teacher_id: string;
+  title: string;
+  description: string;
+  submission_date: string;
+  attachments: string[];
+  is_published: boolean;
+  school_code: string;
+  submittedCount: number;
+  totalCount: number;
+  createdAt: string;
+  waNotifyStatus?: "SENT" | "NOT_SENT";
+  waNotifiedAt?: string;
+}
+
+// ── Today's Timetable (dedicated endpoint) ─────────────────────────────
+
+export interface TimetableApiItem {
+  id: string;
+  className: string;
+  sectionName: string;
+  subjectName: string;
+  teacher_id: string;
+  start_time: string;
+  end_time: string;
+  room: string;
+  day_of_week: string;
+}
+
+export interface TimetableResponse {
+  status: boolean;
+  message?: string;
+  data?: TimetableApiItem | TimetableApiItem[];
+}
+
 export interface AttendanceTrendDay {
   date: string;   // e.g. "Mon", "Tue"
   present: number;

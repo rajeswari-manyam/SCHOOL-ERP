@@ -226,7 +226,7 @@ export const getMonthlyAttendance = async (
     `/tenant/getMonthlyAttendanceByStudentId`,
     { params }
   );
-  return data;
+  return extractMonthlyAttendance(data);
 };
 
 // ✅ YEARLY — updated to send class_id, section_id, academicYearId

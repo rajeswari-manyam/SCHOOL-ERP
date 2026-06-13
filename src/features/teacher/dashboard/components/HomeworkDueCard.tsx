@@ -1,5 +1,6 @@
 import { format, parseISO, isToday, isTomorrow } from "date-fns";
-import type { HomeworkItem } from "../types/teacher-dashboard.types";
+import { RefreshCw, AlertCircle, BookOpen } from "lucide-react";
+import { useAllHomeworkList } from "../hooks/useTeacherDashboard";
 
 const dueLabel = (dateStr: string) => {
   const d = parseISO(dateStr);
@@ -21,31 +22,83 @@ const ProgressBar = ({ value, max }: { value: number; max: number }) => {
   );
 };
 
-const HomeworkDueCard = ({ items }: { items: HomeworkItem[] }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-    <h3 className="text-sm font-extrabold text-gray-900 mb-4">Homework Due This Week</h3>
-    {items.length === 0 ? (
-      <p className="text-sm text-gray-400 text-center py-4">No homework due this week 🎉</p>
-    ) : (
-      <div className="flex flex-col gap-4">
-        {items.map((hw) => {
-          const due = dueLabel(hw.dueDate);
-          return (
-            <div key={hw.id} className="flex flex-col gap-0.5">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 leading-tight">{hw.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{hw.subject} · {hw.class}</p>
-                </div>
-                <span className={`text-[11px] font-bold flex-shrink-0 ${due.color}`}>{due.text}</span>
-              </div>
-              <ProgressBar value={hw.submittedCount} max={hw.totalCount} />
-            </div>
-          );
-        })}
+const Skeleton = () => (
+  <div className="flex flex-col gap-4 animate-pulse">
+    {[1, 2, 3].map((i) => (
+      <div key={i} className="flex flex-col gap-2">
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div className="h-1.5 bg-gray-100 rounded-full w-full" />
       </div>
-    )}
+    ))}
   </div>
 );
+
+interface HomeworkDueCardProps {
+  teacherId: string;
+}
+
+const HomeworkDueCard = ({ teacherId }: HomeworkDueCardProps) => {
+  const { data: items = [], isLoading, isError, refetch } = useAllHomeworkList(teacherId);
+  const errorMessage = isError ? "Failed to load homework" : null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-extrabold text-gray-900">
+          Homework Due
+          {items.length > 0 && <span className="text-gray-400 font-normal ml-1">({items.length})</span>}
+        </h3>
+        {errorMessage && (
+          <button
+            onClick={() => refetch()}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+          >
+            <RefreshCw size={12} />
+            Retry
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <Skeleton />
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-2 py-4 text-center">
+          <AlertCircle size={28} className="text-red-400" />
+          <p className="text-sm text-gray-500">{errorMessage}</p>
+          <button
+            onClick={() => refetch()}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold mt-1"
+          >
+            Try again
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-4 text-center">
+          <BookOpen size={28} className="text-gray-300" />
+          <p className="text-sm text-gray-400">No pending homework 🎉</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {items.map((hw) => {
+            const due = dueLabel(hw.dueDate);
+            return (
+              <div key={hw.id} className="flex flex-col gap-0.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 leading-tight">{hw.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{hw.subject} · {hw.class}</p>
+                  </div>
+                  <span className={`text-[11px] font-bold flex-shrink-0 ${due.color}`}>{due.text}</span>
+                </div>
+                <ProgressBar value={hw.submittedCount} max={hw.totalCount} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default HomeworkDueCard;

@@ -1,7 +1,7 @@
 import api from "@/config/axios";
 import type { CreateStudentPayload, UpdateStudentPayload, Student, FeePayment, StudentDocument, StudentAttendanceDay } from "../types/student.types";
-import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
-import { getAllSections } from "@/services/section.api";
+import { getAllClasses } from "@/services/class.api";
+import { getSectionsByClassId, getAllSections } from "@/services/section.api";
 
 export const MOCK_ATTENDANCE: StudentAttendanceDay[] = [
   { date: "2025-03-31", status: null },

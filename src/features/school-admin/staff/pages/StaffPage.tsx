@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import type { TabKey } from "../types/staff.types";
-import { useStaffStore } from "../store/usestore";
+import type { TabKey, StaffMember } from "../types/staff.types";
+import type { LeaveRecord } from "../api/staff.api";
+import { useStaffStore, filterStaff } from "../store/usestore";
 import { StatsCards } from "../components/StatCards";
 import { StaffTabs } from "../components/StaffTabs";
 import { StaffFilters } from "../components/StaffFilter";
@@ -11,20 +12,17 @@ import { AddStaffModal } from "../components/AddStaffModal";
 import { EditStaffModal } from "../components/EditStaffModal";
 import { Button } from "../../../../components/ui/button";
 
-const buildTabs = (
-  teachers: number,
-  nonTeaching: number,
-  leavePending: number
-) => [
-  { key: "all" as TabKey, label: "All Staff" },
-  { key: "teachers" as TabKey, label: "Teachers", count: teachers },
-  { key: "non-teaching" as TabKey, label: "Non-Teaching", count: nonTeaching },
-  {
-    key: "leave-requests" as TabKey,
-    label: "Leave Requests",
-    count: leavePending,
-  },
-];
+const buildTabs = (staffData: StaffMember[], leaveData: LeaveRecord[]) => {
+  const teachers = staffData.filter(s => s.isTeaching).length;
+  const nonTeaching = staffData.filter(s => !s.isTeaching).length;
+  const leavePending = leaveData.filter(l => l.status === "PENDING").length;
+  return [
+    { key: "all" as TabKey, label: "All Staff", count: staffData.length },
+    { key: "teachers" as TabKey, label: "Teachers", count: teachers },
+    { key: "non-teaching" as TabKey, label: "Non-Teaching", count: nonTeaching },
+    { key: "leave-requests" as TabKey, label: "Leave Requests", count: leavePending },
+  ];
+};
 
 export default function StaffManagementPage() {
   const navigate = useNavigate();
@@ -36,6 +34,7 @@ export default function StaffManagementPage() {
     statusFilter,
     showModal,
     staffData,
+    leaveData,
     stats,
     loading,
     error,
@@ -53,11 +52,14 @@ export default function StaffManagementPage() {
     loadStaff();
   }, []);
 
-  const filteredStaff = useMemo(() => staffData, [staffData]);
+  const filteredStaff = useMemo(
+    () => filterStaff(staffData, activeTab, search, roleFilter, statusFilter),
+    [staffData, activeTab, search, roleFilter, statusFilter]
+  );
 
   const tabs = useMemo(
-    () => buildTabs(stats.teachers, stats.nonTeaching, stats.leavePending),
-    [stats]
+    () => buildTabs(staffData, leaveData),
+    [staffData, leaveData]
   );
 
   return (
@@ -82,7 +84,7 @@ export default function StaffManagementPage() {
         </div>
 
         {/* Right: academic year label + CTA */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Hide academic year label on very small screens to save space */}
           <span className="hidden sm:inline text-sm text-slate-400 whitespace-nowrap">
             2023-24 Academic Year
@@ -131,7 +133,7 @@ export default function StaffManagementPage() {
 
         {!error && !loading && activeTab === "leave-requests" ? (
           <div className="w-full overflow-x-auto">
-            <LeaveRequestsTab staff={staffData} />
+            <LeaveRequestsTab leaves={leaveData} />
           </div>
         ) : !error && !loading ? (
           <>

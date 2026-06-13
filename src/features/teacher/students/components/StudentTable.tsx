@@ -143,7 +143,7 @@ const StudentTable = ({ students, onView }: Props) => {
                   </div>
                 </td>
                 <td className="px-5 py-3.5 hidden sm:table-cell">
-                  <span className="text-sm text-gray-600">{s.className}</span>
+                  <span className="text-sm text-gray-600">{s.className}{s.section ? ` - ${s.section}` : ''}</span>
                 </td>
                 <td className="px-5 py-3.5">
                   <AttCell pct={s.attendancePct} />

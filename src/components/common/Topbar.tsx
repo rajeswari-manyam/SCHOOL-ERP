@@ -50,13 +50,13 @@ const Topbar = ({
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-40 h-16 sm:h-20",
+        "fixed top-0 right-0 z-40 h-12 sm:h-14",
         "bg-white border-b border-slate-200 shadow-sm",
         "transition-all duration-300 ease-in-out",
         leftOffset
       )}
     >
-      <div className="h-full flex items-center px-3 sm:px-4 md:px-6 lg:px-8 w-full gap-2 sm:gap-3 md:gap-4">
+      <div className="h-full flex items-center px-2 sm:px-3 md:px-4 lg:px-8 w-full gap-2 sm:gap-3 md:gap-4">
 
         {/* ── Sidebar toggle button ── */}
         <button
@@ -64,14 +64,14 @@ const Topbar = ({
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
             "flex shrink-0 items-center justify-center",
-            "h-9 w-9 rounded-xl",
+            "h-8 w-8 rounded-xl",
             "bg-[#f4f7fd] text-[#6c7380]",
             "hover:bg-[#e9eef8] hover:text-slate-800",
             "transition-colors duration-150",
             "outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           )}
         >
-          <Menu className="h-[18px] w-[18px]" />
+          <Menu className="h-4 w-4" />
         </button>
 
         {/* ── Left: breadcrumb + search ── */}
@@ -102,7 +102,7 @@ const Topbar = ({
           </div>
 
           {/* Search */}
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 rounded-lg sm:rounded-2xl bg-[#f4f7fd] px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 rounded-lg sm:rounded-2xl bg-[#f4f7fd] px-2 sm:px-3 md:px-4 py-1 sm:py-2 md:py-2.5">
             <FaSearch className="text-[#b0b8c1] text-xs sm:text-sm flex-shrink-0" />
             <input
               type="text"

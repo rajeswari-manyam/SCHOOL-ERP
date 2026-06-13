@@ -11,6 +11,7 @@ export { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals
 export {
   useTeacherDashboard, useMarkAttendance, useMarkAttendanceViaWA,
   useAssignHomework, useUploadMaterial, useApplyLeave,
+  usePendingHomeworkByTeacher, useTeacherTodayTimetable, useTeacherTodayTimetableV2, useAllHomeworkList,
 } from "./hooks/useTeacherDashboard";
 export type {
   TeacherDashboardData, TeacherProfile, AttendanceBanner as AttendanceBannerType,

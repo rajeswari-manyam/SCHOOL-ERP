@@ -28,14 +28,14 @@ export const StaffTable = ({ staff, total, onEdit, onView }: Props) => (
       </TableHeader>
       <TableBody>
         {staff.length === 0 ? (
-          <TableRow>
+          <TableRow key="empty">
             <TableCell colSpan={6} className="py-12 text-center text-slate-400">
               No staff members found
             </TableCell>
           </TableRow>
         ) : (
-          staff.map((s) => (
-            <TableRow key={s.id} className="group">
+          staff.map((s, i) => (
+            <TableRow key={s.id || `staff-${i}`} className="group">
               <TableCell>
                 <div className="flex items-center gap-3">
                   <StaffAvatar initials={s.initials ?? "NA"} status={s.status} />

@@ -1,4 +1,5 @@
-import { Check } from "lucide-react";
+import { Check, RefreshCw, AlertCircle, Calendar } from "lucide-react";
+import { useTeacherTodayTimetableV2 } from "../hooks/useTeacherDashboard";
 import type { Period, PeriodStatus } from "../types/teacher-dashboard.types";
 
 const statusStyles: Record<PeriodStatus, string> = {
@@ -7,30 +8,85 @@ const statusStyles: Record<PeriodStatus, string> = {
   UPCOMING:  "bg-white border border-gray-100 text-gray-700",
 };
 
-const TodayScheduleCard = ({ periods }: { periods: Period[] }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-    <h3 className="text-sm font-extrabold text-gray-900 mb-4">Today's Schedule</h3>
-    <div className="flex flex-col gap-2">
-      {periods.map((p) => (
-        <div key={p.id}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${statusStyles[p.status]}`}>
-          <div className="flex-shrink-0 min-w-[80px]">
-            <p className={`text-xs font-bold ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.time}</p>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-bold truncate ${p.status === "CURRENT" ? "text-white" : p.status === "COMPLETED" ? "text-gray-400" : "text-gray-800"}`}>{p.subject}</p>
-            <p className={`text-xs truncate ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.class} · {p.room}</p>
-          </div>
-          {p.status === "CURRENT" && (
-            <span className="flex-shrink-0 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">NOW</span>
-          )}
-          {p.status === "COMPLETED" && (
-            <Check size={14} className="flex-shrink-0 text-gray-400" strokeWidth={2.5} />
-          )}
+const Skeleton = () => (
+  <div className="flex flex-col gap-2 animate-pulse">
+    {[1, 2, 3].map((i) => (
+      <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50">
+        <div className="h-4 bg-gray-200 rounded w-20" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3.5 bg-gray-200 rounded w-2/3" />
+          <div className="h-3 bg-gray-100 rounded w-1/3" />
         </div>
-      ))}
-    </div>
+      </div>
+    ))}
   </div>
 );
+
+interface TodayScheduleCardProps {
+  teacherId: string;
+}
+
+const TodayScheduleCard = ({ teacherId }: TodayScheduleCardProps) => {
+  const { data: periods = [], isLoading, isError, error, refetch } = useTeacherTodayTimetableV2(teacherId);
+  const errorMessage = isError ? "Failed to load today's schedule" : null;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-extrabold text-gray-900">Today's Schedule</h3>
+        {errorMessage && (
+          <button
+            onClick={() => refetch()}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+          >
+            <RefreshCw size={12} />
+            Retry
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <Skeleton />
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-2 py-4 text-center">
+          <AlertCircle size={28} className="text-red-400" />
+          <p className="text-sm text-gray-500">{errorMessage}</p>
+          <button
+            onClick={() => refetch()}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold mt-1"
+          >
+            Try again
+          </button>
+        </div>
+      ) : periods.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-4 text-center">
+          <Calendar size={28} className="text-gray-300" />
+          <p className="text-sm text-gray-400">No classes scheduled today</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {periods.map((p) => (
+            <div key={p.id}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${statusStyles[p.status]}`}>
+              <div className="flex-shrink-0 min-w-[80px]">
+                <p className={`text-xs font-bold ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.time}</p>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-bold truncate ${p.status === "CURRENT" ? "text-white" : p.status === "COMPLETED" ? "text-gray-400" : "text-gray-800"}`}>{p.subject}</p>
+                <p className={`text-xs truncate ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.class} · {p.room}</p>
+              </div>
+              {p.status === "CURRENT" && (
+                <span className="flex-shrink-0 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">NOW</span>
+              )}
+              {p.status === "COMPLETED" && (
+                <Check size={14} className="flex-shrink-0 text-gray-400" strokeWidth={2.5} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default TodayScheduleCard;

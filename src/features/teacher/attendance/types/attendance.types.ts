@@ -1,5 +1,28 @@
 // teacher/attendance/types/attendance.types.ts
 
+// ── API response type for /tenant/getteachertodayattendancesummary ──────────
+
+export interface TodayAttendanceSummaryItem {
+  totalStudents: number;
+  presentCount?: number;
+  absentCount?: number;
+  halfDayCount?: number;
+  isMarked: boolean;
+  markedAt?: string;
+  method?: string;
+  date: string;
+  className?: string;
+  sectionName?: string;
+  absentStudents?: Array<{
+    id: string;
+    name: string;
+    rollNo: string;
+    waNumber: string;
+    alertSent: boolean;
+    alertSentAt?: string;
+  }>;
+}
+
 export type AttendanceMark = "P" | "A" | "H";   // Present | Absent | Half-Day
 export type AttendanceStatus = "on_time" | "late" | "missed";
 export type AttendanceMethod = "whatsapp" | "web";

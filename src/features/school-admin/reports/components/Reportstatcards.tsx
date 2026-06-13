@@ -11,22 +11,81 @@ const Card = ({
   sub: string;
   accent: string;
 }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-1">
-    <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-    <div className="flex items-end gap-2">
-      <p className="text-3xl font-extrabold text-gray-900">{value}</p>
-      <span className={`mb-0.5 text-xs font-bold ${accent}`}>{sub}</span>
+  <div
+    className="
+      bg-white
+      rounded-lg
+      border
+      border-gray-100
+      shadow-sm
+      px-2
+      py-1.5
+      h-[80px]
+      flex
+      flex-col
+      justify-center
+      overflow-hidden
+      transition-shadow
+      duration-200
+      hover:shadow-md
+    "
+  >
+    {/* Label */}
+    <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400 truncate">
+      {label}
+    </p>
+
+    {/* Value + Sub */}
+    <div className="flex items-end gap-1 mt-0.5">
+      <p className="text-[13px] font-bold leading-none text-gray-900 truncate">
+        {value}
+      </p>
+
+      <span
+        className={`text-[7px] font-medium leading-none truncate ${accent}`}
+      >
+        {sub}
+      </span>
     </div>
   </div>
 );
 
-const ReportStatCards = ({ stats }: { stats: ReportStats }) => (
-  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-    <Card label="Total Generated" value={stats.totalGenerated} sub="this year" accent="text-indigo-500" />
-    <Card label="Scheduled Reports" value={stats.scheduledReports} sub="active" accent="text-emerald-600" />
-    <Card label="Monthly Avg" value={stats.monthlyAvg} sub="reports" accent="text-gray-400" />
-    <Card label="Pending Delivery" value={stats.pendingDelivery} sub="in queue" accent="text-amber-500" />
-  </div>
-);
+const ReportStatCards = ({
+  stats,
+}: {
+  stats: ReportStats;
+}) => {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <Card
+        label="Total Generated"
+        value={stats.totalGenerated}
+        sub="this year"
+        accent="text-indigo-500"
+      />
+
+      <Card
+        label="Scheduled Reports"
+        value={stats.scheduledReports}
+        sub="active"
+        accent="text-emerald-600"
+      />
+
+      <Card
+        label="Monthly Avg"
+        value={stats.monthlyAvg}
+        sub="reports"
+        accent="text-gray-400"
+      />
+
+      <Card
+        label="Pending Delivery"
+        value={stats.pendingDelivery}
+        sub="in queue"
+        accent="text-amber-500"
+      />
+    </div>
+  );
+};
 
 export default ReportStatCards;

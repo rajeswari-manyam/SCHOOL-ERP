@@ -1,6 +1,6 @@
 import api from "@/config/axios";
-import { getAllClasses, getSectionsByClassId, getAllStaff } from "@/services/class.api";
-import { getSectionById } from "@/services/section.api";
+import { getAllClasses, getAllStaff } from "@/services/class.api";
+import { getSectionsByClassId, getSectionById } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "../types/classes.types";
 
@@ -29,8 +29,8 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
       const [sectionRes, subjectsRes] = await Promise.all([
         getSectionsByClassId(first.id).catch(() => null),
         getAllSubjects({ class_id: first.id }).catch(() => null),
-      ]);
-      const sectionRecords = asArray<Record<string, unknown>>(sectionRes?.data) ?? [];
+      ]) as [{ data?: unknown } | null, { data?: unknown; count?: number } | null];
+      const sectionRecords = asArray<Record<string, unknown>>(Array.isArray(sectionRes) ? sectionRes : sectionRes?.data) ?? [];
       const subjectRecords = asArray<SubjectRecord>(subjectsRes?.data) ?? [];
       const subjectCount = subjectsRes?.count ?? subjectRecords.length;
       const subjectCountBySection = new Map<string, number>();
@@ -121,11 +121,13 @@ const toSectionItem = (record: Record<string, unknown>, teacherMap: Map<string, 
 const asArray = <T>(value: unknown): T[] | null => (Array.isArray(value) ? (value as T[]) : null);
 
 export const fetchSectionsByClassId = async (classId: string): Promise<SectionItem[]> => {
-  const [sectionRes, subjectsRes, staffRes] = await Promise.all([
-    getSectionsByClassId(classId),
+  const sectionPromise = getSectionsByClassId(classId);
+  const [subjectsRes, staffRes] = await Promise.all([
     getAllSubjects({ class_id: classId }).catch(() => null),
-    getAllStaff({ role: "teacher" } as Record<string, string>).catch(() => null),
+    // role is not a valid parameter on GetAllStaffParams; call without args to avoid type error
+    getAllStaff().catch(() => null),
   ]);
+  const sectionRes = (await sectionPromise) as { data?: unknown; sections?: unknown } | null;
 
   const records =
     asArray<Record<string, unknown>>(sectionRes?.data) ??
@@ -164,9 +166,10 @@ export const fetchSectionsByClassId = async (classId: string): Promise<SectionIt
 export const fetchSectionById = async (sectionId: string): Promise<SectionItem | null> => {
   const [res, staffRes] = await Promise.all([
     getSectionById(sectionId),
-    getAllStaff({ role: "teacher" } as Record<string, string>).catch(() => null),
+    // getAllStaff does not accept a 'role' parameter in its params type
+    getAllStaff().catch(() => null),
   ]);
-  const record = res;
+  const record = res ? ((res as { data?: unknown }).data ?? res) : null;
   if (record) {
     const teacherMap = new Map<string, string>();
     const staffRecords = asArray<{ id?: string; name?: string }>(staffRes?.data) ?? [];

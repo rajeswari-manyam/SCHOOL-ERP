@@ -5,27 +5,17 @@ import TeacherStatCards from "./components/TeacherStatCards";
 import TodayScheduleCard from "./components/TodayScheduleCard";
 import QuickActionsCard from "./components/QuickActionsCard";
 import HomeworkDueCard from "./components/HomeworkDueCard";
-import ClassOverviewCard from "./components/ClassOverviewCard";
+// import ClassOverviewCard from "./components/ClassOverviewCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
+import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
-import { useTeacherDashboard } from "./hooks/useTeacherDashboard";
+import { useTeacherDashboard, useTeacherLeaveBalance } from "./hooks/useTeacherDashboard";
+import { useAuthStore } from "../../../store/authStore";
 import { format } from "date-fns";
 
 // ── Mock fallback data ─────────────────────────────────────
 const MOCK_BANNER = { status: "NOT_MARKED" as const, totalStudents: 42 };
 const MOCK_STATS  = { classStrength: 42, homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
-const MOCK_SCHEDULE = [
-  { id: "1", time: "8:00 – 8:45",  subject: "Mathematics",   class: "Class 8-A", room: "Room 12", status: "COMPLETED" as const },
-  { id: "2", time: "8:45 – 9:30",  subject: "Mathematics",   class: "Class 9-B", room: "Room 7",  status: "CURRENT" as const },
-  { id: "3", time: "9:45 – 10:30", subject: "Mathematics",   class: "Class 7-C", room: "Room 3",  status: "UPCOMING" as const },
-  { id: "4", time: "11:00 – 11:45",subject: "Free Period",   class: "Staff Room",room: "—",        status: "UPCOMING" as const },
-  { id: "5", time: "12:30 – 1:15", subject: "Mathematics",   class: "Class 8-B", room: "Room 11", status: "UPCOMING" as const },
-];
-const MOCK_HOMEWORK = [
-  { id: "h1", subject: "Mathematics", class: "Class 8-A", dueDate: new Date().toISOString().slice(0,10), submittedCount: 28, totalCount: 42, title: "Chapter 5 – Exercise 5.2" },
-  { id: "h2", subject: "Mathematics", class: "Class 9-B", dueDate: new Date(Date.now() + 86400000).toISOString().slice(0,10), submittedCount: 15, totalCount: 38, title: "Quadratic Equations Practice" },
-  { id: "h3", subject: "Mathematics", class: "Class 7-C", dueDate: new Date(Date.now() + 172800000).toISOString().slice(0,10), submittedCount: 5,  totalCount: 35, title: "Fractions Revision Sheet" },
-];
 const MOCK_OVERVIEW = {
   monthlyAvgPct: 87,
   trend: [
@@ -43,16 +33,22 @@ const MOCK_OVERVIEW = {
 
 const TeacherDashboardPage = () => {
   const navigate = useNavigate();
+  const staffId = useAuthStore((state) => state.user?.id ?? "");
+  const teacherId = localStorage.getItem("teacherStaffId") || staffId;
   const { data } = useTeacherDashboard();
-  const [hwModal,     setHwModal]     = useState(false);
-  const [leaveModal,  setLeaveModal]  = useState(false);
-  const [uploadModal, setUploadModal] = useState(false);
+  const { data: leaveBalances = [] } = useTeacherLeaveBalance(staffId);
+  const [hwModal,            setHwModal]            = useState(false);
+  const [attendanceModal,    setAttendanceModal]    = useState(false);
+  const [leaveModal,         setLeaveModal]         = useState(false);
+  const [uploadModal,        setUploadModal]        = useState(false);
 
   const banner   = data?.attendanceBanner ?? MOCK_BANNER;
-  const stats    = data?.stats ?? MOCK_STATS;
-  const schedule = data?.todaySchedule ?? MOCK_SCHEDULE;
-  const homework = data?.homeworkDueThisWeek ?? MOCK_HOMEWORK;
-  const overview = data?.classOverview ?? MOCK_OVERVIEW;
+  const liveLeaveBalance = leaveBalances.reduce((sum, item) => sum + Number(item.remaining ?? 0), 0);
+  const stats    = {
+    ...(data?.stats ?? MOCK_STATS),
+    leaveBalance: leaveBalances.length > 0 ? liveLeaveBalance : (data?.stats?.leaveBalance ?? MOCK_STATS.leaveBalance),
+  };
+  // const overview = data?.classOverview ?? MOCK_OVERVIEW;
   const teacher  = data?.teacher;
 
   return (
@@ -87,29 +83,37 @@ const TeacherDashboardPage = () => {
 
         {/* Left col: schedule + quick actions */}
         <div className="flex flex-col gap-5">
-          <TodayScheduleCard periods={schedule} />
-          <QuickActionsCard
-            onMarkAttendance={() => {}}
+          <TodayScheduleCard teacherId={teacherId} />
+          {/* <QuickActionsCard
+            onMarkAttendance={() => setAttendanceModal(true)}
+            onAssignHomework={() => setHwModal(true)}
+            onUploadMaterial={() => setUploadModal(true)}
+            onApplyLeave={() => setLeaveModal(true)}
+            onViewStudents={() => navigate("/teacher/students")}
+          /> */}
+        </div>
+
+        {/* Middle col: homework */}
+        <div>
+          <HomeworkDueCard teacherId={teacherId} />
+        </div>
+
+        {/* Right col: class overview */}
+        {/* <div>
+          <ClassOverviewCard overview={overview} />
+        </div> */}
+        <QuickActionsCard
+            onMarkAttendance={() => setAttendanceModal(true)}
             onAssignHomework={() => setHwModal(true)}
             onUploadMaterial={() => setUploadModal(true)}
             onApplyLeave={() => setLeaveModal(true)}
             onViewStudents={() => navigate("/teacher/students")}
           />
-        </div>
-
-        {/* Middle col: homework */}
-        <div>
-          <HomeworkDueCard items={homework} />
-        </div>
-
-        {/* Right col: class overview */}
-        <div>
-          <ClassOverviewCard overview={overview} />
-        </div>
       </div>
 
       {/* Modals */}
-      <AssignHomeworkModal  open={hwModal}     onClose={() => setHwModal(false)} />
+      <MarkAttendanceModal open={attendanceModal} onClose={() => setAttendanceModal(false)} totalStudents={stats.classStrength} />
+      <AssignHomeworkModal  open={hwModal}     onClose={() => setHwModal(false)} teacherId={teacherId} />
       <ApplyLeaveModal      open={leaveModal}  onClose={() => setLeaveModal(false)} />
       <UploadMaterialModal  open={uploadModal} onClose={() => setUploadModal(false)} />
     </div>
