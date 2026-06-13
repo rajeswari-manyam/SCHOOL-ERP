@@ -83,16 +83,10 @@ export const fetchClassesList = async (academicYearId: string | null): Promise<C
 };
 
 export const fetchSectionsList = async (classId: string): Promise<ClassOption[]> => {
-  const res = await getSectionsByClassId(classId);
-  const records = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.data)
-      ? res.data
-      : null;
-  if (!records) return [];
+  const records = await getSectionsByClassId(classId);
   return records.map((r) => {
-    const name = (r.sectionName ?? r.section_name ?? "").trim();
-    const id = (r.id ?? "") as string;
+    const name = (r.sectionName ?? "").trim();
+    const id = r.id;
     return { id, value: name, label: name };
   }).filter((o) => o.value !== "");
 };
