@@ -12,7 +12,7 @@ import type { ExamTab } from "./hooks/useExamMarks";
 const TABS: { key: ExamTab; label: string }[] = [
   { key: "enter",     label: "Enter Marks" },
   { key: "submitted", label: "Submitted Marks" },
-  { key: "published", label: "Results Published" },
+  // { key: "published", label: "Results Published" },
 ];
 
 const ExamMarksPage = () => {
@@ -28,8 +28,8 @@ const ExamMarksPage = () => {
     handleSaveDraft, handleOpenSubmit, handleConfirmSubmit,
     handleDownloadReport,
     submittedExams, publishedResults,
-    apiResultsLoading, apiResultsError,
-    handleLoadFromApi,
+    studentsError,
+    marksLoading, marksError, refetchMarks,
     submitting, submitError,
   } = useExamMarks();
 
@@ -105,10 +105,9 @@ const ExamMarksPage = () => {
             selector={selector}
             onChange={setSelector}
             onLoad={handleLoadStudents}
-            onLoadFromApi={handleLoadFromApi}
             studentsLoaded={studentsLoaded}
-            apiLoading={apiResultsLoading}
-            apiError={apiResultsError}
+            apiError={!!studentsError}
+            errorMessage={studentsError}
           />
 
           {/* Summary bar */}
@@ -160,7 +159,7 @@ const ExamMarksPage = () => {
 
       {/* ── Tab: Submitted Marks ──────────────────────────────────────── */}
       {activeTab === "submitted" && (
-        <SubmittedMarksTab exams={submittedExams} />
+        <SubmittedMarksTab exams={submittedExams} loading={marksLoading} error={marksError} onRetry={refetchMarks} />
       )}
 
       {/* ── Tab: Results Published ────────────────────────────────────── */}

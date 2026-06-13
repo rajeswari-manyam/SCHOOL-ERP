@@ -10,6 +10,7 @@ export { default as CorrectionRequestModal }   from "./components/CorrectionRequ
 
 export {
   useTodayAttendance,
+  useTodayAttendanceSummary,
   useAttendanceStudents,
   useMyAttendanceHistory,
   useMyCorrectionRequests,

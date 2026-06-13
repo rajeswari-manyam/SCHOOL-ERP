@@ -1,5 +1,6 @@
 import api from "@/config/axios";
-import type { CreateStaffPayload, StaffMember, UpdateStaffPayload } from "../types/staff.types";
+import { getAuthUser } from "@/store/authStore";
+import type { CreateStaffPayload, LeaveRequest, StaffMember, UpdateStaffPayload } from "../types/staff.types";
 
 export interface StaffStatsResponse {
   status: boolean;
@@ -17,6 +18,165 @@ export interface StaffStatsSummary {
   nonTeaching: number;
   leavePending: number;
 }
+
+interface RawLeaveRecord {
+  id?: string;
+  staff_id?: string;
+  staffId?: string;
+  staff_name?: string;
+  name?: string;
+  employeeId?: string;
+  emp_id?: string;
+  userId?: string;
+  leave_type?: string;
+  type?: string;
+  start_date?: string;
+  fromDate?: string;
+  end_date?: string;
+  toDate?: string;
+  total_days?: number;
+  totalDays?: number;
+  reason?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+const extractArray = (value: unknown): any[] => {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "object") return [];
+
+  const data = value as Record<string, unknown>;
+  for (const key of ["data", "leaves", "applications", "result", "records", "items"]) {
+    const candidate = data[key];
+    if (Array.isArray(candidate)) return candidate;
+    if (candidate && typeof candidate === "object") {
+      const nested = extractArray(candidate);
+      if (nested.length > 0) return nested;
+    }
+  }
+
+  return [];
+};
+
+const mapLeaveRequest = (item: Record<string, unknown>): LeaveRequest | undefined => {
+  if (!item) return undefined;
+  const raw = item as RawLeaveRecord;
+  const type = (raw.leave_type ?? raw.type ?? "CASUAL").toUpperCase();
+  const status = (raw.status ?? "PENDING").toUpperCase();
+  return {
+    staffId: String(raw.staff_id ?? raw.staffId ?? raw.employeeId ?? raw.id ?? ''),
+    staffName: String(raw.staff_name ?? raw.name ?? ''),
+    type: (type === "SICK" || type === "CASUAL" || type === "PAID" ? type : "CASUAL") as LeaveRequest["type"],
+    from: raw.start_date ?? raw.fromDate ?? "",
+    to: raw.end_date ?? raw.toDate ?? "",
+    days: Number(raw.total_days ?? raw.totalDays ?? 0),
+    reason: raw.reason ?? "",
+    status: (status === "PENDING" || status === "APPROVED" || status === "REJECTED" ? status : "PENDING") as LeaveRequest["status"],
+  };
+};
+
+export interface LeaveRecord extends LeaveRequest {
+  id: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** GET /tenant/getallleaves — returns parsed leave records */
+export const fetchLeaves = async (): Promise<LeaveRecord[]> => {
+  try {
+    const { data } = await api.get("/tenant/getallleaves");
+    const raw = extractArray(data);
+    const records: LeaveRecord[] = [];
+    for (const item of raw) {
+      if (!item || typeof item !== 'object') continue;
+      const obj = item as Record<string, unknown>;
+      const mapped = mapLeaveRequest(obj);
+      if (mapped) {
+        records.push({
+          ...mapped,
+          id: String(obj['id'] ?? obj['_id'] ?? ''),
+          createdAt: obj['createdAt'] ? String(obj['createdAt']) : obj['created_at'] ? String(obj['created_at']) : undefined,
+          updatedAt: obj['updatedAt'] ? String(obj['updatedAt']) : obj['updated_at'] ? String(obj['updated_at']) : undefined,
+        });
+      }
+    }
+    return records;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const body = err?.response?.data;
+    const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
+    console.error(`[staff] GET /tenant/getallleaves FAILED (${status ?? 'network'})`, bodyStr || err?.message || '');
+    return [];
+  }
+};
+
+export interface LeaveActionPayload {
+  approved_by?: string;
+  remarks?: string;
+}
+
+export interface LeaveActionResponse {
+  status: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
+}
+
+const getApprovedBy = (): string => getAuthUser()?.id ?? '';
+
+/** PUT /tenant/leaves/:id/approve */
+export const approveLeave = async (
+  leaveId: string,
+  remarks?: string,
+): Promise<LeaveActionResponse> => {
+  const payload: LeaveActionPayload = {
+    approved_by: getApprovedBy(),
+    remarks: remarks ?? '',
+  };
+  try {
+    const { data } = await api.put<LeaveActionResponse>(
+      `/tenant/leaves/${leaveId}/approve`,
+      payload,
+    );
+    console.log(`[staff] approveLeave OK (${leaveId})`, data);
+    return data;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const body = err?.response?.data;
+    const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
+    console.error(`[staff] PUT /tenant/leaves/${leaveId}/approve FAILED (${status ?? 'network'})`, bodyStr || err?.message || '');
+    throw new Error(
+      err?.response?.data?.message ?? err?.message ?? 'Failed to approve leave',
+    );
+  }
+};
+
+/** PUT /tenant/leaves/:id/reject */
+export const rejectLeave = async (
+  leaveId: string,
+  remarks?: string,
+): Promise<LeaveActionResponse> => {
+  const payload: LeaveActionPayload = {
+    approved_by: getApprovedBy(),
+    remarks: remarks ?? '',
+  };
+  try {
+    const { data } = await api.put<LeaveActionResponse>(
+      `/tenant/leaves/${leaveId}/reject`,
+      payload,
+    );
+    console.log(`[staff] rejectLeave OK (${leaveId})`, data);
+    return data;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const body = err?.response?.data;
+    const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
+    console.error(`[staff] PUT /tenant/leaves/${leaveId}/reject FAILED (${status ?? 'network'})`, bodyStr || err?.message || '');
+    throw new Error(
+      err?.response?.data?.message ?? err?.message ?? 'Failed to reject leave',
+    );
+  }
+};
 
 const toCamelCase = (obj: any): any => {
   if (Array.isArray(obj)) return obj.map(toCamelCase);
@@ -78,29 +238,66 @@ const normalizeStaffMember = (item: any): StaffMember => {
 };
 
 export const fetchStaffStats = async (): Promise<StaffStatsSummary> => {
-  const { data } = await api.get<StaffStatsResponse>("/tenant/staffstats");
+  const [staffStatsRes, leaves] = await Promise.all([
+    api.get<StaffStatsResponse>("/tenant/staffstats").catch(() => null),
+    fetchLeaves(),
+  ]);
 
-  if (!data?.status || !data?.data) {
-    throw new Error("Invalid response from /tenant/staffstats");
+  const statsData = staffStatsRes?.data;
+  const pendingLeaves = leaves.filter((item) => item.status === "PENDING").length;
+
+  if (!statsData?.status || !statsData?.data) {
+    return { total: 0, teachers: 0, nonTeaching: 0, leavePending: pendingLeaves };
   }
 
   return {
-    total: Number(data.data.totalStaff ?? 0),
-    teachers: Number(data.data.teacherCount ?? 0),
-    nonTeaching: Number(data.data.nonTeachingCount ?? 0),
-    leavePending: Number(data.data.pendingLeaves ?? 0),
+    total: Number(statsData.data.totalStaff ?? 0),
+    teachers: Number(statsData.data.teacherCount ?? 0),
+    nonTeaching: Number(statsData.data.nonTeachingCount ?? 0),
+    leavePending: pendingLeaves || Number(statsData.data.pendingLeaves ?? 0),
   };
 };
 
 export const fetchStaff = async (): Promise<StaffMember[]> => {
-  const { data } = await api.get("/tenant/getallstaff");
-  console.log("fetchStaff raw response:", JSON.stringify(data));
+  const [staffRes, leaves] = await Promise.all([
+    api.get("/tenant/getallstaff").catch(() => ({ data: [] })),
+    fetchLeaves(),
+  ]);
+
+  const rawStaff = staffRes?.data ?? staffRes;
   let list: any[] = [];
-  if (Array.isArray(data)) list = data;
-  else if (data?.staff && Array.isArray(data.staff)) list = data.staff;
-  else if (data?.data && Array.isArray(data.data)) list = data.data;
-  else console.warn("fetchStaff: unexpected response shape", data);
-  return list.map(normalizeStaffMember);
+  if (Array.isArray(rawStaff)) list = rawStaff;
+  else if (rawStaff?.staff && Array.isArray(rawStaff.staff)) list = rawStaff.staff;
+  else if (rawStaff?.data && Array.isArray(rawStaff.data)) list = rawStaff.data;
+  else console.warn("fetchStaff: unexpected response shape", rawStaff);
+
+  const leaveMap = new Map<string, LeaveRecord>();
+  const leaveMapByName = new Map<string, LeaveRecord>();
+
+  for (const record of leaves) {
+    const candidates = [record.staffId, record.id].filter(Boolean) as string[];
+    for (const candidate of candidates) {
+      const existing = leaveMap.get(candidate);
+      if (!existing || record.status === "PENDING") leaveMap.set(candidate, record);
+    }
+    const nameKey = record.staffName?.trim().toLowerCase() ?? '';
+    if (nameKey) {
+      const existingName = leaveMapByName.get(nameKey);
+      if (!existingName || record.status === "PENDING") leaveMapByName.set(nameKey, record);
+    }
+  }
+
+  return list.map((item) => {
+    const member = normalizeStaffMember(item);
+    const nameKey = member.name.trim().toLowerCase();
+    const leaveRequest: LeaveRequest | undefined =
+      leaveMap.get(member.id) ??
+      leaveMap.get(member.employeeId) ??
+      leaveMapByName.get(nameKey) ??
+      member.leaveRequest;
+
+    return { ...member, leaveRequest };
+  });
 };
 
 export const createStaff = async (

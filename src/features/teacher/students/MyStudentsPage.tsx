@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Check } from "lucide-react";
-import { useMyStudents, MOCK_STUDENTS } from "./hooks/useMyStudents";
+import { Check, AlertCircle } from "lucide-react";
+import { useMyStudents } from "./hooks/useMyStudents";
 import ChronicAbsenteesAlert from "./components/ChronicAbsenteesAlert";
 import StudentFilterBar from "./components/StudentFilterBar";
 import StudentTable from "./components/StudentTable";
@@ -8,8 +8,8 @@ import StudentQuickViewDrawer from "./components/StudentQuickViewDrawer";
 
 const MyStudentsPage = () => {
   const {
+    students, filtered, chronicAbsentees, isLoading, isError, error,
     filters, setFilters,
-    filtered, chronicAbsentees,
     selectedStudent, isDrawerOpen,
     openDrawer, closeDrawer,
   } = useMyStudents();
@@ -21,10 +21,43 @@ const MyStudentsPage = () => {
     setTimeout(() => setExportMsg(false), 3000);
   };
 
-  // Determine selected student's index for avatar colour consistency
-  const selectedIdx = selectedStudent
-    ? MOCK_STUDENTS.findIndex((s) => s.id === selectedStudent.id)
-    : 0;
+  // Use field name or fallback for page header
+  const first = students[0];
+  const headerClass = first ? `${first.className}${first.section ? ` - ${first.section}` : ''}` : '—';
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6 min-h-full">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
+        <div className="h-4 w-64 animate-pulse rounded bg-gray-100" />
+        <div className="space-y-3 mt-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-14 w-full animate-pulse rounded-xl bg-gray-100" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <AlertCircle size={40} className="text-red-400" strokeWidth={1.5} />
+        <p className="text-red-400 font-semibold">Failed to load students.</p>
+        <p className="text-sm text-gray-400 max-w-md text-center">
+          {error instanceof Error ? error.message : 'Something went wrong. Please try again.'}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-0 min-h-full">
@@ -33,7 +66,7 @@ const MyStudentsPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Students</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Class 8-A · {MOCK_STUDENTS.length} students enrolled</p>
+          <p className="text-sm text-gray-400 mt-0.5">{headerClass} · {students.length} student{(students.length === 1 ? '' : 's')} enrolled</p>
         </div>
         {/* Export success toast */}
         {exportMsg && (
@@ -51,7 +84,7 @@ const MyStudentsPage = () => {
       <StudentFilterBar
         filters={filters}
         onChange={setFilters}
-        totalCount={MOCK_STUDENTS.length}
+        totalCount={students.length}
         filteredCount={filtered.length}
         onExport={handleExport}
       />
@@ -59,12 +92,12 @@ const MyStudentsPage = () => {
       {/* Student table */}
       <StudentTable students={filtered} onView={openDrawer} />
 
-      {/* Quick view drawer */}
+      {/* Quick view drawer — pass proper index from the full list */}
       <StudentQuickViewDrawer
         student={selectedStudent}
         open={isDrawerOpen}
         onClose={closeDrawer}
-        studentIndex={selectedIdx}
+        studentIndex={selectedStudent ? students.findIndex((s) => s.id === selectedStudent.id) : 0}
       />
     </div>
   );

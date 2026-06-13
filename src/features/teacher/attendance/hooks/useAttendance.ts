@@ -13,6 +13,7 @@ import type {
 export const ATTENDANCE_KEYS = {
   all:         ["attendance"] as const,
   today:       () => [...ATTENDANCE_KEYS.all, "today"]   as const,
+  todaySummary:(teacherId: string) => [...ATTENDANCE_KEYS.all, "today-summary", teacherId] as const,
   students:    () => [...ATTENDANCE_KEYS.all, "students"] as const,
   myHistory:   () => [...ATTENDANCE_KEYS.all, "my-history"] as const,
   corrections: () => [...ATTENDANCE_KEYS.all, "corrections"] as const,
@@ -25,6 +26,16 @@ export const useTodayAttendance = () =>
     queryKey: ATTENDANCE_KEYS.today(),
     queryFn:  attendanceApi.getToday,
     staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
+  });
+
+export const useTodayAttendanceSummary = (teacherId: string, options?: { enabled?: boolean }) =>
+  useQuery({
+    queryKey: ATTENDANCE_KEYS.todaySummary(teacherId),
+    queryFn: () => attendanceApi.getTodayAttendanceSummary(teacherId),
+    enabled: Boolean(teacherId) && (options?.enabled ?? true),
+    staleTime: 1000 * 60,
+    retry: 2,
     refetchOnWindowFocus: true,
   });
 

@@ -186,15 +186,49 @@ export const bulkAttendance = async (payload: any): Promise<any> => {
   return data;
 };
 
+export interface MonthlyAttendanceRecord {
+  date: string;
+  status: string;
+}
+
+export interface MonthlyAttendanceResponse {
+  status?: boolean;
+  message?: string;
+  records?: MonthlyAttendanceRecord[];
+  data?: MonthlyAttendanceRecord[] | { records?: MonthlyAttendanceRecord[] };
+}
+
+/** Normalize /tenant/getMonthlyAttendanceByStudentId response → array of { date, status } */
+export const extractMonthlyAttendance = (raw: unknown): MonthlyAttendanceRecord[] => {
+  if (!raw || typeof raw !== 'object') return [];
+  const obj = raw as Record<string, unknown>;
+
+  // Try common response shapes
+  if (Array.isArray(obj['records'])) return obj['records'] as MonthlyAttendanceRecord[];
+  if (Array.isArray(obj['data'])) return obj['data'] as MonthlyAttendanceRecord[];
+  if (obj['data'] && typeof obj['data'] === 'object' && !Array.isArray(obj['data'])) {
+    const inner = obj['data'] as Record<string, unknown>;
+    if (Array.isArray(inner['records'])) return inner['records'] as MonthlyAttendanceRecord[];
+  }
+
+  // Fallback: search for any array with date fields
+  for (const val of Object.values(obj)) {
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && 'date' in (val[0] as object)) {
+      return val as MonthlyAttendanceRecord[];
+    }
+  }
+  return [];
+};
+
 // MONTHLY
 export const getMonthlyAttendance = async (
   params: MonthlyAttendanceParams
-): Promise<any> => {
+): Promise<MonthlyAttendanceRecord[]> => {
   const { data } = await api.get(
     `/tenant/getMonthlyAttendanceByStudentId`,
     { params }
   );
-  return data;
+  return extractMonthlyAttendance(data);
 };
 
 // YEARLY

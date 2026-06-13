@@ -21,7 +21,9 @@ export interface Student {
   rollNo: string;
   name: string;
   className: string; // e.g. "Class 8-A"
+  classId?: string;
   section: string;
+  sectionId?: string;
   isActive: boolean;
   attendancePct: number;
   feeStatus: FeeStatus;

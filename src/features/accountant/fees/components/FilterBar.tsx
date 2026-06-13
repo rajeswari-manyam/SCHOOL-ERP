@@ -61,10 +61,11 @@ export const FilterBar = ({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 w-full min-w-0">
       {/* ── Row 1: search · date range · class · mode · button ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto_auto] gap-2 w-full min-w-0">
+        {/* Search */}
+        <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -76,46 +77,50 @@ export const FilterBar = ({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-gray-200 text-xs text-gray-600 bg-[#EFF4FF] whitespace-nowrap">
+        {/* Date range */}
+        <div className="flex items-center gap-1 h-9 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-[#EFF4FF] shrink-0">
           <span>📅</span>
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="border-none outline-none text-xs bg-transparent"
+            className="border-none outline-none text-xs bg-transparent w-[100px]"
           />
           <span className="text-gray-400">—</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="border-none outline-none text-xs bg-transparent"
+            className="border-none outline-none text-xs bg-transparent w-[100px]"
           />
         </div>
 
+        {/* Class */}
         <select
           value={selectedClass}
           onChange={(e) => setSelectedClass(e.target.value)}
-          className="h-9 px-3 rounded-lg border border-gray-200 text-xs text-gray-700 bg-[#EFF4FF] focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="h-9 px-2 rounded-lg border border-gray-200 text-xs text-gray-700 bg-[#EFF4FF] focus:outline-none focus:ring-2 focus:ring-indigo-200 shrink-0"
         >
           {FILTER_CLASSES.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
 
+        {/* Mode */}
         <select
           value={selectedMode}
           onChange={(e) => setSelectedMode(e.target.value)}
-          className="h-9 px-3 rounded-lg border border-gray-200 text-xs text-gray-700 bg-[#EFF4FF] focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="h-9 px-2 rounded-lg border border-gray-200 text-xs text-gray-700 bg-[#EFF4FF] focus:outline-none focus:ring-2 focus:ring-indigo-200 shrink-0"
         >
           {FILTER_MODES.map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
 
+        {/* Search button */}
         <Button
           size="sm"
-          className="h-9 px-5 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white"
+          className="h-9 px-4 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white shrink-0"
           onClick={handleSearch}
         >
           Search
@@ -124,7 +129,7 @@ export const FilterBar = ({
 
       {/* ── Row 2: DUE STATUS pills + sort + clear ── */}
       {showDueStatus && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className="text-xs font-medium text-gray-500 shrink-0 uppercase tracking-wide">
             Due Status:
           </span>
@@ -141,7 +146,7 @@ export const FilterBar = ({
             </button>
           ))}
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 shrink-0">
             <span className="text-xs text-gray-500 whitespace-nowrap">Sort:</span>
             <select
               value={sortBy}

@@ -9,14 +9,41 @@ const STATUS_CONFIG: Record<ExamStatus, { label: string; classes: string }> = {
 
 interface Props {
   exams: SubmittedExam[];
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
 }
 
-const SubmittedMarksTab = ({ exams }: Props) => {
+const SubmittedMarksTab = ({ exams, loading, error, onRetry }: Props) => {
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+        <div className="inline-block w-8 h-8 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin mb-3" />
+        <p className="text-sm font-semibold text-gray-500">Loading submitted marks…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+        <div className="text-3xl mb-3 text-red-400">⚠</div>
+        <p className="text-sm font-semibold text-gray-500 mb-2">Failed to load submitted marks</p>
+        {onRetry && (
+          <button onClick={onRetry} className="text-xs font-semibold text-indigo-600 hover:underline">
+            Try again
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (exams.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
         <div className="text-4xl mb-3">📤</div>
         <p className="text-sm font-semibold text-gray-500">No submitted exams yet</p>
+        <p className="text-xs text-gray-400 mt-1">Select a class, exam and subject above then switch to this tab</p>
       </div>
     );
   }

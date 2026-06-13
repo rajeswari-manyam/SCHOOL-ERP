@@ -7,8 +7,12 @@ import type {
   ClassStudentResultsQuery,
   ClassStudentResultsResponse,
   StudentResultItem,
-  CreateStudentResultPayload,
-  CreateStudentResultResponse,
+  StudentsBySubjectQuery,
+  StudentsBySubjectItem,
+  BulkMarksPayload,
+  BulkMarksResponse,
+  GetAllMarksQuery,
+  MarksRecordItem,
 } from "../types/exam-marks.types";
 
 const isDev = import.meta.env.DEV;
@@ -54,6 +58,38 @@ function hasApiError(raw: unknown): string | null {
     if (inner?.status === false) return (inner?.message as string) ?? "Unknown API error";
   }
   return null;
+}
+
+function mapMarksRecordItem(item: Record<string, unknown>): MarksRecordItem {
+  return {
+    id: (item.id ?? item._id ?? item.marksId ?? "") as string,
+    studentId: (item.studentId ?? item.student_id ?? item.student ?? "") as string,
+    studentName: (item.studentName ?? item.student_name ?? item.name ?? item.student ?? "") as string,
+    rollNo: (item.rollNo ?? item.roll_no ?? item.rollNumber ?? item.roll_number ?? "") as string,
+    marksObtained: item.marksObtained != null ? Number(item.marksObtained) : item.marks_obtained != null ? Number(item.marks_obtained) : item.marks != null ? Number(item.marks) : undefined,
+    maxMarks: item.maxMarks != null ? Number(item.maxMarks) : item.max_marks != null ? Number(item.max_marks) : undefined,
+    grade: (item.grade ?? "") as string,
+    isAbsent: item.isAbsent === true || item.is_absent === true,
+    remarks: (item.remarks ?? "") as string,
+    subjectName: (item.subjectName ?? item.subject_name ?? item.subject ?? "") as string,
+    examId: (item.examId ?? item.exam_id ?? "") as string,
+    examName: (item.examName ?? item.exam_name ?? "") as string,
+    className: (item.className ?? item.class_name ?? "") as string,
+    sectionName: (item.sectionName ?? item.section_name ?? "") as string,
+    academicYearId: (item.academicYearId ?? item.academic_year_id ?? "") as string,
+  };
+}
+
+function mapStudentsBySubjectItem(item: Record<string, unknown>): StudentsBySubjectItem {
+  return {
+    id: (item.id ?? item._id ?? item.studentId ?? item.student_id ?? "") as string,
+    studentId: (item.studentId ?? item.student_id ?? item.id ?? "") as string,
+    studentName: (item.studentName ?? item.student_name ?? item.name ?? item.student ?? "") as string,
+    rollNo: (item.rollNo ?? item.roll_no ?? item.rollNumber ?? item.roll_number ?? "") as string,
+    className: (item.className ?? item.class_name ?? "") as string,
+    sectionName: (item.sectionName ?? item.section_name ?? "") as string,
+    subjectName: (item.subjectName ?? item.subject_name ?? "") as string,
+  };
 }
 
 function mapStudentResultItem(item: Record<string, unknown>): StudentResultItem {
@@ -142,6 +178,34 @@ export const examMarksApi = {
     }
   },
 
+  // ── /tenant/studentsbysubject ─────────────────────────────────────────────
+
+  getStudentsBySubject: async (params: StudentsBySubjectQuery): Promise<StudentsBySubjectItem[]> => {
+    logger("log", "Fetching students by subject", params);
+
+    try {
+      const { data: raw } = await api.get("/tenant/studentsbysubject", { params });
+
+      // Response may be { status: true, data: [...] }
+      if (raw && typeof raw === "object") {
+        const obj = raw as Record<string, unknown>;
+        if (Array.isArray(obj?.data)) return (obj.data as Record<string, unknown>[]).map(mapStudentsBySubjectItem);
+        if (obj?.status === true && Array.isArray(obj?.students)) return (obj.students as Record<string, unknown>[]).map(mapStudentsBySubjectItem);
+      }
+
+      // Response is a flat array
+      if (Array.isArray(raw)) return raw.map(mapStudentsBySubjectItem);
+
+      logger("log", "No students returned from studentsbysubject API");
+      return [];
+    } catch (err: any) {
+      const ctx = err?.response?.data ?? err?.message;
+      logger("error", "getStudentsBySubject failed", { params, response: ctx });
+      const message = ctx?.message ?? JSON.stringify(ctx) ?? err?.message ?? "Failed to fetch students";
+      throw new ExamMarksApiError(message, err?.response?.status, "/tenant/studentsbysubject", err);
+    }
+  },
+
   // ── /tenant/class-student-results ──────────────────────────────────────────
 
   getClassStudentResults: async (params: ClassStudentResultsQuery): Promise<StudentResultItem[]> => {
@@ -179,63 +243,95 @@ export const examMarksApi = {
     }
   },
 
-  // ── /tenant/createresults ─────────────────────────────────────────────────
+  // ── /tenant/getallmarks ──────────────────────────────────────────────────
 
-  createStudentResult: async (payload: CreateStudentResultPayload): Promise<CreateStudentResultResponse> => {
-    logger("log", "Creating student result", { student_id: payload.student_id, subjectName: payload.subjectName });
+  getAllMarks: async (params: GetAllMarksQuery): Promise<MarksRecordItem[]> => {
+    logger("log", "Fetching marks", params);
 
     try {
-      const { data } = await api.post<CreateStudentResultResponse>("/tenant/createresults", payload);
+      const { data: raw } = await api.get("/tenant/getallmarks", { params });
 
-      if (data?.status === false) {
-        const msg = data?.message ?? "Create result API returned error";
-        logger("warn", "Create result API returned error", { message: msg });
-        throw new ExamMarksApiError(msg, undefined, "/tenant/createresults");
+      if (raw && typeof raw === "object") {
+        const obj = raw as Record<string, unknown>;
+        if (Array.isArray(obj?.data)) return (obj.data as Record<string, unknown>[]).map(mapMarksRecordItem);
+        if (obj?.status === true && Array.isArray(obj?.marks)) return (obj.marks as Record<string, unknown>[]).map(mapMarksRecordItem);
       }
 
-      logger("log", "Student result created successfully", { student_id: payload.student_id });
-      return data;
-    } catch (err) {
-      if (err instanceof ExamMarksApiError) throw err;
-      const error = err as { response?: { data?: { message?: string }; status?: number }; message?: string };
-      const ctx = error?.response?.data ?? error?.message;
-      logger("error", "createStudentResult failed", { student_id: payload.student_id, response: ctx });
-      const message = error?.response?.data?.message ?? JSON.stringify(error?.response?.data) ?? error?.message ?? "Failed to create student result";
-      throw new ExamMarksApiError(message, error?.response?.status, "/tenant/createresults", err);
+      if (Array.isArray(raw)) return raw.map(mapMarksRecordItem);
+
+      logger("log", "No marks returned from getallmarks API");
+      return [];
+    } catch (err: any) {
+      const ctx = err?.response?.data ?? err?.message;
+      logger("error", "getAllMarks failed", { params, response: ctx });
+      const message = ctx?.message ?? JSON.stringify(ctx) ?? err?.message ?? "Failed to fetch marks";
+      throw new ExamMarksApiError(message, err?.response?.status, "/tenant/getallmarks", err);
     }
   },
 
-  createBatchResults: async (entries: StudentMarkEntry[], selector: ExamSelector): Promise<CreateStudentResultResponse[]> => {
+  // ── /tenant/marks/bulk ────────────────────────────────────────────────────
+
+  submitMarksBulk: async (entries: StudentMarkEntry[], selector: ExamSelector): Promise<BulkMarksResponse> => {
     const schoolCode = localStorage.getItem("schoolcode") ?? import.meta.env.VITE_SCHOOL_CODE ?? "";
 
-    const payloads: CreateStudentResultPayload[] = entries
+    const marks: BulkMarksPayload["marks"] = entries
       .filter((e) => e.marks !== "" || e.isAbsent)
       .map((e) => ({
         student_id: e.studentId,
-        exam_type: selector.examType,
-        className: selector.className,
-        subjectName: selector.subject,
-        academic_year: selector.academicYear,
-        marks: e.isAbsent ? 0 : (e.marks as number),
+        exam_id: selector.examId ?? "",
+        rollNumber: e.rollNo,
+        academicYearId: selector.academicYearId ?? "",
+        subject_id: selector.subjectId ?? "",
+        class_id: selector.classId ?? "",
+        section_id: selector.sectionId ?? "",
+        marks_obtained: e.isAbsent ? 0 : (e.marks as number),
+        max_marks: e.maxMarks,
         grade: e.isAbsent ? "F" : (e.grade ?? ""),
         remarks: e.remarks,
-        absent: e.isAbsent,
-        school_code: schoolCode,
+        is_absent: e.isAbsent,
       }));
 
-    if (payloads.length === 0) {
+    if (marks.length === 0) {
       logger("log", "No entries to submit");
-      return [];
+      return { status: true, message: "No entries to submit", count: 0 };
     }
 
-    logger("log", `Submitting ${payloads.length} results in batch`);
+    const payload: BulkMarksPayload = { school_code: schoolCode, marks };
 
-    const results: CreateStudentResultResponse[] = [];
-    for (const payload of payloads) {
-      const result = await examMarksApi.createStudentResult(payload);
-      results.push(result);
+    logger("log", `Submitting ${marks.length} marks via /tenant/marks/bulk`, { sample: marks[0], school_code: schoolCode });
+
+    try {
+      const { data } = await api.post<BulkMarksResponse>("/tenant/marks/bulk", payload);
+
+      const formatError = (e: unknown): string => {
+        if (!e || typeof e !== "object") return String(e);
+        const obj = e as Record<string, unknown>;
+        const id = (obj.student_id ?? obj.studentId ?? obj.id ?? obj.index ?? "?") as string;
+        const err = (obj.error ?? obj.message ?? obj.reason ?? obj.msg ?? JSON.stringify(obj)) as string;
+        return `${id}: ${err}`;
+      };
+
+      if (data?.status === false || (data?.errors && Array.isArray(data.errors) && data.errors.length > 0)) {
+        const errArr = Array.isArray(data?.errors) ? data.errors : [];
+        const errorsDetail = errArr.map(formatError).join("; ");
+        const prefix = data?.message ?? "Bulk marks API error";
+        const msg = errorsDetail ? `${prefix} — ${errorsDetail}` : prefix;
+        logger("warn", "Bulk marks API error", { message: data?.message, errors: data?.errors });
+        throw new ExamMarksApiError(msg, undefined, "/tenant/marks/bulk");
+      }
+
+      logger("log", `Bulk marks submitted successfully: ${data?.count ?? marks.length} records`);
+      return data;
+    } catch (err) {
+      if (err instanceof ExamMarksApiError) throw err;
+      const error = err as { response?: { data?: { message?: string; errors?: Array<Record<string, unknown>> }; status?: number }; message?: string };
+      const resData = error?.response?.data as Record<string, unknown> | undefined;
+      const errorsArr = Array.isArray(resData?.errors) ? (resData.errors as Array<Record<string, unknown>>) : [];
+      const errorsDetail = errorsArr.map((e) => `${e.student_id ?? e.studentId ?? "?"}: ${e.error ?? e.message ?? e.reason ?? JSON.stringify(e)}`).join("; ");
+      const prefix = resData?.message as string ?? "";
+      const msg = errorsDetail ? `${prefix} — ${errorsDetail}` : (prefix || error?.message || "Failed to submit marks");
+      logger("error", "submitMarksBulk failed", { count: marks.length, response: resData });
+      throw new ExamMarksApiError(msg, error?.response?.status, "/tenant/marks/bulk", err);
     }
-
-    return results;
   },
 };

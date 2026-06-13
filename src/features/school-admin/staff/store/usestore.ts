@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import type { StaffMember, TabKey, UpdateStaffPayload } from "../types/staff.types";
-import { fetchStaff, fetchStaffStats, updateStaff as updateStaffApi } from "../api/staff.api";
+import type { StaffMember, TabKey, UpdateStaffPayload, LeaveRequest } from "../types/staff.types";
+import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi } from "../api/staff.api";
+import type { LeaveRecord } from "../api/staff.api";
 
 interface StaffStats {
   total: number;
@@ -12,9 +13,11 @@ interface StaffStats {
 interface StaffState {
   // Data
   staffData: StaffMember[];
+  leaveData: LeaveRecord[];
   stats: StaffStats;
   loading: boolean;
   error: string | null;
+  leaveProcessing: Record<string, 'approving' | 'rejecting'>;
 
   // Filters
   activeTab: TabKey;
@@ -37,6 +40,8 @@ interface StaffState {
   setShowModal: (show: boolean) => void;
   setEditStaffMember: (member: StaffMember | null) => void;
   updateStaffInStore: (id: string, payload: UpdateStaffPayload) => Promise<void>;
+  approveLeave: (leaveId: string, remarks?: string) => Promise<void>;
+  rejectLeave: (leaveId: string, remarks?: string) => Promise<void>;
 
   // Computed
   getFilteredStaff: () => StaffMember[];
@@ -50,7 +55,13 @@ const calculateStats = (staff: StaffMember[]): StaffStats => {
   return { total, teachers, nonTeaching, leavePending };
 };
 
-const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: string, roleFilter: string, statusFilter: string): StaffMember[] => {
+const removeProcessing = (map: Record<string, 'approving' | 'rejecting'>, id: string) => {
+  const copy = { ...map };
+  delete copy[id];
+  return copy;
+};
+
+export const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: string, roleFilter: string, statusFilter: string): StaffMember[] => {
   let filtered = staff;
 
   // Filter by tab
@@ -87,6 +98,8 @@ const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: string, ro
 export const useStaffStore = create<StaffState>((set, get) => ({
   // Initial data
   staffData: [],
+  leaveData: [],
+  leaveProcessing: {},
   stats: { total: 0, teachers: 0, nonTeaching: 0, leavePending: 0 },
   loading: false,
   error: null,
@@ -106,16 +119,18 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   loadStaff: async () => {
     set({ loading: true, error: null });
     try {
-      const [staffData, statsData] = await Promise.all([
+      const [staffData, statsData, leaveData] = await Promise.all([
         fetchStaff(),
         fetchStaffStats().catch((err) => {
           console.warn("Staff stats endpoint unavailable, falling back to derived values", err);
           return null;
         }),
+        fetchLeaves(),
       ]);
 
       set({
         staffData,
+        leaveData,
         stats: statsData ?? calculateStats(staffData),
         loading: false,
       });
@@ -162,6 +177,78 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       });
     } catch (err) {
       set({ editLoading: false });
+      throw err;
+    }
+  },
+
+  approveLeave: async (leaveId: string, remarks?: string) => {
+    set((state) => ({
+      leaveProcessing: { ...state.leaveProcessing, [leaveId]: 'approving' },
+    }));
+    try {
+      await approveLeaveApi(leaveId, remarks);
+      set((state) => {
+        const nextLeaves = state.leaveData.map((l) =>
+          l.id === leaveId ? { ...l, status: 'APPROVED' as const } : l,
+        );
+        const pendingCount = nextLeaves.filter((l) => l.status === 'PENDING').length;
+        return {
+          leaveData: nextLeaves,
+          leaveProcessing: removeProcessing(state.leaveProcessing, leaveId),
+          stats: { ...state.stats, leavePending: pendingCount },
+        };
+      });
+      // Also sync staffData leaveRequest if matched
+      set((state) => {
+        const target = state.leaveData.find((l) => l.id === leaveId);
+        if (!target?.staffId) return {};
+        const nextStaff = state.staffData.map((s) =>
+          s.id === target.staffId && s.leaveRequest
+            ? { ...s, leaveRequest: { ...s.leaveRequest, status: 'APPROVED' as const } }
+            : s,
+        );
+        return { staffData: nextStaff };
+      });
+    } catch (err) {
+      set((state) => ({
+        leaveProcessing: removeProcessing(state.leaveProcessing, leaveId),
+      }));
+      throw err;
+    }
+  },
+
+  rejectLeave: async (leaveId: string, remarks?: string) => {
+    set((state) => ({
+      leaveProcessing: { ...state.leaveProcessing, [leaveId]: 'rejecting' },
+    }));
+    try {
+      await rejectLeaveApi(leaveId, remarks);
+      set((state) => {
+        const nextLeaves = state.leaveData.map((l) =>
+          l.id === leaveId ? { ...l, status: 'REJECTED' as const } : l,
+        );
+        const pendingCount = nextLeaves.filter((l) => l.status === 'PENDING').length;
+        return {
+          leaveData: nextLeaves,
+          leaveProcessing: removeProcessing(state.leaveProcessing, leaveId),
+          stats: { ...state.stats, leavePending: pendingCount },
+        };
+      });
+      // Also sync staffData leaveRequest if matched
+      set((state) => {
+        const target = state.leaveData.find((l) => l.id === leaveId);
+        if (!target?.staffId) return {};
+        const nextStaff = state.staffData.map((s) =>
+          s.id === target.staffId && s.leaveRequest
+            ? { ...s, leaveRequest: { ...s.leaveRequest, status: 'REJECTED' as const } }
+            : s,
+        );
+        return { staffData: nextStaff };
+      });
+    } catch (err) {
+      set((state) => ({
+        leaveProcessing: removeProcessing(state.leaveProcessing, leaveId),
+      }));
       throw err;
     }
   },

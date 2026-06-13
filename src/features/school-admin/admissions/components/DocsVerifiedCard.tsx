@@ -1,7 +1,8 @@
-import { CheckCircle2, AlertCircle, FileText, User, ExternalLink } from 'lucide-react';
+import { CheckCircle2, AlertCircle, FileText, User, ExternalLink, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Enquiry } from '../types';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
+import { useAdmissionDocuments } from '../hooks/useAdmissionsQueries';
 import { Card } from '../../../../components/ui/card';
 import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
@@ -50,14 +51,21 @@ function prettifyFileName(name: string): string {
 
 export function DocsVerifiedCard({ enquiry, index }: Props) {
   const { setSelectedEnquiry, openConfirmAdmission } = useAdmissionsStore();
+  const { data: fetchedDocs = [], isLoading: isDocsLoading } = useAdmissionDocuments(enquiry.id);
 
-  // All document records from the enquiry data — now includes id/file_url/file_name
-  // when the backend returns them embedded in the enquiry response
+  // Merge API-fetched document records (have file_name + file_url) with
+  // embedded enquiry.documents (have name + status). API records win.
   const docs = enquiry.documents ?? [];
 
-  // Separate checklist items (status only) from uploaded files (have file_url)
+  // Build uploaded files from dedicated API response
+  const uploadedFiles = fetchedDocs.length > 0
+    ? fetchedDocs
+        .filter((d) => d.file_url)
+        .map((d) => ({ id: d.id, name: d.file_name, file_name: d.file_name, file_url: d.file_url }))
+    : docs.filter((d): d is typeof d & { file_url: string } => !!d.file_url);
+
+  // Checklist items (status-only) from embedded data
   const checklist = docs.filter((d) => !d.file_url);
-  const uploadedFiles = docs.filter((d): d is typeof d & { file_url: string } => !!d.file_url);
 
   const verifiedCount = checklist.filter((d) => d.status === 'verified').length;
   const allVerified = checklist.length > 0 && verifiedCount === checklist.length;
@@ -135,8 +143,13 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
           </div>
         )}
 
-        {/* ── Uploaded files (embedded in enquiry response) ──────────────── */}
-        {uploadedFiles.length > 0 && (
+        {/* ── Uploaded files (from /tenant/getadmissiondocuments/) ────────── */}
+        {isDocsLoading ? (
+          <div className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-gray-50 py-3 text-[11px] text-gray-400">
+            <Loader2 size={12} className="animate-spin" />
+            Loading documents…
+          </div>
+        ) : uploadedFiles.length > 0 ? (
           <div className="mb-3">
             <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
               Uploaded Files
@@ -164,7 +177,7 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
               ))}
             </ul>
           </div>
-        )}
+        ) : null}
 
         {/* Action */}
         <Button

@@ -3,13 +3,13 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { AlertCircle, Edit3, Send } from "lucide-react";
 import {
-  useTodayAttendance,
+  useTodayAttendanceSummary,
   useMyAttendanceHistory,
   useAllHolidays,
-  MOCK_TODAY_MARKED,
   MOCK_HISTORY,
 } from "./hooks/useAttendance";
-import WAMethodCard from "./components/WAMethodCard";
+import { useAuthStore } from "../../../store/authStore";
+// import WAMethodCard from "./components/WAMethodCard";
 import TodayTab from "./components/TodayTab";
 import MyHistoryTab from "./components/MyHistoryTab";
 import CorrectionRequestModal from "./components/CorrectionRequestModal";
@@ -60,11 +60,19 @@ type TabKey = "today" | "history";
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const MyAttendancePage = () => {
-  const { data: todayData }   = useTodayAttendance();
+  const staffId = useAuthStore((state) => state.user?.id ?? "");
+  const teacherId = localStorage.getItem("teacherStaffId") || staffId;
+  const { data: today, isLoading: todayLoading, isError: todayError } = useTodayAttendanceSummary(teacherId);
   const { data: historyData } = useMyAttendanceHistory();
   const { data: holidaysRaw } = useAllHolidays();
 
-  const today = todayData ?? MOCK_TODAY_MARKED; // swap to MOCK_TODAY for not-marked state
+  const safeToday = today ?? {
+    isMarked: false,
+    totalStudents: 0,
+    classLabel: "—",
+    date: new Date().toISOString().slice(0, 10),
+    absentStudents: [],
+  };
   const history = Array.isArray(historyData)
     ? historyData
     : typeof historyData === "object" && historyData !== null && Array.isArray((historyData as { data: AttendanceHistoryEntry[] }).data)
@@ -121,87 +129,85 @@ const MyAttendancePage = () => {
 
   return (
     <div className="flex flex-col gap-6 min-h-full">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Attendance</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {format(new Date(), "EEEE, d MMMM yyyy")} · Class {today.classLabel}
-          </p>
+      {/* Loading skeleton */}
+      {todayLoading && (
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-48" />
+          <div className="h-4 bg-gray-100 rounded w-72" />
+          <div className="h-20 bg-gray-50 rounded-2xl" />
         </div>
-        <button
-          onClick={() => { setCorrectionPrefill(undefined); setCorrectionOpen(true); }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm self-start"
-        >
-          <Edit3 size={14} className="text-current" />
-          Request Correction
-        </button>
-      </div>
-
-      {/* Persistent red banner — only if not marked */}
-      {!today.isMarked && (
-        <NotMarkedBanner
-          onMarkWA={handleMarkViaWA}
-          onMarkWeb={() => setActiveTab("today")}
-        />
       )}
 
-      {/* WhatsApp Method Card */}
-      <WAMethodCard onMarkViaWA={handleMarkViaWA} />
+      {/* Error state */}
+      {todayError && !todayLoading && (
+        <div className="flex flex-col items-center gap-2 py-10 text-center">
+          <AlertCircle size={32} className="text-red-400" />
+          <p className="text-sm font-semibold text-red-600">Failed to load attendance data</p>
+          <p className="text-xs text-gray-400">Check your connection and try again</p>
+        </div>
+      )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-100 overflow-x-auto flex-nowrap">
-        {TABS.map((t) => (
+      {/* Main content */}
+      {!todayLoading && !todayError && (<>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Attendance</h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {format(new Date(), "EEEE, d MMMM yyyy")} · Class {safeToday.classLabel}
+            </p>
+          </div>
           <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key as TabKey)}
-            className={`px-4 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
-              activeTab === t.key
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            onClick={() => { setCorrectionPrefill(undefined); setCorrectionOpen(true); }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm self-start"
           >
-            {t.label}
+            <Edit3 size={14} className="text-current" />
+            Request Correction
           </button>
-        ))}
-      </div>
-
-      {/* Holiday banner: shown when today is a holiday */}
-      {isTodayHoliday && (
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-center">
-          <p className="text-base font-bold text-gray-700">
-            🎉 {todayHolidayName ?? "Holiday"}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Today is a holiday — attendance is not expected.
-          </p>
         </div>
-      )}
 
-      {/* Tab content */}
-      {activeTab === "today" && (
-        <TodayTab
-          today={today}
-          isHoliday={isTodayHoliday}
-          holidayName={todayHolidayName}
-          onOpenCorrectionModal={openCorrectionFromToday}
+        {/* Persistent red banner — only if not marked */}
+        {!safeToday.isMarked && (
+          <NotMarkedBanner onMarkWA={handleMarkViaWA} onMarkWeb={() => setActiveTab("today")} />
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-gray-100 overflow-x-auto flex-nowrap">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key as TabKey)}
+              className={`px-4 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
+                activeTab === t.key ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Holiday banner */}
+        {isTodayHoliday && (
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-center">
+            <p className="text-base font-bold text-gray-700">🎉 {todayHolidayName ?? "Holiday"}</p>
+            <p className="text-sm text-gray-500 mt-1">Today is a holiday — attendance is not expected.</p>
+          </div>
+        )}
+
+        {/* Tab content */}
+        {activeTab === "today" && (
+          <TodayTab today={safeToday} isHoliday={isTodayHoliday} holidayName={todayHolidayName} onOpenCorrectionModal={openCorrectionFromToday} />
+        )}
+        {activeTab === "history" && (
+          <MyHistoryTab history={history} holidays={rawHolidayList} onRequestCorrection={openCorrectionFromHistory} />
+        )}
+
+        {/* Correction modal */}
+        <CorrectionRequestModal
+          open={correctionOpen}
+          onClose={() => { setCorrectionOpen(false); setCorrectionPrefill(undefined); }}
+          prefill={correctionPrefill}
         />
-      )}
-
-      {activeTab === "history" && (
-        <MyHistoryTab
-          history={history}
-          holidays={rawHolidayList}
-          onRequestCorrection={openCorrectionFromHistory}
-        />
-      )}
-
-      {/* Correction modal */}
-      <CorrectionRequestModal
-        open={correctionOpen}
-        onClose={() => { setCorrectionOpen(false); setCorrectionPrefill(undefined); }}
-        prefill={correctionPrefill}
-      />
+      </>)}
     </div>
   );
 };

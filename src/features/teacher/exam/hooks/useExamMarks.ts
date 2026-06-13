@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type {
   ExamSelector,
   StudentMarkEntry,
@@ -6,11 +6,11 @@ import type {
   SubmittedExam,
   PublishedResult,
   Grade,
-  ClassStudentResultsQuery,
+  GetAllMarksQuery,
 } from "../types/exam-marks.types";
-import { EXAM_TYPE_LABELS } from "../types/exam-marks.types";
-import { useClassStudentResults, mapToStudentMarkEntries } from "./useClassStudentResults";
 import { examMarksApi } from "../api/exam-marks.api";
+import { mapToStudentMarkEntriesFromSubject } from "./useStudentsBySubject";
+import { useAllMarks, marksToSubmittedExam } from "./useAllMarks";
 
 const isDev = import.meta.env.DEV;
 function logger(level: "log" | "warn" | "error", ...args: unknown[]) { if (isDev) console[level]("[useExamMarks]", ...args); }
@@ -36,21 +36,6 @@ export const GRADE_CONFIG: Record<Grade, { classes: string; bg: string }> = {
   "D":  { classes: "bg-orange-50 text-orange-700 border-orange-200",    bg: "bg-orange-400" },
   "F":  { classes: "bg-red-50 text-red-700 border-red-200",             bg: "bg-red-500"    },
 };
-
-// ── Mock students (8-A roster) ────────────────────────────────────────────
-const BASE_STUDENTS: Omit<StudentMarkEntry, "marks" | "grade" | "remarks" | "isAbsent">[] = [
-  { studentId: "s1", rollNo: "01", name: "Arjun Reddy",   maxMarks: 100 },
-  { studentId: "s2", rollNo: "02", name: "Priya Sharma",  maxMarks: 100 },
-  { studentId: "s3", rollNo: "03", name: "Ravi Teja",     maxMarks: 100 },
-  { studentId: "s4", rollNo: "04", name: "Sneha Patel",   maxMarks: 100 },
-  { studentId: "s5", rollNo: "05", name: "Meena Kumari",  maxMarks: 100 },
-  { studentId: "s6", rollNo: "06", name: "Rohan Mehta",   maxMarks: 100 },
-  { studentId: "s7", rollNo: "07", name: "Ananya Singh",  maxMarks: 100 },
-  { studentId: "s8", rollNo: "08", name: "Karthik Naidu", maxMarks: 100 },
-];
-
-const freshStudents = (): StudentMarkEntry[] =>
-  BASE_STUDENTS.map((s) => ({ ...s, marks: "", grade: null, remarks: "", isAbsent: false }));
 
 // ── Mock submitted exams ──────────────────────────────────────────────────
 export const MOCK_SUBMITTED: SubmittedExam[] = [
@@ -128,40 +113,68 @@ export const useExamMarks = () => {
   const [submitting, setSubmitting] = useState(false);
   const [dlMsg, setDlMsg] = useState(false);
 
-  // ── Class-student-results (production API) ─────────────────────────────
-  const classResultsQuery = useMemo((): ClassStudentResultsQuery => {
-    // Extract raw values from display labels if possible
-    const clsParts = selector.className.replace("Class ", "").split("-");
-    return {
-      className: clsParts[0] || selector.className,
-      sectionName: clsParts[1] || "A",
-      subjectName: selector.subject,
-      academicYear: selector.academicYear.split("-")[0] || selector.academicYear,
-      exam_type: selector.examType.toLowerCase().replace(/_/g, ""),
-    };
-  }, [selector.className, selector.subject, selector.academicYear, selector.examType]);
+  // ── /tenant/getallmarks — auto-fetches when sub-tab is active ─────────
+  const marksQuery = useMemo((): GetAllMarksQuery => ({
+    class_id: selector.classId ?? "",
+    section_id: selector.sectionId ?? "",
+    subject_id: selector.subjectId ?? "",
+    exam_id: selector.examId ?? "",
+  }), [selector.classId, selector.sectionId, selector.subjectId, selector.examId]);
 
   const {
-    data: apiResults,
-    isLoading: apiResultsLoading,
-    isError: apiResultsError,
-    refetch: refetchApiResults,
-  } = useClassStudentResults(classResultsQuery);
+    data: marksRecords,
+    isLoading: marksLoading,
+    isError: marksError,
+    refetch: refetchMarks,
+  } = useAllMarks(marksQuery, activeTab === "submitted");
 
-  // Load students handler (uses API results when available, mock fallback)
-  const handleLoadStudents = useCallback(() => {
-    if (apiResults && apiResults.length > 0) {
-      setEntries(mapToStudentMarkEntries(apiResults));
-    } else {
-      setEntries(freshStudents());
+  const submittedExams: SubmittedExam[] = useMemo(
+    () => marksRecords ? marksToSubmittedExam(marksRecords, selector.className, selector.subject, selector.examType || undefined) : [],
+    [marksRecords, selector.className, selector.subject, selector.examType],
+  );
+
+  // ── /tenant/studentsbysubject — on-demand fetch ────────────────────────
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [studentsError, setStudentsError] = useState<string | null>(null);
+
+  const handleLoadStudents = useCallback(async () => {
+    const q = {
+      class_id: selector.classId ?? "",
+      section_id: selector.sectionId ?? "",
+      subject_id: selector.subjectId ?? "",
+      academicYearId: selector.academicYearId ?? "",
+      exam_id: selector.examId ?? "",
+    };
+
+    if (!q.class_id || !q.section_id || !q.subject_id || !q.academicYearId || !q.exam_id) {
+      setStudentsError("All selector fields must be filled before loading students.");
+      return;
     }
-    setStudentsLoaded(true);
-  }, [apiResults]);
 
-  // Auto-load when API results arrive after selector change
-  const handleLoadFromApi = useCallback(() => {
-    refetchApiResults();
-  }, [refetchApiResults]);
+    setStudentsLoading(true);
+    setStudentsError(null);
+    setEntries([]);
+    setStudentsLoaded(false);
+
+    try {
+      const items = await examMarksApi.getStudentsBySubject(q);
+      if (items.length === 0) {
+        setStudentsError("No students returned for the selected criteria.");
+        setEntries([]);
+        setStudentsLoaded(true);
+      } else {
+        setEntries(mapToStudentMarkEntriesFromSubject(items));
+        setStudentsLoaded(true);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load students.";
+      logger("error", "handleLoadStudents failed", { message, query: q });
+      setStudentsError(message);
+      setEntries([]);
+    } finally {
+      setStudentsLoading(false);
+    }
+  }, [selector.classId, selector.sectionId, selector.subjectId, selector.academicYearId, selector.examId]);
 
   // Update a single entry field
   const updateEntry = useCallback(
@@ -209,9 +222,9 @@ export const useExamMarks = () => {
     };
   }, [entries]);
 
-  const selectorLabel = selector.examType
-    ? `${EXAM_TYPE_LABELS[selector.examType]} · ${selector.className} · ${selector.subject}`
-    : "";
+  const selectorLabel = [selector.examType, selector.className, selector.subject]
+    .filter(Boolean)
+    .join(" · ");
 
   const handleSaveDraft = () => {
     setDraftMsg(true);
@@ -229,15 +242,15 @@ export const useExamMarks = () => {
 
     try {
       setSubmitting(true);
-      const results = await examMarksApi.createBatchResults(entries, selector);
-      logger("log", `Successfully submitted ${results.length} results`);
+      const res = await examMarksApi.submitMarksBulk(entries, selector);
+      logger("log", `Bulk submit result`, res);
       setSubmitMsg(true);
       setTimeout(() => setSubmitMsg(false), 3000);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to submit results";
       logger("error", "Submit failed", { message });
       setSubmitError(message);
-      setTimeout(() => setSubmitError(null), 5000);
+      setTimeout(() => setSubmitError(null), 10000);
     } finally {
       setSubmitting(false);
     }
@@ -260,10 +273,10 @@ export const useExamMarks = () => {
     handleSaveDraft, handleOpenSubmit, handleConfirmSubmit,
     handleDownloadReport,
     submitting, submitError,
-    submittedExams: MOCK_SUBMITTED,
+    submittedExams,
+    marksLoading, marksError,
+    refetchMarks,
     publishedResults: MOCK_PUBLISHED,
-    // Class-student-results API
-    apiResults, apiResultsLoading, apiResultsError,
-    handleLoadFromApi,
+    studentsLoading, studentsError,
   };
 };

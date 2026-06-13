@@ -9,8 +9,10 @@ export type TabKey =
 export type LeaveType = "SICK" | "CASUAL" | "PAID";
 
 export interface LeaveRequest {
+  staffId?: string;
+  staffName?: string;
   type: LeaveType;
-  from: string; // later you can switch to Date
+  from: string;
   to: string;
   days: number;
   reason: string;

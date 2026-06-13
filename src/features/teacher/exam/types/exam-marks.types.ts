@@ -10,10 +10,15 @@ export type ExamStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "PUBLISHED";
 export type Grade = "A+" | "A" | "B+" | "B" | "C" | "D" | "F";
 
 export interface ExamSelector {
-  examType: ExamType | "";
+  examType: string;
+  examId?: string;
   className: string;
+  classId?: string;
+  sectionId?: string;
   subject: string;
+  subjectId?: string;
   academicYear: string;
+  academicYearId?: string;
 }
 
 export interface StudentMarkEntry {
@@ -40,7 +45,7 @@ export interface ExamSummary {
 
 export interface SubmittedExam {
   id: string;
-  examType: ExamType;
+  examType: string;
   examLabel: string;
   className: string;
   subject: string;
@@ -89,6 +94,82 @@ export const EXAM_TYPE_LABELS: Record<ExamType, string> = {
   FINAL:       "Final Exam",
 };
 
+// ── /tenant/studentsbysubject API types ─────────────────────────────────────
+
+export interface StudentsBySubjectQuery {
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  academicYearId: string;
+  exam_id: string;
+}
+
+export interface StudentsBySubjectItem {
+  id: string;
+  studentId?: string;
+  studentName?: string;
+  rollNo?: string;
+  className?: string;
+  sectionName?: string;
+  subjectName?: string;
+}
+
+// ── /tenant/marks/bulk API types ───────────────────────────────────────────
+
+export interface BulkMarkItem {
+  student_id: string;
+  exam_id: string;
+  rollNumber: string;
+  academicYearId: string;
+  subject_id: string;
+  class_id: string;
+  section_id: string;
+  marks_obtained: number;
+  max_marks: number;
+  grade: string;
+  remarks: string;
+  is_absent: boolean;
+}
+
+export interface BulkMarksPayload {
+  school_code: string;
+  marks: BulkMarkItem[];
+}
+
+export interface BulkMarksResponse {
+  status: boolean;
+  message?: string;
+  count?: number;
+  errors?: Array<{ student_id: string; error: string }>;
+}
+
+// ── /tenant/getallmarks API types ──────────────────────────────────────────
+
+export interface GetAllMarksQuery {
+  class_id: string;
+  section_id: string;
+  subject_id: string;
+  exam_id: string;
+}
+
+export interface MarksRecordItem {
+  id: string;
+  studentId?: string;
+  studentName?: string;
+  rollNo?: string;
+  marksObtained?: number;
+  maxMarks?: number;
+  grade?: string;
+  isAbsent?: boolean;
+  remarks?: string;
+  subjectName?: string;
+  examId?: string;
+  examName?: string;
+  className?: string;
+  sectionName?: string;
+  academicYearId?: string;
+}
+
 export const CLASS_OPTIONS = ["Class 8-A", "Class 8-B", "Class 9-A", "Class 9-B","Class 10-A", "Class 10-B"];
 export const SUBJECT_OPTIONS = ["Mathematics", "Science", "English", "Hindi", "Social Studies", "Computer Science","Max"];
 export const ACADEMIC_YEAR_OPTIONS = ["2024-25", "2023-24", "2022-23","2025-2026"];
@@ -126,23 +207,4 @@ export interface ClassStudentResultsResponse {
   data?: StudentResultItem[];
 }
 
-// ── /tenant/createresults API types ─────────────────────────────────────────
 
-export interface CreateStudentResultPayload {
-  student_id: string;
-  exam_type: string;
-  className: string;
-  subjectName: string;
-  academic_year: string;
-  marks: number;
-  grade: string;
-  remarks: string;
-  absent: boolean;
-  school_code: string;
-}
-
-export interface CreateStudentResultResponse {
-  status: boolean;
-  message?: string;
-  data?: Record<string, unknown>;
-}
