@@ -129,6 +129,7 @@ export type FeeOption = {
   /** Remaining outstanding on this fee item */
   remainingAmount: number;
   overdue?: boolean;
+  dueDate?: string;
   /** Applicable late fee for this item */
   lateFee?: number;
 };

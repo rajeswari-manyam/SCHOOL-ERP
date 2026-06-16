@@ -38,7 +38,7 @@ const schema = z
     paymentDate: z.string().min(1, "Date is required"),
     /** The amount the student is paying right now (may be partial) */
     paymentAmount: z
-      .number({ invalid_type_error: "Enter a valid amount" })
+      .number({ error: "Enter a valid amount" })
       .positive("Amount must be greater than 0"),
     fees: z.array(
       z.object({
