@@ -1,6 +1,6 @@
 import api from "@/config/axios";
 import { getAllClasses, getAllStaff } from "@/services/class.api";
-import { getSectionsByClassId, getSectionById } from "@/services/section.api";
+import { getSectionsByClassIdFromApi, getSectionById } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "../types/classes.types";
 
@@ -27,10 +27,10 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
     [...grouped.entries()].map(async ([className, records]) => {
       const first = records[0];
       const [sectionRes, subjectsRes] = await Promise.all([
-        getSectionsByClassId(first.id).catch(() => null),
+        getSectionsByClassIdFromApi(first.id).catch(() => null),
         getAllSubjects({ class_id: first.id }).catch(() => null),
       ]) as [{ data?: unknown } | null, { data?: unknown; count?: number } | null];
-      const sectionRecords = asArray<Record<string, unknown>>(Array.isArray(sectionRes) ? sectionRes : sectionRes?.data) ?? [];
+      const sectionRecords = asArray<Record<string, unknown>>(sectionRes?.data) ?? [];
       const subjectRecords = asArray<SubjectRecord>(subjectsRes?.data) ?? [];
       const subjectCount = subjectsRes?.count ?? subjectRecords.length;
       const subjectCountBySection = new Map<string, number>();
@@ -121,17 +121,14 @@ const toSectionItem = (record: Record<string, unknown>, teacherMap: Map<string, 
 const asArray = <T>(value: unknown): T[] | null => (Array.isArray(value) ? (value as T[]) : null);
 
 export const fetchSectionsByClassId = async (classId: string): Promise<SectionItem[]> => {
-  const sectionPromise = getSectionsByClassId(classId);
-  const [subjectsRes, staffRes] = await Promise.all([
+  const [sectionRes, subjectsRes, staffRes] = await Promise.all([
+    getSectionsByClassIdFromApi(classId).catch(() => null),
     getAllSubjects({ class_id: classId }).catch(() => null),
-    // role is not a valid parameter on GetAllStaffParams; call without args to avoid type error
     getAllStaff().catch(() => null),
   ]);
-  const sectionRes = (await sectionPromise) as { data?: unknown; sections?: unknown } | null;
 
   const records =
     asArray<Record<string, unknown>>(sectionRes?.data) ??
-    asArray<Record<string, unknown>>((sectionRes as { sections?: unknown } | undefined)?.sections) ??
     [];
 
   const teacherMap = new Map<string, string>();

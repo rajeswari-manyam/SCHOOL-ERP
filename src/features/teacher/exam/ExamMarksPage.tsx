@@ -6,6 +6,7 @@ import MarksEntryTable from "./components/MarksEntryTable";
 import SummaryBar from "./components/SummaryBar";
 import SubmitMarksModal from "./components/SubmitMarksModal";
 import SubmittedMarksTab from "./components/SubmittedMarksTab";
+import SubmittedMarksFilter from "./components/SubmittedMarksFilter";
 import ResultsPublishedTab from "./components/ResultsPublishedTab";
 import type { ExamTab } from "./hooks/useExamMarks";
 
@@ -31,6 +32,11 @@ const ExamMarksPage = () => {
     studentsError,
     marksLoading, marksError, refetchMarks,
     submitting, submitError,
+    // filter
+    submittedFilter, setSubmittedFilter,
+    activeFilter,
+    handleFilterSearch,
+    marksEnabled,
   } = useExamMarks();
 
   return (
@@ -72,7 +78,7 @@ const ExamMarksPage = () => {
         </div>
       </div>
 
-      {/* 3-Tab navigation */}
+      {/* Tab navigation */}
       <div className="flex gap-0.5 border-b border-gray-200 mb-6 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <Button
@@ -100,7 +106,6 @@ const ExamMarksPage = () => {
       {/* ── Tab: Enter Marks ─────────────────────────────────────────── */}
       {activeTab === "enter" && (
         <div className="flex flex-col gap-5">
-          {/* Exam selector */}
           <ExamSelectorForm
             selector={selector}
             onChange={setSelector}
@@ -110,13 +115,10 @@ const ExamMarksPage = () => {
             errorMessage={studentsError}
           />
 
-          {/* Summary bar */}
           <SummaryBar summary={summary} visible={studentsLoaded && entries.length > 0} />
 
-          {/* Marks entry table */}
           <MarksEntryTable entries={entries} onUpdate={updateEntry} />
 
-          {/* Action bar */}
           {studentsLoaded && entries.length > 0 && (
             <div className="flex gap-3">
               <Button
@@ -159,7 +161,27 @@ const ExamMarksPage = () => {
 
       {/* ── Tab: Submitted Marks ──────────────────────────────────────── */}
       {activeTab === "submitted" && (
-        <SubmittedMarksTab exams={submittedExams} loading={marksLoading} error={marksError} onRetry={refetchMarks} />
+        <div className="flex flex-col gap-0">
+          {/* Filter bar */}
+          <SubmittedMarksFilter
+            filter={submittedFilter}
+            onChange={setSubmittedFilter}
+            onSearch={handleFilterSearch}
+            loading={marksLoading}
+          />
+
+          {/* Results table */}
+          <SubmittedMarksTab
+            exams={submittedExams}
+            loading={marksLoading}
+            error={marksEnabled && marksError}
+            onRetry={refetchMarks}
+            // Pass whether a search has been triggered (to show idle state vs error)
+            hasSearched={Boolean(
+              activeFilter.class_id && activeFilter.section_id && activeFilter.subject_id
+            )}
+          />
+        </div>
       )}
 
       {/* ── Tab: Results Published ────────────────────────────────────── */}

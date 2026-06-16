@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Edit3, FileText, MoreVertical, MessageCircle } from "lucide-react";
 import { useStudentProfile } from "../hooks/useStudents";
+import { useStudentAttendance } from "../hooks/useStudentAttendance";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import StudentAttendanceTab from "./StudentAttendanceTab";
 import StudentFeeTab from "./StudentFeeTab";
 import StudentDocumentsTab from "./StudentDocumentTab";
 import { EditStudentModal } from "./EditStudentModal";
-import { studentsApi } from "../api/students.api";
+import { studentsApi } from "@/services/school-students.api";
+import { useUIStore } from "@/store/uiStore";
 
 type Tab = "overview" | "attendance" | "fee-history" | "documents";
 
@@ -32,9 +34,16 @@ const InfoRow = ({ label, value }: { label: string; value?: string | number }) =
 const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, loading, error, attendance, feePayments, documents, retry } = useStudentProfile(id!);
+  const { student, loading, error, feePayments, documents, retry } = useStudentProfile(id!);
+  const attendanceHook = useStudentAttendance(student ?? null);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showEdit, setShowEdit] = useState(false);
+  const setPageTitle = useUIStore((s) => s.setPageTitle);
+
+  useEffect(() => {
+    if (student) setPageTitle(`${student.firstName} ${student.lastName}`);
+    return () => setPageTitle(null);
+  }, [student, setPageTitle]);
 
   if (loading) {
     return (
@@ -74,8 +83,8 @@ const StudentProfilePage = () => {
 
   const fullName = `${student.firstName} ${student.lastName}`;
   const outstanding = feePayments.filter(p => p.status === "PENDING").reduce((s, p) => s + p.amount, 0);
-  const presentThisMonth = attendance.filter(d => d.status === "present").length;
-  const totalDaysThisMonth = attendance.filter(d => d.status !== null).length;
+  const presentThisMonth = attendanceHook.monthlyData?.summary?.present ?? 0;
+  const totalDaysThisMonth = attendanceHook.monthlyData?.summary?.total ?? 0;
 
   const TABS: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
@@ -161,7 +170,7 @@ const StudentProfilePage = () => {
                 <InfoRow label="Admission No" value={student.admissionNo} />
                 <InfoRow label="Class" value={`${student.class}-${student.section}`} />
                 <InfoRow label="Date of Birth" value={student.dob} />
-                <InfoRow label="Age" value={student.dob ? `${new Date().getFullYear() - parseInt(student.dob.split(" ").pop()!)} years` : "—"} />
+                <InfoRow label="Age" value={student.dob ? `${new Date().getFullYear() - new Date(student.dob).getFullYear()} years` : "—"} />
                 <InfoRow label="Gender" value={student.gender} />
                 <InfoRow label="Blood Group" value={student.bloodGroup} />
                 <InfoRow label="Father's Name" value={student.fatherName} />
@@ -245,7 +254,17 @@ const StudentProfilePage = () => {
       )}
 
       {activeTab === "attendance" && (
-        <StudentAttendanceTab attendance={attendance} />
+        <StudentAttendanceTab
+          todayData={attendanceHook.todayData}
+          todayLoading={attendanceHook.todayLoading}
+          monthlyData={attendanceHook.monthlyData}
+          yearlyData={attendanceHook.yearlyData}
+          viewMonth={attendanceHook.viewMonth}
+          viewYear={attendanceHook.viewYear}
+          monthlyLoading={attendanceHook.monthlyLoading}
+          prevMonth={attendanceHook.prevMonth}
+          nextMonth={attendanceHook.nextMonth}
+        />
       )}
 
       {activeTab === "fee-history" && (

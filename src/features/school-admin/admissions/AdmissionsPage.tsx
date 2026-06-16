@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { Download, UserPlus} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PipelineStats } from './components/PipelineStats';
@@ -6,9 +7,23 @@ import { EnquiryDetailDrawer } from './components/EnquiryDetailDrawer';
 import { AddEnquiryModal } from './components/AddEnquiryModal';
 import { ConfirmAdmissionModal } from './components/ConfirmAdmissionModal';
 import { useAdmissionsStore } from './hooks/useAdmissionsStore';
+import { useUIStore } from '@/store/uiStore';
+import { getAllAcademicYears } from '@/services/academicYear.api';
 
 export function AdmissionsPage() {
   const { openAddEnquiry } = useAdmissionsStore();
+  const storeYearId = useUIStore((s) => s.academicYearId);
+  const { data: activeYear } = useQuery({
+    queryKey: ['academic-years', storeYearId],
+    queryFn: async () => {
+      const res = await getAllAcademicYears();
+      const years = res?.status && Array.isArray(res?.data) ? res.data : [];
+      const selected = years.find((y) => y.id === storeYearId);
+      if (selected) return selected;
+      return years.find((y) => y.active) || years[0] || null;
+    },
+    staleTime: 5 * 60_000,
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -25,9 +40,11 @@ export function AdmissionsPage() {
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tight truncate">Admissions</h1>
-              <span className="text-xs font-semibold text-indigo-600 border border-indigo-300 rounded-full px-2 sm:px-3 py-1 whitespace-nowrap">
-                2025-26 Academic Year
-              </span>
+              {activeYear?.yearName && (
+                <span className="text-xs font-semibold text-indigo-600 border border-indigo-300 rounded-full px-2 sm:px-3 py-1 whitespace-nowrap">
+                  {activeYear.yearName} Academic Year
+                </span>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-1 line-clamp-2">
               Manage student journey from initial enquiry to final confirmation.

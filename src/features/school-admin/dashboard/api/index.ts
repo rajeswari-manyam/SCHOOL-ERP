@@ -9,6 +9,7 @@ import type {
 } from '../types';
 
 const MOCK_DASHBOARD: DashboardData = {
+  schoolName: '',
   stats: [
     { id: 'attendance', label: 'STUDENTS PRESENT TODAY', value: '—', sub: 'Loading…', icon: 'users' },
     { id: 'classes', label: 'CLASSES MARKED TODAY', value: '—', sub: 'Loading…', icon: 'check' },

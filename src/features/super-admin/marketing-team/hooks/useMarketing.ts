@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { marketingApi } from "../api/marketing.api";
+import { marketingApi } from "@/services/marketing.api";
 import type { RepFilters, CreateMarketingPayload } from "../types/marketing.types";
 
 export const MARKETING_KEYS = {

@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import type { StaffMember, TabKey, UpdateStaffPayload, LeaveRequest } from "../types/staff.types";
-import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi } from "../api/staff.api";
-import type { LeaveRecord } from "../api/staff.api";
+import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi } from "@/services/school-staff.api";
+import type { LeaveRecord } from "@/services/school-staff.api";
+import { useUIStore } from "@/store/uiStore";
 
 interface StaffStats {
   total: number;
@@ -117,10 +118,11 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
   // Actions
   loadStaff: async () => {
+    const academicYearId = useUIStore.getState().academicYearId;
     set({ loading: true, error: null });
     try {
       const [staffData, statsData, leaveData] = await Promise.all([
-        fetchStaff(),
+        fetchStaff(academicYearId),
         fetchStaffStats().catch((err) => {
           console.warn("Staff stats endpoint unavailable, falling back to derived values", err);
           return null;

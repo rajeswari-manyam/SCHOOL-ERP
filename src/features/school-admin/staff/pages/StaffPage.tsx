@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { TabKey, StaffMember } from "../types/staff.types";
-import type { LeaveRecord } from "../api/staff.api";
+import type { LeaveRecord } from "@/services/school-staff.api";
 import { useStaffStore, filterStaff } from "../store/usestore";
+import { useUIStore } from "@/store/uiStore";
 import { StatsCards } from "../components/StatCards";
 import { StaffTabs } from "../components/StaffTabs";
 import { StaffFilters } from "../components/StaffFilter";
@@ -48,9 +49,12 @@ export default function StaffManagementPage() {
     setEditStaffMember,
   } = useStaffStore();
 
+  const academicYearId = useUIStore((s) => s.academicYearId);
+  const academicYearName = useUIStore((s) => s.academicYearName);
+
   useEffect(() => {
     loadStaff();
-  }, []);
+  }, [academicYearId]);
 
   const filteredStaff = useMemo(
     () => filterStaff(staffData, activeTab, search, roleFilter, statusFilter),
@@ -87,7 +91,7 @@ export default function StaffManagementPage() {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Hide academic year label on very small screens to save space */}
           <span className="hidden sm:inline text-sm text-slate-400 whitespace-nowrap">
-            2023-24 Academic Year
+            {academicYearName ?? "2023-24"} Academic Year
           </span>
           <Button
             onClick={() => setShowModal(true)}

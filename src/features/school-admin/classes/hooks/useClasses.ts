@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useUIStore } from "@/store/uiStore";
-import * as classesApi from "../api/classes.api";
+import * as classesApi from "@/services/school-classes.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, AddSectionPayload, AddSubjectPayload } from "../types/classes.types";
 
 const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>

@@ -11,10 +11,13 @@ interface UseAttendanceOptions {
   studentId: string;
   month: number;  // 0-indexed (0 = January)
   year: number;
+  classId?: string;
+  sectionId?: string;
+  academicYearId?: string;
 }
 
 export const useAttendance = (options: UseAttendanceOptions) => {
-  const { studentId, month, year } = options;
+  const { studentId, month, year, classId, sectionId, academicYearId } = options;
 
   const [data, setData] = useState<AttendanceData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -27,15 +30,16 @@ export const useAttendance = (options: UseAttendanceOptions) => {
     setError(null);
 
     try {
-      // Fetch monthly and yearly attendance in parallel
-      const [monthlyRes, yearlyRes] = await Promise.all([
-        getMonthlyAttendance({ studentId, month: month + 1, year }), // API uses 1-indexed months
-        getYearlyAttendance({ studentId, year, class_id: "", section_id: "", academicYearId: "" }),
-      ]);
+      const monthlyPromise = getMonthlyAttendance({ studentId, month: month + 1, year });
+
+      const yearlyPromise = (classId && sectionId && academicYearId)
+        ? getYearlyAttendance({ studentId, year, class_id: classId, section_id: sectionId, academicYearId })
+        : Promise.resolve(null);
+
+      const [monthlyRes, yearlyRes] = await Promise.all([monthlyPromise, yearlyPromise]);
 
       const summary = monthlyRes?.summary;
 
-      // ── Build AttendanceDay[] from summary.present_dates / absent_dates ─
       const presentDates: string[] = summary?.present_dates ?? [];
       const absentDates: string[] = summary?.absent_dates ?? [];
 
@@ -50,35 +54,38 @@ export const useAttendance = (options: UseAttendanceOptions) => {
         })),
       ];
 
-      // ── Monthly summary from API ───────────────────────────────────────
       const totalDays = summary?.total ?? 0;
       const presentDays = summary?.present ?? 0;
       const absentDays = summary?.absent ?? 0;
       const monthPercentage =
         totalDays > 0 ? parseFloat(((presentDays / totalDays) * 100).toFixed(1)) : 0;
 
-   const yearlyRecords: any[] = yearlyRes?.records ?? [];
-      
-    const yearPresent = yearlyRecords.filter(
-  (r: any) =>
-    r.status !== "absent" && r.status !== "Absent" &&
-    r.status !== "holiday" && r.status !== "Holiday"
-).length;
-const yearAbsent = yearlyRecords.filter(
-  (r: any) => r.status === "absent" || r.status === "Absent"
-).length;
-      const yearTotal = yearPresent + yearAbsent;
-      const yearPercentage =
+      let yearPresent = 0;
+      let yearAbsent = 0;
+      let yearTotal = 0;
+      let yearPercentage = 0;
+
+      if (yearlyRes?.summary) {
+        yearPresent = yearlyRes.summary.present ?? 0;
+        yearAbsent = yearlyRes.summary.absent ?? 0;
+        yearTotal = yearlyRes.summary.total ?? 0;
+      } else if (yearlyRes?.records) {
+        const records: any[] = yearlyRes.records;
+        yearPresent = records.filter(
+          (r: any) => r.status !== "absent" && r.status !== "Absent" &&
+            r.status !== "holiday" && r.status !== "Holiday"
+        ).length;
+        yearAbsent = records.filter(
+          (r: any) => r.status === "absent" || r.status === "Absent"
+        ).length;
+        yearTotal = yearPresent + yearAbsent;
+      }
+      yearPercentage =
         yearTotal > 0 ? parseFloat(((yearPresent / yearTotal) * 100).toFixed(1)) : 0;
 
-      // ── Grab student meta from first available record ──────────────────
-      const firstRecord = monthlyRes?.records?.[0] ?? yearlyRes?.records?.[0];
-
       const assembled: AttendanceData = {
-        studentName: firstRecord?.studentName ?? "Student",
-        className: firstRecord?.className
-          ? `${firstRecord.className}${firstRecord.section ? firstRecord.section : ""}`
-          : "—",
+        studentName: "Student",
+        className: "—",
         academicYear: `${year - 1}-${String(year).slice(2)}`,
         month: {
           totalDays,
@@ -102,7 +109,7 @@ const yearAbsent = yearlyRecords.filter(
     } finally {
       setLoading(false);
     }
-  }, [studentId, month, year]);
+  }, [studentId, month, year, classId, sectionId, academicYearId]);
 
   useEffect(() => {
     fetchAttendance();

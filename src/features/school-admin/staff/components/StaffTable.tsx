@@ -1,6 +1,5 @@
 import type { StaffMember } from "../types/staff.types";
 import { StatusBadge } from "./Statusbadge";
-import { SubjectPill } from "./SubjectPill";
 import { Button } from "../../../../components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../../../components/ui/table";
 
@@ -14,7 +13,7 @@ interface Props {
   onView?: (staff: StaffMember) => void;
 }
 
-const COLUMNS = ["Name & Contact", "Role", "Status", "Leave Bal.", "Actions"];
+const COLUMNS = ["Name & Contact", "Role", "Department", "Status", "Leave Bal.", "Actions"];
 
 export const StaffTable = ({ staff, total, onEdit, onView }: Props) => (
   <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
@@ -46,13 +45,7 @@ export const StaffTable = ({ staff, total, onEdit, onView }: Props) => (
                 </div>
               </TableCell>
               <TableCell className="text-slate-600">{s.role ?? "—"}</TableCell>
-              {/* <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {s.subjects && s.subjects.length > 0
-                    ? s.subjects.map((sub) => <SubjectPill key={sub} label={sub} />)
-                    : <span className="text-slate-400 text-xs">—</span>}
-                </div>
-              </TableCell> */}
+              <TableCell className="text-slate-600">{s.departmentName || "—"}</TableCell>
               <TableCell>
                 <StatusBadge status={s.status} />
               </TableCell>

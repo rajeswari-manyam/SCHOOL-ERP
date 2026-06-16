@@ -2,58 +2,84 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Shield, GraduationCap, ChevronLeft, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  RefreshCw,
+  Shield,
+  GraduationCap,
+  ChevronLeft,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 
-import { verifyOtp } from "../api/auth.api";
-import { sendOtp }   from "../api/auth.api";
+import { verifyOtp, sendOtp, getUserById } from "@/services/auth.api";
 import { useAuthStore, USER_TYPE_ROUTE_MAP } from "@/store/authStore";
-import type { UserType } from "../types/auth.types";
+import type { UserType, AuthUser } from "../types/auth.types";
 
-// ── Role → visual theming ─────────────────────────────────────────────────────
-const ROLE_VISUAL: Record<string, { label: string; accent: string; light: string; dark: string }> = {
-  Teacher:     { label: "Teacher Portal",    accent: "bg-emerald-500", light: "bg-emerald-50", dark: "text-emerald-700" },
-  SuperAdmin:  { label: "Super Admin",       accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
-  Admin:       { label: "Admin Portal",      accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
-  Accountant:  { label: "Accounts Portal",   accent: "bg-amber-500",   light: "bg-amber-50",   dark: "text-amber-700"  },
-  Parent:      { label: "Parent Portal",     accent: "bg-rose-500",    light: "bg-rose-50",    dark: "text-rose-700"   },
-  Student:     { label: "Student Portal",    accent: "bg-violet-500",  light: "bg-violet-50",  dark: "text-violet-700" },
+// ── Role → visual theming ──────────────────────────────────────────────────────
+const ROLE_VISUAL: Record<
+  string,
+  { label: string; accent: string; light: string; dark: string }
+> = {
+  Teacher:    { label: "Teacher Portal",  accent: "bg-emerald-500", light: "bg-emerald-50", dark: "text-emerald-700" },
+  SuperAdmin: { label: "Super Admin",     accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
+  Admin:      { label: "Admin Portal",    accent: "bg-indigo-600",  light: "bg-indigo-50",  dark: "text-indigo-700" },
+  Accountant: { label: "Accounts Portal", accent: "bg-amber-500",   light: "bg-amber-50",   dark: "text-amber-700"  },
+  Parent:     { label: "Parent Portal",   accent: "bg-rose-500",    light: "bg-rose-50",    dark: "text-rose-700"   },
+  Student:    { label: "Student Portal",  accent: "bg-violet-500",  light: "bg-violet-50",  dark: "text-violet-700" },
 };
 
 const RESEND_COUNTDOWN = 45;
 
 const OtpPage = () => {
   const navigate = useNavigate();
-  const login    = useAuthStore((s) => s.login);
+  const setAuth        = useAuthStore((s) => s.setAuth);
+  const setUserProfile = useAuthStore((s) => s.setUserProfile);
 
-  // ── Read saved data from localStorage (written by LoginPage after sendOtp) ─
+  // ── Read meta saved by LoginPage after sendOtp ──────────────────────────────
   const phone       = localStorage.getItem("phone")      ?? "";
   const schoolcode  = localStorage.getItem("schoolcode") ?? "";
   const rawUserType = localStorage.getItem("userType")   ?? "Teacher";
   const devOtp      = localStorage.getItem("otp")        ?? "";
 
-  const visual = ROLE_VISUAL[rawUserType] ?? ROLE_VISUAL["Teacher"];
+  const normalizedUserType =
+    rawUserType.charAt(0).toUpperCase() + rawUserType.slice(1).toLowerCase();
+  const visual = ROLE_VISUAL[normalizedUserType] ?? ROLE_VISUAL["Teacher"];
 
-  // ── Guard: if no phone saved, send back to login ──────────────────────────
+  // ── Guard: no phone → back to login ────────────────────────────────────────
   useEffect(() => {
     if (!phone) navigate("/login", { replace: true });
   }, [phone, navigate]);
 
-  // ── OTP state ─────────────────────────────────────────────────────────────
-  const [otp,       setOtp]       = useState(devOtp);
+  // Log OTP in dev (never auto-fill)
+  if (import.meta.env.DEV && devOtp) {
+    console.log(
+      "%c🔑 DEV OTP:",
+      "font-size:16px; font-weight:bold; color:#d97706;",
+      devOtp
+    );
+  }
+
+  // ── State ───────────────────────────────────────────────────────────────────
+  const [otp,       setOtp]       = useState("");
   const [error,     setError]     = useState("");
   const [loading,   setLoading]   = useState(false);
   const [timer,     setTimer]     = useState(RESEND_COUNTDOWN);
   const [canResend, setCanResend] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Countdown timer ───────────────────────────────────────────────────────
+  // ── Countdown ───────────────────────────────────────────────────────────────
   const startTimer = useCallback(() => {
     setCanResend(false);
     setTimer(RESEND_COUNTDOWN);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimer((t) => {
-        if (t <= 1) { clearInterval(timerRef.current!); setCanResend(true); return 0; }
+        if (t <= 1) {
+          clearInterval(timerRef.current!);
+          setCanResend(true);
+          return 0;
+        }
         return t - 1;
       });
     }, 1000);
@@ -61,18 +87,24 @@ const OtpPage = () => {
 
   useEffect(() => {
     startTimer();
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [startTimer]);
 
-  // ── Resend OTP ────────────────────────────────────────────────────────────
+  // ── Resend OTP ──────────────────────────────────────────────────────────────
   const handleResend = async () => {
     if (!canResend) return;
     try {
-      setOtp(""); setError("");
+      setOtp("");
+      setError("");
       const res = await sendOtp({ schoolcode, phone });
       if (import.meta.env.DEV && res.otp) {
-        localStorage.setItem("otp", res.otp);
-        setOtp(res.otp);
+        console.log(
+          "%c🔑 DEV OTP (resent):",
+          "font-size:16px; font-weight:bold; color:#d97706;",
+          res.otp
+        );
       }
       toast.success("OTP resent successfully!");
       startTimer();
@@ -81,152 +113,132 @@ const OtpPage = () => {
     }
   };
 
-  // ── Verify OTP ────────────────────────────────────────────────────────────
-const handleVerifyOtp = async (otpToVerify = otp) => {
-  if (otpToVerify.length !== 6) {
-    setError("Please enter all 6 digits");
-    return;
-  }
+  // ── Verify OTP ──────────────────────────────────────────────────────────────
+  const handleVerifyOtp = async (otpToVerify = otp) => {
+    if (otpToVerify.length !== 6) {
+      setError("Please enter all 6 digits");
+      return;
+    }
 
-  setError("");
-  setLoading(true);
+    setError("");
+    setLoading(true);
 
-  try {
-    const payload = {
-      schoolcode,
-      phone,
-      otp: otpToVerify,
-    };
+    try {
+      // ── Step 1: verify OTP ───────────────────────────────────────────────
+      const response = await verifyOtp({ schoolcode, phone, otp: otpToVerify });
 
-    console.log("VERIFY OTP PAYLOAD →", payload);
+      if (!response?.status) {
+        setError(response?.message ?? "Invalid OTP");
+        toast.error(response?.message ?? "OTP Verification Failed");
+        return;
+      }
 
-   const response = await verifyOtp(payload);
+      const token  = response.token ?? `token-${Date.now()}`;
+      const userId = response.userId ?? response.user?.id ?? response.data?.id ?? "";
 
-console.log("VERIFY OTP RESPONSE →", response);
+      // ── Step 2: commit token to Zustand IMMEDIATELY ───────────────────────
+      // The axios interceptor reads useAuthStore.getState().token — NOT
+      // localStorage directly.  setAuth must run before getUserById so the
+      // Bearer header is present on that request.
+      const initialUser: AuthUser = {
+        id:          userId,
+        name:        response.name ?? "User",
+        phone:       phone,
+        email:       response.email,
+        userType:    rawUserType as UserType,
+        schoolcode:  schoolcode,
+        role:        response.role,
+        permissions: response.permissions,
+      };
+      setAuth(initialUser, token);
+      localStorage.setItem("userId", userId);
 
-const parentId =
-  response.userId ||
-  response.user?.id ||
-  response.data?.id;
-
-if (parentId) {
-  localStorage.setItem("parentId", parentId);
-  localStorage.setItem("userId", parentId);
-
-  console.log("Saved parentId:", parentId);
-}
-
-  if (response?.status === true) {
-  console.log("USER TYPE →", rawUserType);
-
-  const parentId =
-    response.userId ||
-    response.user?.id ||
-    response.data?.id;
-
-  console.log("Extracted Parent ID:", parentId);
-
-  if (parentId) {
-    localStorage.setItem("parentId", String(parentId));
-    localStorage.setItem("userId", String(parentId));
-
-    console.log(
-      "Saved Parent ID:",
-      localStorage.getItem("parentId")
-    );
-  }
-
-  if (rawUserType?.toLowerCase() === "parent") {
-    console.log("Parent Login Detected");
-  }
-      const userPayload =
-        response.user ??
-        (response.data
-          ? {
-              id: response.data.id,
-              name: `${response.data.first_name ?? ""} ${
-                response.data.last_name ?? ""
-              }`.trim(),
-              userType: rawUserType as UserType,
-              schoolcode: response.data.school_code,
-            }
-          : {
-              id: response.userId,
-              userType: rawUserType as UserType,
-            });
-console.log("OTP Response:", response);
-      login(
-        response.token ?? `token-${Date.now()}`,
-        userPayload,
-        rawUserType
-      );
+      // ── Step 3: enrich profile via getUserById (token is now in Zustand) ──
+      try {
+        const userProfile = await getUserById(userId);
+        if (userProfile?.status) setUserProfile(userProfile);
+      } catch {
+        // Non-fatal — proceed with the name/role already from OTP response
+      }
 
       toast.success("OTP Verified Successfully!");
-
-      const route =
-        USER_TYPE_ROUTE_MAP[rawUserType] ??
-        "/teacher/dashboard";
-
-      console.log("NAVIGATING TO →", route);
-
+      const route = USER_TYPE_ROUTE_MAP[rawUserType] ?? "/login";
       navigate(route, { replace: true });
-    } else {
-      setError(response?.message ?? "Invalid OTP");
-      toast.error(response?.message ?? "OTP Verification Failed");
+
+    } catch (err: unknown) {
+      console.error("OTP Verify Error:", err);
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "OTP Verification Failed";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    console.error("OTP Verify Error:", err);
+  };
 
-    const msg =
-      err?.response?.data?.message ||
-      "OTP Verification Failed";
-
-    setError(msg);
-    toast.error(msg);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // ── 6-box OTP input helpers ───────────────────────────────────────────────
+  // ── 6-box OTP input ─────────────────────────────────────────────────────────
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
   const vals   = otp.padEnd(6, "").split("").slice(0, 6);
 
   const handleBoxChange = (idx: number, raw: string) => {
     const char = raw.replace(/\D/g, "").slice(-1);
-    const next = [...vals]; next[idx] = char;
+    const next = [...vals];
+    next[idx] = char;
     const newOtp = next.join("").trimEnd();
-    setOtp(newOtp); setError("");
+    setOtp(newOtp);
+    setError("");
     if (char && idx < 5) inputs.current[idx + 1]?.focus();
     if (newOtp.length === 6) setTimeout(() => handleVerifyOtp(newOtp), 200);
   };
 
-  const handleBoxKey = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleBoxKey = (
+    idx: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === "Backspace") {
-      if (vals[idx]) { const n = [...vals]; n[idx] = ""; setOtp(n.join("").trimEnd()); }
-      else if (idx > 0) { const n = [...vals]; n[idx-1] = ""; setOtp(n.join("").trimEnd()); inputs.current[idx-1]?.focus(); }
-    } else if (e.key === "ArrowLeft"  && idx > 0) inputs.current[idx-1]?.focus();
-    else if   (e.key === "ArrowRight" && idx < 5) inputs.current[idx+1]?.focus();
+      if (vals[idx]) {
+        const n = [...vals];
+        n[idx] = "";
+        setOtp(n.join("").trimEnd());
+      } else if (idx > 0) {
+        const n = [...vals];
+        n[idx - 1] = "";
+        setOtp(n.join("").trimEnd());
+        inputs.current[idx - 1]?.focus();
+      }
+    } else if (e.key === "ArrowLeft"  && idx > 0) inputs.current[idx - 1]?.focus();
+    else if   (e.key === "ArrowRight" && idx < 5) inputs.current[idx + 1]?.focus();
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
     setOtp(pasted);
     inputs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex bg-white">
 
       {/* ── Left: OTP panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 sm:px-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 xs:px-6 py-8 sm:py-12 sm:px-10">
         <div className="w-full max-w-md">
 
           {/* Back */}
-          <button type="button" onClick={() => navigate("/login")}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-8 group">
-            <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-8 group"
+          >
+            <ChevronLeft
+              size={16}
+              className="group-hover:-translate-x-0.5 transition-transform"
+            />
             Back to login
           </button>
 
@@ -242,27 +254,34 @@ console.log("OTP Response:", response);
 
           {/* Role badge + heading */}
           <div className="mb-8">
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${visual.light} ${visual.dark} text-xs font-semibold mb-3 border border-current/10`}>
-              <Sparkles size={11} />{visual.label}
+            <div
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${visual.light} ${visual.dark} text-xs font-semibold mb-3 border border-current/10`}
+            >
+              <Sparkles size={11} />
+              {visual.label}
             </div>
             <h1 className="text-2xl font-bold text-slate-900">OTP Verification</h1>
-            <p className="text-sm text-slate-500 mt-1">A 6-digit code has been sent to your number</p>
+            <p className="text-sm text-slate-500 mt-1">
+              A 6-digit code has been sent to your number
+            </p>
           </div>
 
-          {/* Phone + change */}
-          <div className="flex items-center justify-between text-sm mb-5">
+          {/* Phone + role badge */}
+          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 text-sm mb-5">
             <p className="text-slate-600">
-              OTP sent to <span className="font-semibold text-slate-800">+91 {phone}</span>
+              OTP sent to{" "}
+              <span className="font-semibold text-slate-800">+91 {phone}</span>
             </p>
-            <div className="inline-flex items-center gap-1 text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full font-semibold">
-              <CheckCircle2 size={11} />{rawUserType}
+            <div className="inline-flex items-center gap-1 text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full font-semibold w-fit">
+              <CheckCircle2 size={11} />
+              {rawUserType}
             </div>
           </div>
 
           {/* 6-box OTP input */}
           <div className="space-y-2 mb-6">
             <div
-              className="flex justify-center gap-2 sm:gap-3"
+              className="flex justify-center gap-1.5 xs:gap-2 sm:gap-3"
               onPaste={handlePaste}
               role="group"
               aria-label="OTP input"
@@ -286,7 +305,7 @@ console.log("OTP Response:", response);
                     onChange={(e) => handleBoxChange(i, e.target.value)}
                     onKeyDown={(e) => handleBoxKey(i, e)}
                     onFocus={(e) => e.target.select()}
-                    className={`w-11 sm:w-13 h-12 sm:h-14 rounded-xl border-2 text-center text-xl font-bold outline-none transition-all duration-200 caret-transparent focus:scale-105 ${cls}`}
+                    className={`w-11 xs:w-12 sm:w-13 h-12 sm:h-14 rounded-xl border-2 text-center text-lg xs:text-xl font-bold outline-none transition-all duration-200 caret-transparent focus:scale-105 ${cls}`}
                   />
                 );
               })}
@@ -299,13 +318,20 @@ console.log("OTP Response:", response);
           {/* Resend timer */}
           <div className="text-center mb-5">
             {canResend ? (
-              <button type="button" onClick={handleResend}
-                className="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors">
-                <RefreshCw size={13} />Resend OTP
+              <button
+                type="button"
+                onClick={handleResend}
+                className="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors"
+              >
+                <RefreshCw size={13} />
+                Resend OTP
               </button>
             ) : (
               <p className="text-xs text-slate-400">
-                Resend OTP in <span className="font-semibold text-slate-600 tabular-nums">00:{String(timer).padStart(2,"0")}</span>
+                Resend OTP in{" "}
+                <span className="font-semibold text-slate-600 tabular-nums">
+                  00:{String(timer).padStart(2, "0")}
+                </span>
               </p>
             )}
           </div>
@@ -317,20 +343,24 @@ console.log("OTP Response:", response);
             disabled={loading || otp.length !== 6}
             className="w-full h-12 flex items-center justify-center gap-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-200"
           >
-            {loading
-              ? <><Loader2 size={16} className="animate-spin" />Verifying…</>
-              : "Verify & Continue"
-            }
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Verifying…
+              </>
+            ) : (
+              "Verify & Continue"
+            )}
           </button>
 
-          {/* Dev: click-to-fill OTP */}
+          {/* Dev OTP hint */}
           {import.meta.env.DEV && devOtp && (
             <p className="text-xs text-center text-slate-400 bg-amber-50 rounded-lg px-3 py-2 border border-dashed border-amber-200 mt-4">
-              Dev OTP from API:{" "}
-              <button type="button" className="font-bold font-mono text-amber-700 hover:underline"
-                onClick={() => { setOtp(devOtp); }}>
-                {devOtp}
-              </button>{" "}(click to fill)
+              🔑 Dev OTP logged to console — open{" "}
+              <kbd className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 font-mono">
+                F12
+              </kbd>{" "}
+              to view
             </p>
           )}
 
@@ -344,24 +374,46 @@ console.log("OTP Response:", response);
       {/* ── Right: Dark accent panel ── */}
       <div className="hidden lg:flex w-[480px] xl:w-[520px] items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="absolute inset-0 pointer-events-none">
-          <div className={`absolute -top-20 -right-20 w-80 h-80 rounded-full ${visual.accent} opacity-15 blur-3xl`} />
-          <div className={`absolute -bottom-20 -left-20 w-64 h-64 rounded-full ${visual.accent} opacity-10 blur-2xl`} />
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+          <div
+            className={`absolute -top-20 -right-20 w-80 h-80 rounded-full ${visual.accent} opacity-15 blur-3xl`}
+          />
+          <div
+            className={`absolute -bottom-20 -left-20 w-64 h-64 rounded-full ${visual.accent} opacity-10 blur-2xl`}
+          />
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
         </div>
         <div className="relative text-center px-12">
           <div className="flex justify-center gap-2 mb-10">
-            {["●","●","●","●","●","●"].map((dot, i) => (
-              <div key={i} className={`w-10 h-12 rounded-lg flex items-center justify-center text-xl font-bold border-2 transition-all duration-300 ${i < 3 ? `${visual.accent} border-transparent text-white shadow-lg` : "border-white/20 bg-white/5 text-white/20"}`}>
+            {["●", "●", "●", "●", "●", "●"].map((dot, i) => (
+              <div
+                key={i}
+                className={`w-10 h-12 rounded-lg flex items-center justify-center text-xl font-bold border-2 transition-all duration-300 ${
+                  i < 3
+                    ? `${visual.accent} border-transparent text-white shadow-lg`
+                    : "border-white/20 bg-white/5 text-white/20"
+                }`}
+              >
                 {i < 3 ? dot : "–"}
               </div>
             ))}
           </div>
-          <h3 className="text-2xl font-bold text-white mb-3">Verify your identity</h3>
+          <h3 className="text-2xl font-bold text-white mb-3">
+            Verify your identity
+          </h3>
           <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-            Enter the one-time password sent to your registered mobile number to continue.
+            Enter the one-time password sent to your registered mobile number to
+            continue.
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 text-slate-500 text-xs">
-            <Shield size={11} /><span>Valid for 10 minutes · Do not share</span>
+            <Shield size={11} />
+            <span>Valid for 10 minutes · Do not share</span>
           </div>
         </div>
       </div>

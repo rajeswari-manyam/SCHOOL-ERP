@@ -1,163 +1,190 @@
 // teacher/attendance/api/attendance.api.ts
 import axios from "@/config/axios";
+import { createAttendance } from "../../../../services/attendance.api";
 import type {
   TodayAttendance,
   AttendanceHistoryEntry,
   MarkAttendancePayload,
   CorrectionRequestPayload,
   CorrectionRequest,
-  TodayAttendanceSummaryItem,
 } from "../types/attendance.types";
 
-// ── Extract / transform helpers for /tenant/getteachertodayattendancesummary ──
+// ── Types matching /tenant/getteachertodayattendancesummary response ──────────
 
-const extractTodaySummary = (raw: unknown): TodayAttendanceSummaryItem | null => {
-  if (!raw || typeof raw !== "object") return null;
+interface RawSummarySection {
+  class_id: string;
+  class_name: string;
+  section_id: string;
+  section_name: string;
+  teacher_id: string;
+  teacher_name: string;
+  total_strength: number;
+  marked_time: string;
+  students: Array<{
+    student_id: string;
+    student_name: string;
+    roll_number: string;
+    marked_time: string;
+    status?: string;
+  }>;
+  absent_students: Array<{
+    student_id: string;
+    student_name: string;
+    roll_number: string;
+    marked_time: string;
+    status?: string;
+  }>;
+  // ✅ The real API response uses a nested summary object — not flat count fields
+  summary: {
+    total_strength: number;
+    present_count: number;
+    absent_count: number;
+    halfday_count: number;
+  };
+}
 
-  const obj = raw as Record<string, unknown>;
+interface RawSummaryDay {
+  attendance_date: string;
+  total_sections: number;
+  sections: RawSummarySection[];
+}
 
-  // { data: { ... } }
-  const inner =
-    obj?.data && typeof obj.data === "object" && !Array.isArray(obj.data)
-      ? (obj.data as Record<string, unknown>)
-      : null;
+interface RawSummaryResponse {
+  status: boolean;
+  teacher_id: string;
+  from_date: string;
+  to_date: string;
+  total_days: number;
+  data: RawSummaryDay[];
+}
 
-  const source = inner ?? obj;
+// ── Transform: pick today's entry from the response array ────────────────────
 
-  // Must have at least totalStudents / date to be valid
-  if (!source?.totalStudents && !source?.date) return null;
+const transformSummaryResponse = (raw: RawSummaryResponse): TodayAttendance => {
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Find today's day entry; fallback to most recent
+  const dayEntry =
+    raw.data.find((d) => d.attendance_date === todayStr) ?? raw.data[0] ?? null;
+
+  if (!dayEntry || dayEntry.sections.length === 0) {
+    return {
+      isMarked: false,
+      totalStudents: 0,
+      classLabel: "—",
+      date: todayStr,
+      absentStudents: [],
+    };
+  }
+
+  const sections = dayEntry.sections;
+
+  // ✅ Use summary.present_count / absent_count / halfday_count from each section
+  const totalStudents = sections.reduce((s, sec) => s + (sec.summary?.total_strength ?? sec.total_strength ?? 0), 0);
+  const presentCount  = sections.reduce((s, sec) => s + (sec.summary?.present_count  ?? 0), 0);
+  const absentCount   = sections.reduce((s, sec) => s + (sec.summary?.absent_count   ?? 0), 0);
+  const halfDayCount  = sections.reduce((s, sec) => s + (sec.summary?.halfday_count  ?? 0), 0);
+
+  // ✅ Build a smart class label
+  // If all sections belong to the same class → "4th-C"
+  // If multiple classes → "4th, 5 (2 sections)"
+  const uniqueClasses = [...new Set(sections.map((s) => s.class_name))];
+  const classLabel =
+    sections.length === 1
+      ? `${sections[0].class_name}-${sections[0].section_name}`
+      : uniqueClasses.length === 1
+      ? `${uniqueClasses[0]} (${sections.length} sections)`
+      : `${uniqueClasses.join(", ")} (${sections.length} sections)`;
+
+  // Use the first section for meta (class id, marked time)
+  const firstSec = sections[0];
+
+  // ✅ Flatten absent students across ALL sections
+  const absentStudents: TodayAttendance["absentStudents"] = sections.flatMap((sec) =>
+    sec.absent_students.map((s) => ({
+      student: {
+        id: s.student_id,
+        name: s.student_name,
+        rollNo: s.roll_number,
+        waNumber: "",
+      },
+      alertSent: false,
+      alertSentAt: undefined,
+    }))
+  );
 
   return {
-    totalStudents: Number(source.totalStudents) || 0,
-    presentCount: source.presentCount != null ? Number(source.presentCount) : undefined,
-    absentCount: source.absentCount != null ? Number(source.absentCount) : undefined,
-    halfDayCount: source.halfDayCount != null ? Number(source.halfDayCount) : undefined,
-    isMarked: Boolean(source.isMarked),
-    markedAt: source.markedAt as string | undefined,
-    method: source.method as string | undefined,
-    date: (source.date as string) ?? new Date().toISOString().slice(0, 10),
-    className: source.className as string | undefined,
-    sectionName: source.sectionName as string | undefined,
-    absentStudents: Array.isArray(source.absentStudents)
-      ? source.absentStudents.map((s: unknown) => {
-          const st = s as Record<string, unknown>;
-          return {
-            id: (st.id as string) ?? "",
-            name: (st.name as string) ?? "",
-            rollNo: (st.rollNo as string) ?? "",
-            waNumber: (st.waNumber as string) ?? "",
-            alertSent: Boolean(st.alertSent),
-            alertSentAt: st.alertSentAt as string | undefined,
-          };
-        })
-      : [],
+    isMarked: true,
+    markedAt: firstSec.marked_time,
+    method: "web",
+    presentCount,
+    absentCount,
+    halfDayCount,
+    totalStudents,
+    classLabel,
+    classId: firstSec.class_id,
+    sectionId: firstSec.section_id,
+    date: dayEntry.attendance_date,
+    absentStudents,
   };
 };
 
-const transformSummaryToToday = (item: TodayAttendanceSummaryItem): TodayAttendance => ({
-  isMarked: item.isMarked,
-  markedAt: item.markedAt,
-  method: (item.method === "whatsapp" || item.method === "web") ? item.method : undefined,
-  presentCount: item.presentCount,
-  absentCount: item.absentCount,
-  halfDayCount: item.halfDayCount,
-  totalStudents: item.totalStudents,
-  classLabel: [item.className, item.sectionName].filter(Boolean).join("-"),
-  date: item.date,
-  absentStudents: (item.absentStudents ?? []).map((s) => ({
-    student: { id: s.id, name: s.name, rollNo: s.rollNo, waNumber: s.waNumber },
-    alertSent: s.alertSent,
-    alertSentAt: s.alertSentAt,
-  })),
+// ── Empty fallback ────────────────────────────────────────────────────────────
+
+const emptyToday = (): TodayAttendance => ({
+  isMarked: false,
+  totalStudents: 0,
+  classLabel: "—",
+  date: new Date().toISOString().slice(0, 10),
+  absentStudents: [],
 });
 
 export const attendanceApi = {
-  // ── Today ─────────────────────────────────────────────────────────────────
-  getToday: async (): Promise<TodayAttendance> => {
-    const { data } = await axios.get("/teacher/attendance/today");
-    return data;
-  },
-
+  // ── Today Summary (new endpoint) ───────────────────────────────────────────
   getTodayAttendanceSummary: async (teacherId: string): Promise<TodayAttendance> => {
     const url = "/tenant/getteachertodayattendancesummary";
-    console.log("📥 getTodayAttendanceSummary request:", { url, teacherId });
+    console.log("📥 getTodayAttendanceSummary →", { url, teacherId });
 
     try {
-      const response = await axios.get<unknown>(url, {
+      const { data: raw } = await axios.get<RawSummaryResponse>(url, {
         params: { teacher_id: teacherId },
       });
-      const { data: raw, status: httpStatus } = response;
 
-      console.log("📥 getTodayAttendanceSummary raw response:", {
-        httpStatus,
-        keys: typeof raw === "object" && raw ? Object.keys(raw as Record<string, unknown>) : typeof raw,
-        data: JSON.stringify(raw),
-      });
+      console.log("📥 raw response:", JSON.stringify(raw));
 
-      // Handle status:false as not-marked, not error
-      if (raw && typeof raw === "object") {
-        const obj = raw as Record<string, unknown>;
-        if (obj?.status === false) {
-          console.log("ℹ️ getTodayAttendanceSummary: status:false —", (obj?.message as string) ?? "");
-          return {
-            isMarked: false,
-            totalStudents: 0,
-            classLabel: "—",
-            date: new Date().toISOString().slice(0, 10),
-            absentStudents: [],
-          };
-        }
+      if (!raw?.status) {
+        console.log("ℹ️ status:false — no attendance data");
+        return emptyToday();
       }
 
-      const item = extractTodaySummary(raw);
-      if (item) {
-        console.log("✅ getTodayAttendanceSummary: received summary");
-        return transformSummaryToToday(item);
+      if (!Array.isArray(raw.data) || raw.data.length === 0) {
+        console.warn("⚠️ empty data array");
+        return emptyToday();
       }
 
-      console.warn("⚠️ getTodayAttendanceSummary: no summary extracted — response keys:",
-        typeof raw === "object" && raw ? Object.keys(raw as Record<string, unknown>) : typeof raw);
-      return {
-        isMarked: false,
-        totalStudents: 0,
-        classLabel: "—",
-        date: new Date().toISOString().slice(0, 10),
-        absentStudents: [],
-      };
+      return transformSummaryResponse(raw);
     } catch (err: unknown) {
-      const errObj = err as { response?: { status?: number; data?: unknown }; message?: string; code?: string };
+      const errObj = err as { response?: { status?: number; data?: unknown }; message?: string };
       const statusCode = errObj?.response?.status;
-      const respData = errObj?.response?.data;
-      const responseBody = respData ? JSON.stringify(respData) : "—";
-      const errMsg = errObj?.message ?? "Unknown error";
+      const respData   = errObj?.response?.data as Record<string, unknown> | undefined;
 
-      // 404 with status:false = no data, return unmarked
-      const isNoData =
-        statusCode === 404 &&
-        respData && typeof respData === "object" &&
-        (respData as Record<string, unknown>)?.status === false;
-
-      if (isNoData) {
-        console.log("ℹ️ getTodayAttendanceSummary: 404 with status:false — no attendance summary");
-        return {
-          isMarked: false,
-          totalStudents: 0,
-          classLabel: "—",
-          date: new Date().toISOString().slice(0, 10),
-          absentStudents: [],
-        };
+      // 404 with status:false → no data, not an error
+      if (statusCode === 404 && respData?.status === false) {
+        console.log("ℹ️ 404 + status:false — no attendance summary");
+        return emptyToday();
       }
 
       console.error("❌ getTodayAttendanceSummary failed", {
-        url, teacherId,
-        status: statusCode,
-        responseData: responseBody,
-        message: errMsg,
-        code: errObj?.code,
+        url, teacherId, status: statusCode, message: errObj?.message,
       });
-
-      throw new Error(`Attendance summary error (${statusCode ?? "network"}): ${errMsg}`);
+      throw new Error(`Attendance summary error (${statusCode ?? "network"}): ${errObj?.message}`);
     }
+  },
+
+  // ── Legacy today (kept for fallback) ──────────────────────────────────────
+  getToday: async (): Promise<TodayAttendance> => {
+    const { data } = await axios.get("/teacher/attendance/today");
+    return data;
   },
 
   getStudents: async (): Promise<{ id: string; name: string; rollNo: string; waNumber: string }[]> => {
@@ -165,12 +192,29 @@ export const attendanceApi = {
     return data;
   },
 
-  markViaWeb: async (payload: MarkAttendancePayload): Promise<void> => {
-    await axios.post("/teacher/attendance/mark", payload);
+  markViaWeb: async (payload: MarkAttendancePayload): Promise<{ alreadyMarked?: string[] }> => {
+    const result = await createAttendance({
+      class_id: payload.classId,
+      section_id: payload.sectionId,
+      teacher_id: payload.teacherId,
+      academicYearId: payload.academicYearId,
+      date: payload.date,
+      attendance: payload.records.map((r) => ({
+        studentId: r.studentId,
+        status: r.status === "ABSENT" ? ("absent" as const) : ("present" as const),
+      })),
+    });
+
+    const raw = result as unknown as { errors?: { data?: { studentId?: string }; error?: string }[] };
+    const alreadyMarked: string[] = (raw?.errors ?? [])
+      .filter((e) => e?.error?.toLowerCase().includes("already marked"))
+      .map((e) => e?.data?.studentId ?? "");
+
+    return { alreadyMarked };
   },
 
   retryWaAlert: async (studentId: string): Promise<void> => {
-    await axios.post(`/teacher/attendance/alert/retry`, { studentId });
+    await axios.post("/teacher/attendance/alert/retry", { studentId });
   },
 
   // ── History ────────────────────────────────────────────────────────────────
@@ -187,5 +231,40 @@ export const attendanceApi = {
   getMyCorrectionRequests: async (): Promise<CorrectionRequest[]> => {
     const { data } = await axios.get("/teacher/attendance/corrections");
     return data;
+  },
+
+  // ── Teacher attendance summary by date range ───────────────────────────────
+  getTeacherAttendanceSummaryRange: async (
+    teacherId: string,
+    fromDate: string,
+    toDate: string
+  ): Promise<RawSummaryResponse | null> => {
+    const url = "/tenant/getteachertodayattendancesummary";
+    console.log("📥 getTeacherAttendanceSummaryRange →", { teacherId, fromDate, toDate });
+
+    try {
+      const { data: raw } = await axios.get<RawSummaryResponse>(url, {
+        params: { teacher_id: teacherId, from_date: fromDate, to_date: toDate },
+      });
+
+      console.log("📥 range raw response:", JSON.stringify(raw));
+
+      if (!raw?.status || !Array.isArray(raw.data) || raw.data.length === 0) {
+        return null;
+      }
+
+      return raw;
+    } catch (err: unknown) {
+      const errObj = err as { response?: { status?: number; data?: unknown }; message?: string };
+      const statusCode = errObj?.response?.status;
+      const respData   = errObj?.response?.data as Record<string, unknown> | undefined;
+
+      if (statusCode === 404 && respData?.status === false) {
+        return null;
+      }
+
+      console.error("❌ getTeacherAttendanceSummaryRange failed", { teacherId, fromDate, toDate, statusCode });
+      throw new Error(`Attendance range error (${statusCode ?? "network"}): ${(errObj as { message?: string })?.message}`);
+    }
   },
 };

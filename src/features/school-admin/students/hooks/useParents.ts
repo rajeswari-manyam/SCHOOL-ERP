@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { parentsApi } from "../api/parents.api";
+import { parentsApi } from "@/services/school-parents.api";
 import type { CreateParentPayload } from "../types/parent.types";
 
 export const useParents = () => {

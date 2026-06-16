@@ -38,6 +38,9 @@ export interface StaffMember {
 
   leaveRequest?: LeaveRequest;
 
+  departmentId?: string;
+  departmentName?: string;
+
   createdAt?: string;
   updatedAt?: string;
 }
@@ -49,9 +52,9 @@ export interface CreateStaffPayload {
   phone: string;
   emp_number: string;
   qualification: string;
-  department: string;
-  designation: string;
-  monthly_salary: number;
+  department_id?: string;
+  academicYearId?: string;
+  salary?: number;
   date_of_birth: string;
   date_of_join: string;
   school_code: string;
@@ -64,9 +67,8 @@ export interface UpdateStaffPayload {
   phone?: string;
   emp_number?: string;
   qualification?: string;
-  department?: string;
-  designation?: string;
-  monthly_salary?: number;
+  department_id?: string;
+  salary?: number;
   date_of_birth?: string;
   date_of_join?: string;
   role?: string;

@@ -207,11 +207,28 @@ const normalizeStatus = (status?: string): StaffMember["status"] => {
   return "ACTIVE";
 };
 
+const toArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((v) => (typeof v === "object" && v !== null ? String(v.name ?? v.value ?? "") : String(v))).filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return value.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 const normalizeStaffMember = (item: any): StaffMember => {
   const camel = toCamelCase(item);
   const role = normalizeRole(camel.role ?? camel.designation ?? camel.position);
   const status = normalizeStatus(camel.status);
   const isTeaching = /teacher/i.test(camel.role ?? "") || Boolean(camel.isTeaching);
+
+  const classes = toArray(camel.classes);
+  const subjects = toArray(camel.subjects);
+
+  // Fallback to single-string fields if the array fields are empty
+  const classTeacherOf = toArray(camel.classTeacherOf);
+  const subjectTeacherOf = toArray(camel.subjectTeacherOf);
 
   return {
     id: camel.id ?? "",
@@ -227,11 +244,13 @@ const normalizeStaffMember = (item: any): StaffMember => {
     employeeId: camel.empNumber ?? camel.employeeId ?? "",
     phone: camel.phone ?? "",
     email: camel.email ?? "",
-    classes: Array.isArray(camel.classes) ? camel.classes : [],
-    subjects: Array.isArray(camel.subjects) ? camel.subjects : [],
+    classes: classes.length > 0 ? classes : classTeacherOf,
+    subjects: subjects.length > 0 ? subjects : subjectTeacherOf,
     leaveBalance: Number(camel.leaveBalance ?? camel.leavesBalance ?? 0),
     isTeaching,
     leaveRequest: camel.leaveRequest,
+    departmentId: camel.departmentId ?? camel.department?.id ?? "",
+    departmentName: camel.department?.departmentName ?? camel.departmentName ?? "",
     createdAt: camel.createdAt,
     updatedAt: camel.updatedAt,
   };

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { myStudentsApi, getTeacherId } from "../api/my-students.api";
+import { myStudentsApi, getTeacherId } from "@/services/teacher-my-students.api";
 import type { Student, MyStudentsFilters } from "../types/my-students.types";
 
 export const useMyStudents = () => {

@@ -17,8 +17,17 @@ import type {
   ModulePermission,
   AddUserFormData,
   CreateClassPayload,
+  Department,
+  CreateDepartmentPayload,
 } from "../types/settings.types";
-import * as api from "../api/settings.api";
+import * as api from "@/services/school-settings.api";
+import * as deptApi from "@/services/department.api";
+import * as wdApi from "@/services/working-days.api";
+import type { WorkingDayRecord, WorkingDayPayload } from "@/services/working-days.api";
+import * as holidaysApi from "@/services/holidays.api";
+import type { HolidayFromApi, CreateHolidayPayload, UpdateHolidayPayload } from "@/services/holidays.api";
+import * as leaveAllocApi from "@/services/leave-allocation.api";
+import type { LeaveAllocation, CreateLeaveAllocationPayload } from "@/services/leave-allocation.api";
 
 // ─── School Profile ───────────────────────────────────────────────────────────
 
@@ -235,4 +244,182 @@ export function useWhatsApp() {
   );
 
   return { connection, templates, notifications, loading, toggleNotification };
+}
+
+// ─── Departments ──────────────────────────────────────────────────────────────
+
+export function useDepartments() {
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    deptApi.fetchDepartments().then(data => {
+      setDepartments(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const addDepartment = useCallback(async (payload: CreateDepartmentPayload) => {
+    setSaving(true);
+    try {
+      const newDept = await deptApi.createDepartment(payload);
+      setDepartments(prev => [...prev, newDept]);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const editDepartment = useCallback(async (id: string, departmentName: string) => {
+    await deptApi.updateDepartment(id, { departmentName });
+    setDepartments(prev => prev.map(d => d.id === id ? { ...d, departmentName } : d));
+  }, []);
+
+  const removeDepartment = useCallback(async (id: string) => {
+    await deptApi.deleteDepartment(id);
+    setDepartments(prev => prev.filter(d => d.id !== id));
+  }, []);
+
+  return { departments, loading, saving, addDepartment, editDepartment, removeDepartment };
+}
+
+// ─── Working Days ─────────────────────────────────────────────────────────────
+
+export function useWorkingDays() {
+  const [workingDays, setWorkingDays] = useState<WorkingDayRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    wdApi.fetchAllWorkingDays().then(data => {
+      setWorkingDays(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const createWorkingDay = useCallback(async (payload: WorkingDayPayload) => {
+    setSaving(true);
+    try {
+      const record = await wdApi.createWorkingDay(payload);
+      setWorkingDays(prev => [...prev, record]);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const updateWorkingDay = useCallback(async (id: string, payload: Partial<WorkingDayPayload>) => {
+    setSaving(true);
+    try {
+      const record = await wdApi.updateWorkingDay(id, payload);
+      setWorkingDays(prev => prev.map(w => w.id === id ? record : w));
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const removeWorkingDay = useCallback(async (id: string) => {
+    await wdApi.deleteWorkingDay(id);
+    setWorkingDays(prev => prev.filter(w => w.id !== id));
+  }, []);
+
+  return { workingDays, loading, saving, createWorkingDay, updateWorkingDay, removeWorkingDay };
+}
+
+// ─── Leave Allocations ────────────────────────────────────────────────────────
+
+export function useLeaveAllocations() {
+  const [allocations, setAllocations] = useState<LeaveAllocation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    leaveAllocApi.getAllLeaveAllocations()
+      .then(list => setAllocations(list))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const createAllocations = useCallback(async (payload: CreateLeaveAllocationPayload) => {
+    setSaving(true);
+    try {
+      await leaveAllocApi.createLeaveAllocation(payload);
+      const fresh = await leaveAllocApi.getAllLeaveAllocations();
+      setAllocations(fresh);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const updateAllocation = useCallback(async (id: string, payload: { allocated_days?: number; leave_type?: string }) => {
+    setSaving(true);
+    try {
+      await leaveAllocApi.updateLeaveAllocation(id, payload);
+      setAllocations(prev => prev.map(a => a.id === id ? { ...a, ...payload } : a));
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const removeAllocation = useCallback(async (id: string) => {
+    await leaveAllocApi.deleteLeaveAllocation(id);
+    setAllocations(prev => prev.filter(a => a.id !== id));
+  }, []);
+
+  return { allocations, loading, saving, createAllocations, updateAllocation, removeAllocation };
+}
+
+// ─── Holidays ─────────────────────────────────────────────────────────────────
+
+export function useHolidays() {
+  const [holidays, setHolidays] = useState<HolidayFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    holidaysApi.getAllHolidays()
+      .then(res => {
+        let list: HolidayFromApi[] = [];
+        if (Array.isArray(res.data)) list = res.data;
+        else if (res.holidays) list = res.holidays;
+        else if (res.data && typeof res.data === "object" && "holidays" in res.data) {
+          list = (res.data as { holidays: HolidayFromApi[] }).holidays;
+        }
+        setHolidays(list);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const createHoliday = useCallback(async (payload: CreateHolidayPayload) => {
+    setSaving(true);
+    try {
+      const res = await holidaysApi.createHoliday(payload);
+      if (res.data) setHolidays(prev => [...prev, res.data!]);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to create holiday";
+      throw new Error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const updateHoliday = useCallback(async (id: string, payload: UpdateHolidayPayload) => {
+    setSaving(true);
+    try {
+      const res = await holidaysApi.updateHolidayById(id, payload);
+      setHolidays(prev => prev.map(h => h.id === id ? { ...h, ...(res.data ?? payload) } : h));
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to update holiday";
+      throw new Error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const removeHoliday = useCallback(async (id: string) => {
+    await holidaysApi.deleteHolidayById(id);
+    setHolidays(prev => prev.filter(h => h.id !== id));
+  }, []);
+
+  return { holidays, loading, saving, createHoliday, updateHoliday, removeHoliday };
 }

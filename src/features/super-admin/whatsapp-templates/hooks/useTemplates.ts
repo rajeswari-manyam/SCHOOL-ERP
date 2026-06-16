@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { templatesApi } from "../api/templates.api";
+import { templatesApi } from "@/services/whatsapp-templates.api";
 import type { TemplateFilters, TemplateFormValues } from "../types/templates.types";
 
 export const TEMPLATE_KEYS = {

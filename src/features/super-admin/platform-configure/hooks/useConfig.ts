@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { configApi } from "../api/config.api";
+import { configApi } from "@/services/platform-config.api";
 import type {
   DialogConfig,
   RazorpayConfig,

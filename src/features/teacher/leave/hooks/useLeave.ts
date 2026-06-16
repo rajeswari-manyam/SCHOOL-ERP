@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { leaveApi } from "../api/leave.api";
+import { leaveApi } from "@/services/teacher-leave.api";
 import type {
   LeaveBalance,
   LeaveApplication,

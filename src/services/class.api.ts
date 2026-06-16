@@ -11,6 +11,8 @@ export interface ClassRecord {
 
   capacity?: number;
   total_strength?: number;
+  sections_count?: number;
+  class_strength?: number;
 
   description?: string;
   status?: string;
@@ -42,6 +44,23 @@ export const getAllClasses = async (
   const { data } = await api.get<GetAllClassesResponse>(
     `/tenant/getallclasses`,
     { params }
+  );
+  return data;
+};
+
+export interface GetAcademicYearClassesResponse {
+  status: boolean;
+  count: number;
+  totalPages?: number;
+  currentPage?: number;
+  data: ClassRecord[];
+}
+
+export const getAcademicYearClasses = async (
+  academicYearId: string
+): Promise<GetAcademicYearClassesResponse> => {
+  const { data } = await api.get<GetAcademicYearClassesResponse>(
+    `/tenant/getacademicyearclasses/${academicYearId}`
   );
   return data;
 };
@@ -96,16 +115,11 @@ export const getClassById = async (
 export interface SectionRecord {
   id: string;
   sectionName: string;
-  section_name?: string;
-  classId: string;
-  class_name?: string;
-  capacity?: number;
-  total_strength?: number;
-  class_teacher?: string;
-  classteacherid?: string | null;
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  classTeacherId?: string | null;
+  classTeacherName?: string;
+  totalStrength?: number;
+  academicYearId?: string;
+  subjectCount?: number;
 }
 
 export interface GetSectionsByClassIdResponse {
@@ -118,8 +132,7 @@ export const getSectionsByClassId = async (
   classId: string
 ): Promise<GetSectionsByClassIdResponse> => {
   const { data } = await api.get<GetSectionsByClassIdResponse>(
-    `/tenant/getallsections`,
-    { params: { class_id: classId } }   // ← query param, not path param
+    `/tenant/getsectionsbyclassId/${classId}`   // ← path param
   );
   return data;
 };

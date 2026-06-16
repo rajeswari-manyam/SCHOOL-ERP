@@ -12,11 +12,11 @@ interface Props {
   onStatusChange: (v: string) => void;
 }
 
-const ROLES    = ["All Roles", "Class Teacher", "Subject Teacher", "Admin", "Support"];
-const STATUSES = ["All Status", "ACTIVE", "ON_LEAVE", "INACTIVE"];
+const ROLES    = ["Teacher", "Admin", "Support", "Staff"];
+const STATUSES = ["ACTIVE", "ON_LEAVE", "INACTIVE"];
 
-const ROLE_OPTIONS   = ROLES.map(role     => ({ label: role,   value: role }));
-const STATUS_OPTIONS = STATUSES.map(status => ({ label: status, value: status }));
+const ROLE_OPTIONS   = [{ label: "All Roles", value: "" }, ...ROLES.map(role => ({ label: role, value: role }))];
+const STATUS_OPTIONS = [{ label: "All Status", value: "" }, ...STATUSES.map(status => ({ label: status, value: status }))];
 
 export const StaffFilters = ({
   search, roleFilter, statusFilter, onSearch, onRoleChange, onStatusChange,

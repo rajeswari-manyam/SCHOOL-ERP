@@ -30,10 +30,14 @@ interface UIState {
   collapsed: boolean;              // desktop: icon-rail vs full
   theme: "light" | "dark";
   academicYearId: string | null;   // selected academic year ID
+  academicYearName: string | null; // selected academic year display name
+  pageTitle: string | null;        // dynamic title for nested pages (e.g. student name)
   setSidebarOpen: (v: boolean) => void;
   setCollapsed: (v: boolean | ((prev: boolean) => boolean)) => void;
   setTheme: (theme: "light" | "dark") => void;
   setAcademicYearId: (id: string | null) => void;
+  setAcademicYearName: (name: string | null) => void;
+  setPageTitle: (title: string | null) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -41,9 +45,13 @@ export const useUIStore = create<UIState>((set) => ({
   collapsed: false,
   theme: "light",
   academicYearId: null,
+  academicYearName: null,
+  pageTitle: null,
   setSidebarOpen: (v) => set({ sidebarOpen: v }),
   setCollapsed: (v) =>
     set((s) => ({ collapsed: typeof v === "function" ? v(s.collapsed) : v })),
   setTheme: (theme) => set({ theme }),
   setAcademicYearId: (id) => set({ academicYearId: id }),
+  setAcademicYearName: (name) => set({ academicYearName: name }),
+  setPageTitle: (title) => set({ pageTitle: title }),
 }));

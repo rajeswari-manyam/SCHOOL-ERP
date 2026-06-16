@@ -9,6 +9,7 @@ export interface HolidayFromApi {
   type: string;
   note: string;
   school_code: string;
+  academicYearId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,6 +20,7 @@ export interface CreateHolidayPayload {
   type: string;
   note: string;
   school_code: string;
+  academicYearId: string;
 }
 
 export interface UpdateHolidayPayload {
@@ -53,9 +55,7 @@ export const getAllHolidays = async (): Promise<GetAllHolidaysResponse> => {
 export const getHolidayById = async (
   id: string
 ): Promise<HolidayActionResponse> => {
-  const { data } = await api.get(`/tenant/getholidayById/${id}`, {
-    params: { id },
-  });
+  const { data } = await api.get(`/tenant/getholidayById/${id}`);
   return data;
 };
 

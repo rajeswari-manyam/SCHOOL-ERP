@@ -4,7 +4,7 @@ import {
   useQueryClient,
   keepPreviousData,
 } from '@tanstack/react-query';
-import { billingApi } from '../api/billing.api';
+import { billingApi } from '@/services/billing.api';
 import type {
   InstitutionFilters,
   RecordPaymentPayload,

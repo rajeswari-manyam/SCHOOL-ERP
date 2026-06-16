@@ -6,6 +6,7 @@ export type AcademicYearInfo = AcademicYearRecord;
 
 export const useAcademicYears = () => {
   const setStoredAcademicYearId = useUIStore((state) => state.setAcademicYearId);
+  const setStoredAcademicYearName = useUIStore((state) => state.setAcademicYearName);
   const [years, setYears] = useState<AcademicYearInfo[]>([]);
   const [activeYear, setActiveYear] = useState<AcademicYearInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ export const useAcademicYears = () => {
         const nextActive = list.find((year) => year.active) || list[0] || null;
         setActiveYear(nextActive);
         setStoredAcademicYearId(nextActive?.id ?? null);
+        setStoredAcademicYearName(nextActive?.yearName ?? null);
       })
       .catch((err: unknown) => {
         const message = err instanceof Error
@@ -45,6 +47,7 @@ export const useAcademicYears = () => {
   const switchYear = (year: AcademicYearInfo) => {
     setActiveYear(year);
     setStoredAcademicYearId(year.id);
+    setStoredAcademicYearName(year.yearName);
   };
 
   return { years, activeYear, loading, error, switchYear, retry: load };

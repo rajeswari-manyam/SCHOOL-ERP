@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { examMarksApi } from "../api/exam-marks.api";
-import type { GetAllMarksQuery, MarksRecordItem, SubmittedExam, ExamStatus } from "../types/exam-marks.types";
+import { examMarksApi } from "@/services/teacher-exam-marks.api";
+import type {
+  GetAllMarksQuery,
+  MarksRecordItem,
+  SubmittedExam,
+  ExamStatus,
+} from "../types/exam-marks.types";
 
 export const ALL_MARKS_KEYS = {
   all: ["teacher", "all-marks"] as const,
@@ -13,39 +18,51 @@ export function useAllMarks(query: GetAllMarksQuery, enabled: boolean) {
     queryFn: () => examMarksApi.getAllMarks(query),
     staleTime: 1000 * 60 * 2,
     retry: 1,
-    enabled: enabled && Boolean(query.class_id && query.exam_id && query.subject_id && query.section_id),
+    // exam_id is optional — only require class + section + subject
+    enabled: enabled && Boolean(query.class_id && query.section_id && query.subject_id),
   });
 }
 
-export function marksToSubmittedExam(items: MarksRecordItem[], className?: string, subjectName?: string, examType?: string): SubmittedExam[] {
+/**
+ * Maps the /tenant/getallmarks summary records directly to SubmittedExam rows.
+ *
+ * API returns one record per exam:
+ *   { id, examName, academicYear, className, subjectName, examDate,
+ *     marksEntered, totalStudents, averageMarks, completionPercentage, status }
+ *
+ * No grouping needed — each record IS one submitted exam row.
+ */
+export function marksToSubmittedExam(
+  items: MarksRecordItem[],
+  fallbackClassName?: string,
+  fallbackSubject?: string,
+  fallbackExamType?: string,
+): SubmittedExam[] {
   if (!items || items.length === 0) return [];
 
-  const grouped = new Map<string, MarksRecordItem[]>();
-  for (const item of items) {
-    const key = `${item.examId ?? "?"}-${item.subjectName ?? subjectName ?? "?"}`;
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(item);
-  }
-
-  return Array.from(grouped.entries()).map(([key, group], i) => {
-    const appeared = group.filter((m) => !m.isAbsent && m.marksObtained != null);
-    const marksArr = appeared.map((m) => m.marksObtained!);
-    const passArr = marksArr.filter((m) => m >= 40);
-    const total = group.length;
+  return items.map((item) => {
+    const rawStatus = (item.status ?? "SUBMITTED").toUpperCase();
+    const validStatuses: ExamStatus[] = ["DRAFT", "SUBMITTED", "APPROVED", "PUBLISHED"];
+    const status: ExamStatus = validStatuses.includes(rawStatus as ExamStatus)
+      ? (rawStatus as ExamStatus)
+      : "SUBMITTED";
 
     return {
-      id: key,
-      examType: examType ?? "FINAL",
-      examLabel: group[0]?.examName ?? items[0]?.examName ?? `Exam ${i + 1}`,
-      className: className ?? group[0]?.className ?? "",
-      subject: subjectName ?? group[0]?.subjectName ?? "",
-      academicYear: group[0]?.academicYearId ?? "",
-      submittedOn: "",
-      status: "SUBMITTED" as ExamStatus,
-      totalStudents: total,
-      appeared: appeared.length,
-      average: marksArr.length ? Math.round((marksArr.reduce((a, b) => a + b, 0) / marksArr.length) * 10) / 10 : 0,
-      passRate: marksArr.length ? Math.round((passArr.length / marksArr.length) * 100) : 0,
+      id:                   item.id,
+      examType:             fallbackExamType ?? item.examName ?? "",
+      examLabel:            item.examName    ?? "Exam",
+      className:            item.className   ?? fallbackClassName ?? "",
+      subject:              item.subjectName ?? fallbackSubject   ?? "",
+      academicYear:         item.academicYear ?? "",
+      submittedOn:          item.examDate    ?? "",
+      status,
+      totalStudents:        item.totalStudents        ?? 0,
+      appeared:             item.marksEntered         ?? 0,
+      average:              item.averageMarks         ?? 0,
+      // API doesn't return passRate directly — use completionPercentage as proxy,
+      // or 0 if absent. Override once the backend exposes it.
+      passRate:             0,
+      completionPercentage: item.completionPercentage ?? 0,
     };
   });
 }

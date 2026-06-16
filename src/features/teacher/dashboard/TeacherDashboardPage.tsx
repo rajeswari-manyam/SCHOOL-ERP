@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AttendanceBanner from "./components/AttendanceBanner";
+import { AlertCircle } from "lucide-react";
 import TeacherStatCards from "./components/TeacherStatCards";
 import TodayScheduleCard from "./components/TodayScheduleCard";
 import QuickActionsCard from "./components/QuickActionsCard";
@@ -10,11 +10,11 @@ import AssignHomeworkModal from "./components/AssignHomeworkModal";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
 import { useTeacherDashboard, useTeacherLeaveBalance } from "./hooks/useTeacherDashboard";
+import { useTodayAttendanceSummary } from "../attendance/hooks/useAttendance";
 import { useAuthStore } from "../../../store/authStore";
 import { format } from "date-fns";
 
 // ── Mock fallback data ─────────────────────────────────────
-const MOCK_BANNER = { status: "NOT_MARKED" as const, totalStudents: 42 };
 const MOCK_STATS  = { classStrength: 42, homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
 const MOCK_OVERVIEW = {
   monthlyAvgPct: 87,
@@ -36,13 +36,13 @@ const TeacherDashboardPage = () => {
   const staffId = useAuthStore((state) => state.user?.id ?? "");
   const teacherId = localStorage.getItem("teacherStaffId") || staffId;
   const { data } = useTeacherDashboard();
+  const { data: todayAttendance } = useTodayAttendanceSummary(teacherId);
   const { data: leaveBalances = [] } = useTeacherLeaveBalance(staffId);
   const [hwModal,            setHwModal]            = useState(false);
   const [attendanceModal,    setAttendanceModal]    = useState(false);
   const [leaveModal,         setLeaveModal]         = useState(false);
   const [uploadModal,        setUploadModal]        = useState(false);
 
-  const banner   = data?.attendanceBanner ?? MOCK_BANNER;
   const liveLeaveBalance = leaveBalances.reduce((sum, item) => sum + Number(item.remaining ?? 0), 0);
   const stats    = {
     ...(data?.stats ?? MOCK_STATS),
@@ -65,10 +65,44 @@ const TeacherDashboardPage = () => {
         <p className="text-sm text-gray-500">{teacher?.schoolName ?? "School"}</p>
       </div>
 
-      {/* Attendance banner */}
-      <div className="flex flex-col gap-3">
-        <AttendanceBanner banner={banner} />
-      </div>
+      {/* Attendance not-marked banner */}
+      {todayAttendance && !todayAttendance.isMarked && (
+        <div
+          className={[
+            "flex flex-col gap-3 rounded-2xl border border-red-200 dark:border-red-800",
+            "bg-red-50 dark:bg-red-950/40 px-4 py-4 sm:px-5",
+            "sm:flex-row sm:items-center sm:justify-between sm:gap-4",
+          ].join(" ")}
+          role="alert"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
+              <AlertCircle size={14} className="text-red-500 dark:text-red-400" strokeWidth={2.5} aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-700 dark:text-red-300 leading-tight">
+                Attendance Not Marked Yet
+              </p>
+              <p className="text-xs text-red-400 dark:text-red-500 mt-0.5">
+                Mark today's attendance to keep records up to date
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAttendanceModal(true)}
+            className={[
+              "flex w-full items-center justify-center gap-2 sm:w-auto",
+              "rounded-xl bg-red-600 hover:bg-red-700 active:scale-95",
+              "px-5 py-2.5 text-sm font-semibold text-white",
+              "transition-all duration-150 shadow-sm",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2",
+            ].join(" ")}
+          >
+            Mark Attendance
+          </button>
+        </div>
+      )}
 
       {/* Stat cards */}
       <TeacherStatCards

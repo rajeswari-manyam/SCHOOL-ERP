@@ -56,6 +56,7 @@ export interface SubmittedExam {
   appeared: number;
   average: number;
   passRate: number;
+  completionPercentage?: number;
 }
 
 export interface TopStudent {
@@ -149,25 +150,26 @@ export interface GetAllMarksQuery {
   class_id: string;
   section_id: string;
   subject_id: string;
-  exam_id: string;
+  exam_id?: string;  // optional — omit to fetch all exams for the class/section/subject
 }
 
+/**
+ * Shape returned by /tenant/getallmarks — one record per exam (summary row).
+ * e.g. { id, examName, academicYear, className, subjectName, examDate,
+ *         marksEntered, totalStudents, averageMarks, completionPercentage, status }
+ */
 export interface MarksRecordItem {
   id: string;
-  studentId?: string;
-  studentName?: string;
-  rollNo?: string;
-  marksObtained?: number;
-  maxMarks?: number;
-  grade?: string;
-  isAbsent?: boolean;
-  remarks?: string;
-  subjectName?: string;
-  examId?: string;
   examName?: string;
+  academicYear?: string;
   className?: string;
-  sectionName?: string;
-  academicYearId?: string;
+  subjectName?: string;
+  examDate?: string;
+  marksEntered?: number;
+  totalStudents?: number;
+  averageMarks?: number;
+  completionPercentage?: number;
+  status?: string;
 }
 
 export const CLASS_OPTIONS = ["Class 8-A", "Class 8-B", "Class 9-A", "Class 9-B","Class 10-A", "Class 10-B"];
@@ -206,5 +208,3 @@ export interface ClassStudentResultsResponse {
   message?: string;
   data?: StudentResultItem[];
 }
-
-

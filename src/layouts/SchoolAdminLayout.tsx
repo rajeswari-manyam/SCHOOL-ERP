@@ -15,6 +15,9 @@ import {
 import Sidebar from "../components/common/Sidebar";
 import Topbar from "../components/common/Topbar";
 import { useUIStore } from "@/store/uiStore";
+import { useAuthStore } from "@/store/authStore";
+import { getUserById } from "@/services/auth.api";
+import { fetchSchoolProfile } from "@/services/school-settings.api";
 
 // ✅ Breadcrumb labels
 const BreadcrumbLabels: Record<string, string> = {
@@ -44,49 +47,83 @@ const NavItem = [
 ];
 
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const SchoolAdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement | null>(null);
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
-  const collapsed = useUIStore((s) => s.collapsed);
+  const collapsed   = useUIStore((s) => s.collapsed);
+  const pageTitle   = useUIStore((s) => s.pageTitle);
+
+  const user              = useAuthStore((s) => s.user);
+  const setUserProfile    = useAuthStore((s) => s.setUserProfile);
+  const setPrincipalName  = useAuthStore((s) => s.setPrincipalName);
+
+  // Fetch full profile on first load if name was never populated
+  useEffect(() => {
+    const userId = user?.id ?? localStorage.getItem("userId");
+    if (!userId) return;
+    if (user?.name && user.name !== "User") return;
+    getUserById(userId)
+      .then(profile => { if (profile?.status) setUserProfile(profile); })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch school details to get principal name
+  useEffect(() => {
+    if (user?.principalName) return;
+    fetchSchoolProfile()
+      .then(profile => { if (profile.principalName) setPrincipalName(profile.principalName); })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const breadcrumbs = useMemo(() => {
-    const current = BreadcrumbLabels[location.pathname] ?? (
-      location.pathname
-        .split("/")
-        .filter(Boolean)
-        .slice(1)
-        .map((segment) => segment.replace(/[-_]/g, " "))
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(" / ") || "Dashboard"
-    );
+    const segments = location.pathname.split("/").filter(Boolean).slice(1);
+    const isKnown = BreadcrumbLabels[location.pathname];
 
-    if (location.pathname === "/schooladmin/dashboard" || location.pathname === "/schooladmin") {
-      return [{ label: current }];
+    if (isKnown) {
+      return [{ label: isKnown }];
     }
 
-    return [
-      
-      { label: current },
-    ];
-  }, [location.pathname]);
+    const parts = segments.map((seg) =>
+      UUID_RE.test(seg) ? (pageTitle ?? "Profile") : (seg.replace(/[-_]/g, " ").replace(/^\w/, (c) => c.toUpperCase()))
+    );
+
+    const label = parts.join(" / ") || "Dashboard";
+    return [{ label }];
+  }, [location.pathname, pageTitle]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, left: 0 });
   }, [location.pathname]);
 
-  // Responsive left padding for main content
-  let mainPadding = "md:pl-72";
+  // Responsive left padding for main content (matches SIDEBAR_EXPANDED_W = 260px)
+  let mainPadding = "md:pl-[260px]";
   if (!sidebarOpen) mainPadding = "md:pl-0";
   else if (collapsed) mainPadding = "md:pl-16";
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#F4F6FA]">
-      <Sidebar items={NavItem} />
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[#F4F6FA]">
+      <Sidebar
+        items={NavItem}
+        user={{
+          name: user?.principalName?.trim() || (user?.name && user.name !== "User" ? user.name : ""),
+          role: (() => {
+            const ut = user?.userType ?? "";
+            if (ut === "Admin" || ut === "SchoolAdmin") return "Principal";
+            if (ut === "Teacher")    return "Teacher";
+            if (ut === "Accountant") return "Accountant";
+            if (ut === "Parent")     return "Parent";
+            if (ut === "Student")    return "Student";
+            return user?.role?.name ?? "Administrator";
+          })(),
+        }}
+      />
       <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-20">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-12 sm:mt-14">
           <Outlet />
         </main>
       </div>

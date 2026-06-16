@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { examMarksApi } from "../api/exam-marks.api";
+import { examMarksApi } from "@/services/teacher-exam-marks.api";
 import type {
   ClassStudentResultsQuery,
   StudentResultItem,

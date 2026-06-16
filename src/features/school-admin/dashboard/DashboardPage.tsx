@@ -2,16 +2,21 @@ import { motion } from 'framer-motion';
 import { Download, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMemo } from 'react';
-import { useDashboard, useAdmissionsThisWeek, useSchoolTodayAttendance, useAllClassesTodayAttendance, useClassAttendanceStatus, useEnquiriesPipeline, useSendReminders } from './hooks/index';
-import { AlertBanner } from './components/AlertBanner';
-import { StatsGrid } from './components/StatsGrid';
-import { AttendanceTable } from './components/AttendanceTable';
-import { FeesDueSummary } from './components/FeesDueSummary';
+import {
+  useDashboard, useAdmissionsThisWeek, useSchoolTodayAttendance,
+  useAllClassesTodayAttendance, useClassAttendanceStatus,
+  useEnquiriesPipeline, useSendReminders, useActiveAcademicYear,
+} from './hooks/index';
+import { AlertBanner }         from './components/AlertBanner';
+import { StatsGrid }           from './components/StatsGrid';
+import { AttendanceTable }     from './components/AttendanceTable';
+import { FeesDueSummary }      from './components/FeesDueSummary';
 import { WhatsAppActivityFeed } from './components/WhatsAppActivity';
-import { AdmissionsPipeline } from './components/AdmissionsPipeline';
-import { DashboardSkeleton } from './components/DashboardSkeleton';
+import { AdmissionsPipeline }  from './components/AdmissionsPipeline';
+import { DashboardSkeleton }   from './components/DashboardSkeleton';
 import type { AttendanceClass, StatsCard } from './types/index';
-import {Button} from '../../../components/ui/button';
+import { useAuthStore } from '@/store/authStore';
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -26,63 +31,37 @@ function formatDate(): string {
 }
 
 export function DashboardPage() {
-  const { data, isLoading, isError } = useDashboard();
-  const { data: admissionsWeek, isLoading: isAdmissionsLoading } = useAdmissionsThisWeek();
-  const { data: todayAttendance, isLoading: isAttendanceLoading } = useSchoolTodayAttendance();
+  const { user } = useAuthStore();
+  const schoolName    = user?.name?.trim() || 'School';
+  const principalName = user?.principalName?.trim();
+  const greetingName  = principalName || schoolName;
+
+  const { data, isLoading, isError }                                    = useDashboard();
+  const { data: admissionsWeek,  isLoading: isAdmissionsLoading }       = useAdmissionsThisWeek();
+  const { data: todayAttendance, isLoading: isAttendanceLoading }       = useSchoolTodayAttendance();
   const { data: classAttendance = [], isLoading: isClassAttendanceLoading } = useAllClassesTodayAttendance();
-  const { data: classStatus, isLoading: isClassStatusLoading } = useClassAttendanceStatus();
-  const { data: enquiriesPipeline = [], isLoading: isPipelineLoading } = useEnquiriesPipeline();
-  const { mutate: sendReminders, isPending: isSending } = useSendReminders();
+  const { data: classStatus,     isLoading: isClassStatusLoading }      = useClassAttendanceStatus();
+  const { data: enquiriesPipeline = [] }                                = useEnquiriesPipeline();
+  const { data: activeAcademicYear }                                    = useActiveAcademicYear();
+  const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
 
   const stats = useMemo<StatsCard[] | undefined>(() => {
     if (!data?.stats) return undefined;
     return data.stats.map((stat) => {
       if (stat.id === 'admissions') {
-        if (admissionsWeek) {
-          const prefix = admissionsWeek.changeVsLastWeek > 0 ? '+' : '';
-          return {
-            ...stat,
-            value: String(admissionsWeek.total),
-            badge: {
-              text: `${prefix}${admissionsWeek.changeVsLastWeek} vs LW`,
-              variant: admissionsWeek.changeVsLastWeek >= 0 ? 'green' : ('red' as const),
-            },
-            sub: `${admissionsWeek.pendingFollowUp} pending follow-up`,
-          };
-        }
-        return { ...stat, value: '—', badge: undefined, sub: 'No data', action: undefined };
+        if (admissionsWeek) return { ...stat, value: String(admissionsWeek.total), sub: `${admissionsWeek.pendingFollowUp} pending follow-up` };
+        return { ...stat, value: '—', sub: 'No data', action: undefined };
       }
       if (stat.id === 'attendance') {
-        if (todayAttendance) {
-          return {
-            ...stat,
-            value: `${todayAttendance.present}/${todayAttendance.totalStudents}`,
-            badge: {
-              text: `${todayAttendance.percentage}% RATE`,
-              variant: todayAttendance.percentage >= 85 ? 'green' : todayAttendance.percentage >= 70 ? 'orange' : ('red' as const),
-            },
-            sub: `${todayAttendance.absent} absent across ${todayAttendance.classesMarked} classes`,
-          };
-        }
-        return { ...stat, value: '—', badge: undefined, sub: 'No data', action: undefined };
+        if (todayAttendance) return { ...stat, value: `${todayAttendance.present}/${todayAttendance.totalStudents}`, sub: `${todayAttendance.absent} absent across ${todayAttendance.classesMarked} classes` };
+        return { ...stat, value: '—', sub: 'No data', action: undefined };
       }
       if (stat.id === 'classes') {
         if (classStatus) {
           const allMarked = classStatus.pending === 0;
-          return {
-            ...stat,
-            value: `${classStatus.marked}/${classStatus.total}`,
-            badge: {
-              text: allMarked ? 'ALL MARKED' : `● ${classStatus.pending} pending`,
-              variant: allMarked ? 'green' : ('orange' as const),
-            },
-            sub: allMarked
-              ? 'All classes marked today'
-              : `${classStatus.pending} class${classStatus.pending === 1 ? '' : 'es'} pending`,
-            alert: !allMarked,
-          };
+          return { ...stat, value: `${classStatus.marked}/${classStatus.total}`, sub: allMarked ? 'All classes marked today' : `${classStatus.pending} class${classStatus.pending === 1 ? '' : 'es'} pending`, alert: !allMarked };
         }
-        return { ...stat, value: '—', badge: undefined, sub: 'No data', action: undefined, alert: false };
+        return { ...stat, value: '—', sub: 'No data', action: undefined, alert: false };
       }
       return stat;
     });
@@ -90,8 +69,8 @@ export function DashboardPage() {
 
   const loadingStatIds = useMemo(() => {
     const ids = new Set<string>();
-    if (isAdmissionsLoading) ids.add('admissions');
-    if (isAttendanceLoading) ids.add('attendance');
+    if (isAdmissionsLoading)  ids.add('admissions');
+    if (isAttendanceLoading)  ids.add('attendance');
     if (isClassStatusLoading) ids.add('classes');
     return ids.size > 0 ? ids : undefined;
   }, [isAdmissionsLoading, isAttendanceLoading, isClassStatusLoading]);
@@ -101,71 +80,83 @@ export function DashboardPage() {
   if (isError || !data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <p className="text-red-400 font-semibold">Failed to load dashboard data.</p>
-        <button onClick={() => window.location.reload()}
-          className="px-4 py-2 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm font-semibold hover:bg-brand-500/20 transition-colors">
+        <p className="text-red-500 font-semibold text-sm">Failed to load dashboard data.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 text-sm font-semibold hover:bg-indigo-100 transition-colors"
+        >
           Retry
         </button>
       </div>
     );
   }
 
-  // Use dedicated API for class attendance; fall back to dashboard mock data
-  const attendanceClasses = classAttendance.length > 0 ? classAttendance : data.attendanceClasses;
+  const attendanceClasses = (classAttendance.length > 0 ? classAttendance : data.attendanceClasses) ?? [];
 
   const unmarkedClasses = attendanceClasses
     .filter((c: AttendanceClass) => c.status === 'not_marked')
-    .map((c: AttendanceClass) => c.className) ;
+    .map((c: AttendanceClass) => c.className);
 
   const handleSendReminders = () => {
     sendReminders(unmarkedClasses, {
       onSuccess: () => toast.success('WhatsApp reminders sent!', { description: `Sent to teachers of ${unmarkedClasses.join(', ')}` }),
-      onError: ()  => toast.error('Failed to send reminders'),
+      onError:   () => toast.error('Failed to send reminders'),
     });
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-4 sm:space-y-5 pb-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-5 pb-8"
+    >
+      {/* ── Alert ── */}
       {unmarkedClasses.length > 0 && (
         <AlertBanner classes={unmarkedClasses} onSendReminder={handleSendReminders} sending={isSending} />
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
+      {/* ── Page header ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug truncate">
             {getGreeting()},{' '}
-            <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">Ramesh sir</span>
+            <span className="text-indigo-600">{greetingName} sir</span>
           </h1>
-          <p className="text-subtle text-xs sm:text-sm mt-1 sm:mt-0.5 line-clamp-2">
+          <p className="mt-0.5 text-xs sm:text-sm text-gray-500 line-clamp-2">
             Here's what's happening at{' '}
-            <span className="text-brand-400 font-medium">Hanamkonda Public School</span>
+            <span className="font-semibold text-indigo-600">{schoolName}</span>
             {' '}today — {formatDate()}
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 w-full sm:w-auto">
-          <Button className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm disabled:opacity-60">
-            <Download size={14} className="sm:w-4 sm:h-4 w-3 h-3" /> <span className="hidden sm:inline">Download Report</span><span className="sm:hidden">Download</span>
-          </Button>
-          <Button className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
-            <Radio size={14} className="sm:w-4 sm:h-4 w-3 h-3" /> <span className="hidden sm:inline">Send Broadcast</span><span className="sm:hidden">Broadcast</span>
-          </Button>
+
+        <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+          <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-gray-300 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm">
+            <Download size={14} className="shrink-0" />
+            <span className="hidden sm:inline">Download Report</span>
+            <span className="sm:hidden">Download</span>
+          </button>
+          <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+            <Radio size={14} className="shrink-0" />
+            <span className="hidden sm:inline">Send Broadcast</span>
+            <span className="sm:hidden">Broadcast</span>
+          </button>
         </div>
       </div>
 
+      {/* ── Stats ── */}
       <StatsGrid stats={stats ?? data.stats} loadingStatIds={loadingStatIds} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
+      {/* ── Attendance + Fees ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="lg:col-span-3">
           {isClassAttendanceLoading && attendanceClasses.length === 0 ? (
-            <div className="bg-[#f5f6f8] rounded-3xl overflow-hidden shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <div className="animate-pulse space-y-4">
-                <div className="h-6 w-48 rounded bg-gray-200" />
-                <div className="h-8 w-32 rounded bg-gray-200" />
-                <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-12 w-full rounded bg-gray-200" />
-                  ))}
-                </div>
+                <div className="h-5 w-48 rounded-lg bg-gray-100" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-12 w-full rounded-lg bg-gray-100" />
+                ))}
               </div>
             </div>
           ) : (
@@ -173,13 +164,18 @@ export function DashboardPage() {
           )}
         </div>
         <div className="lg:col-span-2">
-          <FeesDueSummary totalOutstanding={data.feeTotalOutstanding} paidPercent={data.feePaidPercent} defaulters={data.feeDefaulters} />
+          <FeesDueSummary
+            totalOutstanding={data.feeTotalOutstanding}
+            paidPercent={data.feePaidPercent}
+            defaulters={data.feeDefaulters}
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+      {/* ── WhatsApp + Admissions ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WhatsAppActivityFeed activities={data.whatsappActivity} />
-        <AdmissionsPipeline pipeline={enquiriesPipeline} />
+        <AdmissionsPipeline pipeline={enquiriesPipeline} academicYearName={activeAcademicYear?.yearName} />
       </div>
     </motion.div>
   );

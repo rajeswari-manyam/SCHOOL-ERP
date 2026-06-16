@@ -1,227 +1,271 @@
 // teacher/attendance/components/MyHistoryTab.tsx
-import { useMemo } from "react";
-import { format, getDaysInMonth, getDay, startOfMonth } from "date-fns";
-import type { AttendanceHistoryEntry } from "../types/attendance.types";
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { Calendar, ChevronDown, ChevronUp, Users, UserCheck, UserX } from "lucide-react";
 
-interface HolidayItem {
-  id: string;
-  date: string;
-  holidayname?: string;
-  name?: string;
-  type?: string;
+// ── Types matching the API response ──────────────────────────────────────────
+
+interface RawStudent {
+  student_id: string;
+  student_name: string;
+  roll_number: string;
+  marked_time: string;
+  status?: string;
+}
+
+interface RawSection {
+  class_id: string;
+  class_name: string;
+  section_id: string;
+  section_name: string;
+  teacher_id: string;
+  teacher_name: string;
+  total_strength: number;
+  marked_time: string;
+  students: RawStudent[];
+  absent_students: RawStudent[];
+  summary: {
+    total_strength: number;
+    present_count: number;
+    absent_count: number;
+    halfday_count: number;
+  };
+}
+
+interface RawDay {
+  attendance_date: string;
+  total_sections: number;
+  sections: RawSection[];
+}
+
+export interface AttendanceSummaryResponse {
+  status: boolean;
+  teacher_id: string;
+  from_date: string;
+  to_date: string;
+  total_days: number;
+  data: RawDay[];
 }
 
 interface MyHistoryTabProps {
-  history?: AttendanceHistoryEntry[];
-  holidays?: HolidayItem[];
-  onRequestCorrection: (entry: AttendanceHistoryEntry) => void;
+  teacherId: string;
+  summaryData?: AttendanceSummaryResponse | null;
+  isLoading?: boolean;
+  fromDate: string;
+  toDate: string;
+  onFromDateChange: (d: string) => void;
+  onToDateChange: (d: string) => void;
 }
 
-// Calendar cell color
-const calColor = (entry: AttendanceHistoryEntry | undefined, isHoliday: boolean, day: number, month: number, year: number): string => {
-  const d = new Date(year, month, day);
-  const dow = d.getDay();
-  if (dow === 0 || dow === 6) return "bg-gray-50 text-gray-300";       // weekend
-  if (isHoliday) return "bg-gray-200 text-gray-500";                  // holiday
-  if (!entry || entry.status === null) return "bg-gray-100 text-gray-400"; // no data / future
-  if (entry.status === "on_time")  return "bg-emerald-100 text-emerald-700 font-bold";
-  if (entry.status === "late")     return "bg-amber-100 text-amber-600 font-bold";
-  if (entry.status === "missed")   return "bg-red-100 text-red-500 font-bold";
-  return "bg-gray-100 text-gray-400";
-};
+// ── Status pill styles ────────────────────────────────────────────────────────
 
-const METHOD_LABEL: Record<string, string> = { whatsapp: "WhatsApp", web: "Web Form" };
 const STATUS_PILL: Record<string, string> = {
-  on_time: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  late:    "bg-amber-50 text-amber-700 border border-amber-200",
-  missed:  "bg-red-50 text-red-600 border border-red-200",
+  present:  "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  absent:   "bg-red-50 text-red-600 border border-red-200",
+  halfday:  "bg-amber-50 text-amber-700 border border-amber-200",
 };
 
-const MyHistoryTab = ({ history = [], holidays = [], onRequestCorrection }: MyHistoryTabProps) => {
-  // Show current month calendar
-  const now    = new Date();
-  const year   = now.getFullYear();
-  const month  = now.getMonth();
+// ── Section card — expandable ─────────────────────────────────────────────────
 
-  const daysInMonth    = getDaysInMonth(new Date(year, month));
-  const firstDayOfWeek = getDay(startOfMonth(new Date(year, month))); // 0=Sun
-  const days           = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+const SectionCard = ({ section, date }: { section: RawSection; date: string }) => {
+  const [expanded, setExpanded] = useState(false);
+  const { summary, students, class_name, section_name, marked_time } = section;
 
-  const safeHistory = Array.isArray(history) ? history : [];
+  return (
+    <div className="border border-gray-100 rounded-xl overflow-hidden">
+      {/* Section header row */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-gray-800">
+            {class_name}-{section_name}
+          </span>
+          <span className="text-xs text-gray-400">{date} · {marked_time}</span>
+        </div>
 
-  // Build lookup date→entry
-  const byDate = useMemo(() => {
-    const map: Record<string, AttendanceHistoryEntry> = {};
-    safeHistory.forEach((e) => { map[e.date] = e; });
-    return map;
-  }, [safeHistory]);
+        <div className="flex items-center gap-4">
+          {/* Mini stats */}
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+              <UserCheck size={12} />
+              {summary.present_count}P
+            </span>
+            <span className="flex items-center gap-1 text-xs font-semibold text-red-500">
+              <UserX size={12} />
+              {summary.absent_count}A
+            </span>
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <Users size={12} />
+              {summary.total_strength} total
+            </span>
+          </div>
+          {expanded ? (
+            <ChevronUp size={14} className="text-gray-400" />
+          ) : (
+            <ChevronDown size={14} className="text-gray-400" />
+          )}
+        </div>
+      </button>
 
-  // Build holiday set for current month
-  const holidayDates = useMemo(() => {
-    const s = new Set<string>();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const prefix = `${year}-${pad(month + 1)}`;
-    (Array.isArray(holidays) ? holidays : []).forEach((h) => {
-      if (h.date && h.date.startsWith(prefix)) s.add(h.date);
-    });
-    return s;
-  }, [holidays, year, month]);
+      {/* Student list */}
+      {expanded && (
+        <div className="divide-y divide-gray-50">
+          {students.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-gray-400 text-center">No student data.</p>
+          ) : (
+            students.map((s) => {
+              const statusKey = s.status === "absent" ? "absent" : "present";
+              return (
+                <div
+                  key={s.student_id}
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50/60 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                      {s.roll_number}
+                    </span>
+                    <span className="text-sm text-gray-800 font-medium">{s.student_name}</span>
+                  </div>
+                  <span
+                    className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${
+                      STATUS_PILL[statusKey] ?? "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {s.status ?? "present"}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
-  const getEntry = (d: number) => {
-    const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    return byDate[iso];
-  };
+// ── Main component ────────────────────────────────────────────────────────────
 
-  const isHoliday = (d: number) => {
-    const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    return holidayDates.has(iso);
-  };
+const MyHistoryTab = ({
+  summaryData,
+  isLoading,
+  fromDate,
+  toDate,
+  onFromDateChange,
+  onToDateChange,
+}: MyHistoryTabProps) => {
+  const today = new Date().toISOString().slice(0, 10);
 
-  const today = now.getDate();
+  const days: RawDay[] = useMemo(
+    () => (Array.isArray(summaryData?.data) ? summaryData!.data : []),
+    [summaryData]
+  );
 
-  const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  // Aggregate totals across all days
+  const totals = useMemo(() => {
+    let present = 0, absent = 0, total = 0;
+    days.forEach((d) =>
+      d.sections.forEach((s) => {
+        present += s.summary.present_count;
+        absent  += s.summary.absent_count;
+        total   += s.summary.total_strength;
+      })
+    );
+    return { present, absent, total };
+  }, [days]);
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Calendar grid */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <p className="text-sm font-bold text-gray-800">{format(new Date(year, month), "MMMM yyyy")}</p>
-          {/* Legend */}
-          <div className="flex items-center gap-4">
-            {[
-              { color: "bg-emerald-100", label: "On time" },
-              { color: "bg-amber-100",   label: "Late" },
-              { color: "bg-red-100",     label: "Missed" },
-              { color: "bg-gray-200",    label: "Holiday" },
-            ].map((l) => (
-              <span key={l.label} className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-500">
-                <span className={`w-3 h-3 rounded-sm ${l.color}`} />
-                {l.label}
-              </span>
-            ))}
+
+      {/* ── Date range picker ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+          <Calendar size={14} className="text-indigo-500" />
+          Select Date Range
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+              From
+            </label>
+            <input
+              type="date"
+              value={fromDate}
+              max={toDate}
+              onChange={(e) => onFromDateChange(e.target.value)}
+              className="h-9 px-3 rounded-xl border border-gray-200 text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-colors bg-gray-50"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+              To
+            </label>
+            <input
+              type="date"
+              value={toDate}
+              min={fromDate}
+              max={today}
+              onChange={(e) => onToDateChange(e.target.value)}
+              className="h-9 px-3 rounded-xl border border-gray-200 text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-colors bg-gray-50"
+            />
           </div>
         </div>
+      </div>
 
-        <div className="px-5 pt-3 pb-5">
-          {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {DAYS_OF_WEEK.map((d) => (
-              <div key={d} className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-wide py-1">
-                {d}
+      {/* ── Summary stats row ──────────────────────────────────────────────── */}
+      {!isLoading && days.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Present", count: totals.present, cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+            { label: "Absent",  count: totals.absent,  cls: "bg-red-50 border-red-100 text-red-600" },
+            { label: "Total",   count: totals.total,   cls: "bg-indigo-50 border-indigo-100 text-indigo-700" },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-2xl border px-4 py-3 text-center ${s.cls}`}>
+              <p className="text-2xl font-extrabold">{s.count}</p>
+              <p className="text-[11px] font-semibold opacity-80 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Content area ───────────────────────────────────────────────────── */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-36 text-sm text-gray-400 animate-pulse">
+          Loading attendance…
+        </div>
+      ) : days.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-12 text-center">
+          <p className="text-sm text-gray-400">No attendance records found for selected date range.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {days.map((day) => (
+            <div key={day.attendance_date} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {/* Day header */}
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                <p className="text-sm font-bold text-gray-800">
+                  {format(new Date(day.attendance_date), "EEEE, d MMMM yyyy")}
+                </p>
+                <span className="text-xs text-gray-400 font-semibold">
+                  {day.total_sections} section{day.total_sections !== 1 ? "s" : ""}
+                </span>
               </div>
-            ))}
-          </div>
 
-          {/* Day cells */}
-          <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for first week offset */}
-            {Array.from({ length: firstDayOfWeek }, (_, i) => (
-              <div key={`empty-${i}`} />
-            ))}
-
-            {days.map((d) => {
-              const entry = getEntry(d);
-              const isHolidayDate = isHoliday(d);
-              const isToday = d === today;
-              return (
-                <div
-                  key={d}
-                  title={isHolidayDate ? "Holiday" : entry ? `${entry.presentCount}P ${entry.absentCount}A · ${entry.status ?? ""}` : undefined}
-                  className={`aspect-square flex items-center justify-center text-xs rounded-xl transition-all
-                    ${calColor(entry, isHolidayDate, d, month, year)}
-                    ${isToday ? "ring-2 ring-indigo-400 ring-offset-1" : ""}
-                  `}
-                >
-                  {d}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Summary row */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "On Time",  count: safeHistory.filter((h) => h.status === "on_time").length,  cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
-          { label: "Late",     count: safeHistory.filter((h) => h.status === "late").length,     cls: "bg-amber-50 border-amber-100 text-amber-700" },
-          { label: "Missed",   count: safeHistory.filter((h) => h.status === "missed").length,   cls: "bg-red-50 border-red-100 text-red-600" },
-        ].map((s) => (
-          <div key={s.label} className={`rounded-2xl border px-4 py-3 text-center ${s.cls}`}>
-            <p className="text-2xl font-extrabold">{s.count}</p>
-            <p className="text-[11px] font-semibold opacity-80 mt-0.5">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* History table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <p className="text-sm font-bold text-gray-800">Attendance History</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                {["Date", "Class", "Present", "Absent", "Marked At", "Method", "Status", "Action"].map((h) => (
-                  <th key={h} className="text-[11px] font-bold uppercase tracking-widest text-gray-400 px-4 py-3 text-left">
-                    {h}
-                  </th>
+              {/* Sections */}
+              <div className="px-5 py-4 flex flex-col gap-3">
+                {day.sections.map((sec) => (
+                  <SectionCard
+                    key={`${sec.class_id}-${sec.section_id}`}
+                    section={sec}
+                    date={day.attendance_date}
+                  />
                 ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {safeHistory.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-12 text-center text-sm text-gray-400">No history found.</td>
-                </tr>
-              ) : (
-                safeHistory.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-50/40 transition-colors">
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                      {format(new Date(entry.date), "dd MMM yyyy")}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{entry.classLabel}</td>
-                    <td className="px-4 py-3 text-sm font-bold text-emerald-600">{entry.presentCount}</td>
-                    <td className="px-4 py-3 text-sm font-bold text-red-500">{entry.absentCount}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {entry.markedAt ?? <span className="text-red-400">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {entry.method ? (
-                        <span className={`text-xs font-semibold ${entry.method === "whatsapp" ? "text-[#25d366]" : "text-indigo-600"}`}>
-                          {METHOD_LABEL[entry.method]}
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {entry.status ? (
-                        <span className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${STATUS_PILL[entry.status] ?? "bg-gray-100 text-gray-500"}`}>
-                          {entry.status.replace("_", " ")}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {entry.status && entry.status !== null ? (
-                        <button
-                          onClick={() => onRequestCorrection(entry)}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
-                        >
-                          Correct
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supportApi } from "../api/support.api";
+import { supportApi } from "@/services/support.api";
 import type { TicketFilters, TicketFormValues } from "../types/support.types";
 
 export const SUPPORT_KEYS = {

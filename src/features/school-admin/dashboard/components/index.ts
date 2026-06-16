@@ -4,5 +4,6 @@ export { AttendanceTable } from './AttendanceTable';
 export { FeesDueSummary } from './FeesDueSummary';
 export { WhatsAppActivityFeed } from './WhatsAppActivity';
 export { AdmissionsPipeline } from './AdmissionsPipeline';
+export { AcademicYearStats } from './AcademicYearStats';
 export { DashboardSkeleton } from './DashboardSkeleton';
 

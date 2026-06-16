@@ -27,21 +27,32 @@ export default function AttendancePage(): React.ReactElement {
   // ── Student + Academic Year meta ─────────────────────────────────────────
   const [student, setStudent] = useState<Student | null>(null);
   const [academicYear, setAcademicYear] = useState<AcademicYearRecord | null>(null);
+  const [idsReady, setIdsReady] = useState(false);
+  const [classId, setClassId] = useState("");
+  const [sectionId, setSectionId] = useState("");
+  const [academicYearId, setAcademicYearId] = useState("");
 
   useEffect(() => {
     if (!studentId) return;
 
-    // Fetch student details
     getStudentById(studentId)
-      .then((s) => setStudent(s))
+      .then((s) => {
+        setStudent(s);
+        setClassId(s.class_id ?? "");
+        setSectionId(s.sectionId ?? "");
+      })
       .catch(() => setStudent(null));
 
-    // Fetch active academic year
     getAllAcademicYears().then(({ data }) => {
       const active = data.find((y) => y.active) ?? data[0] ?? null;
       setAcademicYear(active);
+      if (active) setAcademicYearId(active.id);
     });
   }, [studentId]);
+
+  useEffect(() => {
+    if (classId && sectionId && academicYearId) setIdsReady(true);
+  }, [classId, sectionId, academicYearId]);
 
   // ── Safety check ─────────────────────────────────────────────────────────
   if (!studentId) {
@@ -52,6 +63,9 @@ export default function AttendancePage(): React.ReactElement {
     studentId,
     month: currentMonth,
     year: currentYear,
+    classId: idsReady ? classId : undefined,
+    sectionId: idsReady ? sectionId : undefined,
+    academicYearId: idsReady ? academicYearId : undefined,
   });
 
   const prevMonth = () => setCurrentMonth((m) => (m === 0 ? 11 : m - 1));

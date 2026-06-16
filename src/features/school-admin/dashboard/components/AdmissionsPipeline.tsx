@@ -1,139 +1,99 @@
 import { motion } from 'framer-motion';
 import {
-  UserPlus,
-  ClipboardCheck,
-  Receipt,
-  Megaphone,
-  Search,
-  Table2,
+  Search, MessageCircle, FileText, CheckCircle, XCircle,
+  UserPlus, ClipboardCheck, Receipt, Megaphone, Table2, Calendar,
 } from 'lucide-react';
-import { cn } from '../../../../utils/cn';
 import type { AdmissionStage } from '../types';
 
-type AdmissionStageWithActive = AdmissionStage & { active?: boolean };
-
 interface AdmissionsPipelineProps {
-  pipeline: AdmissionStageWithActive[];
+  pipeline: AdmissionStage[];
+  academicYearName?: string;
 }
 
+const stageConfig = [
+  { key: 'ENQUIRY',   label: 'Enquiry',   bg: 'bg-blue-500',    icon: Search,        text: 'text-blue-50'   },
+  { key: 'INTERVIEW', label: 'Interview', bg: 'bg-purple-500',  icon: MessageCircle, text: 'text-purple-50' },
+  { key: 'DOCS',      label: 'Documents', bg: 'bg-orange-500',  icon: FileText,      text: 'text-orange-50' },
+  { key: 'CONFIRMED', label: 'Confirmed', bg: 'bg-emerald-500', icon: CheckCircle,   text: 'text-emerald-50'},
+  { key: 'DECLINED',  label: 'Declined',  bg: 'bg-red-500',     icon: XCircle,       text: 'text-red-50'    },
+];
+
 const quickActions = [
-  { id: 'add-student', label: 'Add Student',    icon: UserPlus       },
-  { id: 'attendance',  label: 'Attendance',     icon: ClipboardCheck },
-  { id: 'fee-payment', label: 'Fee Payment',    icon: Receipt        },
-  { id: 'broadcast',   label: 'Broadcast',      icon: Megaphone      },
-  { id: 'enquiry',     label: 'Add Enquiry',    icon: Search         },
-  { id: 'report',      label: 'Gen. Report',    icon: Table2         },
+  { id: 'add-student', label: 'Add Student',  icon: UserPlus       },
+  { id: 'attendance',  label: 'Attendance',   icon: ClipboardCheck },
+  { id: 'fee-payment', label: 'Fee Payment',  icon: Receipt        },
+  { id: 'broadcast',   label: 'Broadcast',    icon: Megaphone      },
+  { id: 'enquiry',     label: 'Add Enquiry',  icon: Search         },
+  { id: 'report',      label: 'Gen. Report',  icon: Table2         },
 ];
 
-const DEFAULT_PIPELINE: AdmissionStageWithActive[] = [
-  { stage: 'ENQUIRY', count: 0 },
-  { stage: 'INTERVIEW', count: 0 },
-  { stage: 'DOCS', count: 0 },
-  { stage: 'CONFIRMED', count: 0, highlight: true },
-  { stage: 'DECLINED', count: 0, danger: true },
-];
+export function AdmissionsPipeline({ pipeline, academicYearName }: AdmissionsPipelineProps) {
+  const stageCountMap = pipeline.reduce<Record<string, number>>((acc, s) => {
+    acc[s.stage] = s.count;
+    return acc;
+  }, {});
 
-export function AdmissionsPipeline({ pipeline }: AdmissionsPipelineProps) {
-  const stages = pipeline.length > 0 ? pipeline : DEFAULT_PIPELINE;
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:gap-5 sm:p-5 md:p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 flex flex-col gap-5">
 
-      {/* ── Title ── */}
-      <h2 className="text-base font-extrabold tracking-tight text-gray-900 sm:text-lg md:text-xl lg:text-2xl">
-        Admissions Pipeline &amp; Quick Actions
-      </h2>
-
-      {/* ── Pipeline stages ──
-          Mobile:  2 cols
-          sm:      3 cols
-          lg:      all stages in one row (auto-fit)
-      ── */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5">
-        {stages.map((stage, i) => (
-          <motion.div
-            key={stage.stage}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 + i * 0.06, duration: 0.35 }}
-            className={cn(
-              // Layout
-              'relative flex flex-col items-center justify-center overflow-hidden rounded-xl px-2 text-center',
-              // Height — shorter on mobile
-              'min-h-[64px] sm:min-h-[80px] md:min-h-[90px]',
-              'py-2.5 sm:py-3',
-              // Bottom accent bar
-              'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:rounded-b-xl',
-              // Variants
-              !stage.highlight && !stage.danger && 'bg-[#f0f1fa] after:bg-transparent',
-              stage.active     && 'bg-[#f0f1fa] after:bg-indigo-500',
-              stage.highlight  && 'bg-emerald-50 after:bg-emerald-500',
-              stage.danger     && 'bg-red-50 after:bg-red-500',
-            )}
-          >
-            {/* Stage label */}
-            <p
-              className={cn(
-                'mb-1 text-[8px] font-bold uppercase tracking-[0.07em] sm:mb-1.5 sm:text-[9px] md:text-[10px] lg:text-xs',
-                stage.highlight ? 'text-emerald-700'
-                  : stage.danger  ? 'text-red-600'
-                  : stage.active  ? 'text-indigo-600'
-                  : 'text-gray-400',
-              )}
-            >
-              {stage.stage}
-            </p>
-
-            {/* Count */}
-            <p
-              className={cn(
-                'text-lg font-extrabold leading-none tracking-tight sm:text-2xl md:text-[28px]',
-                stage.highlight ? 'text-emerald-700'
-                  : stage.danger  ? 'text-red-600'
-                  : 'text-gray-900',
-              )}
-            >
-              {stage.count}
-            </p>
-          </motion.div>
-        ))}
+      {/* ── Admissions Pipeline header ── */}
+      <div>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-sm sm:text-base font-bold text-gray-900">Admissions Pipeline</h2>
+          {academicYearName && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-100 px-2.5 py-1 text-[10px] font-semibold text-indigo-600">
+              <Calendar size={10} />
+              AY {academicYearName}
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">Track enquiries through each stage</p>
       </div>
 
-      {/* ── Quick Actions ──
-          Mobile:  2 cols, compact
-          sm:      3 cols
-          lg:      6 cols — one full row
-      ── */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-6 lg:gap-3">
+      {/* ── Stage cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {stageConfig.map((stage, i) => {
+          const count = stageCountMap[stage.key] ?? 0;
+          const Icon  = stage.icon;
+          return (
+            <motion.div
+              key={stage.key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06, duration: 0.28 }}
+              className={`${stage.bg} rounded-xl p-3.5 sm:p-4 flex items-center justify-between hover:opacity-90 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer`}
+            >
+              <div>
+                <p className={`text-2xl sm:text-3xl font-black leading-none ${stage.text} tabular-nums`}>{count}</p>
+                <p className={`text-[11px] sm:text-xs font-semibold mt-1 ${stage.text} opacity-90`}>{stage.label}</p>
+              </div>
+              <Icon className={`h-6 w-6 sm:h-7 sm:w-7 ${stage.text} opacity-70 shrink-0`} strokeWidth={1.75} />
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* ── Quick Actions header ── */}
+      <div>
+        <h2 className="text-sm sm:text-base font-bold text-gray-900">Quick Actions</h2>
+        <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">Common tasks at your fingertips</p>
+      </div>
+
+      {/* ── Quick Action buttons ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {quickActions.map((action, i) => {
           const Icon = action.icon;
           return (
             <motion.button
               key={action.id}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 + i * 0.05, duration: 0.3 }}
-              className={cn(
-                'group flex flex-col items-center justify-center',
-                'gap-1.5 sm:gap-2 md:gap-2.5',
-                // Height — smaller on mobile
-                'py-3 sm:py-4 md:py-5',
-                'px-2',
-                'cursor-pointer rounded-xl transition-all duration-150',
-                'bg-indigo-50 hover:bg-indigo-100 active:scale-[0.97]',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
-              )}
+              transition={{ delay: 0.28 + i * 0.04, duration: 0.25 }}
+              className="bg-gray-50 hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer"
               aria-label={action.label}
             >
-              {/* Icon — scales up progressively */}
-              <Icon
-                className="h-4 w-4 text-indigo-950 transition-transform duration-150 group-hover:scale-110 sm:h-5 sm:w-5 md:h-[22px] md:w-[22px] lg:h-6 lg:w-6"
-                strokeWidth={1.75}
-              />
-
-              {/* Label — readable at every size, no ALL-CAPS on mobile */}
-              <span className="text-center text-[9px] font-black leading-tight tracking-wide text-indigo-950 sm:text-[10px] sm:tracking-[0.06em] md:text-[11px] lg:text-xs lg:tracking-[0.07em]">
-                {action.label}
-              </span>
+              <Icon className="h-5 w-5 text-gray-600" strokeWidth={1.75} />
+              <span className="text-[11px] font-semibold text-gray-700">{action.label}</span>
             </motion.button>
           );
         })}

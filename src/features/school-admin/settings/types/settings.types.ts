@@ -198,6 +198,32 @@ export interface CreateClassPayload {
   school_code: string;
 }
 
+// ─── Departments ───────────────────────────────────────────────────────────────
+export interface Department {
+  id: string;
+  departmentName: string;
+  academicYearId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDepartmentPayload {
+  departmentName: string;
+  academicYearId: string;
+}
+
+export interface DepartmentActionResponse {
+  status: boolean;
+  message: string;
+  data?: Department;
+}
+
+export interface GetAllDepartmentsResponse {
+  status: boolean;
+  message?: string;
+  data?: Department[];
+}
+
 export interface CreateClassResponse {
   success: boolean;
   message?: string;

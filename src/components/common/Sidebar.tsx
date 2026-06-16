@@ -264,7 +264,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
           {/* Collapsed: avatar only, no interaction */}
           {collapsed ? (
             <div
-              title={user?.name ?? "Ramesh Kumar"}
+              title={user?.name || "—"}
               className="flex w-full items-center justify-center rounded-xl p-2"
             >
               <img
@@ -288,7 +288,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold leading-tight">
-                    {user?.name ?? "Ramesh Kumar"}
+                    {user?.name || "—"}
                   </p>
                   <p className="truncate text-[11px] text-slate-400 leading-tight">
                     {user?.role ?? "Administrator"}

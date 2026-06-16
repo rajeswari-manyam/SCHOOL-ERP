@@ -1,6 +1,6 @@
 // teacher/attendance/hooks/useAttendance.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { attendanceApi } from "../api/attendance.api";
+import { attendanceApi } from "@/services/teacher-attendance.api";
 import { getAllHolidays } from "../../../../services/holidays.api";
 import type {
   MarkAttendancePayload,
@@ -25,6 +25,7 @@ export const useTodayAttendance = () =>
   useQuery({
     queryKey: ATTENDANCE_KEYS.today(),
     queryFn:  attendanceApi.getToday,
+    enabled: false,   // endpoint not yet on backend
     staleTime: 1000 * 60,
     refetchOnWindowFocus: true,
   });
@@ -50,6 +51,7 @@ export const useMyAttendanceHistory = () =>
   useQuery({
     queryKey: ATTENDANCE_KEYS.myHistory(),
     queryFn:  attendanceApi.getMyHistory,
+    enabled: false,   // endpoint not yet on backend
     staleTime: 1000 * 60 * 5,
   });
 
@@ -82,7 +84,7 @@ export const useMarkAttendanceViaWeb = () => {
 export const useRetryWaAlert = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (studentId: string) => attendanceApi.retryWaAlert(studentId),
+    mutationFn: (_studentId: string) => Promise.resolve(), // endpoint not yet on backend
     onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.today() }),
   });
 };
@@ -139,3 +141,16 @@ export const MOCK_HISTORY: AttendanceHistoryEntry[] = [
   { id: "h8", date: "2025-04-07", classLabel: "10-A", presentCount: 40, absentCount: 2,  totalStudents: 42, markedAt: "08:47", method: "whatsapp",    status: "on_time"  },
   { id: "h9", date: "2025-04-06", classLabel: "10-A", presentCount: 35, absentCount: 7,  totalStudents: 42, markedAt: null,    method: null,         status: "missed"   },
 ];
+// ── Teacher attendance summary by date range ──────────────────────────────────
+export const useTeacherAttendanceSummaryRange = (
+  teacherId: string,
+  fromDate: string,
+  toDate: string
+) =>
+  useQuery({
+    queryKey: [...ATTENDANCE_KEYS.all, "summary-range", teacherId, fromDate, toDate],
+    queryFn: () => attendanceApi.getTeacherAttendanceSummaryRange(teacherId, fromDate, toDate),
+    enabled: Boolean(teacherId) && Boolean(fromDate) && Boolean(toDate),
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
+  });

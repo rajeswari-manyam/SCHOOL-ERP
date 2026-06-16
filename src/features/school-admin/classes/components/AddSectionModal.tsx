@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
-import { getAllStaff, type StaffRecord } from "@/services/class.api";
+import { getAllStaff, type StaffRecord } from "@/services/staff.api";
+import { getAllSections } from "@/services/section.api";
 import type { AddSectionPayload } from "../types/classes.types";
 
 interface Props {
@@ -30,6 +31,7 @@ type SectionFormData = z.infer<typeof sectionSchema>;
 export const AddSectionModal = ({ classId, className, onClose, onSubmit }: Props) => {
   const { years, loading: yearsLoading, activeYear } = useAcademicYears();
   const [teachers, setTeachers] = useState<StaffRecord[]>([]);
+  const [assignedTeacherIds, setAssignedTeacherIds] = useState<Set<string>>(new Set());
   const [teachersLoading, setTeachersLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -61,8 +63,23 @@ export const AddSectionModal = ({ classId, className, onClose, onSubmit }: Props
     const loadTeachers = async () => {
       setTeachersLoading(true);
       try {
-        const { data } = await getAllStaff({ role: "teacher" });
-        if (!ignore) setTeachers(Array.isArray(data) ? data : []);
+        const [staffRes, sections] = await Promise.all([
+          getAllStaff({ role: "teacher" }),
+          getAllSections().catch(() => []),
+        ]);
+        if (!ignore) {
+          const allTeachers = Array.isArray(staffRes.data) ? staffRes.data : [];
+          setTeachers(allTeachers);
+          const usedIds = new Set<string>();
+          for (const s of Array.isArray(sections) ? sections : []) {
+            const tid = s.classTeacherId || s.class_teacher_id;
+            if (tid) usedIds.add(tid);
+          }
+          for (const t of allTeachers) {
+            if (t.class_teacher_of) usedIds.add(t.id);
+          }
+          setAssignedTeacherIds(usedIds);
+        }
       } catch (err) {
         if (!ignore) {
           console.error("Failed to load teachers", err);
@@ -136,10 +153,12 @@ export const AddSectionModal = ({ classId, className, onClose, onSubmit }: Props
                 <Select
                   value={watch("classTeacherId")}
                   onValueChange={(value) => setValue("classTeacherId", value)}
-                  options={teachers.map((t) => ({
-                    value: t.id,
-                    label: `${t.name} (${t.email || t.phone || "Teacher"})`,
-                  }))}
+                  options={teachers
+                    .filter((t) => !assignedTeacherIds.has(t.id))
+                    .map((t) => ({
+                      value: t.id,
+                      label: `${t.name} (${t.email || t.phone || "Teacher"})`,
+                    }))}
                   placeholder="Select teacher"
                 />
               )}

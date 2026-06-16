@@ -329,7 +329,7 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
        
 {(notifOpen || profileOpen) && (
   <div
-    className="fixed inset-0 z-20"
+    className="fixed inset-0 z-50"
     onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
   />
 )}

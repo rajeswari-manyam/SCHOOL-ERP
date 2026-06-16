@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { reportsApi } from "../api/reports.api";
+import { reportsApi } from "@/services/school-reports.api";
 import type { GeneratedReport, ReportStats, GenerateReportFormData, ReportType, CreateReportPayload } from "../types/reports.types";
 
 const SCHOOL_CODE = import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode");

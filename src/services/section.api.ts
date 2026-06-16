@@ -5,6 +5,7 @@ export interface Section {
   sectionName: string;
   classId: string;
   classTeacherId: string;
+  class_teacher_id?: string;
   academicYearId: string;
   totalStrength: number;
   currentStrength: number;
@@ -32,6 +33,37 @@ export interface ApiResponse<T> {
   message?: string;
   data: T;
 }
+
+export interface SectionsByClassResponse {
+  status: boolean;
+  count?: number;
+  data: Array<{
+    id: string;
+    sectionName?: string;
+    section_name?: string;
+    classTeacherId?: string;
+    class_teacher_id?: string;
+    classTeacherName?: string;
+    class_teacher_name?: string;
+    totalStrength?: number;
+    total_strength?: number;
+    subjectCount?: number;
+    subject_count?: number;
+    totalSubjects?: number;
+    classId?: string;
+    class_id?: string;
+    academicYearId?: string;
+    academic_year_id?: string;
+  }>;
+}
+
+/** GET /tenant/getsectionsbyclassId/{classId} */
+export const getSectionsByClassIdFromApi = async (classId: string): Promise<SectionsByClassResponse> => {
+  const { data } = await api.get<SectionsByClassResponse>(
+    `/tenant/getsectionsbyclassId/${classId}`
+  );
+  return data;
+};
 
 /** GET /tenant/getallsections — filtered client-side by class ID */
 export const getSectionsByClassId = async (classId: string): Promise<Section[]> => {

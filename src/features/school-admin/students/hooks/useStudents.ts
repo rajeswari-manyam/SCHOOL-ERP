@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
-import { studentsApi, buildClassSectionMaps, resolveStudentNames, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "../api/students.api";
+import { studentsApi, buildClassSectionMaps, resolveStudentNames, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "@/services/school-students.api";
 import type { Student, AddStudentFormData, CreateStudentPayload, UpdateStudentPayload, Gender } from "../types/student.types";
 
 const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
@@ -16,6 +16,7 @@ const LOAD_TIMEOUT_MS = 30_000;
 
 export const useStudents = () => {
   const schoolcode = useAuthStore((s) => s.user?.schoolcode ?? "");
+  const academicYearId = useUIStore((s) => s.academicYearId);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,16 +31,16 @@ export const useStudents = () => {
     return () => { mountedRef.current = false; };
   }, []);
 
-  const loadStudents = useCallback(() => {
+  const loadStudents = useCallback((yearId?: string | null) => {
     setLoading(true);
     setError(null);
 
     const doLoad = async () => {
       try {
         const [data, { classMap, sectionMap }] = await Promise.all([
-          withTimeout(studentsApi.getAll(), LOAD_TIMEOUT_MS, "getAllStudents"),
+          withTimeout(studentsApi.getAll(yearId), LOAD_TIMEOUT_MS, "getAllStudents"),
           withTimeout(
-            buildClassSectionMaps(useUIStore.getState().academicYearId),
+            buildClassSectionMaps(yearId ?? null),
             LOAD_TIMEOUT_MS,
             "buildClassSectionMaps",
           ),
@@ -62,10 +63,10 @@ export const useStudents = () => {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void loadStudents();
+      void loadStudents(academicYearId);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [loadStudents]);
+  }, [loadStudents, academicYearId]);
 
   const filtered = useMemo(() => {
     return students.filter(s => {
@@ -84,7 +85,8 @@ export const useStudents = () => {
   const stats = useMemo(() => {
     const active = students.filter(s => s.status === "ACTIVE").length;
     const transferred = students.filter(s => s.status === "TRANSFERRED").length;
-    const thisMonth = students.filter(s => s.admittedOn?.includes("2025")).length;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const thisMonth = students.filter(s => s.admittedOn?.startsWith(currentMonth)).length;
     const pending = students.filter(s => s.feeStatus === "PENDING" || s.feeStatus === "OVERDUE").length;
     return { totalActive: active, transferredOut: transferred, newThisMonth: thisMonth, pendingTC: pending };
   }, [students]);

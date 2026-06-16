@@ -49,6 +49,7 @@ export interface StatsCard {
 }
 
 export interface DashboardData {
+  schoolName?: string;
   stats: StatsCard[];
   attendanceClasses: AttendanceClass[];
   feeDefaulters: FeeDefaulter[];
@@ -217,6 +218,74 @@ export interface RawEnquiriesResponse {
   list?: RawEnquiryItem[];
   records?: RawEnquiryItem[];
   result?: RawEnquiryItem[];
+}
+
+// ─── Academic-Year-scoped Dashboard APIs ────────────────────────────────────
+
+export interface AcademicYearListResponse<T> {
+  status: boolean;
+  count: number;
+  totalPages: number;
+  currentPage: number;
+  data: T[];
+}
+
+export interface AcademicYearDashboardItem {
+  id: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearStudentItem {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  class_name?: string;
+  section_name?: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearStaffItem {
+  id: string;
+  name?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearClassItem {
+  id: string;
+  class_name: string;
+  academicYearId: string;
+  status: string;
+  total_strength: number;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearSubjectItem {
+  id: string;
+  name?: string;
+  subject_name?: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearAttendanceItem {
+  id: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearExamItem {
+  id: string;
+  exam_name?: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearResultItem {
+  id: string;
+  [key: string]: unknown;
+}
+
+export interface AcademicYearFeeItem {
+  id: string;
+  [key: string]: unknown;
 }
 
 /** Raw API response shape for /tenant/getadmissionsthisweek */

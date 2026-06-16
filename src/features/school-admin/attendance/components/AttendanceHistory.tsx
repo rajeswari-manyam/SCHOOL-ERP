@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Phone, MessageSquare, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
-import { useChronicAbsentees } from "../hooks/useAttendance";
+import { Phone, MessageSquare, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays } from "lucide-react";
+import { useChronicAbsentees, useAllHolidays } from "../hooks/useAttendance";
+import type { HolidayFromApi } from "@/services/holidays.api";
 
 // ─── Avatar helpers ───────────────────────────────────────────────────────────
 const COLORS = [
@@ -47,6 +48,19 @@ const PAGE_SIZE = 8;
 const AttendanceHistory = () => {
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useChronicAbsentees();
+
+  const { data: holidaysRaw, isLoading: holidaysLoading } = useAllHolidays();
+
+  // Normalise the holidays response — handles all backend envelope shapes
+  const holidays: HolidayFromApi[] = (() => {
+    const res = holidaysRaw;
+    if (!res) return [];
+    if (Array.isArray(res.data)) return res.data;
+    if (res.holidays) return res.holidays;
+    if (res.data && typeof res.data === "object" && "holidays" in res.data)
+      return (res.data as { holidays: HolidayFromApi[] }).holidays;
+    return [];
+  })();
 
   // Normalise field names — handles different possible backend shapes
   const raw: ChronicStudent[] = Array.isArray(data?.data)
@@ -231,6 +245,76 @@ const AttendanceHistory = () => {
               </div>
             </div>
           </>
+        )}
+      </div>
+
+      {/* ── School Holidays ─────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">School Holidays</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Holidays and events for this academic year</p>
+          </div>
+          {!holidaysLoading && holidays.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600">
+              <CalendarDays className="w-3 h-3" />
+              {holidays.length} holiday{holidays.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {/* Loading */}
+        {holidaysLoading && (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 bg-gray-100 rounded animate-pulse w-40" />
+                  <div className="h-2.5 bg-gray-100 rounded animate-pulse w-24" />
+                </div>
+                <div className="w-16 h-5 bg-gray-100 rounded-full animate-pulse" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty */}
+        {!holidaysLoading && holidays.length === 0 && (
+          <div className="p-8 text-center">
+            <CalendarDays className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">No holidays found</p>
+          </div>
+        )}
+
+        {/* List */}
+        {!holidaysLoading && holidays.length > 0 && (
+          <div className="divide-y divide-gray-50">
+            {holidays.map(h => (
+              <div key={h.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/50 transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-indigo-50 flex flex-col items-center justify-center flex-shrink-0">
+                  <span className="text-[10px] font-bold text-indigo-500 uppercase leading-none">
+                    {new Date(h.date + "T00:00:00").toLocaleDateString("en-IN", { month: "short" })}
+                  </span>
+                  <span className="text-base font-bold text-indigo-700 leading-tight">
+                    {new Date(h.date + "T00:00:00").getDate()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{h.holidayname}</p>
+                  {h.note && <p className="text-xs text-gray-400 truncate">{h.note}</p>}
+                </div>
+                <span className={`flex-shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  h.type === "public" ? "bg-blue-100 text-blue-700" :
+                  h.type === "national" ? "bg-indigo-100 text-indigo-700" :
+                  h.type === "school_event" ? "bg-purple-100 text-purple-700" :
+                  "bg-emerald-100 text-emerald-700"
+                }`}>
+                  {h.type === "school_event" ? "Event" : h.type === "school_day" ? "School Day" : h.type ? h.type.charAt(0).toUpperCase() + h.type.slice(1) : "Holiday"}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

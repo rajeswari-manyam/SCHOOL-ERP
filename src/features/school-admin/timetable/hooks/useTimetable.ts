@@ -6,10 +6,12 @@ import { createTimetable as createServiceSlot, getTimetableById, getAllTimetable
 import type { TimetablePayload, TimetableSlot as ServiceTimetableSlot } from "@/services/timetable.api";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import type { ClassRecord } from "@/services/class.api";
+import { getAllStaff } from "@/services/staff.api";
 import {
   getAllExamTimetables as getAllExamTimetable,
   createExamTimetable as createExamSlot,
   deleteExamTimetable,
+  updateExamTimetable,
 } from "@/services/examtimetable.api";
 import { getAllSubjects } from "@/services/subject.api";
 import type {
@@ -293,11 +295,11 @@ export const useTeacherOptions = () =>
     queryKey: TIMETABLE_KEYS.teachers(),
     queryFn: async (): Promise<TeacherOption[]> => {
       try {
-        const { data } = await api.get("/tenant/getallstaff");
-        const list = Array.isArray(data) ? data : data?.staff ?? data?.data ?? [];
-        return list.map((s: any) => ({
-          value: s._id ?? s.id ?? s.teacher_id ?? "",
-          label: s.teacher_name ?? s.teachername ?? s.name ?? s.fullName ?? s.firstName ?? "",
+        const res = await getAllStaff();
+        const list = Array.isArray(res.data) ? res.data : [];
+        return list.map((s) => ({
+          value: s.id ?? "",
+          label: s.name ?? "",
         }));
       } catch {
         return [];
@@ -450,8 +452,8 @@ export const useCreateExamTimetable = () => {
 export const useUpdateExamTimetable = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateExamTimetablePayload> }) =>
-      api.put(`/tenant/updateexams-timetableById/${id}`, data).then((r) => r.data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      updateExamTimetable(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
       toast.success("Exam timetable updated successfully");

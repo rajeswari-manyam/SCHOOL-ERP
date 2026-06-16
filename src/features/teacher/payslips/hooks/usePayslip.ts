@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { payslipApi } from "../api/payslip.api";
+import { payslipApi } from "@/services/teacher-payslip.api";
 import type { Payslip, AnnualSummary } from "../types/payslip.types";
 
 const MONTHS = [

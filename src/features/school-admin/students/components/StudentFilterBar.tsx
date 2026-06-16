@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Filter, X, SlidersHorizontal } from "lucide-react";
+import type { ClassOption } from "@/services/school-students.api";
 
 interface StudentFilterBarProps {
   search: string;
@@ -13,23 +14,9 @@ interface StudentFilterBarProps {
   setSectionFilter: (v: string) => void;
   statusFilter: string;
   setStatusFilter: (v: string) => void;
+  classOptions?: ClassOption[];
+  sectionOptions?: ClassOption[];
 }
-
-const CLASSES = [
-  { value: "All", label: "All Classes" },
-  { value: "6",   label: "Class 6"     },
-  { value: "7",   label: "Class 7"     },
-  { value: "8",   label: "Class 8"     },
-  { value: "9",   label: "Class 9"     },
-  { value: "10",  label: "Class 10"    },
-];
-
-const SECTIONS = [
-  { value: "All", label: "All Sections" },
-  { value: "A",   label: "Section A"    },
-  { value: "B",   label: "Section B"    },
-  { value: "C",   label: "Section C"    },
-];
 
 const STATUSES = [
   { value: "All",         label: "All Status"   },
@@ -46,7 +33,17 @@ const StudentFilterBar = ({
   setSectionFilter,
   statusFilter,
   setStatusFilter,
+  classOptions = [],
+  sectionOptions = [],
 }: StudentFilterBarProps) => {
+  const classSelectOptions = [
+    { value: "All", label: "All Classes" },
+    ...classOptions.map((c) => ({ value: c.value, label: c.label })),
+  ];
+  const sectionSelectOptions = [
+    { value: "All", label: "All Sections" },
+    ...sectionOptions.map((s) => ({ value: s.value, label: s.label })),
+  ];
   const [panelOpen, setPanelOpen] = useState(false);
 
   const hasActiveFilters =
@@ -94,7 +91,7 @@ const StudentFilterBar = ({
             <Select
               value={classFilter}
               onValueChange={setClassFilter}
-              options={CLASSES}
+              options={classSelectOptions}
               className="h-9 w-[120px] rounded-lg border-gray-200 text-sm sm:h-10"
             />
           </div>
@@ -105,7 +102,7 @@ const StudentFilterBar = ({
             <Select
               value={sectionFilter}
               onValueChange={setSectionFilter}
-              options={SECTIONS}
+              options={sectionSelectOptions}
               className="h-9 w-[120px] rounded-lg border-gray-200 text-sm sm:h-10"
             />
           </div>
@@ -160,7 +157,7 @@ const StudentFilterBar = ({
             <Select
               value={classFilter}
               onValueChange={setClassFilter}
-              options={CLASSES}
+              options={classSelectOptions}
               className="h-9 w-full rounded-lg border-gray-200 text-sm"
             />
           </div>
@@ -173,7 +170,7 @@ const StudentFilterBar = ({
             <Select
               value={sectionFilter}
               onValueChange={setSectionFilter}
-              options={SECTIONS}
+              options={sectionSelectOptions}
               className="h-9 w-full rounded-lg border-gray-200 text-sm"
             />
           </div>

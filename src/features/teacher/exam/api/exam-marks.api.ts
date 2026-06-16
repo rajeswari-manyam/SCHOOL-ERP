@@ -60,23 +60,25 @@ function hasApiError(raw: unknown): string | null {
   return null;
 }
 
+/**
+ * Maps a raw /tenant/getallmarks summary record to MarksRecordItem.
+ * Actual API shape (one row per exam, not per student):
+ *   { id, examName, academicYear, className, subjectName, examDate,
+ *     marksEntered, totalStudents, averageMarks, completionPercentage, status }
+ */
 function mapMarksRecordItem(item: Record<string, unknown>): MarksRecordItem {
   return {
-    id: (item.id ?? item._id ?? item.marksId ?? "") as string,
-    studentId: (item.studentId ?? item.student_id ?? item.student ?? "") as string,
-    studentName: (item.studentName ?? item.student_name ?? item.name ?? item.student ?? "") as string,
-    rollNo: (item.rollNo ?? item.roll_no ?? item.rollNumber ?? item.roll_number ?? "") as string,
-    marksObtained: item.marksObtained != null ? Number(item.marksObtained) : item.marks_obtained != null ? Number(item.marks_obtained) : item.marks != null ? Number(item.marks) : undefined,
-    maxMarks: item.maxMarks != null ? Number(item.maxMarks) : item.max_marks != null ? Number(item.max_marks) : undefined,
-    grade: (item.grade ?? "") as string,
-    isAbsent: item.isAbsent === true || item.is_absent === true,
-    remarks: (item.remarks ?? "") as string,
-    subjectName: (item.subjectName ?? item.subject_name ?? item.subject ?? "") as string,
-    examId: (item.examId ?? item.exam_id ?? "") as string,
-    examName: (item.examName ?? item.exam_name ?? "") as string,
-    className: (item.className ?? item.class_name ?? "") as string,
-    sectionName: (item.sectionName ?? item.section_name ?? "") as string,
-    academicYearId: (item.academicYearId ?? item.academic_year_id ?? "") as string,
+    id:                   (item.id ?? item._id ?? "") as string,
+    examName:             (item.examName ?? item.exam_name ?? "") as string,
+    academicYear:         (item.academicYear ?? item.academic_year ?? item.academicYearId ?? "") as string,
+    className:            (item.className ?? item.class_name ?? "") as string,
+    subjectName:          (item.subjectName ?? item.subject_name ?? item.subject ?? "") as string,
+    examDate:             (item.examDate ?? item.exam_date ?? "") as string,
+    marksEntered:         item.marksEntered != null ? Number(item.marksEntered) : item.marks_entered != null ? Number(item.marks_entered) : undefined,
+    totalStudents:        item.totalStudents != null ? Number(item.totalStudents) : undefined,
+    averageMarks:         item.averageMarks != null ? Number(item.averageMarks) : item.average_marks != null ? Number(item.average_marks) : undefined,
+    completionPercentage: item.completionPercentage != null ? Number(item.completionPercentage) : undefined,
+    status:               (item.status ?? "") as string,
   };
 }
 
@@ -248,8 +250,17 @@ export const examMarksApi = {
   getAllMarks: async (params: GetAllMarksQuery): Promise<MarksRecordItem[]> => {
     logger("log", "Fetching marks", params);
 
+    // Build clean params — omit exam_id when not provided so the backend
+    // returns all submitted exams for this class/section/subject.
+    const cleanParams: Record<string, string> = {
+      class_id:   params.class_id,
+      section_id: params.section_id,
+      subject_id: params.subject_id,
+    };
+    if (params.exam_id) cleanParams.exam_id = params.exam_id;
+
     try {
-      const { data: raw } = await api.get("/tenant/getallmarks", { params });
+      const { data: raw } = await api.get("/tenant/getallmarks", { params: cleanParams });
 
       if (raw && typeof raw === "object") {
         const obj = raw as Record<string, unknown>;

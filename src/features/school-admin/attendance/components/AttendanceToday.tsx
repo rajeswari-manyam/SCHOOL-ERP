@@ -198,7 +198,6 @@ const AttendanceToday = ({
   allClassesError,
   onSelectClass,
 }: AttendanceTodayProps) => {
-  const [dismissedBanner, setDismissedBanner] = useState(false);
   const [panelItem, setPanelItem]             = useState<ClassTodayItem | null>(null);
   const [classPage, setClassPage]             = useState(1);
 
@@ -244,7 +243,8 @@ const AttendanceToday = ({
   return (
     <>
       <div className="space-y-5">
-        {/* WhatsApp Banner */}
+        {/* WhatsApp banner commented out — API /tenant/whatsapp/connection removed */}
+        {/*
         {!dismissedBanner && (
           <div className="flex items-start gap-3 bg-purple-50/80 rounded-xl p-3.5">
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
@@ -267,6 +267,7 @@ const AttendanceToday = ({
             </button>
           </div>
         )}
+        */}
 
         {/* Compact Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

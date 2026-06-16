@@ -8,9 +8,10 @@ import type {
   Grade,
   GetAllMarksQuery,
 } from "../types/exam-marks.types";
-import { examMarksApi } from "../api/exam-marks.api";
+import { examMarksApi } from "@/services/teacher-exam-marks.api";
 import { mapToStudentMarkEntriesFromSubject } from "./useStudentsBySubject";
 import { useAllMarks, marksToSubmittedExam } from "./useAllMarks";
+import type { SubmittedFilter } from "../components/SubmittedMarksFilter";
 
 const isDev = import.meta.env.DEV;
 function logger(level: "log" | "warn" | "error", ...args: unknown[]) { if (isDev) console[level]("[useExamMarks]", ...args); }
@@ -36,34 +37,6 @@ export const GRADE_CONFIG: Record<Grade, { classes: string; bg: string }> = {
   "D":  { classes: "bg-orange-50 text-orange-700 border-orange-200",    bg: "bg-orange-400" },
   "F":  { classes: "bg-red-50 text-red-700 border-red-200",             bg: "bg-red-500"    },
 };
-
-// ── Mock submitted exams ──────────────────────────────────────────────────
-export const MOCK_SUBMITTED: SubmittedExam[] = [
-  {
-    id: "sub-1", examType: "UNIT_TEST_1", examLabel: "Unit Test 1",
-    className: "Class 8-A", subject: "Mathematics", academicYear: "2024-25",
-    submittedOn: "2025-02-10", status: "APPROVED",
-    totalStudents: 8, appeared: 8, average: 74.5, passRate: 87.5,
-  },
-  {
-    id: "sub-2", examType: "MID_TERM", examLabel: "Mid Term",
-    className: "Class 8-A", subject: "Mathematics", academicYear: "2024-25",
-    submittedOn: "2025-03-22", status: "PUBLISHED",
-    totalStudents: 8, appeared: 7, average: 68.3, passRate: 85.7,
-  },
-  {
-    id: "sub-3", examType: "UNIT_TEST_2", examLabel: "Unit Test 2",
-    className: "Class 8-A", subject: "Mathematics", academicYear: "2024-25",
-    submittedOn: "2025-04-10", status: "SUBMITTED",
-    totalStudents: 8, appeared: 8, average: 71.0, passRate: 100,
-  },
-  {
-    id: "sub-4", examType: "UNIT_TEST_1", examLabel: "Unit Test 1",
-    className: "Class 8-A", subject: "Science", academicYear: "2024-25",
-    submittedOn: "2025-02-12", status: "APPROVED",
-    totalStudents: 8, appeared: 7, average: 66.1, passRate: 71.4,
-  },
-];
 
 // ── Mock published results ────────────────────────────────────────────────
 export const MOCK_PUBLISHED: PublishedResult[] = [
@@ -92,13 +65,30 @@ export const MOCK_PUBLISHED: PublishedResult[] = [
 // ── Hook ──────────────────────────────────────────────────────────────────
 export type ExamTab = "enter" | "submitted" | "published";
 
+const EMPTY_FILTER: SubmittedFilter = {
+  class_id: "",
+  section_id: "",
+  subject_id: "",
+  exam_id: "",
+};
+
 export const useExamMarks = () => {
   const [activeTab, setActiveTab] = useState<ExamTab>("enter");
 
-  // Exam selector
+  // Exam selector (Enter Marks tab)
   const [selector, setSelector] = useState<ExamSelector>({
     examType: "", className: "", subject: "", academicYear: "",
   });
+
+  // ── Submitted Marks tab filter ─────────────────────────────────────────
+  // Separate from `selector` so the two tabs are independent.
+  const [submittedFilter, setSubmittedFilter] = useState<SubmittedFilter>(EMPTY_FILTER);
+  // `activeFilter` is what was last searched — only updates when "Search" is clicked.
+  const [activeFilter, setActiveFilter] = useState<SubmittedFilter>(EMPTY_FILTER);
+
+  const handleFilterSearch = useCallback(() => {
+    setActiveFilter({ ...submittedFilter });
+  }, [submittedFilter]);
 
   // Mark entries
   const [entries, setEntries] = useState<StudentMarkEntry[]>([]);
@@ -113,24 +103,37 @@ export const useExamMarks = () => {
   const [submitting, setSubmitting] = useState(false);
   const [dlMsg, setDlMsg] = useState(false);
 
-  // ── /tenant/getallmarks — auto-fetches when sub-tab is active ─────────
+  // ── /tenant/getallmarks — driven by the filter's activeFilter ─────────
   const marksQuery = useMemo((): GetAllMarksQuery => ({
-    class_id: selector.classId ?? "",
-    section_id: selector.sectionId ?? "",
-    subject_id: selector.subjectId ?? "",
-    exam_id: selector.examId ?? "",
-  }), [selector.classId, selector.sectionId, selector.subjectId, selector.examId]);
+    class_id:   activeFilter.class_id,
+    section_id: activeFilter.section_id,
+    subject_id: activeFilter.subject_id,
+    ...(activeFilter.exam_id ? { exam_id: activeFilter.exam_id } : {}),
+  }), [activeFilter]);
+
+  // Only fetch when on the submitted tab AND at minimum class+section+subject are set
+  const marksEnabled =
+    activeTab === "submitted" &&
+    Boolean(activeFilter.class_id && activeFilter.section_id && activeFilter.subject_id);
 
   const {
     data: marksRecords,
     isLoading: marksLoading,
     isError: marksError,
     refetch: refetchMarks,
-  } = useAllMarks(marksQuery, activeTab === "submitted");
+  } = useAllMarks(marksQuery, marksEnabled);
 
   const submittedExams: SubmittedExam[] = useMemo(
-    () => marksRecords ? marksToSubmittedExam(marksRecords, selector.className, selector.subject, selector.examType || undefined) : [],
-    [marksRecords, selector.className, selector.subject, selector.examType],
+    () =>
+      marksRecords
+        ? marksToSubmittedExam(
+            marksRecords,
+            activeFilter.className ?? selector.className,
+            activeFilter.subjectName ?? selector.subject,
+           (activeFilter.examName ?? selector.examType) || undefined
+          )
+        : [],
+    [marksRecords, activeFilter, selector.className, selector.subject, selector.examType],
   );
 
   // ── /tenant/studentsbysubject — on-demand fetch ────────────────────────
@@ -139,11 +142,11 @@ export const useExamMarks = () => {
 
   const handleLoadStudents = useCallback(async () => {
     const q = {
-      class_id: selector.classId ?? "",
-      section_id: selector.sectionId ?? "",
-      subject_id: selector.subjectId ?? "",
+      class_id:       selector.classId       ?? "",
+      section_id:     selector.sectionId     ?? "",
+      subject_id:     selector.subjectId     ?? "",
       academicYearId: selector.academicYearId ?? "",
-      exam_id: selector.examId ?? "",
+      exam_id:        selector.examId        ?? "",
     };
 
     if (!q.class_id || !q.section_id || !q.subject_id || !q.academicYearId || !q.exam_id) {
@@ -183,7 +186,6 @@ export const useExamMarks = () => {
         prev.map((e) => {
           if (e.studentId !== studentId) return e;
           const updated = { ...e, [field]: value };
-          // Recalc grade when marks or absent changes
           if (field === "marks" && typeof value === "number" && !updated.isAbsent) {
             updated.grade = calcGrade(value, e.maxMarks);
           }
@@ -244,8 +246,24 @@ export const useExamMarks = () => {
       setSubmitting(true);
       const res = await examMarksApi.submitMarksBulk(entries, selector);
       logger("log", `Bulk submit result`, res);
+
       setSubmitMsg(true);
       setTimeout(() => setSubmitMsg(false), 3000);
+
+      // Switch to Submitted tab; pre-populate filter from selector and trigger search
+      setActiveTab("submitted");
+      const newFilter: SubmittedFilter = {
+        class_id:    selector.classId    ?? "",
+        section_id:  selector.sectionId  ?? "",
+        subject_id:  selector.subjectId  ?? "",
+        exam_id:     selector.examId     ?? "",
+        className:   selector.className,
+        sectionName: "",
+        subjectName: selector.subject,
+        examName:    selector.examType,
+      };
+      setSubmittedFilter(newFilter);
+      setActiveFilter(newFilter);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to submit results";
       logger("error", "Submit failed", { message });
@@ -278,5 +296,10 @@ export const useExamMarks = () => {
     refetchMarks,
     publishedResults: MOCK_PUBLISHED,
     studentsLoading, studentsError,
+    // Submitted tab filter
+    submittedFilter, setSubmittedFilter,
+    activeFilter,
+    handleFilterSearch,
+    marksEnabled,
   };
 };

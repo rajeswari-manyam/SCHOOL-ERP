@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { feeApi } from "../api/fees.api";
+import { feeApi } from "@/services/school-fees.api";
 import { filterPendingFees, sortPendingFees } from "../utils/Fee.utils";
 import type {
   PendingFee,

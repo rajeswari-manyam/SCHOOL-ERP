@@ -50,6 +50,9 @@ export interface TodayAttendance {
   halfDayCount?: number;
   totalStudents: number;
   classLabel: string;         // "10-A"
+  classId?: string;
+  sectionId?: string;
+  academicYearId?: string;
   date: string;               // ISO
   absentStudents: AbsentEntry[];
 }
@@ -68,6 +71,9 @@ export interface AttendanceHistoryEntry {
 
 export interface MarkAttendancePayload {
   classId: string;
+  sectionId: string;
+  teacherId: string;
+  academicYearId: string;
   date: string;
   records: { studentId: string; status: "PRESENT" | "ABSENT" | "HALF_DAY" }[];
 }

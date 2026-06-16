@@ -1,7 +1,7 @@
 // src/store/authStore.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { AuthUser, UserType } from "@/features/auth/types/auth.types";
+import type { AuthUser, UserType, GetUserByIdResponse } from "@/features/auth/types/auth.types";
 
 // ── API userType  →  dashboard route ─────────────────────────────────────────
 export const USER_TYPE_ROUTE_MAP: Record<string, string> = {
@@ -58,6 +58,12 @@ interface AuthState {
   // ⬇️  login() — backward-compatible alias used by old OtpPage code
   //    login(token, user, rawRole)  where rawRole can be "Teacher" or "teacher"
   login: (token: string, user: Partial<AuthUser>, rawRole: string) => void;
+
+  // Called after getUserById — merges full profile into user
+  setUserProfile: (profile: GetUserByIdResponse) => void;
+
+  // Called after fetching school details — stores principal name
+  setPrincipalName: (name: string) => void;
 
   logout: () => void;
   isAuthenticated: () => boolean;
@@ -117,6 +123,38 @@ export const useAuthStore = create<AuthState>()(
         set({ user, token, userType: user.userType, role });
         localStorage.removeItem("__auth_meta__");
         localStorage.setItem("userId", user.id);
+      },
+
+      // ── After getUserById — merge full profile into existing user ─────────
+      setUserProfile: (profile) => {
+        const current = get().user;
+        if (!current || !profile.status) return;
+        const d = profile.data;
+        const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+        const displayName: string =
+          str(d.parent_name) ?? str(d.teacher_name) ?? str(d.student_name) ??
+          str(d.admin_name)  ?? str(d.accountant_name) ??
+          (str(d.first_name) ? `${str(d.first_name)} ${str(d.last_name) ?? ""}`.trim() : undefined) ??
+          str(d.name) ?? current.name;
+        set({
+          user: {
+            ...current,
+            name:        displayName,
+            email:       d.email       ?? current.email,
+            phone:       d.phone       ?? current.phone,
+            address:     d.address     ?? current.address,
+            students:    d.students    ?? current.students,
+            role:        profile.role  ?? current.role,
+            permissions: profile.permissions ?? current.permissions,
+            schoolcode:  d.school_code ?? current.schoolcode,
+          },
+        });
+      },
+
+      setPrincipalName: (name) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, principalName: name } });
       },
 
       logout: () => {

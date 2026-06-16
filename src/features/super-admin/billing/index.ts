@@ -27,7 +27,7 @@ export {
 } from './hooks/useBilling';
 
 // API
-export { billingApi } from './api/billing.api';
+export { billingApi } from '@/services/billing.api';
 
 // Types
 export type {

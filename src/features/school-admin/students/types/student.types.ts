@@ -10,6 +10,9 @@ export interface Student {
   lastName: string;
   class: string;
   section: string;
+  classId?: string;
+  sectionId?: string;
+  academicYearId?: string;
   parentPhone: string;
   status: StudentStatus;
   feeStatus: FeeStatus;

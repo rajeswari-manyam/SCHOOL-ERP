@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNavBar";
 import WhatsAppFAB from "../components/ui/whatsappfab";
 import { X } from "lucide-react";
@@ -8,17 +8,18 @@ import { useParentChildren } from "./hooks/useParentChildren";
 
 const ParentLayout = () => {
   const authUser = useAuthStore((s) => s.user);
+  const location = useLocation();
 
-  // ✅ Always derive parentId — no early return before hooks
+  // Always derive parentId — no early return before hooks
   const parentId = localStorage.getItem("parentId") || authUser?.id || "";
 
-  // ✅ Hooks always called unconditionally
+  // Hooks always called unconditionally
   const { children, activeChild, setActiveChild, loading } =
     useParentChildren(parentId);
 
   const [showChildModal, setShowChildModal] = useState(false);
 
-  // ✅ Guards AFTER all hooks
+  // Guards AFTER all hooks
   if (!parentId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -55,7 +56,17 @@ const ParentLayout = () => {
           showChildModal ? "blur-sm pointer-events-none select-none" : ""
         }
       >
-        <Outlet context={{ activeChild }} key={activeChild.studentId} />
+        {/*
+          ✅ KEY FIX: combine activeChild.studentId + location.pathname
+          - activeChild.studentId  → remount when switching child (your original logic)
+          - location.pathname      → remount when navigating to any route,
+                                     even one already visited, so pages always
+                                     re-fetch fresh data instead of showing stale UI
+        */}
+        <Outlet
+          context={{ activeChild }}
+          key={`${activeChild.studentId}-${location.pathname}`}
+        />
       </main>
 
       {showChildModal && (

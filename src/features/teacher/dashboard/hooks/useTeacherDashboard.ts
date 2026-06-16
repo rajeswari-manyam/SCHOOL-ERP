@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { leaveApi } from "../../leave/api/leave.api";
-import { teacherDashboardApi } from "../api/teacher-dashboard.api";
+import { leaveApi } from "@/services/teacher-leave.api";
+import { teacherDashboardApi } from "@/services/teacher-dashboard.api";
 
 export const TEACHER_KEYS = {
   all:                ["teacher"] as const,
@@ -14,8 +14,9 @@ export const useTeacherDashboard = () =>
   useQuery({
     queryKey: TEACHER_KEYS.dashboard(),
     queryFn:  teacherDashboardApi.getDashboard,
+    enabled:  false,   // endpoint not yet on backend (/teacher/dashboard 404)
     staleTime: 1000 * 60,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 
 export const usePendingHomeworkByTeacher = (teacherId: string, options?: { enabled?: boolean }) =>

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { schoolsApi } from "../api/schools.api";
+import { schoolsApi } from "@/services/super-admin-schools.api";
 import type { SchoolFilters, SchoolFormValues, School } from "../types/school.types";
 
 export const SCHOOLS_KEYS = {

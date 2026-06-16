@@ -1,12 +1,12 @@
 // teacher/attendance/components/TodayTab.tsx
 import { useState } from "react";
 import { format } from "date-fns";
-import { Check, CheckCircle, ChevronDown, Edit3, RefreshCcw, Send } from "lucide-react";
+import { Check, CheckCircle, ChevronDown, Edit3, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/authStore";
 import {
   useAttendanceStudents,
   useMarkAttendanceViaWeb,
-  useRetryWaAlert,
   MOCK_STUDENTS,
 } from "../hooks/useAttendance";
 import type { TodayAttendance } from "../types/attendance.types";
@@ -18,6 +18,9 @@ interface TodayTabProps {
   today: TodayAttendance;
   isHoliday?: boolean;
   holidayName?: string;
+  classId?: string;
+  sectionId?: string;
+  academicYearId?: string;
   onOpenCorrectionModal: (prefill?: { date: string; studentId: string; studentName: string; rollNo: string; currentMark: "P" | "A" | "H" }) => void;
 }
 
@@ -100,7 +103,6 @@ const NotMarkedState = ({ onOpenWebForm }: { onOpenWebForm: () => void }) => {
 
 // ── Marked State ──────────────────────────────────────────────────────────────
 const MarkedState = ({ today, onOpenCorrectionModal }: { today: TodayAttendance; onOpenCorrectionModal: TodayTabProps["onOpenCorrectionModal"] }) => {
-  const { mutate: retryAlert, isPending: retrying } = useRetryWaAlert();
   const pct = Math.round(((today.presentCount ?? 0) / today.totalStudents) * 100);
 
   return (
@@ -157,16 +159,9 @@ const MarkedState = ({ today, onOpenCorrectionModal }: { today: TodayAttendance;
                     WA Sent {alertSentAt && <span className="text-gray-400 font-normal">{alertSentAt}</span>}
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => retryAlert(student.id)}
-                    disabled={retrying}
-                    className="flex items-center gap-1.5 rounded-lg bg-amber-50 border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50 flex-shrink-0"
-                  >
-                    <RefreshCcw size={11} className="text-current" />
-                    Retry
-                  </Button>
+                  <span className="text-[11px] font-semibold text-amber-500 flex-shrink-0">
+                    WA Pending
+                  </span>
                 )}
 
                 <Button
@@ -195,8 +190,16 @@ const MarkedState = ({ today, onOpenCorrectionModal }: { today: TodayAttendance;
 
 // ── Web Form (collapsible) ────────────────────────────────────────────────────
 const WebForm = ({
-  classLabel, date, onSubmitted,
-}: { classLabel: string; date: string; onSubmitted: () => void }) => {
+  classLabel, date, classId, sectionId, teacherId, academicYearId, onSubmitted,
+}: {
+  classLabel: string;
+  date: string;
+  classId: string;
+  sectionId: string;
+  teacherId: string;
+  academicYearId: string;
+  onSubmitted: () => void;
+}) => {
   const { data: studentData } = useAttendanceStudents();
   const students = studentData ?? MOCK_STUDENTS;
   const { mutate, isPending } = useMarkAttendanceViaWeb();
@@ -218,7 +221,10 @@ const WebForm = ({
 
   const handleConfirmedSubmit = () => {
     mutate({
-      classId: "class-1",
+      classId,
+      sectionId,
+      teacherId,
+      academicYearId,
       date,
       records: students.map((s) => ({ studentId: s.id, status: records[s.id] })),
     }, {
@@ -291,8 +297,9 @@ const WebForm = ({
 };
 
 // ── TodayTab ──────────────────────────────────────────────────────────────────
-const TodayTab = ({ today, isHoliday, holidayName, onOpenCorrectionModal }: TodayTabProps) => {
+const TodayTab = ({ today, isHoliday, holidayName, classId = "", sectionId = "", academicYearId = "", onOpenCorrectionModal }: TodayTabProps) => {
   const [showWebForm, setShowWebForm] = useState(false);
+  const teacherId = useAuthStore((s) => s.user?.id ?? "");
 
   if (isHoliday) {
     return (
@@ -334,6 +341,10 @@ const TodayTab = ({ today, isHoliday, holidayName, onOpenCorrectionModal }: Toda
             <WebForm
               classLabel={today.classLabel}
               date={today.date}
+              classId={classId}
+              sectionId={sectionId}
+              teacherId={teacherId}
+              academicYearId={academicYearId}
               onSubmitted={() => setShowWebForm(false)}
             />
           )}

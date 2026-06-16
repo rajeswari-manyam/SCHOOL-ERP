@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { admissionsApi, type UploadProgressEvent } from '../api/admissionsApi';
+import { admissionsApi, type UploadProgressEvent } from '@/services/admissions.api';
 import { ADMISSIONS_KEYS } from './useAdmissionsQueries';
 
 // ─── File validation constants ────────────────────────────────────────────────

@@ -24,7 +24,7 @@ export {
   MOCK_HISTORY,
 } from "./hooks/useAttendance";
 
-export { attendanceApi }  from "./api/attendance.api";
+export { attendanceApi }  from "@/services/teacher-attendance.api";
 
 export type {
   AttendanceMark,

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
+import { getAllStaff } from "@/services/staff.api";
 import {
   getAllHomework,
   createHomework as createHomeworkApi,
@@ -68,8 +69,6 @@ const transform = (h: Homework): HomeworkItem => ({
 
 // ── Teacher ID resolution (cached) ────────────────────────────────────────────
 
-import api from "@/config/axios";
-
 const CACHED_TEACHER_ID_KEY = "teacherStaffId";
 
 export const fetchTeacherId = async (phone: string): Promise<string> => {
@@ -77,20 +76,13 @@ export const fetchTeacherId = async (phone: string): Promise<string> => {
   if (cached) return cached;
 
   try {
-    const { data: raw } = await api.get<unknown>("/tenant/getallstaff");
-    let list: Record<string, unknown>[] = [];
-    if (Array.isArray(raw)) {
-      list = raw as Record<string, unknown>[];
-    } else if (raw && typeof raw === "object") {
-      const obj = raw as Record<string, unknown>;
-      if (Array.isArray(obj.staff)) list = obj.staff as Record<string, unknown>[];
-      else if (Array.isArray(obj.data)) list = obj.data as Record<string, unknown>[];
-    }
+    const res = await getAllStaff();
+    const list = Array.isArray(res.data) ? res.data : [];
     const normalizedPhone = phone.replace(/\D/g, "");
     const match = list.find(
-      (s) => ((s.phone as string) ?? "").replace(/\D/g, "") === normalizedPhone
+      (s) => (s.phone ?? "").replace(/\D/g, "") === normalizedPhone
     );
-    if (match?.id && typeof match.id === "string") {
+    if (match?.id) {
       localStorage.setItem(CACHED_TEACHER_ID_KEY, match.id);
       return match.id;
     }

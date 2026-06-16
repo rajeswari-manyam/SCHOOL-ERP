@@ -138,6 +138,7 @@ const AddStudentModal = ({
 
   const [studentData, setStudentData] = useState<{
     id?: string;
+    school_id?: string;
   } | null>(null);
 
   // AUTH STORE
@@ -199,6 +200,7 @@ const AddStudentModal = ({
 
       setStudentData({
         id: student.id,
+        school_id: (student as unknown as Record<string, unknown>)?.school_id as string | undefined,
       });
 
       setStep(2);
@@ -256,8 +258,6 @@ const AddStudentModal = ({
         return;
       }
 
-      const schoolId = user?.schoolcode || "";
-
       const parentPayload: CreateParentPayload = {
         parent_name: form.fatherName,
         relation: form.relation,
@@ -266,7 +266,7 @@ const AddStudentModal = ({
         phone: form.fatherPhone,
         students: [studentData.id],
         address: form.residentialAddress,
-        school_id: schoolId,
+        school_id: studentData.school_id || user?.schoolcode || "",
       };
 
       const validationError = validateParentPayload(parentPayload);

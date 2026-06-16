@@ -12,7 +12,8 @@ import type { CreateTimetablePayload } from "../types/timetable.types";
 // API imports
 import { getAllClasses, getSectionsByClassId, type GetAllClassesResponse, type GetSectionsByClassIdResponse } from "@/services/class.api";
 import { getSubjectsBySectionId, type GetSubjectsBySectionIdResponse } from "@/services/subject.api";
-import { getAllStaff, type GetAllStaffResponse } from "@/services/staff.api";
+import { fetchDepartments, getDepartmentById } from "@/services/department.api";
+import type { Department } from "@/features/school-admin/settings/types/settings.types";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 
 /* =========================================================
@@ -118,6 +119,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   const [sectionOptions, setSectionOptions] = useState<DropdownOption[]>([]);
   const [subjectOptions, setSubjectOptions] = useState<DropdownOption[]>([]);
   const [teacherOptions, setTeacherOptions] = useState<DropdownOption[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   // ── Loading states ───────────────────────────────────────
   const [loadingClasses, setLoadingClasses] = useState(false);
@@ -164,6 +166,8 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
   const selectedClassId = watch("class_id");
   const selectedSectionId = watch("section_id");
+  const selectedSubjectId = watch("subject_id");
+  const selectedSubjectName = watch("subjectname");
   const selectedPeriodNo = watch("period_no");
 
   // ── Fetch classes on open ─────────────────────────────────
@@ -210,17 +214,10 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       .catch(console.error)
       .finally(() => setLoadingClasses(false));
 
-    // Fetch all teachers (Teachers only, filter by role)
-    setLoadingTeachers(true);
-    getAllStaff()
-      .then((res: GetAllStaffResponse) => {
-        const opts = res.data
-          .filter((s) => s.role?.toLowerCase() === "teacher")
-          .map((s) => ({ value: s.id, label: s.name }));
-        setTeacherOptions(opts);
-      })
-      .catch(console.error)
-      .finally(() => setLoadingTeachers(false));
+    // Fetch all departments for subject → teacher matching
+    fetchDepartments()
+      .then((data) => setDepartments(data))
+      .catch(console.error);
   }, [open, reset, defaultSchoolCode]);
 
   // ── Cascade: class → sections ─────────────────────────────
@@ -247,7 +244,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       .then((res: GetSectionsByClassIdResponse) => {
         const opts = res.data.map((s) => ({
           value: s.id,
-          label: s.sectionName ?? s.section_name ?? "",
+          label: s.sectionName ?? "",
         }));
         setSectionOptions(opts);
       })
@@ -266,8 +263,11 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
     setLoadingSubjects(true);
     setSubjectOptions([]);
+    setTeacherOptions([]);
     setValue("subject_id", "");
     setValue("subjectname", "");
+    setValue("teacher_id", "");
+    setValue("teachername", "");
 
     getSubjectsBySectionId(selectedSectionId)
       .then((res: GetSubjectsBySectionIdResponse) => {
@@ -280,6 +280,42 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       .catch(console.error)
       .finally(() => setLoadingSubjects(false));
   }, [selectedSectionId, setValue]);
+
+  // ── Cascade: subject → teachers via department match ──────
+  useEffect(() => {
+    if (!selectedSubjectId || !selectedSubjectName) {
+      setTeacherOptions([]);
+      setValue("teacher_id", "");
+      setValue("teachername", "");
+      return;
+    }
+
+    const trimmed = selectedSubjectName.trim().toLowerCase();
+    const matched = departments.find(
+      (d) => d.departmentName.toLowerCase() === trimmed
+    );
+
+    if (!matched) {
+      setTeacherOptions([]);
+      setValue("teacher_id", "");
+      setValue("teachername", "");
+      return;
+    }
+
+    setLoadingTeachers(true);
+    setValue("teacher_id", "");
+    setValue("teachername", "");
+    getDepartmentById(matched.id)
+      .then((dept) => {
+        const opts = (dept?.staffs ?? []).map((s) => ({
+          value: s.id,
+          label: `${s.name} (${s.email || s.phone || s.role})`,
+        }));
+        setTeacherOptions(opts);
+      })
+      .catch(() => setTeacherOptions([]))
+      .finally(() => setLoadingTeachers(false));
+  }, [selectedSubjectId, selectedSubjectName, departments, setValue]);
 
   // ── Sync time slot when period changes ────────────────────
   useEffect(() => {
@@ -455,7 +491,14 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                 loading={loadingTeachers}
                 value={watch("teacher_id")}
                 options={teacherOptions}
-                placeholder="Select teacher"
+                placeholder={
+                  !selectedSubjectId
+                    ? "Pick subject first"
+                    : teacherOptions.length === 0 && !loadingTeachers
+                    ? "No teachers for this subject"
+                    : "Select teacher"
+                }
+                disabled={!selectedSubjectId || teacherOptions.length === 0}
                 onValueChange={(value) => {
                   setValue("teacher_id", value);
                   const found = teacherOptions.find((t) => t.value === value);

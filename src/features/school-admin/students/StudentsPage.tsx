@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useStudents } from "../students/hooks/useStudents";
+import { useClassesList } from "../students/hooks/useClassesList";
+import { useSectionsList } from "../students/hooks/useSectionsList";
+import { useUIStore } from "@/store/uiStore";
 
 import StudentStatCards from "../students/components/StudentStatCards";
 import StudentFilterBar from "../students/components/StudentFilterBar";
@@ -22,6 +25,13 @@ const StudentsPage = () => {
     updateStudent,
     loadStudents,
   } = useStudents();
+
+  const academicYearId = useUIStore((s) => s.academicYearId);
+  const { classes: classOptions } = useClassesList(academicYearId);
+  const selectedClassId = classFilter !== "All"
+    ? classOptions.find((c) => c.value === classFilter)?.id ?? null
+    : null;
+  const { sections: sectionOptions } = useSectionsList(selectedClassId);
 
 
 
@@ -68,6 +78,7 @@ const StudentsPage = () => {
         classFilter={classFilter} setClassFilter={setClassFilter}
         sectionFilter={sectionFilter} setSectionFilter={setSectionFilter}
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+        classOptions={classOptions} sectionOptions={sectionOptions}
       />
 
       {/* Error */}

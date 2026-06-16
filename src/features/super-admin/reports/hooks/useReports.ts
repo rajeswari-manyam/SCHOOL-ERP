@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { reportsApi } from "../api/reports.api";
+import { reportsApi } from "@/services/super-admin-reports.api";
 import type { GenerateReportPayload } from "../types/reports.types";
 
 export const REPORTS_KEYS = {

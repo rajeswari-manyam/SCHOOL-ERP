@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import { sendOtp, verifyOtp } from "../api/auth.api";
+import { sendOtp, verifyOtp } from "@/services/auth.api";
 import { useAuthStore, USER_TYPE_ROUTE_MAP } from "@/store/authStore";
 import type { LoginPayload, OtpVerifyPayload, OtpRouteState } from "../types/auth.types";
 

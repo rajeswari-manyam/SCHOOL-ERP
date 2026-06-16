@@ -9,7 +9,7 @@ export type UserType =
   | "Parent"
   | "Student";
 
-// ── Login API ──────────────────────────────────────
+// ── Login API ──────────────────────────────────────────────────────────────────
 export interface LoginPayload {
   schoolcode: string;
   phone: string;
@@ -22,7 +22,7 @@ export interface LoginResponse {
   otp: string; // dev: returned by API; prod: sent via SMS
 }
 
-// ── OTP Verify API ─────────────────────────────────
+// ── OTP Verify API ─────────────────────────────────────────────────────────────
 export interface OtpVerifyPayload {
   schoolcode: string;
   phone: string;
@@ -37,6 +37,10 @@ export interface OtpVerifyResponse {
   userId?: string;
   userType?: string;
   email?: string;
+  name?: string;
+
+  role?: Role;
+  permissions?: Permission[];
 
   data?: {
     id: string;
@@ -57,28 +61,93 @@ export interface OtpVerifyResponse {
     schoolcode: string;
   };
 }
-// ── Auth Session (stored in Zustand + localStorage) ─
-export interface Child {
-  id: string;
-  name: string;
-  class: string;
-  section?: string;
-  school?: string;
+
+// ── Get User By ID ─────────────────────────────────────────────────────────────
+export interface Permission {
+  module: string;
+  actions: string[];
 }
 
-export interface AuthUser {
+export interface Role {
   id: string;
   name: string;
-  phone: string;
-  userType: UserType;
-  schoolcode: string;
-  studentId?: string;
-  children?: Child[];
+}
+
+export interface GetUserByIdResponse {
+  status: boolean;
+  userType: string;
+  role: Role;
+  permissions: Permission[];
+  data: {
+    // Common
+    id: string;
+    email?: string;
+    phone?: string;
+    school_id?: string;
+    status?: string;
+    createdAt?: string;
+    updatedAt?: string;
+
+    // Parent-specific
+    parent_name?: string;
+    relation?: string;
+    occupation?: string;
+    address?: string;
+    students?: { id: string; name: string }[];
+
+    // Teacher / Admin / Accountant / Student-specific
+    name?: string;
+    first_name?: string;
+    last_name?: string;
+    teacher_name?: string;
+    admin_name?: string;
+    accountant_name?: string;
+    student_name?: string;
+
+    // Student-specific
+    roll_number?: string;
+    admission_number?: string;
+    class?: string;
+    section?: string;
+    class_id?: string;
+    section_id?: string;
+    school_code?: string;
+  };
+}
+
+// ── Auth Session (stored in Zustand + localStorage) ────────────────────────────
+export interface UserProfile {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  schoolcode?: string;
+  // Parent-specific
+  students?: { id: string; name: string }[];
+  // Student-specific
   class_id?: string;
   section_id?: string;
 }
 
-// ── Login Step State ───────────────────────────────
+// Full auth user stored in Zustand
+export interface AuthUser {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  userType: UserType;
+  schoolcode: string;
+  principalName?: string;
+  studentId?: string;
+  class_id?: string;
+  section_id?: string;
+  permissions?: Permission[];
+  role?: Role;
+  students?: { id: string; name: string }[];
+}
+
+// ── Login Step State ───────────────────────────────────────────────────────────
 export type LoginStep = "credentials" | "otp";
 
 // Transient state passed from LoginPage → OtpPage via router state
