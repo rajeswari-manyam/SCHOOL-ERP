@@ -1,88 +1,45 @@
+import { FileText, BarChart3, Clock } from "lucide-react";
 import type { ReportStats } from "../types/reports.types";
 
-const Card = ({
-  label,
-  value,
-  sub,
-  accent,
-}: {
+interface StatCardProps {
+  icon: React.ReactNode;
   label: string;
   value: string | number;
-  sub: string;
   accent: string;
-}) => (
-  <div
-    className="
-      bg-white
-      rounded-lg
-      border
-      border-gray-100
-      shadow-sm
-      px-2
-      py-1.5
-      h-[80px]
-      flex
-      flex-col
-      justify-center
-      overflow-hidden
-      transition-shadow
-      duration-200
-      hover:shadow-md
-    "
-  >
-    {/* Label */}
-    <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400 truncate">
-      {label}
-    </p>
+}
 
-    {/* Value + Sub */}
-    <div className="flex items-end gap-1 mt-0.5">
-      <p className="text-[13px] font-bold leading-none text-gray-900 truncate">
-        {value}
-      </p>
-
-      <span
-        className={`text-[7px] font-medium leading-none truncate ${accent}`}
-      >
-        {sub}
-      </span>
+const StatCard = ({ icon, label, value, accent }: StatCardProps) => (
+  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${accent}`}>
+      {icon}
+    </div>
+    <div>
+      <p className="text-sm text-gray-500 font-medium">{label}</p>
+      <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
     </div>
   </div>
 );
 
-const ReportStatCards = ({
-  stats,
-}: {
-  stats: ReportStats;
-}) => {
+const ReportStatCards = ({ stats }: { stats: ReportStats }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      <Card
-        label="Total Generated"
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <StatCard
+        icon={<FileText className="w-6 h-6 text-indigo-600" />}
+        label="Total Reports"
         value={stats.totalGenerated}
-        sub="this year"
-        accent="text-indigo-500"
+        accent="bg-indigo-50"
       />
-
-      <Card
-        label="Scheduled Reports"
-        value={stats.scheduledReports}
-        sub="active"
-        accent="text-emerald-600"
-      />
-
-      <Card
-        label="Monthly Avg"
+      <StatCard
+        icon={<BarChart3 className="w-6 h-6 text-emerald-600" />}
+        label="Monthly Average"
         value={stats.monthlyAvg}
-        sub="reports"
-        accent="text-gray-400"
+        accent="bg-emerald-50"
       />
-
-      <Card
-        label="Pending Delivery"
+      <StatCard
+        icon={<Clock className="w-6 h-6 text-amber-600" />}
+        label="Pending Reports"
         value={stats.pendingDelivery}
-        sub="in queue"
-        accent="text-amber-500"
+        accent="bg-amber-50"
       />
     </div>
   );

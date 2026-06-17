@@ -550,6 +550,8 @@ const TimetablePage: React.FC = () => {
       <AddPeriodModal
         open={addPeriodOpen}
         isSaving={isCreatingTimetable}
+        defaultClass={activeClass.id ? activeClass : undefined}
+        defaultSection={activeSection.id ? activeSection : undefined}
         onClose={() => setAddPeriodOpen(false)}
         onSave={(payload: CreateTimetablePayload) =>
           createTimetable(payload, { onSuccess: () => setAddPeriodOpen(false) })

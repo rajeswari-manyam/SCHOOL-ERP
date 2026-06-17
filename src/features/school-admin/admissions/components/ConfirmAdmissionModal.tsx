@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
 import { useEnquiries, useConfirmAdmission } from '../hooks/useAdmissionsQueries';
+import { fetchSchoolProfile } from '@/services/school-settings.api';
 import type { ConfirmAdmissionFormData } from '../types';
 
 const schema = z.object({
@@ -28,6 +30,17 @@ export function ConfirmAdmissionModal() {
   const { isConfirmAdmissionOpen, confirmTargetId, closeConfirmAdmission } = useAdmissionsStore();
   const { data: enquiries } = useEnquiries();
   const confirmAdmission = useConfirmAdmission();
+  const [schoolName, setSchoolName] = useState('Hanamkonda Public School');
+  const [principalName, setPrincipalName] = useState('Ramesh Kumar');
+
+  useEffect(() => {
+    if (isConfirmAdmissionOpen) {
+      fetchSchoolProfile().then(profile => {
+        if (profile.schoolName) setSchoolName(profile.schoolName);
+        if (profile.principalName) setPrincipalName(profile.principalName);
+      }).catch(() => {});
+    }
+  }, [isConfirmAdmissionOpen]);
 
   const enquiry = enquiries?.find((e) => e.id === confirmTargetId);
 
@@ -162,11 +175,11 @@ export function ConfirmAdmissionModal() {
                   <p className="text-xs font-bold text-green-700 tracking-wider mb-3">WELCOME WHATSAPP PREVIEW</p>
                   <div className="bg-white rounded-xl p-3 shadow-sm">
                     <p className="text-sm text-gray-800 leading-relaxed">
-                      Welcome to <strong>Hanamkonda Public School!</strong> {enquiry.studentName} has been admitted to{' '}
+                      Welcome to <strong>{schoolName}!</strong> {enquiry.studentName} has been admitted to{' '}
                       {enquiry.classApplyingFor}{section}. Admission No: {ADM_NO_PREFIX}. First day: {formattedFirstDay}. Fee: ₹
                       {ANNUAL_FEE.toLocaleString()}/year. We look forward to seeing you!
                       <br />
-                      <br />— <strong>Principal Ramesh Kumar</strong>
+                      <br />— <strong>Principal {principalName}</strong>
                     </p>
                     <div className="flex justify-end items-center gap-1 mt-1">
                       <span className="text-[10px] text-gray-400">

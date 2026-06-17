@@ -14,9 +14,6 @@ import {
   MAX_FILES,
   formatBytes,
 } from '../hooks/useUploadAdmissionDocuments';
-import { Card } from '../../../../components/ui/card';
-import { Button } from '../../../../components/ui/button';
-import { Badge } from '../../../../components/ui/badge';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -184,9 +181,9 @@ export function InterviewCard({ enquiry, index }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
     >
-      <Card
+      <div
         onClick={() => setSelectedEnquiry(enquiry.id)}
-        className="cursor-pointer border-gray-100 p-4 transition-all hover:border-amber-200"
+        className="bg-white rounded-xl border border-gray-100 p-4 cursor-pointer hover:border-amber-200 hover:shadow-sm transition-all"
       >
         {/* Header */}
         <div className="mb-2 flex items-start justify-between gap-2">
@@ -195,10 +192,13 @@ export function InterviewCard({ enquiry, index }: Props) {
               ? <h3 className="truncate text-sm font-semibold text-gray-900">{enquiry.studentName}</h3>
               : <UnknownStudent id={enquiry.id} />}
           </div>
-          {soon
-            ? <Badge variant={soon.urgent ? 'red' : 'amber'} className="shrink-0">{soon.label}</Badge>
-            : enquiry.interviewDate && <Badge variant="amber" className="shrink-0">Scheduled</Badge>
-          }
+          {soon ? (
+            <span className={`shrink-0 text-[10px] font-bold rounded-full px-2 py-0.5 ${
+              soon.urgent ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'
+            }`}>{soon.label}</span>
+          ) : enquiry.interviewDate ? (
+            <span className="shrink-0 text-[10px] font-bold rounded-full px-2 py-0.5 bg-amber-50 text-amber-700">Scheduled</span>
+          ) : null}
         </div>
 
         {/* Class + Parent */}
@@ -248,20 +248,19 @@ export function InterviewCard({ enquiry, index }: Props) {
           />
 
           {/* Toggle */}
-          <Button
+          <button
             type="button"
             onClick={handleToggleUpload}
             disabled={isUploading}
-            variant="outline"
-            size="sm"
-            className={[
-              'flex w-full items-center justify-center gap-1.5 transition-colors',
-              uploadOpen ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100' : '',
-            ].filter(Boolean).join(' ')}
+            className={`flex w-full items-center justify-center gap-1.5 rounded-lg border text-xs font-medium py-2 transition-colors disabled:opacity-50 ${
+              uploadOpen
+                ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
           >
             <Upload size={12} />
             {uploadOpen ? 'Hide Upload' : 'Upload Documents'}
-          </Button>
+          </button>
 
           {/* Collapsible content */}
           <AnimatePresence initial={false}>
@@ -336,27 +335,24 @@ export function InterviewCard({ enquiry, index }: Props) {
                             <Loader2 size={11} className="animate-spin" />
                             Uploading, please wait…
                           </div>
-                          <Button
+                          <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); panel.handleCancel(); }}
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 text-xs text-red-500 hover:border-red-300 hover:text-red-600"
+                            className="shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-red-500 hover:border-red-300 hover:text-red-600 transition-colors"
                           >
                             Cancel
-                          </Button>
+                          </button>
                         </div>
                       ) : (
                         panel.files.length > 0 && (
-                          <Button
+                          <button
                             type="button"
                             onClick={handleUploadClick}
-                            size="sm"
-                            className="flex w-full items-center justify-center gap-1.5 bg-amber-500 text-white hover:bg-amber-600"
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold py-2 transition-colors"
                           >
                             <Upload size={12} />
                             Upload {panel.files.length} {panel.files.length === 1 ? 'file' : 'files'}
-                          </Button>
+                          </button>
                         )
                       )}
                     </>
@@ -368,22 +364,20 @@ export function InterviewCard({ enquiry, index }: Props) {
         </div>
 
         {/* Move to Docs */}
-        <Button
+        <button
           onClick={(e) => {
             e.stopPropagation();
             moveToStage.mutate({ id: enquiry.id, stage: 'docs_verified' });
           }}
           disabled={moveToStage.isPending || isUploading}
-          variant="outline"
-          size="sm"
-          className="flex w-full items-center justify-center gap-1"
+          className="flex w-full items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white hover:bg-amber-50 hover:border-amber-300 text-xs font-semibold text-gray-700 hover:text-amber-700 py-2 transition-colors disabled:opacity-50"
         >
           {moveToStage.isPending
             ? <><Loader2 size={12} className="animate-spin" /> Moving…</>
             : <>Move to Docs <ArrowRight size={12} /></>
           }
-        </Button>
-      </Card>
+        </button>
+      </div>
     </motion.div>
   );
 }

@@ -7,7 +7,7 @@ export type ReportType =
   | "STAFF";
 
 export type ReportFormat = "PDF" | "CSV";
-export type ReportPeriodType = "Monthly" | "Custom Range" | "Annual" | "Weekly" | "Academic Year" | "Current" | "By Class" | "PDF Only";
+export type ReportPeriodType = "Weekly" | "Monthly" | "Custom" | "Annual" | "Academic Year" | "Current" | "By Class" | "PDF Only";
 
 export interface ReportCard {
   id: ReportType;
@@ -20,6 +20,23 @@ export interface ReportCard {
   accentColor: string;
 }
 
+// ─── Raw API shape (snake_case from backend) ───────────────────────────────────
+export interface RawReport {
+  id: string;
+  reportype: string;
+  from: string;
+  to: string;
+  class_id: string | null;
+  section_id: string | null;
+  academic_year_id: string | null;
+  format: string;
+  emailreport: boolean;
+  school_code: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── UI display shape (mapped from RawReport) ─────────────────────────────────
 export interface GeneratedReport {
   id: string;
   reportName: string;
@@ -30,6 +47,7 @@ export interface GeneratedReport {
   type: ReportType;
 }
 
+// ─── Form state ───────────────────────────────────────────────────────────────
 export interface GenerateReportFormData {
   reportType: ReportType;
   dateRangeType: "This Month" | "Last Month" | "Custom Range";
@@ -54,19 +72,32 @@ export interface ReportStats {
   pendingDelivery: number;
 }
 
-// ─── Create Report (POST /tenant/createreports) ────────────────────────────────
+// ─── API payload / response ───────────────────────────────────────────────────
 export interface CreateReportPayload {
   reportype: string;
   from: string;
   to: string;
-  class: string;
+  class_id: string;
+  section_id: string | null;
+  academic_year_id: string | null;
   format: string;
   emailreport: boolean;
   school_code: string;
 }
 
 export interface CreateReportResponse {
-  success: boolean;
+  status: boolean;
   message?: string;
-  reportId?: string;
+  data?: RawReport;
+}
+
+export interface GetAllReportsResponse {
+  status: boolean;
+  count?: number;
+  data: RawReport[];
+}
+
+export interface GetReportByIdResponse {
+  status: boolean;
+  data: RawReport;
 }

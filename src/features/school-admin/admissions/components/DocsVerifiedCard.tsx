@@ -2,10 +2,7 @@ import { CheckCircle2, AlertCircle, FileText, User, ExternalLink, Loader2 } from
 import { motion } from 'framer-motion';
 import type { Enquiry } from '../types';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
-import { useAdmissionDocuments } from '../hooks/useAdmissionsQueries';
-import { Card } from '../../../../components/ui/card';
-import { Button } from '../../../../components/ui/button';
-import { Badge } from '../../../../components/ui/badge';
+import { useAdmissionDocuments, useDirectConfirmAdmission, useDirectDeclineAdmission } from '../hooks/useAdmissionsQueries';
 
 interface Props {
   enquiry: Enquiry;
@@ -13,31 +10,10 @@ interface Props {
 }
 
 const DOC_STATUS = {
-  verified: { icon: CheckCircle2, color: 'text-emerald-500', label: '' },
-  pending:  { icon: AlertCircle,  color: 'text-amber-500',  label: 'Pending' },
-  missing:  { icon: AlertCircle,  color: 'text-red-500',    label: 'Missing' },
+  verified: { icon: CheckCircle2, color: 'text-emerald-500' },
+  pending:  { icon: AlertCircle,  color: 'text-amber-500'  },
+  missing:  { icon: AlertCircle,  color: 'text-red-500'    },
 } as const;
-
-const UnknownStudent = ({ id }: { id: string }) => (
-  <span className="text-sm font-medium text-gray-400 italic">
-    Unknown #{id.slice(0, 8)}
-  </span>
-);
-
-const DocProgress = ({ verified, total }: { verified: number; total: number }) => {
-  const pct = total ? Math.round((verified / total) * 100) : 0;
-  const color = pct === 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-400';
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full bg-gray-100">
-        <div className={`h-1.5 rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-[10px] font-semibold text-gray-400 tabular-nums">
-        {verified}/{total}
-      </span>
-    </div>
-  );
-};
 
 function prettifyFileName(name: string): string {
   try {
@@ -50,25 +26,22 @@ function prettifyFileName(name: string): string {
 }
 
 export function DocsVerifiedCard({ enquiry, index }: Props) {
-  const { setSelectedEnquiry, openConfirmAdmission } = useAdmissionsStore();
+  const { setSelectedEnquiry } = useAdmissionsStore();
   const { data: fetchedDocs = [], isLoading: isDocsLoading } = useAdmissionDocuments(enquiry.id);
+  const confirmMutation = useDirectConfirmAdmission();
+  const declineMutation = useDirectDeclineAdmission();
+  const isActing = confirmMutation.isPending || declineMutation.isPending;
 
-  // Merge API-fetched document records (have file_name + file_url) with
-  // embedded enquiry.documents (have name + status). API records win.
   const docs = enquiry.documents ?? [];
 
-  // Build uploaded files from dedicated API response
   const uploadedFiles = fetchedDocs.length > 0
     ? fetchedDocs
         .filter((d) => d.file_url)
         .map((d) => ({ id: d.id, name: d.file_name, file_name: d.file_name, file_url: d.file_url }))
     : docs.filter((d): d is typeof d & { file_url: string } => !!d.file_url);
 
-  // Checklist items (status-only) from embedded data
   const checklist = docs.filter((d) => !d.file_url);
-
   const verifiedCount = checklist.filter((d) => d.status === 'verified').length;
-  const allVerified = checklist.length > 0 && verifiedCount === checklist.length;
 
   return (
     <motion.div
@@ -76,26 +49,25 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
     >
-      <Card
+      <div
         onClick={() => setSelectedEnquiry(enquiry.id)}
-        className="p-4 cursor-pointer border-gray-100 hover:border-blue-200 transition-all"
+        className="bg-white rounded-xl border border-gray-100 p-4 cursor-pointer hover:border-blue-200 hover:shadow-sm transition-all"
       >
         {/* Header */}
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            {enquiry.studentName ? (
-              <h3 className="truncate font-semibold text-gray-900 text-sm">
-                {enquiry.studentName}
-              </h3>
-            ) : (
-              <UnknownStudent id={enquiry.id} />
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <h3 className="font-semibold text-gray-900 text-sm leading-snug truncate">
+            {enquiry.studentName || (
+              <span className="text-gray-400 italic">Unknown #{enquiry.id.slice(0, 8)}</span>
             )}
-          </div>
+          </h3>
           {checklist.length > 0 && (
-            <Badge variant={allVerified ? 'emerald' : 'amber'} className="shrink-0">
-              <FileText size={10} className="mr-1" />
-              {allVerified ? 'Complete' : `${verifiedCount}/${checklist.length}`}
-            </Badge>
+            <span className={`shrink-0 text-[10px] font-bold rounded-full px-2 py-0.5 ${
+              verifiedCount === checklist.length
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-amber-50 text-amber-700'
+            }`}>
+              {verifiedCount === checklist.length ? 'Complete' : `${verifiedCount}/${checklist.length}`}
+            </span>
           )}
         </div>
 
@@ -103,9 +75,7 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
         <div className="mb-3 space-y-1 text-xs text-gray-500">
           <div className="flex gap-1">
             <span className="text-gray-400">Class:</span>
-            <span className="font-semibold text-gray-700">
-              {enquiry.classApplyingFor || '—'}
-            </span>
+            <span className="font-semibold text-gray-700">{enquiry.classApplyingFor || '—'}</span>
           </div>
           <div className="flex items-center gap-1">
             <User size={11} className="text-gray-300" />
@@ -115,84 +85,80 @@ export function DocsVerifiedCard({ enquiry, index }: Props) {
           </div>
         </div>
 
-        {/* ── Document checklist ─────────────────────────────────────────── */}
+        {/* Document checklist */}
         {checklist.length > 0 ? (
-          <div className="mb-3">
-            <DocProgress verified={verifiedCount} total={checklist.length} />
-            <ul className="mt-2 space-y-1">
-              {checklist.map((doc) => {
-                const cfg = DOC_STATUS[doc.status] ?? DOC_STATUS.pending;
-                const Icon = cfg.icon;
-                return (
-                  <li key={doc.name} className="flex items-center gap-2 text-xs">
-                    <Icon size={12} className={`shrink-0 ${cfg.color}`} />
-                    <span className={cfg.label ? 'font-medium text-amber-600' : 'text-gray-700'}>
-                      {doc.name}
-                      {cfg.label && (
-                        <span className="ml-1 font-normal text-gray-400">({cfg.label})</span>
-                      )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <ul className="mb-3 space-y-1.5">
+            {checklist.map((doc) => {
+              const cfg = DOC_STATUS[doc.status] ?? DOC_STATUS.pending;
+              const Icon = cfg.icon;
+              return (
+                <li key={doc.name} className="flex items-center gap-2 text-xs">
+                  <Icon size={13} className={`shrink-0 ${cfg.color}`} />
+                  <span className="text-gray-700">{doc.name}</span>
+                </li>
+              );
+            })}
+          </ul>
         ) : (
           <div className="mb-3 rounded-lg bg-gray-50 py-2 text-center text-[11px] text-gray-400">
             No document checklist
           </div>
         )}
 
-        {/* ── Uploaded files (from /tenant/getadmissiondocuments/) ────────── */}
+        {/* Uploaded files */}
         {isDocsLoading ? (
-          <div className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-gray-50 py-3 text-[11px] text-gray-400">
-            <Loader2 size={12} className="animate-spin" />
-            Loading documents…
+          <div className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-gray-50 py-2.5 text-[11px] text-gray-400">
+            <Loader2 size={11} className="animate-spin" />
+            Loading…
           </div>
         ) : uploadedFiles.length > 0 ? (
-          <div className="mb-3">
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-              Uploaded Files
-            </p>
-            <ul className="space-y-1">
-              {uploadedFiles.map((rec) => (
-                <li key={rec.id ?? rec.file_url} className="flex items-center gap-2">
-                  <FileText size={11} className="shrink-0 text-blue-400" />
-                  <span className="min-w-0 flex-1 truncate text-[11px] text-gray-600">
-                    {prettifyFileName(rec.file_name ?? rec.name)}
-                  </span>
-                  {rec.file_url && (
-                    <a
-                      href={rec.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="shrink-0 rounded text-gray-400 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-300"
-                      aria-label={`Open ${prettifyFileName(rec.file_name ?? rec.name)}`}
-                    >
-                      <ExternalLink size={11} />
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="mb-3 space-y-1">
+            {uploadedFiles.map((rec) => (
+              <li key={rec.id ?? rec.file_url} className="flex items-center gap-1.5">
+                <FileText size={11} className="shrink-0 text-blue-400" />
+                <span className="min-w-0 flex-1 truncate text-[11px] text-gray-600">
+                  {prettifyFileName(rec.file_name ?? rec.name)}
+                </span>
+                {rec.file_url && (
+                  <a
+                    href={rec.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 text-gray-400 hover:text-blue-500"
+                  >
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
         ) : null}
 
-        {/* Action */}
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            openConfirmAdmission(enquiry.id);
-          }}
-          disabled={!allVerified}
-          variant={allVerified ? 'default' : 'outline'}
-          size="sm"
-          className="w-full"
-        >
-          {allVerified ? 'Confirm Admission' : 'Pending Documents'}
-        </Button>
-      </Card>
+        {/* Confirm / Decline actions */}
+        <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => confirmMutation.mutate(enquiry.id)}
+            disabled={isActing}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 transition-colors disabled:opacity-60"
+          >
+            {confirmMutation.isPending
+              ? <Loader2 size={12} className="animate-spin" />
+              : <CheckCircle2 size={12} />}
+            Confirm Admission
+          </button>
+          <button
+            onClick={() => declineMutation.mutate(enquiry.id)}
+            disabled={isActing}
+            className="flex items-center justify-center gap-1 rounded-lg border border-gray-200 hover:border-red-300 hover:bg-red-50 text-gray-500 hover:text-red-600 text-xs font-medium px-3 py-2 transition-colors disabled:opacity-60"
+          >
+            {declineMutation.isPending
+              ? <Loader2 size={12} className="animate-spin" />
+              : <AlertCircle size={12} />}
+            Decline
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }

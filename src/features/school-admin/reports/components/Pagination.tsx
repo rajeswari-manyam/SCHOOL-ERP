@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
@@ -10,42 +9,37 @@ interface PaginationProps {
 const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
   if (totalPages <= 1) return null;
 
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
-    <div className="flex items-center justify-center gap-2 py-2">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
+    <div className="flex items-center gap-1.5">
+      <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="w-8 h-8 rounded-lg p-0"
+        className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-        <Button
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      {pages.map((page) => (
+        <button
           key={page}
-          type="button"
-          variant={page === currentPage ? "default" : "outline"}
-          size="sm"
           onClick={() => onPageChange(page)}
-          className="w-8 h-8 rounded-lg p-0"
+          className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+            page === currentPage
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+          }`}
         >
           {page}
-        </Button>
+        </button>
       ))}
-
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
+      <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="w-8 h-8 rounded-lg p-0"
+        className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
+        <ChevronRight className="w-4 h-4" />
+      </button>
     </div>
   );
 };

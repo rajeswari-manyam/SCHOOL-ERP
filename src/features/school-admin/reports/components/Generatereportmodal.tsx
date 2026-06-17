@@ -266,7 +266,7 @@ const GenerateReportModal = ({
             type="button"
             onClick={onGenerate}
             disabled={generating || success}
-            className="w-full sm:w-auto px-5 py-2.5 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:scale-105 hover:shadow-md transition-all"
           >
             {success ? (
               <>

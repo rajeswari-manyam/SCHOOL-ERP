@@ -100,6 +100,8 @@ interface AddPeriodModalProps {
   isSaving?: boolean;
   onClose: () => void;
   onSave: (data: CreateTimetablePayload) => void;
+  defaultClass?: { id: string; label: string };
+  defaultSection?: { id: string; label: string };
 }
 
 /* =========================================================
@@ -111,6 +113,8 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   isSaving,
   onClose,
   onSave,
+  defaultClass,
+  defaultSection,
 }) => {
   const defaultSchoolCode = localStorage.getItem("schoolcode") ?? "";
 
@@ -120,6 +124,9 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   const [subjectOptions, setSubjectOptions] = useState<DropdownOption[]>([]);
   const [teacherOptions, setTeacherOptions] = useState<DropdownOption[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+
+  // Holds the section to auto-select once sections finish loading
+  const [pendingSection, setPendingSection] = useState<{ id: string; label: string } | null>(null);
 
   // ── Loading states ───────────────────────────────────────
   const [loadingClasses, setLoadingClasses] = useState(false);
@@ -177,29 +184,31 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     const defaultAcYear = academicYears.find((y) => y.active)?.id ?? academicYears[0]?.id ?? "";
 
     reset({
-      class_id: "",
-      className: "",
-      section_id: "",
-      sectionName: "",
-      subject_id: "",
-      subjectname: "",
-      teacher_id: "",
-      teachername: "",
-      period_no: "1",
-      time_sloat: TIME_SLOT_MAP["1"].time_sloat,
-      day_of_week: "monday",
-      start_time: TIME_SLOT_MAP["1"].start_time,
-      end_time: TIME_SLOT_MAP["1"].end_time,
-      room_no: "",
-      lunch_start: defaultLunchStart,
-      lunch_end: defaultLunchEnd,
-      break_start: defaultBreakStart,
-      break_end: defaultBreakEnd,
+      class_id:     defaultClass?.id    ?? "",
+      className:    defaultClass?.label ?? "",
+      section_id:   "",
+      sectionName:  "",
+      subject_id:   "",
+      subjectname:  "",
+      teacher_id:   "",
+      teachername:  "",
+      period_no:    "1",
+      time_sloat:   TIME_SLOT_MAP["1"].time_sloat,
+      day_of_week:  "monday",
+      start_time:   TIME_SLOT_MAP["1"].start_time,
+      end_time:     TIME_SLOT_MAP["1"].end_time,
+      room_no:      "",
+      lunch_start:  defaultLunchStart,
+      lunch_end:    defaultLunchEnd,
+      break_start:  defaultBreakStart,
+      break_end:    defaultBreakEnd,
       academic_year: defaultAcYear,
-      school_code: defaultSchoolCode,
+      school_code:  defaultSchoolCode,
     });
     setSectionOptions([]);
     setSubjectOptions([]);
+    // Store the section to auto-select once section options load
+    setPendingSection(defaultSection?.id ? defaultSection : null);
 
     // Fetch classes
     setLoadingClasses(true);
@@ -218,7 +227,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     fetchDepartments()
       .then((data) => setDepartments(data))
       .catch(console.error);
-  }, [open, reset, defaultSchoolCode]);
+  }, [open, reset, defaultSchoolCode, defaultClass, defaultSection]);
 
   // ── Cascade: class → sections ─────────────────────────────
   useEffect(() => {
@@ -251,6 +260,17 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       .catch(console.error)
       .finally(() => setLoadingSections(false));
   }, [selectedClassId, setValue]);
+
+  // ── Auto-select pending section once options are ready ────
+  useEffect(() => {
+    if (!pendingSection || sectionOptions.length === 0) return;
+    const found = sectionOptions.find((s) => s.value === pendingSection.id);
+    if (found) {
+      setValue("section_id", pendingSection.id);
+      setValue("sectionName", pendingSection.label);
+    }
+    setPendingSection(null);
+  }, [sectionOptions, pendingSection, setValue]);
 
   // ── Cascade: section → subjects ───────────────────────────
   useEffect(() => {

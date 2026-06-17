@@ -4,57 +4,96 @@ import { admissionsApi } from '@/services/admissions.api';
 import { useUIStore } from '@/store/uiStore';
 import type { NewEnquiryFormData, ConfirmAdmissionFormData, PipelineStage } from '../types';
 
+// ─── Query keys ───────────────────────────────────────────────────────────────
+
 export const ADMISSIONS_KEYS = {
-  all: ['admissions'] as const,
-  enquiries: (ayId?: string | null) => [...ADMISSIONS_KEYS.all, 'enquiries', ayId] as const,
-  interviewList: (ayId?: string | null) => [...ADMISSIONS_KEYS.all, 'interviewList', ayId] as const,
-  docsList: (ayId?: string | null) => [...ADMISSIONS_KEYS.all, 'docsList', ayId] as const,
-  stats: (ayId?: string | null) => [...ADMISSIONS_KEYS.all, 'stats', ayId] as const,
-  /** Per-enquiry document list — scoped so refetch/invalidate is surgical */
-  documents: (enquiryId: string) => [...ADMISSIONS_KEYS.all, 'documents', enquiryId] as const,
+  all:        ['admissions'] as const,
+  enquiries:  (ay?: string | null) => [...ADMISSIONS_KEYS.all, 'enquiries',  ay] as const,
+  interviews: (ay?: string | null) => [...ADMISSIONS_KEYS.all, 'interviews', ay] as const,
+  docsList:   (ay?: string | null) => [...ADMISSIONS_KEYS.all, 'docsList',   ay] as const,
+  confirmed:  (ay?: string | null) => [...ADMISSIONS_KEYS.all, 'confirmed',  ay] as const,
+  declined:   (ay?: string | null) => [...ADMISSIONS_KEYS.all, 'declined',   ay] as const,
+  stats:      (ay?: string | null) => [...ADMISSIONS_KEYS.all, 'stats',      ay] as const,
+  documents:  (enquiryId: string)  => [...ADMISSIONS_KEYS.all, 'documents',  enquiryId] as const,
 };
 
+/** Invalidate all pipeline lists + stats at once */
+function invalidateAll(qc: ReturnType<typeof useQueryClient>, ay?: string | null) {
+  const keys = [
+    ADMISSIONS_KEYS.enquiries(ay),
+    ADMISSIONS_KEYS.interviews(ay),
+    ADMISSIONS_KEYS.docsList(ay),
+    ADMISSIONS_KEYS.confirmed(ay),
+    ADMISSIONS_KEYS.declined(ay),
+    ADMISSIONS_KEYS.stats(ay),
+  ];
+  keys.forEach((k) => qc.invalidateQueries({ queryKey: k }));
+}
+
+// ─── Stage list hooks ─────────────────────────────────────────────────────────
+
 export function useEnquiries() {
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay = useUIStore((s) => s.academicYearId);
   return useQuery({
-    queryKey: ADMISSIONS_KEYS.enquiries(academicYearId),
-    queryFn: () => admissionsApi.getEnquiries(academicYearId),
-    enabled: !!academicYearId,
+    queryKey: ADMISSIONS_KEYS.enquiries(ay),
+    queryFn:  () => admissionsApi.getEnquiries(ay),
+    enabled:  !!ay,
     staleTime: 30_000,
   });
 }
 
 export function useInterviewList() {
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay = useUIStore((s) => s.academicYearId);
   return useQuery({
-    queryKey: ADMISSIONS_KEYS.interviewList(academicYearId),
-    queryFn: () => admissionsApi.getInterviewList(academicYearId),
-    enabled: !!academicYearId,
+    queryKey: ADMISSIONS_KEYS.interviews(ay),
+    queryFn:  () => admissionsApi.getInterviewList(ay),
+    enabled:  !!ay,
     staleTime: 30_000,
   });
 }
 
 export function useDocsVerificationList() {
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay = useUIStore((s) => s.academicYearId);
   return useQuery({
-    queryKey: ADMISSIONS_KEYS.docsList(academicYearId),
-    queryFn: () => admissionsApi.getDocsVerificationList(academicYearId),
-    enabled: !!academicYearId,
+    queryKey: ADMISSIONS_KEYS.docsList(ay),
+    queryFn:  () => admissionsApi.getDocsVerificationList(ay),
+    enabled:  !!ay,
+    staleTime: 30_000,
+  });
+}
+
+export function useConfirmedAdmissions() {
+  const ay = useUIStore((s) => s.academicYearId);
+  return useQuery({
+    queryKey: ADMISSIONS_KEYS.confirmed(ay),
+    queryFn:  () => admissionsApi.getConfirmedAdmissions(ay),
+    enabled:  !!ay,
+    staleTime: 30_000,
+  });
+}
+
+export function useDeclinedAdmissions() {
+  const ay = useUIStore((s) => s.academicYearId);
+  return useQuery({
+    queryKey: ADMISSIONS_KEYS.declined(ay),
+    queryFn:  () => admissionsApi.getDeclinedAdmissions(ay),
+    enabled:  !!ay,
     staleTime: 30_000,
   });
 }
 
 export function usePipelineStats() {
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay = useUIStore((s) => s.academicYearId);
   return useQuery({
-    queryKey: ADMISSIONS_KEYS.stats(academicYearId),
-    queryFn: () => admissionsApi.getPipelineStats(academicYearId),
-    enabled: !!academicYearId,
+    queryKey: ADMISSIONS_KEYS.stats(ay),
+    queryFn:  () => admissionsApi.getPipelineStats(ay),
+    enabled:  !!ay,
     staleTime: 30_000,
   });
 }
 
-/** Fetch uploaded document records for a single enquiry */
+// ─── Per-enquiry document hook ────────────────────────────────────────────────
+
 export function useAdmissionDocuments(
   enquiryId: string,
   opts: { enabled?: boolean; retry?: boolean | number } = {},
@@ -62,24 +101,24 @@ export function useAdmissionDocuments(
   const { enabled = true, retry = 1 } = opts;
   return useQuery({
     queryKey: ADMISSIONS_KEYS.documents(enquiryId),
-    queryFn: () => admissionsApi.getAdmissionDocuments(enquiryId),
+    queryFn:  () => admissionsApi.getAdmissionDocuments(enquiryId),
     staleTime: 60_000,
-    enabled: enabled && !!enquiryId,
+    enabled:  enabled && !!enquiryId,
     retry,
-    // Return empty array on error so consumers don't need to null-check
     placeholderData: [],
   });
 }
 
+// ─── Mutation hooks ───────────────────────────────────────────────────────────
+
 export function useAddEnquiry() {
   const qc = useQueryClient();
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay  = useUIStore((s) => s.academicYearId);
   return useMutation({
     mutationFn: (data: NewEnquiryFormData) => admissionsApi.addEnquiry(data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries(academicYearId) });
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats(academicYearId) });
-      toast.success('Enquiry added & WhatsApp sent!');
+      invalidateAll(qc, ay);
+      toast.success('Enquiry added successfully');
     },
     onError: () => toast.error('Failed to add enquiry'),
   });
@@ -87,21 +126,17 @@ export function useAddEnquiry() {
 
 export function useMoveToStage() {
   const qc = useQueryClient();
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay  = useUIStore((s) => s.academicYearId);
   return useMutation({
     mutationFn: ({ id, stage }: { id: string; stage: PipelineStage }) => {
-      switch (stage) {
-        case 'interview': return admissionsApi.shortlistToInterview(id);
-        case 'docs_verified': return admissionsApi.shortlistToDocs(id);
-        default: return Promise.resolve();
-      }
+      if (stage === 'interview')    return admissionsApi.shortlistToInterview(id);
+      if (stage === 'docs_verified') return admissionsApi.shortlistToDocs(id);
+      return Promise.resolve();
     },
-    onSuccess: (_void, { stage }) => {
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries(academicYearId) });
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats(academicYearId) });
-      if (stage === 'interview' || stage === 'docs_verified') {
-        toast.success(`Moved to ${stage.replace('_', ' ')}`);
-      }
+    onSuccess: (_v, { stage }) => {
+      invalidateAll(qc, ay);
+      if (stage === 'interview')    toast.success('Moved to Interview stage');
+      if (stage === 'docs_verified') toast.success('Moved to Docs Verification stage');
     },
     onError: () => toast.error('Failed to update stage'),
   });
@@ -109,28 +144,53 @@ export function useMoveToStage() {
 
 export function useConfirmAdmission() {
   const qc = useQueryClient();
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay  = useUIStore((s) => s.academicYearId);
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: ConfirmAdmissionFormData }) =>
       admissionsApi.confirmAdmission(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries(academicYearId) });
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats(academicYearId) });
-      toast.success('Admission confirmed & Welcome WhatsApp sent!');
+      invalidateAll(qc, ay);
+      toast.success('Admission confirmed successfully');
     },
     onError: () => toast.error('Failed to confirm admission'),
   });
 }
 
+export function useDirectConfirmAdmission() {
+  const qc = useQueryClient();
+  const ay  = useUIStore((s) => s.academicYearId);
+  return useMutation({
+    mutationFn: (id: string) => admissionsApi.confirmAdmissionDirect(id),
+    onSuccess: () => {
+      invalidateAll(qc, ay);
+      toast.success('Admission confirmed successfully');
+    },
+    onError: () => toast.error('Failed to confirm admission'),
+  });
+}
+
+export function useDirectDeclineAdmission() {
+  const qc = useQueryClient();
+  const ay  = useUIStore((s) => s.academicYearId);
+  return useMutation({
+    mutationFn: (id: string) => admissionsApi.declineAdmissionDirect(id),
+    onSuccess: () => {
+      invalidateAll(qc, ay);
+      toast.success('Admission declined');
+    },
+    onError: () => toast.error('Failed to decline admission'),
+  });
+}
+
 export function useDeclineEnquiry() {
   const qc = useQueryClient();
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const ay  = useUIStore((s) => s.academicYearId);
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      admissionsApi.declineAdmission(id, reason),
+    mutationFn: ({ id }: { id: string; reason?: string }) =>
+      admissionsApi.declineAdmissionDirect(id),
+
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries(academicYearId) });
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats(academicYearId) });
+      invalidateAll(qc, ay);
       toast.success('Enquiry declined');
     },
     onError: () => toast.error('Failed to decline enquiry'),

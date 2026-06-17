@@ -92,7 +92,7 @@ export const getExamTimetableById = async (id: string) => {
 
 export const updateExamTimetable = async (
   id: string,
-  data: Record<string, unknown>
+  data: ExamTimetablePayload
 ) => {
   const res = await api.put(
     `/tenant/updateexams-timetableById/${id}`,

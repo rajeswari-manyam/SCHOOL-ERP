@@ -3,24 +3,13 @@ import { motion } from 'framer-motion';
 import type { Enquiry } from '../types';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
 import { useMoveToStage } from '../hooks/useAdmissionsQueries';
-import { Card } from '../../../../components/ui/card';
-import { Button } from '../../../../components/ui/button';
-import { Badge } from '../../../../components/ui/badge';
 
-const SOURCE_VARIANTS: Record<string, 'purple' | 'amber' | 'blue' | 'green' | 'sky'> = {
-  social_media: 'purple',
-  referral: 'amber',
-  'walk-in': 'blue',
-  phone: 'green',
-  website: 'sky',
-};
-
-const SOURCE_LABELS: Record<string, string> = {
-  social_media: 'SOCIAL MEDIA',
-  referral: 'REFERRAL',
-  'walk-in': 'WALK-IN',
-  phone: 'PHONE',
-  website: 'WEBSITE',
+const SOURCE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  social_media: { bg: '#f3e8ff', text: '#7c3aed', label: 'SOCIAL MEDIA' },
+  referral:     { bg: '#fffbeb', text: '#b45309', label: 'REFERRAL' },
+  'walk-in':    { bg: '#eff6ff', text: '#1d4ed8', label: 'WALK-IN' },
+  phone:        { bg: '#f0fdf4', text: '#15803d', label: 'PHONE' },
+  website:      { bg: '#f0f9ff', text: '#0369a1', label: 'WEBSITE' },
 };
 
 interface Props {
@@ -28,24 +17,11 @@ interface Props {
   index: number;
 }
 
-const UnknownStudent = ({ id }: { id: string }) => (
-  <span className="text-sm font-medium text-gray-400 italic">
-    Unknown #{id.slice(0, 8)}
-  </span>
-);
-
-const SourceBadge = ({ source }: { source?: string }) => {
-  if (!source) return <Badge variant="gray">UNKNOWN</Badge>;
-  return (
-    <Badge variant={SOURCE_VARIANTS[source] ?? 'gray'}>
-      {SOURCE_LABELS[source] ?? source.replace(/_/g, ' ').toUpperCase()}
-    </Badge>
-  );
-};
-
 export function EnquiryCard({ enquiry, index }: Props) {
   const { setSelectedEnquiry } = useAdmissionsStore();
   const moveToStage = useMoveToStage();
+
+  const src = enquiry.source ? SOURCE_STYLES[enquiry.source] : null;
 
   return (
     <motion.div
@@ -53,67 +29,64 @@ export function EnquiryCard({ enquiry, index }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
     >
-      <Card
+      <div
         onClick={() => setSelectedEnquiry(enquiry.id)}
-        className="p-4 cursor-pointer border-gray-100 hover:border-indigo-200 transition-all"
+        className="bg-white rounded-xl border border-gray-100 p-4 cursor-pointer hover:border-indigo-200 hover:shadow-sm transition-all"
       >
         {/* Header */}
-        <div className="flex items-start justify-between mb-2">
-          <div className="min-w-0 flex-1">
-            {enquiry.studentName ? (
-              <h3 className="truncate font-semibold text-gray-900 text-sm">
-                {enquiry.studentName}
-              </h3>
-            ) : (
-              <UnknownStudent id={enquiry.id} />
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="font-semibold text-gray-900 text-sm leading-snug truncate">
+            {enquiry.studentName || (
+              <span className="text-gray-400 italic">Unknown #{enquiry.id.slice(0, 8)}</span>
             )}
-          </div>
+          </h3>
           {enquiry.whatsappSent && (
-            <div className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500">
-              <MessageCircle size={14} className="text-white" />
+            <div className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-green-500">
+              <MessageCircle size={13} className="text-white" />
             </div>
           )}
         </div>
 
         {/* Details */}
-        <div className="mb-3 space-y-1 text-xs text-gray-500">
+        <div className="space-y-1 text-xs text-gray-500 mb-3">
           <div className="flex gap-1">
             <span className="text-gray-400">Class:</span>
-            <span className="font-semibold text-gray-700">
-              {enquiry.classApplyingFor || '—'}
-            </span>
+            <span className="font-semibold text-gray-700">{enquiry.classApplyingFor || '—'}</span>
           </div>
           <div className="flex gap-1">
             <span className="text-gray-400">Parent:</span>
             <span className="truncate text-gray-600">
-              {enquiry.parentName || (enquiry.parentPhone ? `📞 ${enquiry.parentPhone}` : '—')}
+              {enquiry.parentName || enquiry.parentPhone || '—'}
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-400">Source:</span>
-            <SourceBadge source={enquiry.source} />
-          </div>
+          {src && (
+            <div className="flex gap-1 items-center">
+              <span className="text-gray-400">Source:</span>
+              <span
+                className="text-[10px] font-bold rounded-full px-2 py-0.5"
+                style={{ backgroundColor: src.bg, color: src.text }}
+              >
+                {src.label}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-gray-50 pt-2">
-          <span className="text-[11px] text-gray-400">
-            {enquiry.enquiryDate || '—'}
-          </span>
-          <Button
+        <div className="flex items-center justify-between border-t border-gray-50 pt-2.5">
+          <span className="text-[11px] text-gray-400">{enquiry.enquiryDate || '—'}</span>
+          <button
             onClick={(e) => {
               e.stopPropagation();
               moveToStage.mutate({ id: enquiry.id, stage: 'interview' });
             }}
             disabled={moveToStage.isPending}
-            variant="link"
-            size="sm"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors"
           >
-            Move to Interview <ArrowRight size={12} />
-          </Button>
+            Move to Interview <ArrowRight size={11} />
+          </button>
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 }

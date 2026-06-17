@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
 import { useAddEnquiry } from '../hooks/useAdmissionsQueries';
+import { fetchSchoolProfile } from '@/services/school-settings.api';
 import type { NewEnquiryFormData } from '../types';
 
 const schema = z.object({
@@ -41,6 +43,17 @@ const sourceOptions = [
 export function AddEnquiryModal() {
   const { isAddEnquiryOpen, closeAddEnquiry } = useAdmissionsStore();
   const addEnquiry = useAddEnquiry();
+  const [schoolName, setSchoolName] = useState('Hanamkonda Public School');
+  const [principalName, setPrincipalName] = useState('Ramesh Kumar');
+
+  useEffect(() => {
+    if (isAddEnquiryOpen) {
+      fetchSchoolProfile().then(profile => {
+        if (profile.schoolName) setSchoolName(profile.schoolName);
+        if (profile.principalName) setPrincipalName(profile.principalName);
+      }).catch(() => {});
+    }
+  }, [isAddEnquiryOpen]);
 
   const {
     register,
@@ -266,13 +279,13 @@ export function AddEnquiryModal() {
                       <br />
                       Thank you for visiting{' '}
                       <span className="text-green-600 font-medium">
-                        Hanamkonda Public School
+                        {schoolName}
                       </span>
                       . We will contact you within 24 hours regarding admission to{' '}
                       {classFor || 'the class'}.
                       <br />
                       <br />
-                      — Principal Ramesh Kumar
+                      — Principal {principalName}
                     </p>
                     <p className="text-right text-[10px] text-gray-400 mt-1">
                       {new Date().toLocaleTimeString('en-IN', {

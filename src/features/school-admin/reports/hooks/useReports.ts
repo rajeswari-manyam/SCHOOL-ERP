@@ -1,48 +1,98 @@
 import { useState, useEffect, useMemo } from "react";
 import { reportsApi } from "@/services/school-reports.api";
-import type { GeneratedReport, ReportStats, GenerateReportFormData, ReportType, CreateReportPayload } from "../types/reports.types";
+import type {
+  GeneratedReport,
+  ReportStats,
+  GenerateReportFormData,
+  ReportType,
+  CreateReportPayload,
+} from "../types/reports.types";
 
-const SCHOOL_CODE = import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode");
+function getSchoolCode(): string {
+  return import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode") ?? "";
+}
+
+function toDateRange(type: GenerateReportFormData["dateRangeType"]): { from: string; to: string } {
+  const now   = new Date();
+  const y     = now.getFullYear();
+  const m     = now.getMonth();
+  if (type === "Last Month") {
+    const first = new Date(y, m - 1, 1);
+    const last  = new Date(y, m, 0);
+    return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10) };
+  }
+  // "This Month" or "Custom Range" defaults to current month
+  const first = new Date(y, m, 1);
+  const last  = new Date(y, m + 1, 0);
+  return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10) };
+}
+
+const thisMonth = toDateRange("This Month");
 
 const EMPTY_FORM: GenerateReportFormData = {
-  reportType: "ATTENDANCE",
-  dateRangeType: "Last Month",
-  fromDate: "2025-03-01",
-  toDate: "2025-03-31",
-  classFilter: "All Classes",
-  format: "PDF",
+  reportType:   "ATTENDANCE",
+  dateRangeType: "This Month",
+  fromDate:     thisMonth.from,
+  toDate:       thisMonth.to,
+  classFilter:  "All Classes",
+  format:       "PDF",
   includeSections: {
-    classwiseSummary: true,
-    dailyAttendanceGrid: true,
-    chronicAbsentees: true,
-    teacherWiseMarkingStatus: true,
+    classwiseSummary:           true,
+    dailyAttendanceGrid:        true,
+    chronicAbsentees:           true,
+    teacherWiseMarkingStatus:   true,
   },
-  emailToSelf: true,
-  additionalEmail: "",
+  emailToSelf:      true,
+  additionalEmail:  "",
+};
+
+// Map internal ReportType enum to backend reportype string
+const REPORT_TYPE_LABEL: Record<ReportType, string> = {
+  ATTENDANCE:        "Attendance Report",
+  FEE_COLLECTION:    "Fee Collection Report",
+  STUDENT:           "Students Report",
+  WHATSAPP_ACTIVITY: "WhatsApp Activity",
+  ADMISSIONS:        "Admissions Report",
+  STAFF:             "Staff Report",
 };
 
 export const useReports = () => {
-  const [reports, setReports] = useState<GeneratedReport[]>([]);
-  const [stats, setStats] = useState<ReportStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [reports, setReports]       = useState<GeneratedReport[]>([]);
+  const [stats, setStats]           = useState<ReportStats | null>(null);
+  const [loading, setLoading]       = useState(true);
   const [academicYear, setAcademicYear] = useState("2024-25");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [currentPage, setCurrentPage]   = useState(1);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
-    Promise.all([reportsApi.getAll(), reportsApi.getStats()]).then(([r, s]) => {
-      setReports(r);
-      setStats(s);
-      setLoading(false);
-    });
+    reportsApi.getAll()
+      .then((list) => {
+        setReports(list);
+        const now = new Date();
+        const thisMonthList = list.filter((rep) => {
+          const d = new Date(rep.generatedOn);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        setStats({
+          totalGenerated:  list.length,
+          scheduledReports: 0,
+          monthlyAvg:      thisMonthList.length,
+          pendingDelivery: 0,
+        });
+      })
+      .catch(() => {
+        setStats({ totalGenerated: 0, scheduledReports: 0, monthlyAvg: 0, pendingDelivery: 0 });
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const filteredReports = useMemo(() => {
     if (!searchQuery) return reports;
-    return reports.filter(r =>
-      r.reportName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.generatedBy.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const q = searchQuery.toLowerCase();
+    return reports.filter((r) =>
+      r.reportName.toLowerCase().includes(q) ||
+      r.generatedBy.name.toLowerCase().includes(q)
     );
   }, [reports, searchQuery]);
 
@@ -75,56 +125,60 @@ export const useReports = () => {
 };
 
 export const useGenerateReport = (onSuccess: () => void) => {
-  const [form, setForm] = useState<GenerateReportFormData>(EMPTY_FORM);
+  const [form, setForm]           = useState<GenerateReportFormData>(EMPTY_FORM);
   const [generating, setGenerating] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess]     = useState(false);
 
   const openForType = (type: ReportType) => {
-    setForm(prev => ({ ...prev, reportType: type }));
+    setForm((prev) => ({ ...prev, reportType: type }));
     setSuccess(false);
   };
 
-  const setField = <K extends keyof GenerateReportFormData>(key: K, value: GenerateReportFormData[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }));
-  };
+  const setField = <K extends keyof GenerateReportFormData>(
+    key: K,
+    value: GenerateReportFormData[K],
+  ) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const toggleSection = (key: keyof GenerateReportFormData["includeSections"]) => {
-    setForm(prev => ({
+  const toggleSection = (key: keyof GenerateReportFormData["includeSections"]) =>
+    setForm((prev) => ({
       ...prev,
-      includeSections: {
-        ...prev.includeSections,
-        [key]: !prev.includeSections[key],
-      },
+      includeSections: { ...prev.includeSections, [key]: !prev.includeSections[key] },
     }));
-  };
 
   const generate = async () => {
     setGenerating(true);
+    setSuccess(false);
     try {
+      // Resolve date range if "This Month" / "Last Month"
+      const resolved =
+        form.dateRangeType === "Custom Range"
+          ? { from: form.fromDate, to: form.toDate }
+          : toDateRange(form.dateRangeType);
+
       const payload: CreateReportPayload = {
-        reportype: form.reportType.toLowerCase(),
-        from: form.fromDate,
-        to: form.toDate,
-        class: form.classFilter,
-        format: form.format.toLowerCase(),
-        emailreport: form.emailToSelf,
-        school_code: SCHOOL_CODE,
+        reportype:        REPORT_TYPE_LABEL[form.reportType],
+        from:             resolved.from,
+        to:               resolved.to,
+        class_id:         form.classFilter,
+        section_id:       null,
+        academic_year_id: null,
+        format:           form.format,
+        emailreport:      form.emailToSelf,
+        school_code:      getSchoolCode(),
       };
-      const res = await reportsApi.generate(payload);
-      console.log("generate report success", { url: "/tenant/createreports", payload, response: res });
+
+      await reportsApi.generate(payload);
       setSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-      }, 1000);
-    } catch (err: any) {
-      console.error("generate report failed", { error: err?.message ?? err });
-      alert(err?.message ?? "Failed to generate report");
+      await new Promise((r) => setTimeout(r, 800));
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to generate report";
+      alert(msg);
     } finally {
       setGenerating(false);
     }
   };
 
-  // Estimated size string
   const estimatedSize = useMemo(() => {
     const sections = Object.values(form.includeSections).filter(Boolean).length;
     const base = form.format === "PDF" ? 0.8 : 0.2;

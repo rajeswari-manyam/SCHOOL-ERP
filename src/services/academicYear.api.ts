@@ -5,14 +5,19 @@ export interface AcademicYearRecord {
   yearName: string;
   startDate: string;
   endDate: string;
-  active: boolean;
+  isActive: boolean;
+  active: boolean; // alias kept for backward compatibility
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface GetAllAcademicYearsResponse {
   status: boolean;
+  count?: number;
+  totalPages?: number;
+  currentPage?: number;
   data: AcademicYearRecord[];
 }
-
 
 export interface AcademicYearById {
   id: string;
@@ -23,31 +28,38 @@ export interface AcademicYearById {
   createdAt: string;
   updatedAt: string;
 }
+
 export const getAcademicYearById = async (id: string): Promise<AcademicYearById | null> => {
   try {
     const { data } = await api.get(`/tenant/getacademicyearById/${id}`);
-    if (data?.status && data?.data) {
-      return data.data;
-    }
+    if (data?.status && data?.data) return data.data;
     return null;
   } catch {
     return null;
   }
 };
-const FALLBACK_ACADEMIC_YEARS: AcademicYearRecord[] = [
-  { id: "ay-2025-26", yearName: "2025-2026", startDate: "2025-06-01", endDate: "2026-05-31", active: true },
-  { id: "ay-2024-25", yearName: "2024-2025", startDate: "2024-06-01", endDate: "2025-05-31", active: false },
-];
+
+const normalise = (raw: any): AcademicYearRecord => ({
+  id:         raw.id,
+  yearName:   raw.yearName,
+  startDate:  raw.startDate,
+  endDate:    raw.endDate,
+  isActive:   raw.isActive ?? raw.active ?? false,
+  active:     raw.isActive ?? raw.active ?? false,
+  createdAt:  raw.createdAt,
+  updatedAt:  raw.updatedAt,
+});
 
 export const getAllAcademicYears = async (): Promise<GetAllAcademicYearsResponse> => {
-  try {
-    const { data } = await api.get<GetAllAcademicYearsResponse>("/tenant/getallacademicyears");
-    if (data?.status && Array.isArray(data?.data) && data.data.length > 0) {
-      return data;
-    }
-  } catch {
-    // fallback to local values when the backend is unavailable
+  const { data } = await api.get("/tenant/getallacademicyears");
+  if (!data?.status || !Array.isArray(data?.data)) {
+    throw new Error("Failed to fetch academic years");
   }
-
-  return { status: true, data: FALLBACK_ACADEMIC_YEARS };
+  return {
+    status:      data.status,
+    count:       data.count,
+    totalPages:  data.totalPages,
+    currentPage: data.currentPage,
+    data:        data.data.map(normalise),
+  };
 };

@@ -452,7 +452,7 @@ export const useCreateExamTimetable = () => {
 export const useUpdateExamTimetable = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+    mutationFn: ({ id, data }: { id: string; data: CreateExamTimetablePayload }) =>
       updateExamTimetable(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
