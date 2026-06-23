@@ -7,7 +7,7 @@ interface Props {
 }
 
 const UpcomingExamsTable = ({ exams }: Props) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
     {/* Header */}
     <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

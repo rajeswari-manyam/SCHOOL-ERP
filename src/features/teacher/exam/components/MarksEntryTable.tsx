@@ -28,7 +28,7 @@ const MarksEntryTable = ({ entries, onUpdate }: Props) => {
 
   if (entries.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <div className="text-4xl mb-3">📋</div>
         <p className="text-sm font-semibold text-gray-500">Select exam details and click Load Students</p>
         <p className="text-xs text-gray-300 mt-1">to begin entering marks</p>
@@ -37,7 +37,7 @@ const MarksEntryTable = ({ entries, onUpdate }: Props) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

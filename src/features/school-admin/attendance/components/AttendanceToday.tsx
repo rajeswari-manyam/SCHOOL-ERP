@@ -204,7 +204,7 @@ const AttendanceToday = ({
   if (allClassesLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-16 rounded-lg bg-gray-100 animate-pulse" />
           ))}
@@ -270,7 +270,7 @@ const AttendanceToday = ({
         */}
 
         {/* Compact Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white rounded-lg px-4 py-3 border-l-4 border-l-green-500 shadow-sm flex items-center justify-between">
             <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Total Present</p>
             <p className="text-xl font-bold text-green-600">{totalPresent}</p>

@@ -151,8 +151,10 @@ export const studentsApi = {
     else return [];
     return list.map((raw: any) => {
       const s = toCamelCase(raw) as Record<string, unknown>;
-      const cls = findField(s, ["class", "className", "class_name", "classId", "class_id", "Class", "cls"]);
-      const sec = findField(s, ["section", "sectionName", "section_name", "sectionId", "section_id", "Section", "sec"]);
+      const classDetail = s.classDetail as Record<string, unknown> | undefined;
+      const sectionDetail = s.sectionDetail as Record<string, unknown> | undefined;
+      const cls = classDetail?.className ?? classDetail?.class_name ?? findField(s, ["class", "className", "class_name", "classId", "class_id", "Class", "cls"]) ?? "";
+      const sec = sectionDetail?.sectionName ?? sectionDetail?.section_name ?? findField(s, ["section", "sectionName", "section_name", "sectionId", "section_id", "Section", "sec"]) ?? "";
       const studentName = (s.studentName ?? "") as string;
       const nameParts = studentName.trim().split(/\s+/);
       const firstName = s.firstName ?? s.first ?? s.givenName ?? nameParts[0] ?? "";
@@ -247,8 +249,10 @@ export const studentsApi = {
     if (!camel.id) {
       throw new Error("Student creation failed — no ID returned");
     }
-    const cls = findField(camel, ["class", "className", "class_name", "classId", "class_id", "Class", "cls"]);
-    const sec = findField(camel, ["section", "sectionName", "section_name", "sectionId", "section_id", "Section", "sec"]);
+    const classDetail = camel.classDetail as Record<string, unknown> | undefined;
+    const sectionDetail = camel.sectionDetail as Record<string, unknown> | undefined;
+    const cls = classDetail?.className ?? classDetail?.class_name ?? findField(camel, ["class", "className", "class_name", "classId", "class_id", "Class", "cls"]);
+    const sec = sectionDetail?.sectionName ?? sectionDetail?.section_name ?? findField(camel, ["section", "sectionName", "section_name", "sectionId", "section_id", "Section", "sec"]);
     return {
       ...camel,
       class: typeof cls === "string" && cls ? cls : "",
@@ -260,6 +264,31 @@ export const studentsApi = {
       feeStatus: (String(camel.feeStatus ?? camel.fee ?? camel.feePaymentStatus ?? "PENDING")).toUpperCase(),
       status: (String(camel.status ?? camel.studentStatus ?? "ACTIVE")).toUpperCase(),
     } as Student;
+  },
+
+  bulkCreateStudents: async (students: CreateStudentPayload[]): Promise<Student[]> => {
+    const { data: raw } = await api.post("/tenant/students/bulk", { students });
+    const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    if (obj?.status === false) {
+      throw new Error((obj?.message as string) ?? "Bulk creation failed");
+    }
+    const list = Array.isArray(obj?.data) ? (obj.data as Record<string, unknown>[]) : [];
+    return list.map((record) => {
+      const camel = toCamelCase(record) as Record<string, unknown>;
+      return {
+        ...camel,
+        admissionNo: camel.admissionNo ?? camel.admissionNumber ?? "",
+        firstName: camel.firstName ?? camel.first ?? "",
+        lastName: camel.lastName ?? camel.last ?? "",
+        parentPhone: camel.parentPhone ?? camel.phone ?? "",
+        feeStatus: "PENDING",
+        status: "ACTIVE",
+      } as Student;
+    });
+  },
+
+  deleteStudent: async (id: string): Promise<void> => {
+    await api.delete(`/tenant/deletestudentById/${id}`);
   },
 
   updateStudent: async (id: string, payload: UpdateStudentPayload): Promise<Student> => {

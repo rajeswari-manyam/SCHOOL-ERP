@@ -21,7 +21,8 @@ export function useSchoolTodayAttendance() {
   return useQuery({
     queryKey: [...DASHBOARD_QUERY_KEY, 'today-attendance'],
     queryFn: () => dashboardApi.getSchoolTodayAttendance(),
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: true,
     refetchInterval: 60_000,
     retry: 2,
   });
@@ -32,7 +33,8 @@ export function useClassAttendanceStatus() {
   return useQuery({
     queryKey: [...DASHBOARD_QUERY_KEY, 'class-attendance-status'],
     queryFn: () => dashboardApi.getClassAttendanceStatus(),
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: true,
     refetchInterval: 60_000,
     retry: 2,
   });
@@ -54,7 +56,8 @@ export function useAllClassesTodayAttendance() {
   return useQuery({
     queryKey: [...DASHBOARD_QUERY_KEY, 'all-classes-today-attendance'],
     queryFn: () => dashboardApi.getAllClassesTodayAttendance(),
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: true,
     refetchInterval: 60_000,
     retry: 2,
   });

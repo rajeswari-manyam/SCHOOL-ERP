@@ -1,35 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import TeacherStatCards from "./components/TeacherStatCards";
 import TodayScheduleCard from "./components/TodayScheduleCard";
 import QuickActionsCard from "./components/QuickActionsCard";
 import HomeworkDueCard from "./components/HomeworkDueCard";
-// import ClassOverviewCard from "./components/ClassOverviewCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
-import { useTeacherDashboard, useTeacherLeaveBalance } from "./hooks/useTeacherDashboard";
-import { useTodayAttendanceSummary } from "../attendance/hooks/useAttendance";
+import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher } from "./hooks/useTeacherDashboard";
+import { useTodayAttendanceSummary, useTeacherAttendanceSummaryRange } from "../attendance/hooks/useAttendance";
 import { useAuthStore } from "../../../store/authStore";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 
-// ── Mock fallback data ─────────────────────────────────────
-const MOCK_STATS  = { classStrength: 42, homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
-const MOCK_OVERVIEW = {
-  monthlyAvgPct: 87,
-  trend: [
-    { date: "Mon", present: 39, absent: 3, total: 42 },
-    { date: "Tue", present: 40, absent: 2, total: 42 },
-    { date: "Wed", present: 35, absent: 7, total: 42 },
-    { date: "Thu", present: 41, absent: 1, total: 42 },
-    { date: "Fri", present: 38, absent: 4, total: 42 },
-  ],
-  chronicAbsentees: [
-    { id: "ca1", name: "Ravi Teja", rollNo: "08", attendancePct: 52 },
-    { id: "ca2", name: "Meena Kumari", rollNo: "19", attendancePct: 61 },
-  ],
-};
+const MOCK_STATS = { classStrength: 42, homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
 
 const TeacherDashboardPage = () => {
   const navigate = useNavigate();
@@ -38,66 +22,83 @@ const TeacherDashboardPage = () => {
   const { data } = useTeacherDashboard();
   const { data: todayAttendance } = useTodayAttendanceSummary(teacherId);
   const { data: leaveBalances = [] } = useTeacherLeaveBalance(staffId);
-  const [hwModal,            setHwModal]            = useState(false);
-  const [attendanceModal,    setAttendanceModal]    = useState(false);
-  const [leaveModal,         setLeaveModal]         = useState(false);
-  const [uploadModal,        setUploadModal]        = useState(false);
+  const { data: allHomework = [] } = usePendingHomeworkByTeacher(teacherId);
 
-  const liveLeaveBalance = leaveBalances.reduce((sum, item) => sum + Number(item.remaining ?? 0), 0);
-  const stats    = {
-    ...(data?.stats ?? MOCK_STATS),
-    leaveBalance: leaveBalances.length > 0 ? liveLeaveBalance : (data?.stats?.leaveBalance ?? MOCK_STATS.leaveBalance),
+  const todayStr      = format(new Date(), "yyyy-MM-dd");
+  const monthStartStr = format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const { data: monthlyRaw } = useTeacherAttendanceSummaryRange(teacherId, monthStartStr, todayStr);
+
+  const liveAttendancePct = useMemo(() => {
+    type DayData = { sections: { summary?: { present_count?: number; total_strength?: number }; total_strength?: number }[] };
+    const days = (monthlyRaw as { data?: DayData[] } | null)?.data;
+    if (!days?.length) return null;
+    let totalPresent = 0, totalPossible = 0;
+    for (const day of days) {
+      for (const sec of day.sections) {
+        totalPresent  += sec.summary?.present_count  ?? 0;
+        totalPossible += sec.summary?.total_strength ?? sec.total_strength ?? 0;
+      }
+    }
+    return totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : null;
+  }, [monthlyRaw]);
+
+  const [hwModal,         setHwModal]         = useState(false);
+  const [attendanceModal, setAttendanceModal] = useState(false);
+  const [leaveModal,      setLeaveModal]      = useState(false);
+  const [uploadModal,     setUploadModal]     = useState(false);
+
+  const liveLeaveBalance  = leaveBalances.reduce((sum, item) => sum + Number(item.remaining ?? 0), 0);
+  const liveClassStrength = todayAttendance?.totalStudents ?? 0;
+
+  const stats = {
+    classStrength:       liveClassStrength > 0   ? liveClassStrength  : (data?.stats?.classStrength       ?? MOCK_STATS.classStrength),
+    homeworkPending:     allHomework.length,
+    attendanceThisMonth: liveAttendancePct != null ? liveAttendancePct : (data?.stats?.attendanceThisMonth ?? MOCK_STATS.attendanceThisMonth),
+    leaveBalance:        leaveBalances.length > 0 ? liveLeaveBalance  : (data?.stats?.leaveBalance         ?? MOCK_STATS.leaveBalance),
   };
-  // const overview = data?.classOverview ?? MOCK_OVERVIEW;
-  const teacher  = data?.teacher;
+  const teacher = data?.teacher;
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
 
   return (
-    <div className="flex flex-col gap-6 min-h-full">
+    <div className="flex flex-col gap-6 min-h-full p-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-            Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}{teacher ? `, ${teacher.name.split(" ")[0]}` : ""} 👋
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {greeting}{teacher ? `, ${teacher.name.split(" ")[0]}` : ""} 👋
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">{format(new Date(), "EEEE, d MMMM yyyy")} · {teacher?.classTeacherOf ?? "Class Teacher"}</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {format(new Date(), "EEEE, d MMMM yyyy")}
+            {teacher?.classTeacherOf && ` · ${teacher.classTeacherOf}`}
+          </p>
         </div>
-        <p className="text-sm text-gray-500">{teacher?.schoolName ?? "School"}</p>
+        {teacher?.schoolName && (
+          <p className="text-sm text-gray-500">{teacher.schoolName}</p>
+        )}
       </div>
 
       {/* Attendance not-marked banner */}
       {todayAttendance && !todayAttendance.isMarked && (
         <div
-          className={[
-            "flex flex-col gap-3 rounded-2xl border border-red-200 dark:border-red-800",
-            "bg-red-50 dark:bg-red-950/40 px-4 py-4 sm:px-5",
-            "sm:flex-row sm:items-center sm:justify-between sm:gap-4",
-          ].join(" ")}
+          className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
           role="alert"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-              <AlertCircle size={14} className="text-red-500 dark:text-red-400" strokeWidth={2.5} aria-hidden="true" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <AlertCircle size={14} className="text-red-500" strokeWidth={2.5} />
             </div>
             <div>
-              <p className="text-sm font-bold text-red-700 dark:text-red-300 leading-tight">
-                Attendance Not Marked Yet
-              </p>
-              <p className="text-xs text-red-400 dark:text-red-500 mt-0.5">
-                Mark today's attendance to keep records up to date
-              </p>
+              <p className="text-sm font-medium text-red-700 leading-tight">Attendance Not Marked Yet</p>
+              <p className="text-xs text-red-500 mt-0.5">Mark today's attendance to keep records up to date</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setAttendanceModal(true)}
-            className={[
-              "flex w-full items-center justify-center gap-2 sm:w-auto",
-              "rounded-xl bg-red-600 hover:bg-red-700 active:scale-95",
-              "px-5 py-2.5 text-sm font-semibold text-white",
-              "transition-all duration-150 shadow-sm",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2",
-            ].join(" ")}
+            className="flex w-full items-center justify-center gap-2 sm:w-auto rounded-lg bg-red-600 hover:bg-red-700 px-4 py-2 text-sm font-medium text-white transition-colors"
           >
             Mark Attendance
           </button>
@@ -112,37 +113,17 @@ const TeacherDashboardPage = () => {
         leaveBalance={stats.leaveBalance}
       />
 
-      {/* Main grid: schedule + quick actions | homework + class overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* Left col: schedule + quick actions */}
-        <div className="flex flex-col gap-5">
-          <TodayScheduleCard teacherId={teacherId} />
-          {/* <QuickActionsCard
-            onMarkAttendance={() => setAttendanceModal(true)}
-            onAssignHomework={() => setHwModal(true)}
-            onUploadMaterial={() => setUploadModal(true)}
-            onApplyLeave={() => setLeaveModal(true)}
-            onViewStudents={() => navigate("/teacher/students")}
-          /> */}
-        </div>
-
-        {/* Middle col: homework */}
-        <div>
-          <HomeworkDueCard teacherId={teacherId} />
-        </div>
-
-        {/* Right col: class overview */}
-        {/* <div>
-          <ClassOverviewCard overview={overview} />
-        </div> */}
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TodayScheduleCard teacherId={teacherId} />
+        <HomeworkDueCard teacherId={teacherId} />
         <QuickActionsCard
-            onMarkAttendance={() => setAttendanceModal(true)}
-            onAssignHomework={() => setHwModal(true)}
-            onUploadMaterial={() => setUploadModal(true)}
-            onApplyLeave={() => setLeaveModal(true)}
-            onViewStudents={() => navigate("/teacher/students")}
-          />
+          onMarkAttendance={() => setAttendanceModal(true)}
+          onAssignHomework={() => setHwModal(true)}
+          onUploadMaterial={() => setUploadModal(true)}
+          onApplyLeave={() => setLeaveModal(true)}
+          onViewStudents={() => navigate("/teacher/students")}
+        />
       </div>
 
       {/* Modals */}

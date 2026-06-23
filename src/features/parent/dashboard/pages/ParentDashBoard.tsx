@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { useNavigate, useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 
 import { StatCard } from "../../../../components/ui/statcard"
 import { AttendanceWidget } from "../components/AttendanceWidge"
@@ -30,7 +30,6 @@ type ParentLayoutContext = {
 
 const DashboardPage = () => {
   const { activeChild } = useOutletContext<ParentLayoutContext>()
-  const navigate = useNavigate()
 
   const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "")
   const className = activeChild?.class ?? ""
@@ -164,13 +163,13 @@ const DashboardPage = () => {
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((item, i) => (
-          <div
+          <Link
             key={i}
-            onClick={() => navigate(item.path)}
-            className="cursor-pointer hover:scale-[1.02] transition"
+            to={item.path}
+            className="block cursor-pointer hover:scale-[1.02] transition"
           >
             <StatCard {...item} />
-          </div>
+          </Link>
         ))}
       </div>
 

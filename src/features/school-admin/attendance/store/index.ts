@@ -39,6 +39,11 @@ interface AttendanceState {
   showAddHolidayModal: boolean;
   openAddHoliday: () => void;
   closeAddHoliday: () => void;
+
+  // Mark Staff Attendance Modal
+  showMarkStaffAttendanceModal: boolean;
+  openMarkStaffAttendance: () => void;
+  closeMarkStaffAttendance: () => void;
 }
 
 export const useAttendanceStore = create<AttendanceState>((set, get) => ({
@@ -84,4 +89,8 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   showAddHolidayModal: false,
   openAddHoliday: () => set({ showAddHolidayModal: true }),
   closeAddHoliday: () => set({ showAddHolidayModal: false }),
+
+  showMarkStaffAttendanceModal: false,
+  openMarkStaffAttendance: () => set({ showMarkStaffAttendanceModal: true }),
+  closeMarkStaffAttendance: () => set({ showMarkStaffAttendanceModal: false }),
 }));

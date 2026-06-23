@@ -72,7 +72,7 @@ const CorrectionRequestModal = ({ open, onClose, prefill }: CorrectionRequestMod
           <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
             <div>
               <h2 className="text-lg font-extrabold text-gray-900">Correction Request</h2>
-              <p className="text-sm text-gray-400 mt-0.5">Requires Super Admin approval</p>
+              <p className="text-sm text-gray-500 mt-0.5">Requires Super Admin approval</p>
             </div>
             <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg text-gray-400 hover:text-gray-600" onClick={onClose}>
               <X size={18} className="text-current" />

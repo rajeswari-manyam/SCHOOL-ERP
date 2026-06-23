@@ -40,13 +40,13 @@ const ExamMarksPage = () => {
   } = useExamMarks();
 
   return (
-    <div className="flex flex-col gap-0 min-h-full">
+    <div className="flex flex-col gap-6 min-h-full p-6">
 
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Exam &amp; Marks</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Class 8-A · Mathematics · Academic Year 2024-25</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Exam & Marks</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Class 8-A · Mathematics · Academic Year 2024-25</p>
         </div>
 
         {/* Toasts */}

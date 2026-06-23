@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Pencil, Printer, CalendarPlus, Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
+import { Printer, Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,8 +10,8 @@ import {
   useClassList,
   useSectionsByClass,
   useExamTimetable,
-  useCreateTimetable,
-  useCreateExamTimetable,
+  useBulkCreateTimetable,
+  useBulkCreateExamTimetable,
   useUpdateExamTimetable,
   useAddExam,
   useDeleteExam,
@@ -21,22 +21,22 @@ import {
 import { useExams, useCreateExam, useUpdateExam, useDeleteExam as useDeleteExamRecord } from "./hooks/useExam";
 
 // ── Types ────────────────────────────────────────────────────────────────────
+import type { BulkCreateTimetablePayload } from "@/services/timetable.api";
 import type {
   ExamEntry,
   ExamTimetable,
-  CreateTimetablePayload,
-  CreateExamTimetablePayload,
 } from "./types/timetable.types";
 import type { ExamRecord } from "@/services/exam.api";
 
 // ── Components ───────────────────────────────────────────────────────────────
-import ClassTabs from "./components/Classtabs";
 import WeeklyTimetableGrid from "./components/Weeklytimetablegrid";
 import ExamTimetableTable from "./components/Examtimetable";
 import AddExamModal from "./components/Addexammodal";
 import AddPeriodModal from "./components/Addperiodmodal";
 import AddExamTimetableModal from "./components/AddExamtimetablemodal";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
+import { fetchAllWorkingDays } from "@/services/working-days.api";
+import type { WorkingDayRecord } from "@/services/working-days.api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -235,7 +235,8 @@ const ExamManagerTab: React.FC<{
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 {["#", "Exam Name", "Academic Year", "Created", "Actions"].map((h, i) => (
@@ -274,6 +275,7 @@ const ExamManagerTab: React.FC<{
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
 
@@ -317,6 +319,14 @@ const TimetablePage: React.FC = () => {
   const [activeSection, setActiveSection] = useState({ id: "", label: "" });
   const [classInitialised,   setClassInitialised]   = useState(false);
   const [sectionInitialised, setSectionInitialised] = useState(false);
+  const [workingDays, setWorkingDays] = useState<WorkingDayRecord[]>([]);
+
+  useEffect(() => {
+    fetchAllWorkingDays().then(setWorkingDays).catch(() => {});
+  }, []);
+
+  const activeWD = workingDays.find((wd) => wd.academicYearId === academicYearId);
+  const activeWDSelectedDays = activeWD?.selected_days;
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const { data: classTabsData,   isLoading: classTabsLoading }  = useClassList();
@@ -348,8 +358,8 @@ const TimetablePage: React.FC = () => {
   }, [sectionTabsData, sectionInitialised]);
 
   // ── Mutations ────────────────────────────────────────────────────────────────
-  const { mutate: createTimetable, isPending: isCreatingTimetable } = useCreateTimetable();
-  const { mutate: createExamTimetable, isPending: isCreatingExamTimetable } = useCreateExamTimetable();
+  const { mutate: bulkCreateTimetable, isPending: isCreatingTimetable } = useBulkCreateTimetable();
+  const { mutate: bulkCreateExamTimetable, isPending: isCreatingExamTimetable } = useBulkCreateExamTimetable();
   const { mutate: updateExamTimetable, isPending: isUpdatingExamTimetable } = useUpdateExamTimetable();
   const { mutate: addExam, isPending: isAddingExam } = useAddExam();
   const { mutate: deleteExam } = useDeleteExam();
@@ -397,26 +407,39 @@ const TimetablePage: React.FC = () => {
             </p>
           </div>
 
-          {/* Action buttons — only on timetable tab */}
+          {/* Action buttons + class dropdown — only on timetable tab */}
           {activeTab === "timetable" && (
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Class dropdown in header */}
+              {classTabsLoading ? (
+                <div className="h-10 w-36 rounded-xl bg-gray-100 animate-pulse" />
+              ) : (
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => {
+                    const tab = (classTabsData ?? classTabs).find((t) => t.id === e.target.value);
+                    setActiveClass({ id: e.target.value, label: tab?.label ?? e.target.value });
+                    setActiveSection({ id: "", label: "" });
+                    setSectionInitialised(false);
+                  }}
+                  className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm outline-none focus:border-indigo-500"
+                >
+                  {(classTabsData ?? classTabs).map((c) => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+              )}
               <button
                 onClick={() => setAddPeriodOpen(true)}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
               >
-                <Pencil size={14} /> Edit Period
+                <Plus size={14} /> Add Period
               </button>
               <button
                 onClick={() => window.print()}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
               >
                 <Printer size={14} /> Print Timetable
-              </button>
-              <button
-                onClick={() => setAddExamTimetableOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-              >
-                <CalendarPlus size={14} /> Add Exam Schedule
               </button>
             </div>
           )}
@@ -442,28 +465,6 @@ const TimetablePage: React.FC = () => {
         {/* ── Timetable tab ───────────────────────────────────────────────────── */}
         {activeTab === "timetable" && (
           <>
-            {/* Class tabs */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-3 overflow-hidden">
-              {classTabsLoading ? (
-                <div className="flex gap-1 p-3 overflow-x-auto">
-                  {[1,2,3,4,5].map((i) => (
-                    <div key={i} className="h-9 w-24 rounded-lg bg-gray-100 animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <ClassTabs
-                  tabs={classTabsData ?? classTabs}
-                  selectedId={selectedClassId}
-                  onSelect={(tabId) => {
-                    const tab = (classTabsData ?? classTabs).find((t) => t.id === tabId);
-                    setActiveClass({ id: tabId, label: tab?.label ?? tabId });
-                    setActiveSection({ id: "", label: "" }); // reset — sections will auto-select
-                    setSectionInitialised(false);
-                  }}
-                />
-              )}
-            </div>
-
             {/* Section sub-tabs */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-5 overflow-hidden">
               {sectionTabsLoading ? (
@@ -518,7 +519,7 @@ const TimetablePage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <WeeklyTimetableGrid timetable={classTimetable} onEditCell={() => setAddPeriodOpen(true)} />
+                <WeeklyTimetableGrid timetable={classTimetable} onEditCell={() => setAddPeriodOpen(true)} workingDays={activeWDSelectedDays} />
               )}
             </div>
           </>
@@ -553,8 +554,8 @@ const TimetablePage: React.FC = () => {
         defaultClass={activeClass.id ? activeClass : undefined}
         defaultSection={activeSection.id ? activeSection : undefined}
         onClose={() => setAddPeriodOpen(false)}
-        onSave={(payload: CreateTimetablePayload) =>
-          createTimetable(payload, { onSuccess: () => setAddPeriodOpen(false) })
+        onSave={(payload: BulkCreateTimetablePayload) =>
+          bulkCreateTimetable(payload, { onSuccess: () => setAddPeriodOpen(false) })
         }
       />
       <AddExamTimetableModal
@@ -562,14 +563,14 @@ const TimetablePage: React.FC = () => {
         isSaving={isCreatingExamTimetable || isUpdatingExamTimetable}
         editData={editExamEntry}
         onClose={() => { setAddExamTimetableOpen(false); setEditExamEntry(null); }}
-        onSave={(payload: CreateExamTimetablePayload) => {
+        onSave={(payload) => {
           if (editExamEntry) {
             updateExamTimetable(
-              { id: editExamEntry.id, data: payload },
+              { id: editExamEntry.id, data: payload.examsTimetables[0] },
               { onSuccess: () => { setAddExamTimetableOpen(false); setEditExamEntry(null); } }
             );
           } else {
-            createExamTimetable(payload, { onSuccess: () => setAddExamTimetableOpen(false) });
+            bulkCreateExamTimetable(payload, { onSuccess: () => setAddExamTimetableOpen(false) });
           }
         }}
       />

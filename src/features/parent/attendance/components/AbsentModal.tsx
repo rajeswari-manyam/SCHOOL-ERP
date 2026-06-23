@@ -4,7 +4,9 @@ import type { AbsentModalProps } from "../types/attendance.types"
 import { useAttendanceStore } from "../store/attedance.store"
 
 export default function AbsentModal({ data, onClose }: AbsentModalProps) {
-  const { selectedRecord, isLoadingRecord, recordError } = useAttendanceStore()
+  const selectedRecord   = useAttendanceStore((s) => s.selectedRecord)
+  const isLoadingRecord  = useAttendanceStore((s) => s.isLoadingRecord)
+  const recordError      = useAttendanceStore((s) => s.recordError)
 
   // Prefer live record details; fall back to what the caller passed in
   const studentName  = selectedRecord?.studentName  ?? "Student"

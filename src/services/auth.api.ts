@@ -5,6 +5,7 @@ import type {
   LoginResponse,
   OtpVerifyPayload,
   OtpVerifyResponse,
+  LogoutResponse,
   GetUserByIdResponse,
 } from "@/features/auth/types/auth.types";
 
@@ -19,6 +20,12 @@ export const verifyOtp = async (
   payload: OtpVerifyPayload
 ): Promise<OtpVerifyResponse> => {
   const { data } = await api.post<OtpVerifyResponse>("/tenant/otpverify", payload);
+  return data;
+};
+
+// ── POST /tenant/logout ─────────────────────────────────────────────────────────
+export const logout = async (): Promise<LogoutResponse> => {
+  const { data } = await api.post<LogoutResponse>("/tenant/logout");
   return data;
 };
 

@@ -8,19 +8,14 @@ import { Input } from "../../../../components/ui/input";
 import { Select } from "../../../../components/ui/select";
 import { typography } from "@/styles/typography";
 import { useStaffStore } from "../store/usestore";
+import { fetchDepartments } from "@/services/department.api";
 import type { StaffMember, UpdateStaffPayload } from "../types/staff.types";
+import type { Department } from "@/features/school-admin/settings/types/settings.types";
 
 interface Props {
   staff: StaffMember;
   onClose: () => void;
 }
-
-const ROLE_OPTIONS = [
-  { label: "Class Teacher", value: "Class Teacher" },
-  { label: "Subject Teacher", value: "Subject Teacher" },
-  { label: "Admin", value: "Admin" },
-  { label: "Support", value: "Support" },
-];
 
 const STATUS_OPTIONS = [
   { label: "Active", value: "ACTIVE" },
@@ -36,9 +31,10 @@ interface FormState {
   status: string;
   employeeId: string;
   qualification: string;
-  department: string;
-  designation: string;
+  departmentId: string;
   salary: string;
+  dob: string;
+  joiningDate: string;
 }
 
 const toForm = (s: StaffMember): FormState => ({
@@ -48,10 +44,11 @@ const toForm = (s: StaffMember): FormState => ({
   role: s.role ?? "",
   status: s.status ?? "ACTIVE",
   employeeId: s.employeeId ?? "",
-  qualification: "",
-  department: "",
-  designation: "",
-  salary: "0",
+  qualification: s.qualification ?? "",
+  departmentId: s.departmentId ?? "",
+  salary: s.salary != null ? String(s.salary) : "",
+  dob: s.dateOfBirth ?? "",
+  joiningDate: s.dateOfJoin ?? "",
 });
 
 export const EditStaffModal = ({ staff, onClose }: Props) => {
@@ -60,6 +57,11 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
 
   const [form, setForm] = useState<FormState>(() => toForm(staff));
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  useEffect(() => {
+    fetchDepartments().then(setDepartments);
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -84,7 +86,7 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
     return next;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length) {
@@ -96,13 +98,14 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
       name: form.name.trim(),
       phone: form.phone.replace(/\D/g, ""),
       email: form.email.trim(),
-      role: form.role,
+      role: form.role || undefined,
       status: form.status as UpdateStaffPayload["status"],
       emp_number: form.employeeId.trim() || undefined,
       qualification: form.qualification.trim() || undefined,
-      department: form.department.trim() || undefined,
-      designation: form.designation.trim() || undefined,
-      monthly_salary: form.salary ? Number(form.salary) : undefined,
+      department_id: form.departmentId || undefined,
+      salary: form.salary ? Number(form.salary) : undefined,
+      date_of_birth: form.dob || undefined,
+      date_of_join: form.joiningDate || undefined,
     };
 
     try {
@@ -132,56 +135,77 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
 
         <Form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <FormField label="Full Name *" error={errors.name}>
-            <Input name="name" type="text" value={form.name} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+            <Input name="name" type="text" value={form.name} inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("name", e.target.value)} />
           </FormField>
 
+          <FormField label="Role" error={errors.role}>
+            <Input name="role" type="text" value={form.role} placeholder="e.g. Teacher" inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+              onChange={(e) => handleChange("role", e.target.value)} />
+          </FormField>
+
           <FormField label="Phone *" error={errors.phone}>
-            <Input name="phone" type="tel" value={form.phone} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+            <Input name="phone" type="tel" value={form.phone} inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("phone", e.target.value)} />
           </FormField>
 
           <FormField label="Email *" error={errors.email}>
-            <Input name="email" type="email" value={form.email} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+            <Input name="email" type="email" value={form.email} inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("email", e.target.value)} />
           </FormField>
 
-          <FormField label="Role">
-            <Select options={ROLE_OPTIONS} placeholder="Select role" value={form.role}
-              onChange={(v) => handleChange("role", typeof v === "string" ? v : v?.target?.value ?? "")} />
-          </FormField>
-
-          <FormField label="Status">
-            <Select options={STATUS_OPTIONS} placeholder="Select status" value={form.status}
-              onChange={(v) => handleChange("status", typeof v === "string" ? v : v?.target?.value ?? "")} />
-          </FormField>
-
           <FormField label="Employee ID">
-            <Input name="employeeId" type="text" value={form.employeeId} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+            <Input name="employeeId" type="text" value={form.employeeId} inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("employeeId", e.target.value)} />
           </FormField>
 
           <FormField label="Qualification">
-            <Input name="qualification" type="text" value={form.qualification} placeholder="B.Ed, M.Sc" inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+            <Input name="qualification" type="text" value={form.qualification} placeholder="B.Ed, M.Sc" inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("qualification", e.target.value)} />
           </FormField>
 
-          <FormField label="Department">
-            <Input name="department" type="text" value={form.department} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
-              onChange={(e) => handleChange("department", e.target.value)} />
+          <FormField label="Date of Birth">
+            <Input name="dob" type="date" value={form.dob} inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+              onChange={(e) => handleChange("dob", e.target.value)} />
           </FormField>
 
-          <FormField label="Designation">
-            <Input name="designation" type="text" value={form.designation} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
-              onChange={(e) => handleChange("designation", e.target.value)} />
+          <FormField label="Date of Joining">
+            <Input name="joiningDate" type="date" value={form.joiningDate} inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+              onChange={(e) => handleChange("joiningDate", e.target.value)} />
           </FormField>
 
           <FormField label="Monthly Salary (₹)">
-            <Input name="salary" type="number" value={form.salary} inputSize="sm" className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+            <Input name="salary" type="number" value={form.salary} placeholder="e.g. 45000" inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("salary", e.target.value)} />
           </FormField>
 
-          <div className="col-span-full flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 px-0 py-4 border-t border-slate-100 bg-slate-50 shrink-0">
+          <FormField label="Status">
+            <Select options={STATUS_OPTIONS} placeholder="Select status" value={form.status}
+              onValueChange={(v) => handleChange("status", v)} />
+          </FormField>
+
+          <FormField label="Department" error={errors.departmentId}>
+            <Select
+              options={[
+                { label: "Select department", value: "" },
+                ...departments.map((d) => ({ label: d.departmentName, value: d.id })),
+              ]}
+              value={form.departmentId}
+              onValueChange={(v) => handleChange("departmentId", v)}
+              className="w-full"
+            />
+          </FormField>
+
+          <div className="col-span-full flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100 shrink-0">
             <Button variant="outline" onClick={onClose} className="w-full sm:w-auto" disabled={editLoading}>
               Cancel
             </Button>

@@ -307,6 +307,202 @@ export const getAbsentMoreThan5Days =
     return data;
   };
 
+// ─── Staff Attendance ──────────────────────────────────────────────────────────
+export type StaffAttendanceStatusValue = "present" | "absent" | "late" | "leave" | "halfday";
+
+export interface StaffAttendanceRecord {
+  id: string;
+  staff_id: string;
+  date: string;
+  status: StaffAttendanceStatusValue;
+  working_day: boolean;
+  academicYearId: string | null;
+  school_code: string;
+  remarks: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateStaffAttendancePayload {
+  school_code: string;
+  attendance_records: {
+    staff_id: string;
+    date: string;
+    status: "present" | "absent" | "late" | "leave";
+    working_day: boolean;
+    remarks?: string;
+  }[];
+}
+
+export interface CreateStaffAttendanceResponse {
+  status: boolean;
+  message: string;
+  data: StaffAttendanceRecord[];
+}
+
+export interface GetAllStaffAttendanceResponse {
+  status: boolean;
+  count: number;
+  data: StaffAttendanceRecord[];
+}
+
+export interface GetStaffAttendanceByIdResponse {
+  status: boolean;
+  data: StaffAttendanceRecord;
+}
+
+export interface UpdateStaffAttendancePayload {
+  status?: string;
+  remarks?: string;
+}
+
+export interface UpdateStaffAttendanceResponse {
+  status: boolean;
+  message: string;
+  data: StaffAttendanceRecord;
+}
+
+export interface DeleteStaffAttendanceResponse {
+  status: boolean;
+  message: string;
+}
+
+export interface MonthlyStaffAttendanceParams {
+  staff_id: string;
+  month: number;
+  year: number;
+}
+
+export interface MonthlyStaffAttendanceResponse {
+  status: boolean;
+  staff_id: string;
+  month: number;
+  year: number;
+  summary: {
+    totalDaysInMonth: number;
+    workingDays: number;
+    present: number;
+    absent: number;
+    halfday: number;
+    leave: number;
+    markedDays: number;
+    unmarkedDays: number;
+  };
+  records: StaffAttendanceRecord[];
+}
+
+export interface DateRangeStaffAttendanceParams {
+  staff_id: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface DateRangeStaffAttendanceResponse {
+  status: boolean;
+  staff_id: string;
+  start_date: string;
+  end_date: string;
+  summary: {
+    totalDays: number;
+    workingDays: number;
+    present: number;
+    absent: number;
+    halfday: number;
+    leave: number;
+  };
+  records: StaffAttendanceRecord[];
+}
+
+export interface YearlyStaffAttendanceParams {
+  staff_id: string;
+  year: number;
+}
+
+export interface YearlyStaffAttendanceResponse {
+  status: boolean;
+  staff_id: string;
+  year: number;
+  summary: {
+    markedDays: number;
+    workingDays: number;
+    present: number;
+    absent: number;
+    halfday: number;
+    leave: number;
+  };
+  monthlyBreakdown: Record<string, {
+    present: number;
+    absent: number;
+    halfday: number;
+    leave: number;
+    workingDays: number;
+  }>;
+  records: StaffAttendanceRecord[];
+}
+
+/** POST /tenant/createstaffattendance */
+export const createStaffAttendance = async (
+  payload: CreateStaffAttendancePayload
+): Promise<CreateStaffAttendanceResponse> => {
+  const { data } = await api.post("/tenant/createstaffattendance", payload);
+  return data;
+};
+
+/** GET /tenant/getallstaffattendance */
+export const getAllStaffAttendance = async (): Promise<GetAllStaffAttendanceResponse> => {
+  const { data } = await api.get("/tenant/getallstaffattendance");
+  return data;
+};
+
+/** GET /tenant/getstaffattendanceById/{id} */
+export const getStaffAttendanceById = async (
+  id: string
+): Promise<GetStaffAttendanceByIdResponse> => {
+  const { data } = await api.get(`/tenant/getstaffattendanceById/${id}`);
+  return data;
+};
+
+/** PUT /tenant/updatestaffattendanceById/{id} */
+export const updateStaffAttendanceById = async (
+  id: string,
+  payload: UpdateStaffAttendancePayload
+): Promise<UpdateStaffAttendanceResponse> => {
+  const { data } = await api.put(`/tenant/updatestaffattendanceById/${id}`, payload);
+  return data;
+};
+
+/** DELETE /tenant/deletestaffattendanceById/{id} */
+export const deleteStaffAttendanceById = async (
+  id: string
+): Promise<DeleteStaffAttendanceResponse> => {
+  const { data } = await api.delete(`/tenant/deletestaffattendanceById/${id}`);
+  return data;
+};
+
+/** GET /tenant/getMonthlyStaffAttendance */
+export const getMonthlyStaffAttendance = async (
+  params: MonthlyStaffAttendanceParams
+): Promise<MonthlyStaffAttendanceResponse> => {
+  const { data } = await api.get("/tenant/getMonthlyStaffAttendance", { params });
+  return data;
+};
+
+/** GET /tenant/getDateRangeStaffAttendance */
+export const getDateRangeStaffAttendance = async (
+  params: DateRangeStaffAttendanceParams
+): Promise<DateRangeStaffAttendanceResponse> => {
+  const { data } = await api.get("/tenant/getDateRangeStaffAttendance", { params });
+  return data;
+};
+
+/** GET /tenant/getYearlyStaffAttendance */
+export const getYearlyStaffAttendance = async (
+  params: YearlyStaffAttendanceParams
+): Promise<YearlyStaffAttendanceResponse> => {
+  const { data } = await api.get("/tenant/getYearlyStaffAttendance", { params });
+  return data;
+};
+
 export interface StudentTodayAttendanceResponse {
   status: boolean;
   studentId: string;
@@ -323,7 +519,7 @@ export const getStudentTodayAttendance = async (
   studentId: string
 ): Promise<StudentTodayAttendanceResponse> => {
   const { data } = await api.get(
-    `/tenant/getstudenttodayattendance/`,
+    `/tenant/getstudenttodayattendance`,
     { params: { studentId } }
   );
   return data;

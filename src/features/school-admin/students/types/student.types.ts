@@ -110,15 +110,19 @@ export interface AddStudentFormData {
   rollNumber: string;
   photo?: File | null;
   residentialAddress: string;
-  // Step 2 - Parent
+  // Step 2 - Parent (Father)
   fatherName: string;
   fatherPhone: string;
   fatherOccupation: string;
+  fatherRelation: string;
+  // Step 2 - Parent (Mother)
   motherName: string;
   motherPhone: string;
+  motherOccupation: string;
+  motherRelation: string;
+  // Common
   emergencyContact: string;
   whatsappNumber: string;
   sameAsFather: boolean;
-  relation: string;
   email: string;
 }

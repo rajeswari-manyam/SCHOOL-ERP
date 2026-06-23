@@ -100,7 +100,33 @@ export interface MarkAttendanceForm {
   students: StudentAttendanceEntry[];
 }
 
-export type AttendanceTab = "today" | "history" | "holiday";
+// Staff Attendance
+export type StaffAttendanceStatus = "present" | "absent" | "late" | "leave" | "halfday";
+
+export interface StaffAttendanceEntry {
+  staffId: string;
+  name: string;
+  initials: string;
+  avatarColor: string;
+  role: string;
+  department: "teaching" | "non-teaching" | "admin";
+  subject?: string;
+  status: StaffAttendanceStatus;
+  timeIn?: string;
+  leaveType?: string;
+}
+
+export interface CreateStaffAttendancePayload {
+  attendance_records: {
+    staff_id: string;
+    date: string;
+    status: "present" | "absent" | "late" | "leave";
+    working_day: boolean;
+    remarks?: string;
+  }[];
+}
+
+export type AttendanceTab = "today" | "history" | "holiday" | "staff";
 
 export interface CreateHolidayPayload {
   holidayname: string;

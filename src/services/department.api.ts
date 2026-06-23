@@ -6,6 +6,18 @@ import type {
   DepartmentActionResponse,
 } from "@/features/school-admin/settings/types/settings.types";
 
+export interface BulkAddDepartmentItem {
+  departmentName: string;
+  academicYearId: string;
+}
+
+export interface BulkAddDepartmentsResponse {
+  status: boolean;
+  message: string;
+  count: number;
+  data: Department[];
+}
+
 export interface DepartmentStaff {
   id: string;
   name: string;
@@ -72,6 +84,22 @@ export const deleteDepartment = async (id: string): Promise<void> => {
     if (!data?.status) throw new Error(data?.message ?? "Failed to delete department");
   } catch (err: any) {
     const message = err?.response?.data?.message ?? err?.message ?? "Failed to delete department";
+    throw new Error(message);
+  }
+};
+
+export const bulkAddDepartments = async (
+  departments: BulkAddDepartmentItem[]
+): Promise<BulkAddDepartmentsResponse> => {
+  try {
+    const { data } = await api.post<BulkAddDepartmentsResponse>(
+      "/tenant/bulkadddepartments",
+      { departments }
+    );
+    if (!data?.status) throw new Error(data?.message ?? "Bulk add failed");
+    return data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.message ?? "Bulk add failed";
     throw new Error(message);
   }
 };

@@ -14,12 +14,20 @@ import {
   type CreateHolidayPayload,
 } from "../../../../services/holidays.api";
 import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
+import {
+  createStaffAttendance,
+  getAllStaffAttendance,
+  type CreateStaffAttendancePayload as ApiCreateStaffAttendancePayload,
+} from "../../../../services/attendance.api";
+import { fetchStaff } from "../../../../services/school-staff.api";
+import { getAuthUser } from "../../../../store/authStore";
 import { useAttendanceStore } from "../store";
 import type {
   AttendanceHistory,
   AttendanceDay,
   GetAllClassesTodayAttendanceResponse,
   GetClassTodayAttendanceResponse,
+  CreateStaffAttendancePayload,
 } from "../types/attendance.types";
 import {
   mockAttendanceToday,
@@ -187,6 +195,46 @@ export const useExportCSV = () => {
   });
 };
 
+
+// ─── Staff List ────────────────────────────────────────────────────────────────
+export const useStaffList = () => {
+  return useQuery({
+    queryKey: [...attendanceKeys.all, "staffList"] as const,
+    queryFn: () => fetchStaff(),
+    staleTime: 5 * 60_000,
+  });
+};
+
+// ─── Submit Staff Attendance ──────────────────────────────────────────────────
+export const useSubmitStaffAttendance = () => {
+  const queryClient = useQueryClient();
+  const { closeMarkStaffAttendance } = useAttendanceStore();
+
+  return useMutation({
+    mutationFn: (payload: CreateStaffAttendancePayload) => {
+      const user = getAuthUser();
+      const schoolCode = user?.schoolcode ?? "";
+      const apiPayload: ApiCreateStaffAttendancePayload = {
+        school_code: schoolCode,
+        attendance_records: payload.attendance_records,
+      };
+      return createStaffAttendance(apiPayload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      closeMarkStaffAttendance();
+    },
+  });
+};
+
+// ─── All Staff Attendance Records ────────────────────────────────────────────
+export const useAllStaffAttendance = () => {
+  return useQuery({
+    queryKey: [...attendanceKeys.all, "allStaffAttendance"] as const,
+    queryFn: () => getAllStaffAttendance(),
+    staleTime: 60_000,
+  });
+};
 
 // ─── Chronic Absentees (absent > 5 days) ─────────────────────────────────────
 export const useChronicAbsentees = () => {

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Building2, MessageSquare, Calendar, Banknote, Users, Shield, ChevronRight, X } from "lucide-react";
 import { type SettingsTab } from "./components/Settingssidebar";
 import { SchoolProfileTab } from "./components/Schoolprofiletab";
@@ -129,6 +130,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ activeCard, onClose, chil
 
 export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<SettingsTab | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const openTab = (location.state as { openTab?: SettingsTab } | null)?.openTab;
+    if (openTab) setActiveTab(openTab);
+  }, [location.state]);
 
   // Data hooks
   const schoolProfile = useSchoolProfile();
@@ -176,6 +183,7 @@ export const SettingsPage: React.FC = () => {
             onAddClass={academicConfig.addNewClass}
             onCreateAcademicYear={academicConfig.createAcademicYear}
             onAddDepartment={departments.addDepartment}
+            onBulkAddDepartments={departments.bulkAddDepartments}
             onEditDepartment={departments.editDepartment}
             onDeleteDepartment={departments.removeDepartment}
             onCreateWorkingDay={workingDays.createWorkingDay}
@@ -184,6 +192,7 @@ export const SettingsPage: React.FC = () => {
             holidays={holidaysData.holidays}
             holidaysSaving={holidaysData.saving}
             onCreateHoliday={holidaysData.createHoliday}
+            onBulkAddHolidays={holidaysData.bulkAddHolidays}
             onUpdateHoliday={holidaysData.updateHoliday}
             onDeleteHoliday={holidaysData.removeHoliday}
             leaveAllocations={leaveAllocations.allocations}

@@ -41,6 +41,7 @@ export type { Day };
 // ─── Role Options ─────────────────────────────────────────────────────────────
 
 export const ROLE_OPTIONS: UserRole[] = [
+  "Admin",
   "Principal",
   "Accountant",
   "Teacher",
@@ -84,6 +85,20 @@ export const PERMISSION_LABELS: Record<ModulePermission, string> = {
 // ─── Default Role Permissions ─────────────────────────────────────────────────
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, ModulePermission[]> = {
+  Admin: [
+    "viewDashboard",
+    "downloadReports",
+    "viewAttendance",
+    "markAttendance",
+    "viewStudents",
+    "editStudents",
+    "viewFeeRecords",
+    "recordPayments",
+    "viewStaff",
+    "manageStaff",
+    "sendBroadcast",
+    "manageAdmissions",
+  ],
   Principal: [
     "viewDashboard",
     "downloadReports",

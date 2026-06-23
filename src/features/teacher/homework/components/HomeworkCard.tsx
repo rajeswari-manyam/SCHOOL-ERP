@@ -80,14 +80,14 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
   return (
     <>
       <div
-        className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 hover:shadow-[0_4px_18px_rgba(15,23,42,0.07)] hover:border-slate-300"
+        className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-4 transition-all duration-200 hover:shadow-md"
         style={{ opacity: isHwPast ? 0.82 : 1 }}
       >
         {/* ── Header row ── */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-wrap items-center gap-[6px]">
             <SubjectPill subject={hw.subject} />
-            <span className="inline-flex items-center px-2.5 py-[3px] rounded-full text-[11px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
               {hw.className}{hw.section ? ` – ${hw.section}` : ""}
             </span>
             <WABadge status={hw.waNotifyStatus} notifiedAt={hw.waNotifiedAt} />
@@ -122,14 +122,14 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
 
         {/* ── Title + due badge ── */}
         <div>
-          <h3 className="text-[15px] font-bold text-slate-900 leading-snug mb-1.5">
+          <h3 className="text-sm font-medium text-gray-900 leading-snug mb-1.5">
             {hw.title}
           </h3>
           <DueBadge dateStr={hw.dueDate} isPast={isHwPast} />
         </div>
 
         {/* ── Description ── */}
-        <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-2">
+        <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
           {hw.description}
         </p>
 
@@ -160,7 +160,7 @@ const HomeworkCard = ({ hw, onEdit, onDelete, onSendReminder, reminderSent }: Pr
             variant="outline"
             size="sm"
             onClick={() => setDrawerOpen(true)}
-            className="flex-1 h-9 rounded-xl text-[13px] font-semibold bg-white border-slate-200 text-slate-800 hover:bg-slate-50 gap-1.5"
+            className="flex-1 h-9 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 gap-1.5"
           >
             <Eye size={14} />
             View Submissions

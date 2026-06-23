@@ -111,6 +111,7 @@ export interface FeeQuickInsights {
 // ─── User Accounts ────────────────────────────────────────────────────────────
 
 export type UserRole =
+  | "Admin"
   | "Principal"
   | "Accountant"
   | "Teacher"

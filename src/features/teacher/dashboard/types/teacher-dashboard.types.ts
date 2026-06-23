@@ -49,9 +49,12 @@ export interface HomeworkItem {
 
 export interface PendingHomeworkApiItem {
   id: string;
-  className: string;
-  sectionName: string;
-  subjectName: string;
+  class?: { id: string; name: string };
+  section?: { id: string; name: string };
+  subject?: { id: string; name: string };
+  className?: string;
+  sectionName?: string;
+  subjectName?: string;
   teacher_id: string;
   title: string;
   description: string;

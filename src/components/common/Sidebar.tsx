@@ -17,6 +17,15 @@ interface SidebarProps {
 export const SIDEBAR_EXPANDED_W  = 260;
 export const SIDEBAR_COLLAPSED_W = 64;
 
+const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "—";
+
 const Sidebar = ({ items, className, user }: SidebarProps) => {
   const { pathname }   = useLocation();
   const navigate       = useNavigate();
@@ -267,11 +276,17 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
               title={user?.name || "—"}
               className="flex w-full items-center justify-center rounded-xl p-2"
             >
-              <img
-                src={user?.avatar ?? "https://i.pravatar.cc/100"}
-                alt="Profile"
-                className="h-9 w-9 rounded-full border-2 border-white/10 object-cover"
-              />
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Profile"
+                  className="h-9 w-9 rounded-full border-2 border-white/10 object-cover"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/10 bg-indigo-500 text-[11px] font-bold text-white">
+                  {getInitials(user?.name || "")}
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -281,11 +296,17 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                 aria-haspopup="menu"
                 className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/10 outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]"
               >
-                <img
-                  src={user?.avatar ?? "https://i.pravatar.cc/100"}
-                  alt="Profile"
-                  className="h-9 w-9 shrink-0 rounded-full border-2 border-white/10 object-cover"
-                />
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Profile"
+                    className="h-9 w-9 shrink-0 rounded-full border-2 border-white/10 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white/10 bg-indigo-500 text-[11px] font-bold text-white">
+                    {getInitials(user?.name || "")}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold leading-tight">
                     {user?.name || "—"}

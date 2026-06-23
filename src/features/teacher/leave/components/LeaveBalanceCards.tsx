@@ -16,7 +16,7 @@ const TYPE_ICONS: Record<LeaveType, React.ReactNode> = {
 };
 
 const SkeletonCard = () => (
-  <div className="animate-pulse bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
+  <div className="animate-pulse bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
     <div className="w-10 h-10 rounded-xl bg-gray-200" />
     <div className="space-y-2">
       <div className="h-3 w-24 rounded bg-gray-200" />
@@ -87,7 +87,7 @@ const LeaveBalanceCards = ({ balances, loading, error, onRetry }: Props) => {
         const used = b?.used ?? 0;
         const pct = total > 0 ? Math.round((remaining / total) * 100) : 0;
         return (
-          <div key={b.type} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
+          <div key={b.type} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.iconBg} ${a.icon}`}>
               {TYPE_ICONS[b?.type]}
             </div>

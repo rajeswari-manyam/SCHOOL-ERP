@@ -193,12 +193,13 @@ const toCamelCase = (obj: any): any => {
 const normalizeRole = (role?: string): StaffMember["role"] => {
   const value = (role ?? "").toLowerCase().trim();
 
-  if (value === "teacher" || value.includes("teacher")) return "Teacher";
-  if (value === "admin" || value.includes("admin")) return "Admin";
-  if (value === "support" || value.includes("support")) return "Support";
+  if (!value) return "Staff";
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-  return (isUuid ? "Staff" : (role ?? "Staff")) as StaffMember["role"];
+  if (isUuid) return "Staff";
+
+  // Preserve the original role value (e.g. "Maths teacher", "Science teacher")
+  return role!.trim();
 };
 
 const normalizeStatus = (status?: string): StaffMember["status"] => {
@@ -230,6 +231,11 @@ const normalizeStaffMember = (item: any): StaffMember => {
   const classTeacherOf = toArray(camel.classTeacherOf);
   const subjectTeacherOf = toArray(camel.subjectTeacherOf);
 
+  // Extract from assigned_classes_subjects (from getallstaff API)
+  const assigned: any[] = Array.isArray(camel.assignedClassesSubjects) ? camel.assignedClassesSubjects : [];
+  const assignedSubjects = assigned.map((a: any) => a.subjectName).filter(Boolean) as string[];
+  const assignedClasses = assigned.map((a: any) => `Class ${a.className}${a.sectionName ? ` - ${a.sectionName}` : ""}`).filter(Boolean) as string[];
+
   return {
     id: camel.id ?? "",
     name: camel.name ?? "Unknown",
@@ -244,13 +250,17 @@ const normalizeStaffMember = (item: any): StaffMember => {
     employeeId: camel.empNumber ?? camel.employeeId ?? "",
     phone: camel.phone ?? "",
     email: camel.email ?? "",
-    classes: classes.length > 0 ? classes : classTeacherOf,
-    subjects: subjects.length > 0 ? subjects : subjectTeacherOf,
+    classes: classes.length > 0 ? classes : assignedClasses.length > 0 ? assignedClasses : classTeacherOf,
+    subjects: subjects.length > 0 ? subjects : assignedSubjects.length > 0 ? assignedSubjects : subjectTeacherOf,
     leaveBalance: Number(camel.leaveBalance ?? camel.leavesBalance ?? 0),
     isTeaching,
     leaveRequest: camel.leaveRequest,
     departmentId: camel.departmentId ?? camel.department?.id ?? "",
     departmentName: camel.department?.departmentName ?? camel.departmentName ?? "",
+    qualification: camel.qualification ?? "",
+    salary: camel.salary != null ? Number(camel.salary) : undefined,
+    dateOfBirth: camel.dateOfBirth ?? "",
+    dateOfJoin: camel.dateOfJoin ?? "",
     createdAt: camel.createdAt,
     updatedAt: camel.updatedAt,
   };
@@ -377,6 +387,98 @@ export const updateStaff = async (
       JSON.stringify(error?.response?.data) ??
       error?.message ??
       "Failed to update staff";
+    throw new Error(message);
+  }
+};
+
+export interface BulkCreateStaffPayload {
+  school_id: string;
+  staff: CreateStaffPayload[];
+}
+
+export interface BulkCreateStaffResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  skipped: number;
+  data: StaffMember[];
+}
+
+/** POST /tenant/staff/bulk — create multiple staff members at once */
+export const bulkCreateStaff = async (
+  payload: BulkCreateStaffPayload,
+): Promise<BulkCreateStaffResponse> => {
+  try {
+    const { data } = await api.post<BulkCreateStaffResponse>("/tenant/staff/bulk", payload);
+    console.log("bulkCreateStaff success", { url: "/tenant/staff/bulk", payload, response: data });
+    return data;
+  } catch (err: any) {
+    console.error("bulkCreateStaff failed", {
+      url: "/tenant/staff/bulk",
+      payload,
+      response: err?.response?.data ?? err?.message,
+    });
+    const message =
+      err?.response?.data?.message ??
+      JSON.stringify(err?.response?.data) ??
+      err?.message ??
+      "Failed to create staff members";
+    throw new Error(message);
+  }
+};
+
+/** DELETE /tenant/deletestaffById/:id — soft-delete (deactivate) a staff member */
+export interface AssignedClassSubject {
+  class_id: string;
+  class_name: string;
+  section_id: string;
+  section_name: string;
+  subject_id: string;
+  subject_name: string;
+}
+
+export interface StaffDetails {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  role: string;
+  qualification: string | null;
+  emp_number: string;
+  salary: number | null;
+  date_of_birth: string | null;
+  date_of_join: string | null;
+  status: string;
+  department: { id: string; departmentName: string } | null;
+  leavesTaken?: number;
+  leavesPending?: number;
+  leavesBalance?: number;
+  assigned_classes_subjects: AssignedClassSubject[];
+}
+
+/** GET /tenant/getstaffById/:id — fetch detailed staff info */
+export const getStaffDetailsById = async (id: string): Promise<StaffDetails> => {
+  const { data } = await api.get(`/tenant/getstaffById/${id}`);
+  if (data?.status && data?.data) {
+    return data.data as StaffDetails;
+  }
+  throw new Error(data?.message || "Failed to fetch staff details");
+};
+
+export const deleteStaff = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/tenant/deletestaffById/${id}`);
+    console.log(`deleteStaff OK (${id})`);
+  } catch (err: any) {
+    console.error("deleteStaff failed", {
+      url: `/tenant/deletestaffById/${id}`,
+      response: err?.response?.data ?? err?.message,
+    });
+    const message =
+      err?.response?.data?.message ??
+      JSON.stringify(err?.response?.data) ??
+      err?.message ??
+      "Failed to delete staff";
     throw new Error(message);
   }
 };

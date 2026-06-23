@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
+import { useUIStore } from "@/store/uiStore";
 import { leaveApi } from "@/services/teacher-leave.api";
 import type {
   LeaveBalance,
@@ -113,7 +114,8 @@ const EMPTY_FORM: ApplyLeaveFormData = {
 
 export const useLeave = () => {
   const user = useAuthStore(s => s.user);
-  const staffId = user?.id ?? "";
+  const staffId = localStorage.getItem("teacherStaffId") || user?.id || "";
+  const academicYearId = useUIStore(s => s.academicYearId);
 
   const [leaveHistory, setLeaveHistory] = useState<LeaveApplication[]>([]);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
@@ -130,7 +132,7 @@ export const useLeave = () => {
     setError(null);
     try {
       const [bal, history] = await Promise.all([
-        leaveApi.getLeaveBalances(staffId),
+        leaveApi.getLeaveBalances(staffId, academicYearId),
         leaveApi.getLeaveHistory(staffId),
       ]);
       setBalances(bal);
@@ -141,7 +143,7 @@ export const useLeave = () => {
     } finally {
       setLoading(false);
     }
-  }, [staffId]);
+  }, [staffId, academicYearId]);
 
   useEffect(() => {
     loadData();

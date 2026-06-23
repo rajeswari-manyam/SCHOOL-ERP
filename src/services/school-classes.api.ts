@@ -2,7 +2,7 @@ import api from "@/config/axios";
 import { getAllClasses, getAcademicYearClasses, getAllStaff } from "@/services/class.api";
 import { getSectionsByClassIdFromApi, getSectionById } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
-import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "@/features/school-admin/classes/types/classes.types";
+import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, BulkAddClassesResponse, BulkAddSectionsResponse, BulkAddSubjectsResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "@/features/school-admin/classes/types/classes.types";
 
 export const fetchClasses = async (academicYearId?: string | null): Promise<ClassItem[]> => {
   let classesRes: { status: boolean; data: import("@/services/class.api").ClassRecord[] };
@@ -41,10 +41,18 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
       const subjectRecords = asArray<SubjectRecord>(subjectsRes?.data) ?? [];
       const subjectCount = subjectsRes?.count ?? subjectRecords.length;
       const subjectCountBySection = new Map<string, number>();
+      const subjectsBySection = new Map<string, SubjectItem[]>();
       for (const subject of subjectRecords) {
         const sectionId = String((subject as SubjectRecord & { sectionid?: string }).sectionid ?? subject.section_id ?? "");
         if (!sectionId) continue;
         subjectCountBySection.set(sectionId, (subjectCountBySection.get(sectionId) ?? 0) + 1);
+        if (!subjectsBySection.has(sectionId)) subjectsBySection.set(sectionId, []);
+        subjectsBySection.get(sectionId)!.push({
+          id: String(subject.id ?? ""),
+          name: String(subject.subject_name ?? ""),
+          subjectCode: String(subject.subject_code ?? ""),
+          teacher: String(subject.teacher_name ?? ""),
+        });
       }
       const sectionStudentTotal = sectionRecords.reduce((sum, item) => sum + getStudentCount(item), 0);
       return {
@@ -55,12 +63,13 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
         sectionStudentTotal,
         subjectCount,
         subjectCountBySection,
+        subjectsBySection,
       };
     })
   );
 
   const classes: ClassItem[] = [];
-  for (const { className, first, records, sectionRecords, sectionStudentTotal, subjectCount, subjectCountBySection } of classSectionTotals) {
+  for (const { className, first, records, sectionRecords, sectionStudentTotal, subjectCount, subjectCountBySection, subjectsBySection } of classSectionTotals) {
     const derivedTotalStudents = sectionStudentTotal || records.reduce((sum, r) => sum + getStudentCount(r as unknown as Record<string, unknown>), 0);
 
     const sectionsCount = Number(first.sections_count) || sectionRecords.length;
@@ -73,7 +82,7 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
         classTeacher: String(r.classTeacherName ?? r.class_teacher_name ?? r.classTeacherId ?? r.class_teacher_id ?? ""),
         totalStudents: getStudentCount(r),
         subjectCount: subjectCountBySection.get(String(r.id)) ?? 0,
-        subjects: [],
+        subjects: subjectsBySection.get(String(r.id)) ?? [],
       })).concat(
         sectionRecords.length < sectionsCount
           ? Array.from({ length: sectionsCount - sectionRecords.length }, (_, i) => ({
@@ -240,6 +249,21 @@ export const addClass = async (payload: CreateClassPayload): Promise<ClassItem> 
   }
 };
 
+export const bulkAddClasses = async (payload: CreateClassPayload[]): Promise<BulkAddClassesResponse> => {
+  try {
+    const { data } = await api.post<BulkAddClassesResponse>("/tenant/class/bulk", { classes: payload });
+    if (!data?.status) {
+      throw new Error(data?.message || "Server returned unsuccessful status");
+    }
+    return data;
+  } catch (err: unknown) {
+    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
+    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
+    console.error("bulkAddClasses failed", { payload, response: detailStr });
+    throw new Error(detailStr);
+  }
+};
+
 export const addSection = async (payload: AddSectionPayload): Promise<SectionItem> => {
   try {
     const { data } = await api.post<CreateSectionResponse>("/tenant/createsections", payload);
@@ -263,6 +287,21 @@ export const addSection = async (payload: AddSectionPayload): Promise<SectionIte
   }
 };
 
+export const bulkAddSections = async (payload: AddSectionPayload[]): Promise<BulkAddSectionsResponse> => {
+  try {
+    const { data } = await api.post<BulkAddSectionsResponse>("/tenant/section/bulk", { sections: payload });
+    if (!data?.status) {
+      throw new Error(data?.message || "Server returned unsuccessful status");
+    }
+    return data;
+  } catch (err: unknown) {
+    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
+    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
+    console.error("bulkAddSections failed", { payload, response: detailStr });
+    throw new Error(detailStr);
+  }
+};
+
 export const addSubject = async (payload: AddSubjectPayload): Promise<SubjectItem> => {
   try {
     const { data } = await api.post("/tenant/subjects", payload);
@@ -282,4 +321,62 @@ export const addSubject = async (payload: AddSubjectPayload): Promise<SubjectIte
     console.error("addSubject failed", { url: "/tenant/subjects", payload, response: detailStr });
     throw new Error(`POST /tenant/subjects\nPayload: ${JSON.stringify(payload)}\nResponse: ${detailStr}`);
   }
+};
+
+export const bulkAddSubjects = async (payload: AddSubjectPayload[]): Promise<BulkAddSubjectsResponse> => {
+  try {
+    const { data } = await api.post<BulkAddSubjectsResponse>("/tenant/subjects/bulk", { subjects: payload });
+    if (!data?.status) {
+      throw new Error(data?.message || "Server returned unsuccessful status");
+    }
+    return data;
+  } catch (err: unknown) {
+    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
+    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
+    console.error("bulkAddSubjects failed", { payload, response: detailStr });
+    throw new Error(detailStr);
+  }
+};
+
+/* ── Delete Class ─────────────────────────────────────────────────── */
+export const deleteClass = async (id: string): Promise<void> => {
+  const { data } = await api.delete(`/tenant/deleteclassById/${id}`);
+  if (data?.status === false) throw new Error(data?.message ?? "Failed to delete class");
+};
+
+/* ── Update Section ───────────────────────────────────────────────── */
+export interface UpdateSectionPayload {
+  sectionName?: string;
+  classTeacherId?: string;
+  totalStrength?: number;
+}
+
+export const updateSection = async (id: string, payload: UpdateSectionPayload): Promise<any> => {
+  const { data } = await api.put(`/tenant/updatesection/${id}`, payload);
+  if (!data?.status) throw new Error(data?.message ?? "Failed to update section");
+  return data.data;
+};
+
+/* ── Delete Section ───────────────────────────────────────────────── */
+export const deleteSection = async (id: string): Promise<void> => {
+  const { data } = await api.delete(`/tenant/deletesection/${id}`);
+  if (data?.status === false) throw new Error(data?.message ?? "Failed to delete section");
+};
+
+/* ── Update Subject ───────────────────────────────────────────────── */
+export interface UpdateSubjectPayload {
+  subject_name?: string;
+  teacher_id?: string;
+}
+
+export const updateSubject = async (id: string, payload: UpdateSubjectPayload): Promise<any> => {
+  const { data } = await api.put(`/tenant/updatesubjectById/${id}`, payload);
+  if (!data?.status) throw new Error(data?.message ?? "Failed to update subject");
+  return data.data;
+};
+
+/* ── Delete Subject ───────────────────────────────────────────────── */
+export const deleteSubject = async (id: string): Promise<void> => {
+  const { data } = await api.delete(`/tenant/deletesubjectById/${id}`);
+  if (data?.status === false) throw new Error(data?.message ?? "Failed to delete subject");
 };

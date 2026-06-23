@@ -160,6 +160,7 @@ export interface CreateExamTimetablePayload {
   room_no: string;
   academicYearId: string;
   teacher_id: string;
+  schoolWorkingDayId?: string;
 }
 
 export interface CreateExamTimetableResponse {
@@ -253,6 +254,7 @@ export interface CreateTimetablePayload {
   break_end: string;
   academic_year: string;
   school_code: string;
+  schoolWorkingDayId?: string;
 }
 
 export interface CreateTimetableResponse {

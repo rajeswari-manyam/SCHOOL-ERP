@@ -1,31 +1,25 @@
-import { useEffect } from "react";
 import { useFeeStore } from "../store/fee.store";
+import type { Fee, PaymentHistory } from "../types/fee.types";
 
-export const useFees = (studentId?: string) => {
-  const fetchFees = useFeeStore((s) => s.fetchFees);
+export const useFees = (_studentId?: string) => {
   const store = useFeeStore();
+  const fetchFees = useFeeStore((s) => s.fetchFees);
 
-  useEffect(() => {
-    if (studentId && studentId.trim() !== "") {
-      fetchFees(studentId);
-    }
-  }, [studentId, fetchFees]);
-
-  const pending = store.fees.filter(
-    (f) =>
-      f.status === "pending" ||
-      f.status === "overdue" ||
-      f.status === "upcoming"
-  );
-
-  const allPaid = !store.loading && pending.length === 0;
+  // API not yet available — no fetch on mount
+  const fees: Fee[] = [];
+  const history: PaymentHistory[] = [];
+  const pending: Fee[] = [];
+  const allPaid = false;
 
   return {
     ...store,
-    fetchFees,
+    fees,
+    history,
     pending,
     allPaid,
-    // Annual overview data — already computed in store from API
+    loading: false,
+    error: null,
+    fetchFees,
     tuitionMonths: store.tuitionMonths,
     examTerms: store.examTerms,
     annualSummary: store.annualSummary,

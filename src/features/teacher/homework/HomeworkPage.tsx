@@ -133,7 +133,7 @@ const HomeworkPage = () => {
   const {
     tab, setTab,
     teacherId,
-    activeHomework, pastHomework, materials,
+    activeHomework, pastHomework, materials, isMaterialsError, refetchMaterials,
     isLoading, isError, error, refetch,
     modal, setModal,
     reminderSent, sendReminder,
@@ -332,7 +332,7 @@ const HomeworkPage = () => {
     { id: "materials" as const, label: "Study materials", count: materials.length },
   ];
 
-  const selectCls = "h-[34px] bg-white border border-slate-200 rounded-[10px] px-[10px] pr-7 text-[12px] text-slate-900 outline-none cursor-pointer appearance-none";
+  const selectCls = "h-10 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer";
 
   if (isLoading) return <HomeworkSkeleton />;
   if (isError && !isFiltering) return <ErrorState message={error?.message ?? "An unexpected error occurred"} onRetry={refetch} />;
@@ -345,10 +345,10 @@ const HomeworkPage = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5 flex-wrap">
         <div>
-          <h1 className="text-[20px] font-bold text-slate-900 tracking-[-0.3px]">
+          <h1 className="text-2xl font-semibold text-gray-900">
             Homework & Study Materials
           </h1>
-          <p className="text-[13px] text-slate-500 mt-[3px]">
+          <p className="text-sm text-gray-500 mt-0.5">
             Manage assignments, track submissions and share resources
           </p>
         </div>
@@ -356,14 +356,14 @@ const HomeworkPage = () => {
           <Button
             variant="outline"
             onClick={() => setModal({ type: "uploadMaterial" })}
-            className="flex items-center gap-[6px] h-9 px-4 rounded-[10px] text-[13px] font-semibold border-slate-200 text-slate-900 hover:bg-slate-50"
+            className="flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Upload size={15} className="text-current" />
             Upload Material
           </Button>
           <Button
             onClick={() => setModal({ type: "assign" })}
-            className="flex items-center gap-[6px] h-9 px-4 rounded-[10px] text-[13px] font-semibold bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+            className="flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
           >
             <Plus size={15} strokeWidth={2.5} className="text-current" />
             Assign Homework
@@ -431,7 +431,7 @@ const HomeworkPage = () => {
               setFilterSubjectId("");
               setFilterDate("");
             }}
-            className="h-[34px] px-3 text-[12px] font-semibold text-slate-500 hover:text-red-500 border border-slate-200 rounded-[10px] bg-white hover:border-red-200 transition-colors"
+            className="h-10 px-3 text-sm font-medium text-gray-500 hover:text-red-500 border border-gray-300 rounded-lg bg-white hover:border-red-200 transition-colors"
           >
             Clear
           </button>
@@ -566,7 +566,23 @@ const HomeworkPage = () => {
               <span className="text-slate-400 font-medium">({materials.length} resources)</span>
             </p>
           </div>
-          {materials.length === 0 ? (
+          {isMaterialsError ? (
+            <div className="bg-white border border-red-200 rounded-2xl py-12 flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-400 text-2xl">
+                !
+              </div>
+              <p className="text-[15px] font-bold text-slate-900">Failed to load study materials</p>
+              <p className="text-[13px] text-slate-500 max-w-[260px]">
+                Something went wrong. Try refreshing.
+              </p>
+              <button
+                onClick={() => refetchMaterials()}
+                className="mt-2 px-4 py-2 text-[13px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          ) : materials.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl py-12 flex flex-col items-center gap-3 text-center">
               <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-2xl">
                 📁
@@ -632,9 +648,6 @@ const HomeworkPage = () => {
         open={modal.type === "uploadMaterial"}
         onClose={() => setModal({ type: "none" })}
         onUpload={handleUploadMaterial}
-        classes={classes.map((c) => ({ id: c.id, name: c.class_name }))}
-        sections={sections.map((s) => ({ id: s.id, name: s.sectionName }))}
-        subjects={subjects.map((s) => ({ id: s.id, name: s.subject_name }))}
       />
 
     </div>

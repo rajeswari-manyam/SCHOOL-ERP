@@ -280,7 +280,22 @@ export function useDepartments() {
     setDepartments(prev => prev.filter(d => d.id !== id));
   }, []);
 
-  return { departments, loading, saving, addDepartment, editDepartment, removeDepartment };
+  const bulkAddDepartments = useCallback(async (
+    items: { departmentName: string; academicYearId: string }[]
+  ) => {
+    setSaving(true);
+    try {
+      const result = await deptApi.bulkAddDepartments(items);
+      if (result.data?.length) {
+        setDepartments(prev => [...prev, ...result.data]);
+      }
+      return result;
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  return { departments, loading, saving, addDepartment, editDepartment, removeDepartment, bulkAddDepartments };
 }
 
 // ─── Working Days ─────────────────────────────────────────────────────────────
@@ -421,5 +436,19 @@ export function useHolidays() {
     setHolidays(prev => prev.filter(h => h.id !== id));
   }, []);
 
-  return { holidays, loading, saving, createHoliday, updateHoliday, removeHoliday };
+  const bulkAddHolidays = useCallback(async (items: CreateHolidayPayload[]) => {
+    setSaving(true);
+    try {
+      const res = await holidaysApi.bulkAddHolidays(items);
+      if (res.data?.length) setHolidays(prev => [...prev, ...res.data]);
+      return res;
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? "Bulk add failed";
+      throw new Error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  return { holidays, loading, saving, createHoliday, updateHoliday, removeHoliday, bulkAddHolidays };
 }

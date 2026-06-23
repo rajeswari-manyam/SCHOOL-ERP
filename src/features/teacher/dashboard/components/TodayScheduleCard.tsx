@@ -31,7 +31,7 @@ const TodayScheduleCard = ({ teacherId }: TodayScheduleCardProps) => {
   const errorMessage = isError ? "Failed to load today's schedule" : null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-extrabold text-gray-900">Today's Schedule</h3>
         {errorMessage && (

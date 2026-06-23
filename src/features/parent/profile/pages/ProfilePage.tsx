@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
 import { useProfileStore } from "../hooks/useProfileStore";
 import { ProfileCard } from "../components/ProfileCard";
 import { ChildrenCard } from "../components/ChildrenCard";
@@ -18,13 +19,12 @@ type ParentLayoutContext = {
     avatar: string;
     section?: string;
     studentId?: string;
-    parentName?: string;
-    parentId?: string;
   };
-  parentId?: string;
 };
 
 export default function ProfilePage() {
+  const authUser = useAuthStore((s) => s.user);
+
   const {
     parentName,
     parentPhone,
@@ -38,10 +38,13 @@ export default function ProfilePage() {
     toggleNotification,
   } = useProfileStore();
 
-  const { activeChild, parentId: outletParentId } =
-    useOutletContext<ParentLayoutContext>();
+  const { activeChild } = useOutletContext<ParentLayoutContext>();
 
-  const parentId = outletParentId ?? activeChild?.parentId ?? "";
+  // Same resolution order as ParentLayout
+  const parentId =
+    localStorage.getItem("parentId") ||
+    authUser?.id ||
+    "";
 
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<ContactInfo>(contact);

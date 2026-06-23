@@ -65,8 +65,8 @@ const extractPendingHomeworkList = (raw: unknown, depth = 0): PendingHomeworkApi
 const transformPendingHomeworkItem = (item: PendingHomeworkApiItem): HomeworkItem => ({
   id: item.id,
   title: item.title,
-  subject: item.subjectName,
-  class: `${item.className}${item.sectionName ? `-${item.sectionName}` : ""}`,
+  subject: item.subject?.name ?? item.subjectName ?? "",
+  class: `${item.class?.name ?? item.className ?? ""}${(item.section?.name ?? item.sectionName) ? `-${item.section?.name ?? item.sectionName}` : ""}`,
   dueDate: item.submission_date,
   submittedCount: item.submittedCount ?? 0,
   totalCount: item.totalCount ?? 0,

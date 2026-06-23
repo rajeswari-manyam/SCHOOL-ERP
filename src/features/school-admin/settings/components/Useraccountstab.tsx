@@ -212,14 +212,14 @@ const UserCard: React.FC<{
       <button className="text-indigo-600 text-xs font-medium hover:text-indigo-700 transition-colors">
         Edit
       </button>
-      {user.role !== "Principal" && (
-        <button
-          onClick={() => onDeactivate(user.id)}
-          className="text-red-500 text-xs font-medium hover:text-red-600 transition-colors"
-        >
-          Deactivate
-        </button>
-      )}
+                      {user.role !== "Principal" && user.role !== "Admin" && (
+                        <button
+                          onClick={() => onDeactivate(user.id)}
+                          className="text-red-500 text-xs font-medium hover:text-red-600 transition-colors"
+                        >
+                          Deactivate
+                        </button>
+                      )}
     </div>
   </div>
 );
@@ -316,7 +316,7 @@ export const UserAccountsTab: React.FC<Props> = ({
                       <button className="text-indigo-600 text-sm font-medium hover:text-indigo-700 transition-colors">
                         Edit
                       </button>
-                      {user.role !== "Principal" && (
+                      {user.role !== "Principal" && user.role !== "Admin" && (
                         <button
                           onClick={() => onDeactivate(user.id)}
                           className="text-red-500 text-sm font-medium hover:text-red-600 transition-colors"

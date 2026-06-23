@@ -337,10 +337,10 @@ export const fetchRolePermissions = async (): Promise<RolePermission[]> => {
     const { data } = await api.get<RolePermission[]>("/tenant/roles/permissions");
     return data;
   } catch {
-    const counts: Record<string, number> = {
-      Principal: 1, Accountant: 1, Teacher: 5, "Admin Clerk": 1,
-      Receptionist: 0, Librarian: 0,
-    };
+  const counts: Record<string, number> = {
+    Admin: 1, Principal: 1, Accountant: 1, Teacher: 5, "Admin Clerk": 1,
+    Receptionist: 0, Librarian: 0,
+  };
     return ROLE_OPTIONS.map(role => ({
       role,
       userCount: counts[role] ?? 0,

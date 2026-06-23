@@ -20,7 +20,7 @@ const SummaryBar = ({ summary, visible }: Props) => {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
       <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Class Summary</p>
       <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
         {stats.map(({ label, value, color }) => (

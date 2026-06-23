@@ -11,8 +11,19 @@ export interface CreateParentPayload {
   school_id: string;
 }
 
+export interface BulkCreateParentsResponse {
+  status: boolean;
+  message: string;
+  data: (CreateParentPayload & { id: string })[];
+}
+
 export const parentsApi = {
   createParent: async (payload: CreateParentPayload) => {
+    const { data } = await api.post("/tenant/createparents", payload);
+    return data;
+  },
+
+  createParents: async (payload: CreateParentPayload[]): Promise<BulkCreateParentsResponse> => {
     const { data } = await api.post("/tenant/createparents", payload);
     return data;
   },

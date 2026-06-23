@@ -28,7 +28,7 @@ export default function AttendanceCalendar({
   onAbsentClick,
   isLoading,
 }: AttendanceCalendarProps) {
-  const { monthlyDays } = useAttendanceStore()
+  const monthlyDays = useAttendanceStore((s) => s.monthlyDays)
 
   const { year, month, firstDow, daysInMonth, daysInPrev } =
     getMonthMeta(currentDate)

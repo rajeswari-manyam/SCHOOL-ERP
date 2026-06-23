@@ -11,7 +11,7 @@ interface SummaryCardProps {
 }
 
 const SummaryCard = ({ label, value, sub, accentClass, iconBg, iconColor, icon }: SummaryCardProps) => (
-  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 hover:shadow-md transition-shadow duration-200">
+  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 flex items-center gap-3 hover:shadow-md transition-shadow duration-200">
     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}>
       <span className={iconColor}>{React.cloneElement(icon as React.ReactElement<any>, { size: 15, strokeWidth: 1.8 })}</span>
     </div>

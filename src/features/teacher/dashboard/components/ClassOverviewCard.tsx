@@ -3,7 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import type { ClassOverview } from "../types/teacher-dashboard.types";
 
 const ClassOverviewCard = ({ overview }: { overview: ClassOverview }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-sm font-extrabold text-gray-900">Class Overview</h3>
       <span className="text-sm font-bold text-indigo-600">{overview.monthlyAvgPct}% avg</span>

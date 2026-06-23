@@ -1,293 +1,330 @@
-import type { GenerateReportFormData, ReportType } from "../types/reports.types";
-import type { ChangeEventHandler, ReactNode } from "react";
-import { Check, Download, Info, X } from "lucide-react";
-import { REPORT_CARDS, CLASSES } from "../utils/Report config";
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
+import { X, Calendar, Loader2, Download, Info } from "lucide-react";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { REPORT_CARDS, ReportIcons } from "../utils/report-config";
+import { useGenerateReport } from "../hooks/useReports";
+import { getAuthUser } from "../../../../store/authStore";
+import type { ReportType } from "../types/reports.types";
 
-interface GenerateReportModalProps {
-  form: GenerateReportFormData;
-  generating: boolean;
-  success: boolean;
-  estimatedSize: string;
+interface Props {
+  open: boolean;
+  preselectedType?: ReportType;
   onClose: () => void;
-  onSetField: <K extends keyof GenerateReportFormData>(key: K, value: GenerateReportFormData[K]) => void;
-  onToggleSection: (key: keyof GenerateReportFormData["includeSections"]) => void;
-  onGenerate: () => void;
 }
 
-const Field = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-xs font-bold text-gray-700">{label}</label>
-    {children}
-  </div>
-);
+type PeriodKey = "THIS_MONTH" | "LAST_MONTH" | "CUSTOM";
 
-const DATE_RANGE_OPTIONS = ["This Month", "Last Month", "Custom Range"] as const;
+const PERIOD_PILLS: { value: PeriodKey; label: string }[] = [
+  { value: "THIS_MONTH", label: "This Month" },
+  { value: "LAST_MONTH", label: "Last Month" },
+  { value: "CUSTOM",     label: "Custom Range" },
+];
 
-const SectionCheckbox = ({
-  label,
-  checked,
-  onChange,
-  premium,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: ChangeEventHandler<HTMLInputElement>;
-  premium?: boolean;
-}) => (
-  <label className="flex items-center gap-2.5 cursor-pointer">
-    <Checkbox
-      checked={checked}
-      onChange={onChange}
-      disabled={premium}
-      className="w-4 h-4 shrink-0"
-    />
-    <span className={`text-sm ${premium ? "text-gray-400" : "text-gray-700"}`}>{label}</span>
-    {premium && (
-      <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold uppercase rounded shrink-0">
-        Premium
-      </span>
-    )}
-  </label>
-);
+const CLASS_OPTIONS = [
+  { value: "", label: "All Classes" },
+  ...Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Class ${i + 1}` })),
+];
 
-const GenerateReportModal = ({
-  form,
-  generating,
-  success,
-  estimatedSize,
-  onClose,
-  onSetField,
-  onToggleSection,
-  onGenerate,
-}: GenerateReportModalProps) => {
-  const reportLabel = REPORT_CARDS.find((c) => c.id === form.reportType)?.title ?? "Report";
+const REPORT_TYPE_OPTIONS = REPORT_CARDS.map((c) => ({ value: c.type, label: c.title }));
+
+const DEFAULT_SECTIONS = new Set(["class_summary", "daily_grid", "chronic_absentees", "teacher_marking"]);
+
+function getDateRange(period: PeriodKey) {
+  const now = new Date();
+  if (period === "THIS_MONTH") return { from: startOfMonth(now), to: endOfMonth(now) };
+  if (period === "LAST_MONTH") {
+    const last = subMonths(now, 1);
+    return { from: startOfMonth(last), to: endOfMonth(last) };
+  }
+  return null;
+}
+
+const GenerateReportModal = ({ open, preselectedType, onClose }: Props) => {
+  const [reportType, setReportType] = useState<ReportType>(preselectedType ?? "ATTENDANCE");
+  const [period, setPeriod] = useState<PeriodKey>("LAST_MONTH");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [classId, setClassId] = useState("");
+  const [fmt, setFmt] = useState<"PDF" | "CSV">("PDF");
+  const [checkedSections, setCheckedSections] = useState<Set<string>>(new Set(DEFAULT_SECTIONS));
+  const [myEmailChecked, setMyEmailChecked] = useState(true);
+  const [additionalEmail, setAdditionalEmail] = useState("");
+  const generateMutation = useGenerateReport();
+  const [generating, setGenerating] = useState(false);
+
+  const cardConfig = REPORT_CARDS.find((c) => c.type === reportType);
+  const Icon = ReportIcons[reportType];
+
+  const dateRange = useMemo(() => getDateRange(period), [period]);
+  const displayFrom = period === "CUSTOM" && customFrom
+    ? format(new Date(customFrom), "dd MMM yyyy")
+    : dateRange ? format(dateRange.from, "dd MMM yyyy") : "—";
+  const displayTo = period === "CUSTOM" && customTo
+    ? format(new Date(customTo), "dd MMM yyyy")
+    : dateRange ? format(dateRange.to, "dd MMM yyyy") : "—";
+  const periodLabel = dateRange ? format(dateRange.from, "MMMM yyyy") : "selected period";
+
+  const toggleSection = (key: string) => {
+    setCheckedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const user = getAuthUser();
+      const fromDate = period === "CUSTOM" ? customFrom : dateRange ? format(dateRange.from, "yyyy-MM-dd") : "";
+      const toDate = period === "CUSTOM" ? customTo : dateRange ? format(dateRange.to, "yyyy-MM-dd") : "";
+
+      await generateMutation.mutateAsync({
+        reportype: cardConfig?.title ?? "Attendance Report",
+        from: fromDate,
+        to: toDate,
+        class_id: classId,
+        section_id: "",
+        academic_year_id: "",
+        format: fmt,
+        emailreport: myEmailChecked || !!additionalEmail,
+        school_code: user?.schoolcode ?? "",
+      });
+      toast.success("Report generated successfully");
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to generate report");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (!open) return null;
 
   return (
-    /* ── Backdrop — bottom-sheet on mobile, centered on sm+ ── */
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm">
-      <div
-        className="
-          bg-white w-full sm:max-w-lg
-          rounded-t-2xl sm:rounded-2xl
-          shadow-2xl
-          max-h-[92vh] sm:max-h-[90vh]
-          flex flex-col
-          overflow-hidden
-        "
-      >
-        {/* Drag handle — mobile only */}
-        <div className="flex justify-center pt-3 sm:hidden shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
-
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 shrink-0">
-          <div className="min-w-0 pr-3">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 leading-snug">
-              Generate {reportLabel}
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5">Configure and download your report</p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 shrink-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* ── Scrollable body ── */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-4 sm:gap-5">
-
-          {/* Report Type */}
-          <Field label="Report Type">
-            <Select
-              options={REPORT_CARDS.map((c) => ({ label: c.title, value: c.id }))}
-              value={form.reportType}
-              onValueChange={(value) => onSetField("reportType", value as ReportType)}
-              className="text-sm"
-            />
-          </Field>
-
-          {/* Date Range — wraps on very narrow screens */}
-          <Field label="Date Range">
-            <div className="flex flex-wrap gap-2">
-              {DATE_RANGE_OPTIONS.map((opt) => (
-                <Button
-                  key={opt}
-                  type="button"
-                  variant={form.dateRangeType === opt ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onSetField("dateRangeType", opt)}
-                  className="flex-1 min-w-[90px]"
-                >
-                  {opt}
-                </Button>
-              ))}
-            </div>
-          </Field>
-
-          {/* From / To — always side-by-side (short fields) */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <Field label="From">
-              <Input
-                type="date"
-                value={form.fromDate}
-                onChange={(e) => onSetField("fromDate", e.target.value)}
-                className="w-full"
-              />
-            </Field>
-            <Field label="To">
-              <Input
-                type="date"
-                value={form.toDate}
-                onChange={(e) => onSetField("toDate", e.target.value)}
-                className="w-full"
-              />
-            </Field>
+    <>
+      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+        <div
+          className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[92dvh]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Mobile drag handle */}
+          <div className="flex justify-center pt-2.5 sm:hidden">
+            <div className="w-10 h-1 rounded-full bg-gray-200" />
           </div>
 
-          {/* Class */}
-          <Field label="Class">
-            <Select
-              options={CLASSES.map((c) => ({ label: c, value: c }))}
-              value={form.classFilter}
-              onValueChange={(value) => onSetField("classFilter", value)}
-              className="text-sm"
-            />
-          </Field>
-
-          {/* Format */}
-          <Field label="Format">
-            <div className="flex gap-2">
-              {(["PDF", "CSV"] as const).map((f) => (
-                <Button
-                  key={f}
-                  type="button"
-                  variant={form.format === f ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onSetField("format", f)}
-                  className="px-5"
-                >
-                  {f}
-                </Button>
-              ))}
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 shrink-0">
+            <div className="flex items-center gap-2.5">
+              {Icon && (
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${cardConfig?.iconBg ?? "bg-indigo-50 text-indigo-600"}`}>
+                  <Icon size={16} />
+                </div>
+              )}
+              <h2 className="text-base font-bold text-gray-900">
+                Generate {cardConfig?.title ?? "Report"}
+              </h2>
             </div>
-          </Field>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          {/* Include sections */}
-          {form.reportType === "ATTENDANCE" && (
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                Include Sections
-              </p>
-              <SectionCheckbox
-                label="Class-wise summary"
-                checked={form.includeSections.classwiseSummary}
-                onChange={() => onToggleSection("classwiseSummary")}
-              />
-              <SectionCheckbox
-                label="Daily attendance grid (all 30 days)"
-                checked={form.includeSections.dailyAttendanceGrid}
-                onChange={() => onToggleSection("dailyAttendanceGrid")}
-              />
-              <SectionCheckbox
-                label="Chronic absentees list"
-                checked={form.includeSections.chronicAbsentees}
-                onChange={() => onToggleSection("chronicAbsentees")}
-              />
-              <SectionCheckbox
-                label="Teacher-wise marking status"
-                checked={form.includeSections.teacherWiseMarkingStatus}
-                onChange={() => onToggleSection("teacherWiseMarkingStatus")}
-              />
-              <SectionCheckbox
-                label="Period-wise attendance"
-                checked={false}
-                onChange={() => {}}
-                premium
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+            {/* Report Type */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">Report Type</label>
+              <Select
+                value={reportType}
+                onValueChange={(v) => setReportType(v as ReportType)}
+                options={REPORT_TYPE_OPTIONS}
+                placeholder="Select report type"
               />
             </div>
-          )}
 
-          {/* Email */}
-          <div className="flex flex-col gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              Email Report To
-            </p>
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <Checkbox
-                checked={form.emailToSelf}
-                onChange={() => onSetField("emailToSelf", !form.emailToSelf)}
-                className="w-4 h-4 shrink-0"
+            {/* Date Range */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Date Range</label>
+              <div className="flex flex-wrap gap-2">
+                {PERIOD_PILLS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPeriod(p.value)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      period === p.value
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* From / To */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-gray-700">From</label>
+                {period === "CUSTOM" ? (
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 h-10 px-3 rounded-xl border border-gray-200 bg-gray-50/60 text-sm text-gray-600">
+                    <span className="flex-1 truncate">{displayFrom}</span>
+                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-gray-700">To</label>
+                {period === "CUSTOM" ? (
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 h-10 px-3 rounded-xl border border-gray-200 bg-gray-50/60 text-sm text-gray-600">
+                    <span className="flex-1 truncate">{displayTo}</span>
+                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Class filter */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">Class</label>
+              <Select
+                value={classId}
+                onValueChange={setClassId}
+                options={CLASS_OPTIONS}
+                placeholder="All Classes"
               />
-              <span className="text-sm text-gray-700 break-all">
-                My email (principal@hps.edu.in)
-              </span>
-            </label>
-            <Input
-              placeholder="Additional email (optional)"
-              value={form.additionalEmail}
-              onChange={(e) => onSetField("additionalEmail", e.target.value)}
-            />
-          </div>
+            </div>
 
-          {/* Meta info */}
-          <div className="flex items-start gap-2 bg-gray-50 rounded-xl p-3">
-            <Info className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Estimated {form.format} size: {estimatedSize} • Includes{" "}
-              {form.fromDate && form.toDate
-                ? `${form.fromDate} to ${form.toDate}`
-                : "selected date range"}{" "}
-              data
-            </p>
-          </div>
-        </div>
+            {/* Format */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Format</label>
+              <div className="flex gap-2">
+                {(["PDF", "CSV"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFmt(f)}
+                    className={`px-7 py-2 rounded-xl text-sm font-bold transition-all ${
+                      fmt === f
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {/* ── Footer ── */}
-        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-4 border-t border-gray-100 shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-medium"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={onGenerate}
-            disabled={generating || success}
-            className="w-full sm:w-auto px-5 py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:scale-105 hover:shadow-md transition-all"
-          >
-            {success ? (
-              <>
-                <Check className="h-4 w-4" />
-                Generated!
-              </>
-            ) : generating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                Generate &amp; Download
-              </>
+            {/* Include Sections */}
+            {cardConfig?.sections && cardConfig.sections.length > 0 && (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-extrabold tracking-widest uppercase text-indigo-600">
+                  Include Sections
+                </label>
+                <div className="space-y-2.5">
+                  {cardConfig.sections.map((sec) => (
+                    <label
+                      key={sec.key}
+                      className={`flex items-center gap-3 ${
+                        sec.premium ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={sec.premium ? false : checkedSections.has(sec.key)}
+                        disabled={sec.premium}
+                        onChange={() => !sec.premium && toggleSection(sec.key)}
+                        className="w-4 h-4 rounded accent-indigo-600"
+                      />
+                      <span className="text-sm text-gray-700">{sec.label}</span>
+                      {sec.premium && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 tracking-wide">
+                          PREMIUM
+                        </span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
             )}
-          </Button>
+
+            {/* Email Report To */}
+            <div className="space-y-2.5">
+              <label className="text-sm font-semibold text-gray-700">Email Report To</label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={myEmailChecked}
+                  onChange={(e) => setMyEmailChecked(e.target.checked)}
+                  className="w-4 h-4 rounded accent-indigo-600"
+                />
+                <span className="text-sm text-gray-700">My email (principal@hps.edu.in)</span>
+              </label>
+              <Input
+                placeholder="Additional email (optional)"
+                value={additionalEmail}
+                onChange={(e) => setAdditionalEmail(e.target.value)}
+                className="text-sm bg-gray-50"
+              />
+            </div>
+
+            {/* Estimated size info */}
+            <div className="flex items-start gap-2.5 rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3 text-xs text-gray-500">
+              <Info className="w-3.5 h-3.5 mt-0.5 text-gray-400 shrink-0" />
+              <span>
+                Estimated {fmt} size: <strong className="text-gray-700">~1.8 MB</strong>
+                {" • "}Includes {periodLabel} data for all students
+              </span>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 shrink-0">
+            <Button type="button" onClick={onClose} variant="outline" className="px-5">
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex items-center gap-2 px-6 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+            >
+              {generating
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Download className="w-4 h-4" />
+              }
+              {generating ? "Generating..." : "Generate & Download"}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -53,9 +53,11 @@ const PayslipPage = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 size={28} className="text-indigo-600 animate-spin" />
-        <p className="text-sm text-gray-500 font-semibold">Loading payslips…</p>
+      <div className="flex flex-col gap-6 min-h-full p-6">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+          <Loader2 size={28} className="text-indigo-600 animate-spin" />
+          <p className="text-sm text-gray-500 font-semibold">Loading payslips…</p>
+        </div>
       </div>
     );
   }
@@ -66,8 +68,8 @@ const PayslipPage = () => {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Payslip</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Anjali Verma · Employee ID TCH-2024-047</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Payslip</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Anjali Verma · Employee ID TCH-2024-047</p>
         </div>
 
         {/* Toast notifications */}
@@ -117,7 +119,7 @@ const PayslipPage = () => {
       )}
 
       {/* Month navigation */}
-      <div className="flex items-center justify-between bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3.5 mb-5">
+      <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-3.5 mb-5">
         <button
           onClick={goToPrevMonth}
           className="flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
@@ -142,7 +144,7 @@ const PayslipPage = () => {
 
       {/* No data state */}
       {!currentPayslip && payslips.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center min-h-[200px] bg-white rounded-2xl border border-gray-100 shadow-sm mb-5">
+        <div className="flex flex-col items-center justify-center min-h-[200px] bg-white rounded-xl border border-gray-200 shadow-sm mb-5">
           <p className="text-sm font-semibold text-gray-400">No payslip data available</p>
         </div>
       )}

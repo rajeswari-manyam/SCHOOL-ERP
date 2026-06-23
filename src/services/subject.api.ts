@@ -71,3 +71,29 @@ export const createSubject = async (
   );
   return data;
 };
+
+export interface BulkCreateSubjectPayload {
+  subject_name: string;
+  class_id: string;
+  sectionid: string;
+  teacher_id: string;
+  academicYearId: string;
+}
+
+export interface BulkCreateSubjectsResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  skipped: number;
+  data: SubjectRecord[];
+}
+
+export const bulkCreateSubjects = async (
+  items: BulkCreateSubjectPayload[]
+): Promise<BulkCreateSubjectsResponse> => {
+  const { data } = await api.post<BulkCreateSubjectsResponse>(
+    "/tenant/subjects/bulk",
+    { subjects: items }
+  );
+  return data;
+};

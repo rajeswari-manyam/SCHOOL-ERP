@@ -8,11 +8,12 @@ import StudentStatCards from "../students/components/StudentStatCards";
 import StudentFilterBar from "../students/components/StudentFilterBar";
 import StudentTable from "../students/components/StudentTable";
 import AddStudentModal from "../students/components/AddStudentModal";
+import BulkAddStudentModal from "../students/components/BulkAddStudentModal";
 import { EditStudentModal } from "../students/components/EditStudentModal";
 
 import type { AddStudentFormData, Student } from "../students/types/student.types";
 
-import { Download, Plus } from "lucide-react";
+import { Upload, Plus } from "lucide-react";
 
 const StudentsPage = () => {
   const {
@@ -23,6 +24,7 @@ const StudentsPage = () => {
     statusFilter, setStatusFilter,
     addStudent,
     updateStudent,
+    deleteStudent,
     loadStudents,
   } = useStudents();
 
@@ -33,17 +35,14 @@ const StudentsPage = () => {
     : null;
   const { sections: sectionOptions } = useSectionsList(selectedClassId);
 
-
-
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const handleAddStudent = async (data: AddStudentFormData) => {
     const student = await addStudent(data);
     return { status: true, message: "Student created", data: student };
   };
-
-
 
   return (
     <div className="space-y-5">
@@ -55,9 +54,12 @@ const StudentsPage = () => {
         </div>
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
          
-          <button className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-bold border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-gray-700">
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Import CSV</span><span className="sm:hidden">Import</span>
+          <button
+            onClick={() => setShowBulkModal(true)}
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-bold border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-gray-700"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Bulk Add</span><span className="sm:hidden">Bulk</span>
           </button>
           <button
             onClick={() => setShowAddModal(true)}
@@ -101,10 +103,7 @@ const StudentsPage = () => {
         </div>
       ) : (
         <>
-          <StudentTable students={filtered} onEdit={setEditingStudent} />
-          {filtered.length > 0 && (
-            <p className="text-xs text-gray-400 text-center">Showing {filtered.length} student{filtered.length !== 1 ? "s" : ""}</p>
-          )}
+          <StudentTable students={filtered} onEdit={setEditingStudent} onDelete={deleteStudent} />
         </>
       ))}
 
@@ -124,7 +123,14 @@ const StudentsPage = () => {
         />
       )}
 
-     
+      {showBulkModal && (
+        <BulkAddStudentModal
+          onClose={() => {
+            setShowBulkModal(false);
+            loadStudents(academicYearId);
+          }}
+        />
+      )}
     </div>
   );
 };

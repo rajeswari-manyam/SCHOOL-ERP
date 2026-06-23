@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useAttendanceStore } from "../store";
 import { useAllHolidays } from "../hooks/useAttendance";
+import BulkAddHolidayModal from "./BulkAddHolidayModal";
 import {
   Card,
   CardContent,
@@ -144,6 +146,8 @@ const HolidayCalendar = () => {
     goToPrevMonth, goToNextMonth, openAddHoliday,
   } = useAttendanceStore();
 
+  const [showBulkModal, setShowBulkModal] = useState(false);
+
   const { data: rawData, isLoading, isError, error, refetch } = useAllHolidays();
 
   if (isLoading) {
@@ -211,13 +215,23 @@ const HolidayCalendar = () => {
             >›</Button>
           </div>
 
-          <Button
-            onClick={openAddHoliday}
-            size="sm"
-            className="w-full rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 sm:w-auto sm:px-5"
-          >
-            + Add Holiday
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => setShowBulkModal(true)}
+              size="sm"
+              variant="outline"
+              className="flex-1 sm:flex-none rounded-lg border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 sm:px-4"
+            >
+              Bulk Add
+            </Button>
+            <Button
+              onClick={openAddHoliday}
+              size="sm"
+              className="flex-1 sm:flex-none rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 sm:px-5"
+            >
+              + Add Holiday
+            </Button>
+          </div>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -396,6 +410,10 @@ const HolidayCalendar = () => {
           )}
         </CardContent>
       </Card>
+
+      {showBulkModal && (
+        <BulkAddHolidayModal onClose={() => setShowBulkModal(false)} />
+      )}
     </div>
   );
 };

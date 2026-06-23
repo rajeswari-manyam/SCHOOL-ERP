@@ -8,8 +8,22 @@ interface FeesDueSummaryProps {
 }
 
 export function FeesDueSummary({ totalOutstanding, paidPercent, defaulters }: FeesDueSummaryProps) {
+  const hasData = totalOutstanding > 0 || defaulters.length > 0;
   const pendingPercent = 100 - paidPercent;
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+
+  if (!hasData) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm p-4 sm:p-5 min-h-[200px]">
+        <h2 className="text-sm sm:text-base font-bold text-gray-900 self-start">Fee Dues Summary</h2>
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+          <div className="text-3xl">₹</div>
+          <p className="text-sm font-semibold text-gray-500">No fee data available</p>
+          <p className="text-xs text-gray-400">Fee dues will appear here once data is loaded</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full flex-col gap-4 rounded-2xl bg-white border border-gray-100 shadow-sm p-4 sm:p-5">

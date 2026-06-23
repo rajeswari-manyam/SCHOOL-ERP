@@ -136,6 +136,10 @@ const OtpPage = () => {
       const token  = response.token ?? `token-${Date.now()}`;
       const userId = response.userId ?? response.user?.id ?? response.data?.id ?? "";
 
+      // Use the verified userType from the OTP response if available;
+      // fall back to the one returned by sendOtp (stored in localStorage).
+      const verifiedUserType = (response.userType ?? rawUserType) as UserType;
+
       // ── Step 2: commit token to Zustand IMMEDIATELY ───────────────────────
       // The axios interceptor reads useAuthStore.getState().token — NOT
       // localStorage directly.  setAuth must run before getUserById so the
@@ -145,7 +149,7 @@ const OtpPage = () => {
         name:        response.name ?? "User",
         phone:       phone,
         email:       response.email,
-        userType:    rawUserType as UserType,
+        userType:    verifiedUserType,
         schoolcode:  schoolcode,
         role:        response.role,
         permissions: response.permissions,
@@ -153,17 +157,20 @@ const OtpPage = () => {
       setAuth(initialUser, token);
       localStorage.setItem("userId", userId);
 
-      // ── Step 3: enrich profile via getUserById (token is now in Zustand) ──
-      try {
-        const userProfile = await getUserById(userId);
-        if (userProfile?.status) setUserProfile(userProfile);
-      } catch {
-        // Non-fatal — proceed with the name/role already from OTP response
-      }
-
       toast.success("OTP Verified Successfully!");
-      const route = USER_TYPE_ROUTE_MAP[rawUserType] ?? "/login";
+      const route = USER_TYPE_ROUTE_MAP[verifiedUserType] ?? "/login";
       navigate(route, { replace: true });
+
+      // ── Step 4: enrich profile after navigation (non-fatal) ─────────────
+      // Moved after navigate so a 401 on getUserById doesn't kill the session
+      // before the user reaches the dashboard (the 401 interceptor logs out).
+      try {
+        getUserById(userId).then((userProfile) => {
+          if (userProfile?.status) setUserProfile(userProfile);
+        });
+      } catch {
+        // Silently ignored — user already on dashboard
+      }
 
     } catch (err: unknown) {
       console.error("OTP Verify Error:", err);

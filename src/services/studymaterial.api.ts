@@ -85,7 +85,7 @@ export const getStudyMaterialsByFilter = async (
   params: StudyMaterialFilterParams
 ): Promise<StudyMaterialListResponse> => {
   const { data } = await api.get<StudyMaterialListResponse>(
-    "/tenant/getstudymaterialsbyfilter/",
+    "/tenant/getstudymaterialsbyfilter",
     { params }
   );
   return data;

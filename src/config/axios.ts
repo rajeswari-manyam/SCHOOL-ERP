@@ -2,7 +2,7 @@
 import axios from "axios";
 import { getAuthToken, getTenantId, useAuthStore } from "@/store/authStore";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.21:4000";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://192.168.29.23:4000";
 
 export const api = axios.create({
   baseURL: BASE_URL,

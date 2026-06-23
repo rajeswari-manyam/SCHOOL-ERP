@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/config/axios";
-import { createTimetable as createServiceSlot, getTimetableById, getAllTimetable } from "@/services/timetable.api";
-import type { TimetablePayload, TimetableSlot as ServiceTimetableSlot } from "@/services/timetable.api";
+import { createTimetable as createServiceSlot, bulkCreateTimetable, getTimetableById, getAllTimetable } from "@/services/timetable.api";
+import type { TimetablePayload, BulkCreateTimetablePayload, TimetableSlot as ServiceTimetableSlot } from "@/services/timetable.api";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import type { ClassRecord } from "@/services/class.api";
 import { getAllStaff } from "@/services/staff.api";
@@ -12,7 +12,9 @@ import {
   createExamTimetable as createExamSlot,
   deleteExamTimetable,
   updateExamTimetable,
+  bulkCreateExamTimetable,
 } from "@/services/examtimetable.api";
+import type { BulkExamTimetablePayload } from "@/services/examtimetable.api";
 import { getAllSubjects } from "@/services/subject.api";
 import type {
   EditPeriodPayload,
@@ -367,6 +369,7 @@ export const useCreateTimetable = () => {
         break_end:     payload.break_end,
         lunch_start:   payload.lunch_start,
         lunch_end:     payload.lunch_end,
+        schoolWorkingDayId: payload.schoolWorkingDayId,
       };
       return await createServiceSlot(servicePayload);
     },
@@ -435,6 +438,28 @@ export const useCreateTimetable = () => {
   });
 };
 
+// ─── Bulk create timetable periods ──────────────────────────────────────────────
+export const useBulkCreateTimetable = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: BulkCreateTimetablePayload) => {
+      return await bulkCreateTimetable(payload);
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: 'active' });
+      if (res.inserted > 0) {
+        toast.success(`${res.inserted} period(s) created successfully`);
+      }
+      if (res.errors?.length > 0) {
+        res.errors.forEach((e) => {
+          toast.error(`${e.day}: ${e.message}`);
+        });
+      }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+};
+
 // ─── Create exam timetable entry ────────────────────────────────────────────────
 export const useCreateExamTimetable = () => {
   const qc = useQueryClient();
@@ -443,6 +468,23 @@ export const useCreateExamTimetable = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
       toast.success("Exam timetable created successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+};
+
+// ─── Bulk create exam timetable entries ─────────────────────────────────────────
+export const useBulkCreateExamTimetable = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: BulkExamTimetablePayload) => bulkCreateExamTimetable(payload),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      if (res.failed > 0) {
+        toast.warning(`${res.inserted} added, ${res.failed} skipped (holiday/non-working day)`);
+      } else {
+        toast.success(`${res.inserted} exam timetable entry(ies) created`);
+      }
     },
     onError: (err: Error) => toast.error(err.message),
   });

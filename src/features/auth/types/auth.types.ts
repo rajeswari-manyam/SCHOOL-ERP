@@ -62,6 +62,12 @@ export interface OtpVerifyResponse {
   };
 }
 
+// ── Logout API ──────────────────────────────────────────────────────────────────
+export interface LogoutResponse {
+  status: boolean;
+  message: string;
+}
+
 // ── Get User By ID ─────────────────────────────────────────────────────────────
 export interface Permission {
   module: string;

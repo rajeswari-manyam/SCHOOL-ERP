@@ -17,14 +17,14 @@ interface Props {
 const SalaryHistoryTable = ({ payslips, onDownload }: Props) => {
   if (payslips.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-12 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-12 text-center">
         <p className="text-sm font-semibold text-gray-400">No salary history available</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100">
         <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Salary History</p>
       </div>

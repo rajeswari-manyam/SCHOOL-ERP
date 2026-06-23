@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { ContactInfo, NotificationPref, Child } from "../types/profile.types";
-import { getParentById } from "../../../../services/parent.api";
+import { getUserById } from "../../../../services/auth.api";
 import { getStudentById } from "../../../../services/student.api";
 
 interface ProfileState {
@@ -54,10 +54,12 @@ export const useProfileStore = create<ProfileState>((set) => ({
   fetchProfile: async (parentId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const parent = await getParentById(parentId);
+      const res = await getUserById(parentId);
+      const parent = res.data;
 
+      const studentList = parent.students ?? [];
       const students = await Promise.all(
-      parent.students.map((sid) => getStudentById(sid))
+        studentList.map((item: { id: string; name: string }) => getStudentById(item.id))
       );
 
       const children: Child[] = students.map((s, idx) => ({
@@ -70,25 +72,24 @@ export const useProfileStore = create<ProfileState>((set) => ({
         status:      "ACTIVE" as const,
       }));
 
-      // ✅ Map ALL real API fields into contact
-      // relation tells us if this parent is mother or father
-      const isMother = parent.relation?.toLowerCase() === "mother";
+      const relation = parent.relation?.toLowerCase() ?? "";
+      const isMother = relation === "mother";
 
       const contact: ContactInfo = {
-        fatherName:       isMother ? ""                : parent.parent_name,
-        fatherPhone:      isMother ? ""                : parent.phone,
-        motherName:       isMother ? parent.parent_name : "",
-        motherEmail:      isMother ? parent.email       : "",
-        emergencyContact: parent.phone,   // best available; extend if API adds emergency field
+        fatherName:       isMother ? ""                        : (parent.parent_name ?? ""),
+        fatherPhone:      isMother ? ""                        : (parent.phone ?? ""),
+        motherName:       isMother ? (parent.parent_name ?? "") : "",
+        motherEmail:      isMother ? (parent.email ?? "")      : (parent.email ?? ""),
+        emergencyContact: parent.phone ?? "",
       };
 
       set({
-        parentName:       parent.parent_name,
-        parentPhone:      parent.phone,
-        parentEmail:      parent.email,
-        parentRelation:   parent.relation,
-        parentOccupation: parent.occupation,
-        parentAddress:    parent.address,
+        parentName:       parent.parent_name       ?? "",
+        parentPhone:      parent.phone             ?? "",
+        parentEmail:      parent.email             ?? "",
+        parentRelation:   parent.relation          ?? "",
+        parentOccupation: parent.occupation        ?? "",
+        parentAddress:    parent.address           ?? "",
         contact,
         children,
         isLoading: false,

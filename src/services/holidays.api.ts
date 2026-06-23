@@ -45,6 +45,13 @@ export interface HolidayActionResponse {
   data?: HolidayFromApi;
 }
 
+export interface BulkAddHolidaysResponse {
+  status: boolean;
+  message: string;
+  count: number;
+  data: HolidayFromApi[];
+}
+
 /* ================= APIs ================= */
 
 export const getAllHolidays = async (): Promise<GetAllHolidaysResponse> => {
@@ -79,4 +86,20 @@ export const deleteHolidayById = async (
 ): Promise<HolidayActionResponse> => {
   const { data } = await api.delete(`/tenant/deleteholidayById/${id}`);
   return data;
+};
+
+export const bulkAddHolidays = async (
+  holidays: CreateHolidayPayload[]
+): Promise<BulkAddHolidaysResponse> => {
+  try {
+    const { data } = await api.post<BulkAddHolidaysResponse>(
+      "/tenant/bulkaddholidays",
+      { holidays }
+    );
+    if (!data?.status) throw new Error(data?.message ?? "Bulk add failed");
+    return data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.message ?? "Bulk add failed";
+    throw new Error(message);
+  }
 };

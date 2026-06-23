@@ -57,13 +57,36 @@ export interface ExamTimetableDetail extends ExamTimetablePayload {
   updatedAt: string;
 }
 
-/** ================= CREATE ================= */
+/** ================= CREATE (single) ================= */
 
 export const createExamTimetable = async (
   data: Partial<ExamTimetablePayload>
 ) => {
   const res = await api.post("/tenant/createexams-timetable", data);
   return res.data.data;
+};
+
+/** ================= CREATE (bulk) ================= */
+
+export interface BulkExamTimetablePayload {
+  examsTimetables: (ExamTimetablePayload & { schoolWorkingDayId?: string })[];
+}
+
+export interface BulkExamTimetableResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  failed: number;
+  skipped: number;
+  errors: { row: number; exam_date: string; day: string; message: string }[];
+  data: ExamTimetableDetail[];
+}
+
+export const bulkCreateExamTimetable = async (
+  payload: BulkExamTimetablePayload
+): Promise<BulkExamTimetableResponse> => {
+  const res = await api.post("/tenant/exams-timetable/bulk", payload);
+  return res.data;
 };
 
 /** ================= GET ALL ================= */

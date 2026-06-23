@@ -39,7 +39,8 @@ export default function AbsentList({
   onSelect,
   isLoading,
 }: AbsentListProps) {
-  const { monthlyDays, yearlySummary } = useAttendanceStore()
+  const monthlyDays    = useAttendanceStore((s) => s.monthlyDays)
+  const yearlySummary  = useAttendanceStore((s) => s.yearlySummary)
 
   const year  = currentDate.getFullYear()
   const month = currentDate.getMonth()   // 0-based, matches MONTH_NAMES index

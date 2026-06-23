@@ -147,7 +147,13 @@ export interface RawClassAttendanceItem {
   teacher_name?: string;
   teacherName?: string;
   present?: number | null;
+  present_students?: number | null;
+  presentStudents?: number | null;
   absent?: number | null;
+  absent_students?: number | null;
+  absentStudents?: number | null;
+  total_students?: number | null;
+  totalStudents?: number | null;
   status?: string;
   attendance_status?: string;
   attendanceStatus?: string;

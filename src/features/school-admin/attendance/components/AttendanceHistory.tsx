@@ -123,6 +123,8 @@ const AttendanceHistory = () => {
         {/* Table */}
         {!isLoading && !error && paginated.length > 0 && (
           <>
+            <div className="overflow-x-auto">
+            <div className="min-w-[560px]">
             <div className="grid grid-cols-[1fr_6rem_7rem_8rem_10rem_6rem] gap-3 px-5 py-2.5 bg-gray-50/60 border-b border-gray-100">
               {["Student", "Class", "Absent Days", "Last Absent", "Parent Contact", "Actions"].map((h) => (
                 <span key={h} className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">
@@ -187,6 +189,8 @@ const AttendanceHistory = () => {
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+            </div>
             </div>
           </>
         )}

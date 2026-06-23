@@ -301,6 +301,7 @@ export interface PaginatedUsers {
 
 const mapApiRole = (role: string): UserAccount["role"] => {
   const r = (role ?? "").toLowerCase();
+  if (r === "admin") return "Admin";
   if (r === "principal") return "Principal";
   if (r === "accountant") return "Accountant";
   if (r === "teacher") return "Teacher";
@@ -377,7 +378,7 @@ export const updateUser = async (id: string, data: Partial<UserAccount>): Promis
 
 export const fetchRolePermissions = async (): Promise<RolePermission[]> => {
   const counts: Record<string, number> = {
-    Principal: 1, Accountant: 1, Teacher: 5, "Admin Clerk": 1,
+    Admin: 1, Principal: 1, Accountant: 1, Teacher: 5, "Admin Clerk": 1,
     Receptionist: 0, Librarian: 0,
   };
   return ROLE_OPTIONS.map(role => ({

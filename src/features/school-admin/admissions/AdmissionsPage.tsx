@@ -27,17 +27,17 @@ export function AdmissionsPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fb]">
-      <main className="px-6 py-6 max-w-[1480px] mx-auto">
+      <main className="px-3 py-4 sm:px-6 sm:py-6 max-w-[1480px] mx-auto">
 
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between gap-4 mb-6"
+          className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6"
         >
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-[2rem] font-black text-gray-900 tracking-tight leading-none">
+              <h1 className="text-2xl sm:text-[2rem] font-black text-gray-900 tracking-tight leading-none">
                 Admissions
               </h1>
               {activeYear?.yearName && (
@@ -51,7 +51,7 @@ export function AdmissionsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
               <Download size={15} />
               Export Pipeline

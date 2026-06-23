@@ -1,6 +1,4 @@
-import { Search, Filter } from "lucide-react";
-import { Button } from "../../../../components/ui/button";
-import { Input } from "../../../../components/ui/input";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Select } from "../../../../components/ui/select";
 
 interface Props {
@@ -12,48 +10,52 @@ interface Props {
   onStatusChange: (v: string) => void;
 }
 
-const ROLES    = ["Teacher", "Admin", "Support", "Staff"];
-const STATUSES = ["ACTIVE", "ON_LEAVE", "INACTIVE"];
+const ROLE_OPTIONS = [
+  { label: "All Roles",    value: "" },
+  { label: "Teacher",      value: "Teacher" },
+  { label: "Admin",        value: "Admin" },
+  { label: "Support",      value: "Support" },
+  { label: "Staff",        value: "Staff" },
+];
 
-const ROLE_OPTIONS   = [{ label: "All Roles", value: "" }, ...ROLES.map(role => ({ label: role, value: role }))];
-const STATUS_OPTIONS = [{ label: "All Status", value: "" }, ...STATUSES.map(status => ({ label: status, value: status }))];
+const STATUS_OPTIONS = [
+  { label: "All Status",  value: "" },
+  { label: "Active",      value: "ACTIVE" },
+  { label: "On Leave",    value: "ON_LEAVE" },
+  { label: "Inactive",    value: "INACTIVE" },
+];
 
-export const StaffFilters = ({
-  search, roleFilter, statusFilter, onSearch, onRoleChange, onStatusChange,
-}: Props) => (
-  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+export const StaffFilters = ({ search, roleFilter, statusFilter, onSearch, onRoleChange, onStatusChange }: Props) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
-    {/* Search — full width on mobile, capped on larger screens */}
-    <div className="relative w-full sm:flex-1 sm:max-w-sm">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-      <Input
+    {/* Search */}
+    <div className="relative flex-1">
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <input
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         placeholder="Search name or phone"
-        inputSize="sm"
-        className="pl-9 w-full border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+        className="w-full h-10 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
       />
     </div>
 
-    {/* Selects + filter button — side by side on mobile too, but wrap if needed */}
-    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+    {/* Dropdowns + filter icon */}
+    <div className="flex items-center gap-2">
       <Select
         options={ROLE_OPTIONS}
         value={roleFilter}
         onValueChange={onRoleChange}
-        className="h-9 flex-1 min-w-[120px] sm:flex-none sm:w-auto border-slate-200 focus:ring-indigo-300"
+        className="h-10 rounded-xl bg-gray-50 border-gray-200 text-sm min-w-[120px]"
       />
-
       <Select
         options={STATUS_OPTIONS}
         value={statusFilter}
         onValueChange={onStatusChange}
-        className="h-9 flex-1 min-w-[120px] sm:flex-none sm:w-auto border-slate-200 focus:ring-indigo-300"
+        className="h-10 rounded-xl bg-gray-50 border-gray-200 text-sm min-w-[120px]"
       />
-
-      <Button variant="outline" size="sm" className="w-9 h-9 p-0 flex-shrink-0">
-        <Filter className="w-4 h-4" />
-      </Button>
+      <button className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-gray-500">
+        <SlidersHorizontal className="w-4 h-4" />
+      </button>
     </div>
 
   </div>

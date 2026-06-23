@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { StaffMember, TabKey, UpdateStaffPayload, LeaveRequest } from "../types/staff.types";
-import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi } from "@/services/school-staff.api";
+import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi, deleteStaff as deleteStaffApi } from "@/services/school-staff.api";
+import { updateLeave as updateLeaveApi, deleteLeave as deleteLeaveApi } from "@/services/leaves.api";
 import type { LeaveRecord } from "@/services/school-staff.api";
 import { useUIStore } from "@/store/uiStore";
 
@@ -41,6 +42,9 @@ interface StaffState {
   setShowModal: (show: boolean) => void;
   setEditStaffMember: (member: StaffMember | null) => void;
   updateStaffInStore: (id: string, payload: UpdateStaffPayload) => Promise<void>;
+  deleteStaff: (id: string) => Promise<void>;
+  editLeave: (id: string, reason: string, status: string) => Promise<void>;
+  deleteLeave: (id: string) => Promise<void>;
   approveLeave: (leaveId: string, remarks?: string) => Promise<void>;
   rejectLeave: (leaveId: string, remarks?: string) => Promise<void>;
 
@@ -179,6 +183,61 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       });
     } catch (err) {
       set({ editLoading: false });
+      throw err;
+    }
+  },
+
+  deleteStaff: async (id) => {
+    try {
+      await deleteStaffApi(id);
+      set((state) => {
+        const next = state.staffData.filter((s) => s.id !== id);
+        return {
+          staffData: next,
+          stats: calculateStats(next),
+        };
+      });
+    } catch (err) {
+      console.error("Failed to delete staff", err);
+      throw err;
+    }
+  },
+
+  editLeave: async (id, reason, status) => {
+    try {
+      const payload: Record<string, string> = {};
+      if (reason !== undefined) payload.reason = reason;
+      if (status !== undefined) payload.status = status;
+      await updateLeaveApi(id, payload);
+      set((state) => {
+        const nextLeaves = state.leaveData.map((l) =>
+          l.id === id ? { ...l, reason: reason ?? l.reason, status: (status ?? l.status) as LeaveRequest['status'] } : l,
+        );
+        const pendingCount = nextLeaves.filter((l) => l.status === 'PENDING').length;
+        return {
+          leaveData: nextLeaves,
+          stats: { ...state.stats, leavePending: pendingCount },
+        };
+      });
+    } catch (err) {
+      console.error("Failed to update leave", err);
+      throw err;
+    }
+  },
+
+  deleteLeave: async (id) => {
+    try {
+      await deleteLeaveApi(id);
+      set((state) => {
+        const nextLeaves = state.leaveData.filter((l) => l.id !== id);
+        const pendingCount = nextLeaves.filter((l) => l.status === 'PENDING').length;
+        return {
+          leaveData: nextLeaves,
+          stats: { ...state.stats, leavePending: pendingCount },
+        };
+      });
+    } catch (err) {
+      console.error("Failed to delete leave", err);
       throw err;
     }
   },

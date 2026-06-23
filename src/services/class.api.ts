@@ -90,6 +90,29 @@ export const createClass = async (
   return data;
 };
 
+// ─── Bulk Create Classes ──────────────────────────────────────────────────────
+export interface BulkCreateClassesPayload {
+  classes: CreateClassPayload[];
+}
+
+export interface BulkCreateClassesResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  skipped: number;
+  data: ClassRecord[];
+}
+
+export const bulkCreateClasses = async (
+  payload: BulkCreateClassesPayload
+): Promise<BulkCreateClassesResponse> => {
+  const { data } = await api.post<BulkCreateClassesResponse>(
+    `/tenant/class/bulk`,
+    payload
+  );
+  return data;
+};
+
 /* =========================================================
    📘 GET CLASS BY ID
 ========================================================= */

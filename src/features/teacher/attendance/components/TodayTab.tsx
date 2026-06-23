@@ -7,7 +7,6 @@ import { useAuthStore } from "@/store/authStore";
 import {
   useAttendanceStudents,
   useMarkAttendanceViaWeb,
-  MOCK_STUDENTS,
 } from "../hooks/useAttendance";
 import type { TodayAttendance } from "../types/attendance.types";
 import ConfirmSubmitModal from "./ConfirmSubmitModal";
@@ -201,7 +200,7 @@ const WebForm = ({
   onSubmitted: () => void;
 }) => {
   const { data: studentData } = useAttendanceStudents();
-  const students = studentData ?? MOCK_STUDENTS;
+  const students = studentData ?? [];
   const { mutate, isPending } = useMarkAttendanceViaWeb();
 
   const [records, setRecords] = useState<Record<string, AttStatus>>(
@@ -234,7 +233,7 @@ const WebForm = ({
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
           <div>

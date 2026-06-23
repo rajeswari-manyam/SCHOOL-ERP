@@ -10,7 +10,7 @@ interface Props {
 const LeaveHistoryTable = ({ applications, loading, onCancel }: Props) => {
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-sm font-semibold text-gray-400 mt-3">Loading leave history…</p>
       </div>
@@ -19,7 +19,7 @@ const LeaveHistoryTable = ({ applications, loading, onCancel }: Props) => {
 
   if (applications.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <p className="text-sm font-semibold text-gray-400">No leave applications yet</p>
         <p className="text-xs text-gray-300 mt-1">Apply for leave using the button above</p>
       </div>
@@ -27,7 +27,7 @@ const LeaveHistoryTable = ({ applications, loading, onCancel }: Props) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
         <h3 className="text-sm font-extrabold text-gray-900">Leave History</h3>
         <span className="text-xs text-gray-400">{applications.length} applications</span>

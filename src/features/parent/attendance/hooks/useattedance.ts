@@ -13,7 +13,6 @@ const SHORT_MONTHS = [
   "Jul","Aug","Sep","Oct","Nov","Dec",
 ]
 
-// Extra params needed by getYearlyAttendance
 export interface YearlyFetchParams {
   studentId: string
   year: number
@@ -23,25 +22,49 @@ export interface YearlyFetchParams {
 }
 
 export function useAttendance() {
-  const store = useAttendanceStore()
+  // ✅ Select each piece individually so callbacks have stable references.
+  // Previously `const store = useAttendanceStore()` returned a new object every
+  // render, causing all useCallbacks to re-create → cascading re-renders → browser freeze.
+  const currentDate       = useAttendanceStore((s) => s.currentDate)
+  const monthlyDays       = useAttendanceStore((s) => s.monthlyDays)
+  const monthSummary      = useAttendanceStore((s) => s.monthSummary)
+  const yearlySummary     = useAttendanceStore((s) => s.yearlySummary)
+  const selectedRecord    = useAttendanceStore((s) => s.selectedRecord)
+  const isLoadingMonthly  = useAttendanceStore((s) => s.isLoadingMonthly)
+  const isLoadingYearly   = useAttendanceStore((s) => s.isLoadingYearly)
+  const isLoadingRecord   = useAttendanceStore((s) => s.isLoadingRecord)
+  const monthlyError      = useAttendanceStore((s) => s.monthlyError)
+  const yearlyError       = useAttendanceStore((s) => s.yearlyError)
+  const recordError       = useAttendanceStore((s) => s.recordError)
+
+  const setCurrentDate    = useAttendanceStore((s) => s.setCurrentDate)
+  const setMonthlyDays    = useAttendanceStore((s) => s.setMonthlyDays)
+  const setYearlySummary  = useAttendanceStore((s) => s.setYearlySummary)
+  const setSelectedRecord = useAttendanceStore((s) => s.setSelectedRecord)
+  const setLoadingMonthly = useAttendanceStore((s) => s.setLoadingMonthly)
+  const setLoadingYearly  = useAttendanceStore((s) => s.setLoadingYearly)
+  const setLoadingRecord  = useAttendanceStore((s) => s.setLoadingRecord)
+  const setMonthlyError   = useAttendanceStore((s) => s.setMonthlyError)
+  const setYearlyError    = useAttendanceStore((s) => s.setYearlyError)
+  const setRecordError    = useAttendanceStore((s) => s.setRecordError)
 
   // ─── Fetch monthly attendance ────────────────────────────
   const fetchMonthly = useCallback(
     async (studentId: string, month: number, year: number) => {
-      store.setLoadingMonthly(true)
-      store.setMonthlyError(null)
+      setLoadingMonthly(true)
+      setMonthlyError(null)
       try {
         const [attRes, holidaysRes] = await Promise.all([
           getMonthlyAttendance({ studentId, month, year }),
           getAllHolidays(),
         ]);
 
-        // Normalise attendance records
-       const records: any[] = Array.isArray(attRes?.records)
-  ? attRes.records
-  : Array.isArray(attRes)
-  ? attRes
-  : []
+        const records: any[] = Array.isArray(attRes?.records)
+          ? attRes.records
+          : Array.isArray(attRes)
+          ? attRes
+          : []
+
         const days: DayEntry[] = records.map((r: any) => ({
           id: r.id,
           date: r.date,
@@ -49,7 +72,6 @@ export function useAttendance() {
           reason: r.reason ?? null,
         }))
 
-        // Merge holidays into the calendar days
         const existingDates = new Set(days.map((d) => d.date));
         const pad = (n: number) => String(n).padStart(2, "0");
         const monthStr = pad(month);
@@ -88,24 +110,22 @@ export function useAttendance() {
           total:   days.filter((d) => d.status !== "holiday").length,
         }
 
-        store.setMonthlyDays(days, summary)
+        setMonthlyDays(days, summary)
       } catch (err: any) {
-        store.setMonthlyError(err?.message ?? "Failed to load monthly attendance")
+        setMonthlyError(err?.message ?? "Failed to load monthly attendance")
       } finally {
-        store.setLoadingMonthly(false)
+        setLoadingMonthly(false)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [setLoadingMonthly, setMonthlyError, setMonthlyDays]
   )
 
   // ─── Fetch yearly attendance ─────────────────────────────
-  // Now accepts class_id, section_id, academicYearId as required by the API
   const fetchYearly = useCallback(
     async (params: YearlyFetchParams) => {
       const { studentId, year, class_id, section_id, academicYearId } = params
-      store.setLoadingYearly(true)
-      store.setYearlyError(null)
+      setLoadingYearly(true)
+      setYearlyError(null)
       try {
         const res = await getYearlyAttendance({
           studentId,
@@ -115,19 +135,18 @@ export function useAttendance() {
           academicYearId,
         })
 
-        // Normalise — API returns { status, studentId, academicYearId, summary, records }
-      const records: any[] = Array.isArray(res?.records)
-  ? res.records
-  : Array.isArray(res)
-  ? res
-  : []
-        // Build month-level trend buckets
+        const records: any[] = Array.isArray(res?.records)
+          ? res.records
+          : Array.isArray(res)
+          ? res
+          : []
+
         const buckets: Record<number, { present: number; total: number }> = {}
         for (let m = 1; m <= 12; m++) buckets[m] = { present: 0, total: 0 }
 
         records.forEach((r: any) => {
           const statusLower = (r.status as string).toLowerCase()
-          const m = new Date(r.date).getMonth() + 1  // 1-based
+          const m = new Date(r.date).getMonth() + 1
           if (buckets[m]) {
             buckets[m].total++
             if (statusLower === "present" || statusLower === "late") buckets[m].present++
@@ -141,7 +160,6 @@ export function useAttendance() {
             attendance: Math.round((v.present / v.total) * 100),
           }))
 
-        // Use API summary if available, else derive from records
         const apiSummary = res?.summary
         const totalPresent = apiSummary?.present ?? records.filter(
           (r) => (r.status as string).toLowerCase() === "present" ||
@@ -155,59 +173,66 @@ export function useAttendance() {
           monthlyTrend,
         }
 
-        store.setYearlySummary(yearly)
+        setYearlySummary(yearly)
       } catch (err: any) {
-        store.setYearlyError(err?.message ?? "Failed to load yearly attendance")
+        setYearlyError(err?.message ?? "Failed to load yearly attendance")
       } finally {
-        store.setLoadingYearly(false)
+        setLoadingYearly(false)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [setLoadingYearly, setYearlyError, setYearlySummary]
   )
 
   // ─── Fetch single record by ID ───────────────────────────
   const fetchRecord = useCallback(
     async (id: string) => {
-      store.setLoadingRecord(true)
-      store.setRecordError(null)
+      setLoadingRecord(true)
+      setRecordError(null)
       try {
         const res = await getAttendanceById(id)
-        store.setSelectedRecord(res.data)
+        setSelectedRecord(res.data)
       } catch (err: any) {
-        store.setRecordError(err?.message ?? "Failed to load attendance record")
-        store.setSelectedRecord(null)
+        setRecordError(err?.message ?? "Failed to load attendance record")
+        setSelectedRecord(null)
       } finally {
-        store.setLoadingRecord(false)
+        setLoadingRecord(false)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [setLoadingRecord, setRecordError, setSelectedRecord]
   )
 
   // ─── Month navigation helpers ────────────────────────────
   const goToPrevMonth = useCallback(
     (studentId: string) => {
-      const d = store.currentDate
-      const prev = new Date(d.getFullYear(), d.getMonth() - 1, 1)
-      store.setCurrentDate(prev)
+      const prev = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+      setCurrentDate(prev)
       fetchMonthly(studentId, prev.getMonth() + 1, prev.getFullYear())
     },
-    [store, fetchMonthly]
+    [currentDate, setCurrentDate, fetchMonthly]
   )
 
   const goToNextMonth = useCallback(
     (studentId: string) => {
-      const d = store.currentDate
-      const next = new Date(d.getFullYear(), d.getMonth() + 1, 1)
-      store.setCurrentDate(next)
+      const next = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+      setCurrentDate(next)
       fetchMonthly(studentId, next.getMonth() + 1, next.getFullYear())
     },
-    [store, fetchMonthly]
+    [currentDate, setCurrentDate, fetchMonthly]
   )
 
   return {
-    ...store,
+    currentDate,
+    monthlyDays,
+    monthSummary,
+    yearlySummary,
+    selectedRecord,
+    isLoadingMonthly,
+    isLoadingYearly,
+    isLoadingRecord,
+    monthlyError,
+    yearlyError,
+    recordError,
+    setSelectedRecord,
     fetchMonthly,
     fetchYearly,
     fetchRecord,

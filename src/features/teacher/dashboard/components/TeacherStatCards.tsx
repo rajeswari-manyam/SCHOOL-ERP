@@ -5,72 +5,21 @@ interface StatCard {
   value: string | number;
   sub?: string;
   accent?: string;
+  iconBg?: string;
   icon: React.ReactNode;
 }
 
-const Card = ({
-  label,
-  value,
-  sub,
-  accent = "text-gray-900",
-  icon,
-}: StatCard) => (
-  <div
-    className="
-      bg-white
-      rounded-lg
-      border
-      border-gray-100
-      shadow-sm
-      p-2
-      h-[75px]
-      flex
-      items-center
-      gap-2
-      overflow-hidden
-      transition-all
-      duration-200
-      hover:shadow-md
-    "
-  >
-    {/* Icon */}
-    <div className="w-7 h-7 rounded-md bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
+const Card = ({ label, value, sub, accent = "text-gray-900", iconBg = "bg-indigo-50", icon }: StatCard) => (
+  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow duration-200">
+    <div className={`w-11 h-11 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>
       {icon}
     </div>
-
-    {/* Content */}
     <div className="min-w-0 flex-1">
-      <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400 truncate">
-        {label}
-      </p>
-
-      <p className={`text-[14px] font-bold leading-none mt-0.5 truncate ${accent}`}>
-        {value}
-      </p>
-
-      {sub && (
-        <p className="text-[8px] text-gray-400 truncate mt-0.5">
-          {sub}
-        </p>
-      )}
+      <p className="text-sm text-gray-500 truncate">{label}</p>
+      <p className={`text-2xl font-semibold leading-tight truncate ${accent}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-400 truncate mt-0.5">{sub}</p>}
     </div>
   </div>
-);
-
-const StrengthIcon = () => (
-  <Users size={14} className="text-current" />
-);
-
-const HomeworkIcon = () => (
-  <FileText size={14} className="text-current" />
-);
-
-const AttIcon = () => (
-  <CheckSquare size={14} className="text-current" />
-);
-
-const LeaveIcon = () => (
-  <Calendar size={14} className="text-current" />
 );
 
 interface Props {
@@ -80,46 +29,37 @@ interface Props {
   leaveBalance: number;
 }
 
-const TeacherStatCards = ({
-  classStrength,
-  homeworkPending,
-  attendanceThisMonth,
-  leaveBalance,
-}: Props) => (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+const TeacherStatCards = ({ classStrength, homeworkPending, attendanceThisMonth, leaveBalance }: Props) => (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
     <Card
       label="Class Strength"
       value={classStrength}
       sub="Total enrolled"
-      icon={<StrengthIcon />}
+      icon={<Users size={18} className="text-indigo-600" />}
     />
-
     <Card
       label="Homework Pending"
       value={homeworkPending}
       sub="Awaiting review"
-      accent={
-        homeworkPending > 0
-          ? "text-amber-500"
-          : "text-gray-900"
-      }
-      icon={<HomeworkIcon />}
+      accent={homeworkPending > 0 ? "text-amber-500" : "text-gray-900"}
+      iconBg={homeworkPending > 0 ? "bg-amber-50" : "bg-indigo-50"}
+      icon={<FileText size={18} className={homeworkPending > 0 ? "text-amber-500" : "text-indigo-600"} />}
     />
-
     <Card
       label="Attendance"
       value={`${attendanceThisMonth}%`}
-      sub="Monthly avg"
+      sub="Monthly average"
       accent="text-emerald-600"
-      icon={<AttIcon />}
+      iconBg="bg-emerald-50"
+      icon={<CheckSquare size={18} className="text-emerald-600" />}
     />
-
     <Card
       label="Leave Balance"
       value={leaveBalance}
       sub="Days remaining"
       accent="text-indigo-600"
-      icon={<LeaveIcon />}
+      iconBg="bg-indigo-50"
+      icon={<Calendar size={18} className="text-indigo-600" />}
     />
   </div>
 );

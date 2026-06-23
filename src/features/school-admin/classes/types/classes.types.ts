@@ -40,6 +40,41 @@ export interface ClassApiResponse {
   };
 }
 
+export interface BulkAddClassesResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  skipped: number;
+  data: Array<{
+    id: string;
+    class_name: string;
+    academicYearId: string;
+  }>;
+}
+
+export interface BulkAddSectionsResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  skipped: number;
+  data: Array<{
+    id: string;
+    sectionName: string;
+    classId: string;
+    academicYearId: string;
+    totalStrength: number;
+    classTeacherId: string;
+  }>;
+}
+
+export interface BulkAddSubjectsResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  skipped: number;
+  data: SubjectRecord[];
+}
+
 export interface AddSectionPayload {
   sectionName: string;
   classTeacherId: string;

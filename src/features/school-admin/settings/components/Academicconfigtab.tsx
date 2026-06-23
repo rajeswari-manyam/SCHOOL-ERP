@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Plus, Trash2, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -11,6 +12,11 @@ import { getDepartmentById } from "@/services/department.api";
 import type { DepartmentDetail } from "@/services/department.api";
 import type { LeaveAllocation, CreateLeaveAllocationPayload } from "@/services/leave-allocation.api";
 import { useAuthStore } from "@/store/authStore";
+
+interface BulkDeptRow { id: number; departmentName: string; academicYearId: string; }
+
+let _bulkRowId = 0;
+const newRow = (yearId = ""): BulkDeptRow => ({ id: ++_bulkRowId, departmentName: "", academicYearId: yearId });
 
 const ALL_WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -26,12 +32,14 @@ interface Props {
   onAddClass: (data: CreateClassPayload) => void;
   onCreateAcademicYear: (data: CreateAcademicYearPayload) => Promise<AcademicYear>;
   onAddDepartment: (payload: { departmentName: string; academicYearId: string }) => Promise<void>;
+  onBulkAddDepartments: (items: { departmentName: string; academicYearId: string }[]) => Promise<unknown>;
   onEditDepartment: (id: string, departmentName: string) => Promise<void>;
   onDeleteDepartment: (id: string) => Promise<void>;
   onCreateWorkingDay: (payload: WorkingDayPayload) => Promise<void>;
   onUpdateWorkingDay: (id: string, payload: Partial<WorkingDayPayload>) => Promise<void>;
   onDeleteWorkingDay: (id: string) => Promise<void>;
   onCreateHoliday: (payload: CreateHolidayPayload) => Promise<void>;
+  onBulkAddHolidays: (items: CreateHolidayPayload[]) => Promise<unknown>;
   onUpdateHoliday: (id: string, payload: UpdateHolidayPayload) => Promise<void>;
   onDeleteHoliday: (id: string) => Promise<void>;
   leaveAllocations: LeaveAllocation[];
@@ -87,9 +95,9 @@ export const AcademicConfigTab: React.FC<Props> = ({
   holidays, holidaysSaving,
   leaveAllocations, leaveAllocationsSaving,
   onAddClass, onCreateAcademicYear,
-  onAddDepartment, onEditDepartment, onDeleteDepartment,
+  onAddDepartment, onBulkAddDepartments, onEditDepartment, onDeleteDepartment,
   onCreateWorkingDay, onUpdateWorkingDay, onDeleteWorkingDay,
-  onCreateHoliday, onUpdateHoliday, onDeleteHoliday,
+  onCreateHoliday, onBulkAddHolidays, onUpdateHoliday, onDeleteHoliday,
   onCreateLeaveAllocations, onUpdateLeaveAllocation, onDeleteLeaveAllocation,
 }) => {
   const [showAdd, setShowAdd] = useState(false);
@@ -113,6 +121,22 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [viewingDeptDetail, setViewingDeptDetail] = useState<DepartmentDetail | null>(null);
   const [viewingDeptLoading, setViewingDeptLoading] = useState(false);
 
+  // Bulk add state
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkRows, setBulkRows] = useState<BulkDeptRow[]>([newRow()]);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+  const [bulkSuccess, setBulkSuccess] = useState("");
+
+  // Bulk add holiday state
+  const [showBulkHolidayModal, setShowBulkHolidayModal] = useState(false);
+  const [bulkHolidayRows, setBulkHolidayRows] = useState<{ id: number; holidayname: string; date: string; type: string; note: string }[]>([{ id: 1, holidayname: "", date: "", type: "public", note: "" }]);
+  const [bulkHolidaySaving, setBulkHolidaySaving] = useState(false);
+  const [bulkHolidayError, setBulkHolidayError] = useState("");
+  const [bulkHolidaySuccess, setBulkHolidaySuccess] = useState("");
+  let _hRowId = 1;
+  const newHRow = () => ({ id: ++_hRowId, holidayname: "", date: "", type: "public", note: "" });
+
   // Leave allocation state
   const [leaveYearId, setLeaveYearId] = useState("");
   const [leaveDays, setLeaveDays] = useState<Record<string, number>>({ casual: 12, sick: 10, emergency: 15 });
@@ -126,6 +150,32 @@ export const AcademicConfigTab: React.FC<Props> = ({
     await onAddDepartment({ departmentName: deptName.trim(), academicYearId: deptYearId });
     setDeptName("");
     setDeptYearId("");
+  };
+
+  const openBulkModal = () => {
+    setBulkRows([newRow(deptYearId)]);
+    setBulkError("");
+    setBulkSuccess("");
+    setShowBulkModal(true);
+  };
+
+  const handleBulkSubmit = async () => {
+    const valid = bulkRows.filter(r => r.departmentName.trim() && r.academicYearId);
+    if (valid.length === 0) { setBulkError("Add at least one department name and select an academic year."); return; }
+    setBulkError("");
+    setBulkSaving(true);
+    try {
+      const result = await onBulkAddDepartments(
+        valid.map(r => ({ departmentName: r.departmentName.trim(), academicYearId: r.academicYearId }))
+      ) as { count?: number };
+      setBulkSuccess(`${result?.count ?? valid.length} department(s) added successfully.`);
+      setBulkRows([newRow()]);
+      setTimeout(() => { setShowBulkModal(false); setBulkSuccess(""); }, 1500);
+    } catch (err: unknown) {
+      setBulkError(err instanceof Error ? err.message : "Bulk add failed");
+    } finally {
+      setBulkSaving(false);
+    }
   };
 
   const handleStartEdit = (dept: Department) => {
@@ -330,6 +380,13 @@ export const AcademicConfigTab: React.FC<Props> = ({
             <h2 className="text-base sm:text-lg font-semibold text-gray-900">Department Configuration</h2>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Add and manage departments</p>
           </div>
+          <button
+            onClick={openBulkModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Bulk Add
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
@@ -498,6 +555,104 @@ export const AcademicConfigTab: React.FC<Props> = ({
         )}
       </div>
 
+      {/* ── Bulk Add Departments Modal ── */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Bulk Add Departments</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Add multiple departments at once</p>
+              </div>
+              <button
+                onClick={() => setShowBulkModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Rows */}
+            <div className="px-5 py-4 space-y-2.5 max-h-[50vh] overflow-y-auto">
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_1fr_32px] gap-2 px-1">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Department Name</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Academic Year</span>
+                <span />
+              </div>
+
+              {bulkRows.map((row, idx) => (
+                <div key={row.id} className="grid grid-cols-[1fr_1fr_32px] gap-2 items-center">
+                  <Input
+                    placeholder="e.g. Mathematics"
+                    value={row.departmentName}
+                    onChange={(e) => setBulkRows(prev => prev.map(r => r.id === row.id ? { ...r, departmentName: e.target.value } : r))}
+                    inputSize="sm"
+                    className="w-full"
+                  />
+                  <Select
+                    options={[
+                      { label: "Select year", value: "" },
+                      ...academicYears.map(y => ({ label: y.yearName, value: y.id })),
+                    ]}
+                    value={row.academicYearId}
+                    onValueChange={(val) => setBulkRows(prev => prev.map(r => r.id === row.id ? { ...r, academicYearId: val } : r))}
+                    className="w-full"
+                  />
+                  <button
+                    onClick={() => setBulkRows(prev => prev.length > 1 ? prev.filter(r => r.id !== row.id) : prev)}
+                    disabled={bulkRows.length === 1}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title={`Remove row ${idx + 1}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              <button
+                onClick={() => setBulkRows(prev => [...prev, newRow(prev[prev.length - 1]?.academicYearId ?? "")])}
+                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add another row
+              </button>
+            </div>
+
+            {/* Feedback */}
+            {bulkError && (
+              <div className="mx-5 mb-2 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-xs text-red-600">{bulkError}</div>
+            )}
+            {bulkSuccess && (
+              <div className="mx-5 mb-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 text-xs text-emerald-700 font-medium">{bulkSuccess}</div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                {bulkRows.filter(r => r.departmentName.trim() && r.academicYearId).length} of {bulkRows.length} rows valid
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowBulkModal(false)} disabled={bulkSaving}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleBulkSubmit}
+                  disabled={bulkSaving || bulkRows.every(r => !r.departmentName.trim() || !r.academicYearId)}
+                  className="bg-indigo-600 text-white min-w-[100px]"
+                >
+                  {bulkSaving ? (
+                    <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving…</span>
+                  ) : "Add Departments"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Holiday Configuration ── */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
@@ -507,6 +662,15 @@ export const AcademicConfigTab: React.FC<Props> = ({
               {holidayEditId ? "Edit holiday details below" : "Add and manage holidays in the school calendar"}
             </p>
           </div>
+          {!holidayEditId && (
+            <button
+              onClick={() => { setBulkHolidayRows([newHRow(), newHRow(), newHRow()]); setBulkHolidayError(""); setBulkHolidaySuccess(""); setShowBulkHolidayModal(true); }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Bulk Add
+            </button>
+          )}
         </div>
 
         {/* Form */}
@@ -761,6 +925,127 @@ export const AcademicConfigTab: React.FC<Props> = ({
           </div>
         )}
       </div>
+      {/* ── Bulk Add Holidays Modal ── */}
+      {showBulkHolidayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Bulk Add Holidays</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Add multiple holidays at once</p>
+              </div>
+              <button onClick={() => setShowBulkHolidayModal(false)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-5 pt-4 grid grid-cols-[2fr_1fr_1fr_1fr_32px] gap-2 shrink-0">
+              {["Holiday Name", "Date", "Type", "Note", ""].map(h => (
+                <span key={h} className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{h}</span>
+              ))}
+            </div>
+
+            <div className="px-5 py-3 space-y-2.5 overflow-y-auto flex-1">
+              {bulkHolidayRows.map((row, idx) => (
+                <div key={row.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_32px] gap-2 items-center">
+                  <Input
+                    placeholder="e.g. Diwali"
+                    value={row.holidayname}
+                    onChange={e => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, holidayname: e.target.value } : r))}
+                    inputSize="sm"
+                  />
+                  <Input
+                    type="date"
+                    value={row.date}
+                    onChange={e => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, date: e.target.value } : r))}
+                    inputSize="sm"
+                  />
+                  <Select
+                    options={[
+                      { label: "National", value: "national" },
+                      { label: "Public",   value: "public"   },
+                      { label: "Optional", value: "optional" },
+                      { label: "School",   value: "school"   },
+                    ]}
+                    value={row.type}
+                    onValueChange={val => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, type: val } : r))}
+                    className="w-full"
+                  />
+                  <Input
+                    placeholder="Note"
+                    value={row.note}
+                    onChange={e => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, note: e.target.value } : r))}
+                    inputSize="sm"
+                  />
+                  <button
+                    onClick={() => setBulkHolidayRows(prev => prev.length > 1 ? prev.filter(r => r.id !== row.id) : prev)}
+                    disabled={bulkHolidayRows.length === 1}
+                    title={`Remove row ${idx + 1}`}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => setBulkHolidayRows(prev => [...prev, newHRow()])}
+                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add another row
+              </button>
+            </div>
+
+            {bulkHolidayError && (
+              <div className="mx-5 mb-2 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-xs text-red-600">{bulkHolidayError}</div>
+            )}
+            {bulkHolidaySuccess && (
+              <div className="mx-5 mb-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 text-xs text-emerald-700 font-medium">{bulkHolidaySuccess}</div>
+            )}
+
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 shrink-0">
+              <p className="text-xs text-gray-400">
+                {bulkHolidayRows.filter(r => r.holidayname.trim() && r.date).length} of {bulkHolidayRows.length} rows valid
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowBulkHolidayModal(false)} disabled={bulkHolidaySaving}>Cancel</Button>
+                <Button
+                  size="sm"
+                  disabled={bulkHolidaySaving || bulkHolidayRows.every(r => !r.holidayname.trim() || !r.date)}
+                  className="bg-indigo-600 text-white min-w-[120px]"
+                  onClick={async () => {
+                    const schoolCode = import.meta.env.VITE_SCHOOL_CODE || localStorage.getItem("schoolcode") || "";
+                    const activeYearId = academicYears.find(y => y.active)?.id ?? academicYears[0]?.id ?? "";
+                    const valid = bulkHolidayRows.filter(r => r.holidayname.trim() && r.date);
+                    if (!valid.length) { setBulkHolidayError("Fill at least one holiday name and date."); return; }
+                    if (!activeYearId) { setBulkHolidayError("No active academic year found. Please create one first."); return; }
+                    setBulkHolidayError("");
+                    setBulkHolidaySaving(true);
+                    try {
+                      const result = await onBulkAddHolidays(
+                        valid.map(r => ({ holidayname: r.holidayname.trim(), date: r.date, type: r.type, note: r.note.trim() || r.type, school_code: schoolCode, academicYearId: activeYearId }))
+                      ) as { count?: number };
+                      setBulkHolidaySuccess(`${result?.count ?? valid.length} holiday(s) added successfully.`);
+                      setBulkHolidayRows([newHRow()]);
+                      setTimeout(() => { setShowBulkHolidayModal(false); setBulkHolidaySuccess(""); }, 1400);
+                    } catch (err: unknown) {
+                      setBulkHolidayError(err instanceof Error ? err.message : "Bulk add failed");
+                    } finally {
+                      setBulkHolidaySaving(false);
+                    }
+                  }}
+                >
+                  {bulkHolidaySaving
+                    ? <span className="flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving…</span>
+                    : "Add Holidays"
+                  }
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Leave Allocation Configuration ── */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">

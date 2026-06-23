@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getParentById } from "@/services/parent.api";
+import { getUserById } from "@/services/auth.api";
 import { getStudentById } from "../../services/student.api";
 import type { Student } from "../../services/student.api";
 
@@ -57,11 +57,12 @@ export function useParentChildren(parentId: string) {
       setLoading(true);
       setError(null);
       try {
-        const parent = await getParentById(parentId);
+        const userRes = await getUserById(parentId);
+        const studentList = userRes.data.students ?? [];
 
         const students: ChildInfo[] = await Promise.all(
-          (parent.students ?? []).map(async (item: any) => {
-            const studentId = typeof item === "string" ? item : item.id;
+          studentList.map(async (item: { id: string; name: string }) => {
+            const studentId = item.id;
             const student: Student = await getStudentById(studentId);
 
             return {

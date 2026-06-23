@@ -2,7 +2,7 @@ import api from "@/config/axios";
 import type {
   LeaveApplication, LeaveType, LeaveStatus, LeaveBalance,
   ApplyLeaveFormData, ApplyLeavePayload, ApplyLeaveResponse,
-} from "@/features/teacher/types/leave.types";
+} from "@/features/teacher/leave/types/leave.types";
 
 const SCHOOL_CODE = import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode");
 
@@ -74,21 +74,13 @@ const mapLeaveBalance = (item: any): LeaveBalance => {
 };
 
 export const leaveApi = {
-  getLeaveBalances: async (staffId: string): Promise<LeaveBalance[]> => {
+  getLeaveBalances: async (staffId: string, academicYearId?: string | null): Promise<LeaveBalance[]> => {
     try {
-      const { data } = await api.get("/tenant/leavebalance", { params: { staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac" } });
+      const params: Record<string, string> = { staff_id: staffId };
+      if (academicYearId) params.academicYearId = academicYearId;
+      const { data } = await api.get("/tenant/staffleavesummary", { params });
       const items = extractArray(data);
       if (items.length > 0) return items.map(mapLeaveBalance);
-
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        const obj = data as Record<string, unknown>;
-        const source = obj.data && typeof obj.data === "object" ? obj.data as Record<string, unknown> : obj;
-        const entries = Object.entries(source).filter(([_, v]) => v && typeof v === "object" && !Array.isArray(v));
-        if (entries.length > 0) {
-          return entries.map(([key, val]) => mapLeaveBalance({ ...(val as object), leave_type: key }));
-        }
-      }
-
       return [];
     } catch (err: any) {
       const ctx = err?.response?.data ?? err?.message;
@@ -100,7 +92,7 @@ export const leaveApi = {
 
   getLeaveHistory: async (staffId: string): Promise<LeaveApplication[]> => {
     try {
-      const { data } = await api.get("/tenant/getallleaves", { params: { staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac" } });
+      const { data } = await api.get("/tenant/getallleaves", { params: { staff_id: staffId } });
       const items = extractArray(data);
       return items.map(mapLeaveApplication);
     } catch (err: any) {
@@ -112,9 +104,8 @@ export const leaveApi = {
   },
 
   applyLeave: async (form: ApplyLeaveFormData, staffId: string, totalDays?: number): Promise<LeaveApplication> => {
-    void staffId;
     const payload: ApplyLeavePayload = {
-      staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac",
+      staff_id: staffId,
       leave_type: (form.type?.toLowerCase() ?? "casual") as ApplyLeavePayload["leave_type"],
       start_date: form.fromDate,
       end_date: form.toDate,

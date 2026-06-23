@@ -47,6 +47,7 @@ export interface TimetablePayload {
   break_end: string;
   lunch_start: string;
   lunch_end: string;
+  schoolWorkingDayId?: string;
 }
 
 export type CreateTimetablePayload = TimetablePayload;
@@ -135,6 +136,31 @@ export interface GetAllExamTimetableResponse {
 /* =========================
    API FUNCTIONS
 ========================= */
+
+// ─── Bulk Create Timetable ──────────────────────────────────────────────────────
+export interface BulkCreateTimetablePayload {
+  timetables: TimetablePayload[];
+}
+
+export interface BulkCreateTimetableResponse {
+  status: boolean;
+  message: string;
+  inserted: number;
+  failed: number;
+  skipped: number;
+  errors: Array<{ row: number; day: string; message: string }>;
+  data: TimetableSlot[];
+}
+
+export const bulkCreateTimetable = async (
+  payload: BulkCreateTimetablePayload,
+): Promise<BulkCreateTimetableResponse> => {
+  const { data } = await api.post<BulkCreateTimetableResponse>(
+    "/tenant/timetable/bulk",
+    payload,
+  );
+  return data;
+};
 
 // POST /tenant/createtimetable
 export const createTimetable = async (

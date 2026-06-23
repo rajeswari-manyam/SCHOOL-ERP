@@ -8,8 +8,6 @@ import { useParentChildren } from "./hooks/useParentChildren";
 
 const ParentLayout = () => {
   const authUser = useAuthStore((s) => s.user);
-  const location = useLocation();
-
   // Always derive parentId — no early return before hooks
   const parentId = localStorage.getItem("parentId") || authUser?.id || "";
 
@@ -17,6 +15,7 @@ const ParentLayout = () => {
   const { children, activeChild, setActiveChild, loading } =
     useParentChildren(parentId);
 
+  const location = useLocation();
   const [showChildModal, setShowChildModal] = useState(false);
 
   // Guards AFTER all hooks
@@ -56,17 +55,7 @@ const ParentLayout = () => {
           showChildModal ? "blur-sm pointer-events-none select-none" : ""
         }
       >
-        {/*
-          ✅ KEY FIX: combine activeChild.studentId + location.pathname
-          - activeChild.studentId  → remount when switching child (your original logic)
-          - location.pathname      → remount when navigating to any route,
-                                     even one already visited, so pages always
-                                     re-fetch fresh data instead of showing stale UI
-        */}
-        <Outlet
-          context={{ activeChild }}
-          key={`${activeChild.studentId}-${location.pathname}`}
-        />
+        <Outlet context={{ activeChild }} key={location.pathname} />
       </main>
 
       {showChildModal && (

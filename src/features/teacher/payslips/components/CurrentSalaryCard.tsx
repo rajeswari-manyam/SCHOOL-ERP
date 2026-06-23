@@ -28,7 +28,7 @@ const CurrentSalaryCard = ({ payslip, onDownload, onWhatsApp }: Props) => {
   const att = payslip.attendance ?? { workingDays: 0, presentDays: 0, absentDays: 0, halfDays: 0, leaveDays: 0 };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
       {/* Header row */}
       <div className="flex items-start justify-between mb-5">
         <div>

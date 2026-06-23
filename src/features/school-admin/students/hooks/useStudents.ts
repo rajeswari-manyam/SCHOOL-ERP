@@ -121,9 +121,9 @@ export const useStudents = () => {
       "createStudent"
     );
     if (mountedRef.current) {
-      setStudents(prev => [...prev, newS]);
+      setStudents(prev => [...prev, { ...newS, class: data.class, section: data.section }]);
     }
-    return newS;
+    return { ...newS, class: data.class, section: data.section };
   };
 
   const updateStudent = async (id: string, payload: UpdateStudentPayload) => {
@@ -138,6 +138,17 @@ export const useStudents = () => {
     return updated;
   };
 
+  const deleteStudent = async (id: string) => {
+    await withTimeout(
+      studentsApi.deleteStudent(id),
+      LOAD_TIMEOUT_MS,
+      "deleteStudent"
+    );
+    if (mountedRef.current) {
+      setStudents(prev => prev.filter(s => s.id !== id));
+    }
+  };
+
   return {
     students, filtered, loading, error, stats,
     search, setSearch,
@@ -146,6 +157,7 @@ export const useStudents = () => {
     statusFilter, setStatusFilter,
     addStudent,
     updateStudent,
+    deleteStudent,
     loadStudents,
   };
 };

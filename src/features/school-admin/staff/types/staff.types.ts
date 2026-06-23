@@ -1,4 +1,4 @@
-export type StaffRole = "Teacher" | "Class Teacher" | "Subject Teacher" | "Admin" | "Support" | "Staff";
+export type StaffRole = string;
 
 export type StaffStatus = "ACTIVE" | "ON_LEAVE" | "INACTIVE";
 export type TabKey =
@@ -41,6 +41,11 @@ export interface StaffMember {
   departmentId?: string;
   departmentName?: string;
 
+  qualification?: string;
+  salary?: number;
+  dateOfBirth?: string;
+  dateOfJoin?: string;
+
   createdAt?: string;
   updatedAt?: string;
 }
@@ -68,9 +73,38 @@ export interface UpdateStaffPayload {
   emp_number?: string;
   qualification?: string;
   department_id?: string;
+  academicYearId?: string;
   salary?: number;
   date_of_birth?: string;
   date_of_join?: string;
   role?: string;
   status?: StaffStatus;
+}
+
+export interface AssignedClassSubject {
+  class_id: string;
+  class_name: string;
+  section_id: string;
+  section_name: string;
+  subject_id: string;
+  subject_name: string;
+}
+
+export interface StaffDetails {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  role: string;
+  qualification: string | null;
+  emp_number: string;
+  salary: number | null;
+  date_of_birth: string | null;
+  date_of_join: string | null;
+  status: string;
+  department: { id: string; departmentName: string } | null;
+  leavesTaken?: number;
+  leavesPending?: number;
+  leavesBalance?: number;
+  assigned_classes_subjects: AssignedClassSubject[];
 }

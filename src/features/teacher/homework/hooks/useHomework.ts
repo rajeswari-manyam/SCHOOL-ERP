@@ -9,7 +9,7 @@ import {
   deleteHomeworkById,
 } from "@/services/homework.api";
 import {
-  getStudyMaterialsByFilter,
+  getAllStudyMaterials,
   createStudyMaterial,
   deleteStudyMaterial,
 } from "@/services/studymaterial.api";
@@ -148,16 +148,20 @@ export const useHomework = (): HomeworkState => {
   });
 
   // ── Fetch study materials ────────────────────────────────────────────────
-  const { data: materials = [] } = useQuery({
+  const {
+    data: materials = [],
+    isError: isMaterialsError,
+    refetch: refetchMaterials,
+  } = useQuery({
     queryKey: HOMEWORK_KEYS.materials(),
     queryFn: async () => {
-      const res = await getStudyMaterialsByFilter({ teacher_id: teacherId });
+      const res = await getAllStudyMaterials();
       return (res.data ?? []).map((item: any): StudyMaterial => ({
         id: item.id,
         title: item.title ?? "",
-        subject: item.subject?.name ?? "",
-        className: item.class?.name ?? "",
-        section: item.section?.name ?? "",
+        subject:   item.subject?.name   ?? item.subject?.subject_name ?? item.subject_id  ?? "",
+        className: item.class?.name     ?? item.class?.class_name     ?? item.class_id    ?? "",
+        section:   item.section?.name   ?? item.section?.sectionName  ?? item.section_id  ?? "",
         type: item.upload_type === "link" ? "LINK" : "FILE",
         fileType: item.upload_type === "link" ? "LINK" : "PDF",
         url: item.open_link ?? item.pdf ?? undefined,
@@ -176,7 +180,7 @@ export const useHomework = (): HomeworkState => {
       }));
     },
     staleTime: 1000 * 60 * 3,
-    retry: 1,
+    retry: 0,
     enabled: !!teacherId,
   });
 
@@ -230,6 +234,7 @@ export const useHomework = (): HomeworkState => {
     formData.append("title", payload.title);
     formData.append("upload_date", payload.upload_date);
     formData.append("upload_type", payload.upload_type);
+    formData.append("download", "0");
     if (payload.description) formData.append("description", payload.description);
     if (payload.open_link) formData.append("open_link", payload.open_link);
     if (payload.pdf) formData.append("pdf", payload.pdf);
@@ -250,6 +255,8 @@ export const useHomework = (): HomeworkState => {
     activeHomework,
     pastHomework,
     materials,
+    isMaterialsError,
+    refetchMaterials,
     isLoading,
     isError,
     error,

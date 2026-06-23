@@ -8,6 +8,12 @@ import type {
   GetReportByIdResponse,
   ReportFormat,
   ReportType,
+  StudentReportPayload,
+  StudentReportResponse,
+  StaffReportPayload,
+  StaffReportResponse,
+  GetRecentlyGeneratedReportsResponse,
+  DeleteReportResponse,
 } from "../features/school-admin/reports/types/reports.types";
 
 // ─── Map reportype string → ReportType enum ───────────────────────────────────
@@ -98,5 +104,29 @@ export const reportsApi = {
     a.download = `report-${raw.reportype.replace(/\s+/g, "-")}-${reportId.slice(0, 8)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  },
+
+  /** POST /tenant/student-report — generate student report */
+  studentReport: async (payload: StudentReportPayload): Promise<StudentReportResponse> => {
+    const { data } = await api.post<StudentReportResponse>("/tenant/student-report", payload);
+    return data;
+  },
+
+  /** POST /tenant/staff-report — generate staff report */
+  staffReport: async (payload: StaffReportPayload): Promise<StaffReportResponse> => {
+    const { data } = await api.post<StaffReportResponse>("/tenant/staff-report", payload);
+    return data;
+  },
+
+  /** GET /tenant/getrecentlygeneratedreports */
+  getRecentlyGenerated: async (): Promise<GetRecentlyGeneratedReportsResponse> => {
+    const { data } = await api.get<GetRecentlyGeneratedReportsResponse>("/tenant/getrecentlygeneratedreports");
+    return data;
+  },
+
+  /** DELETE /tenant/deletereportById/:id */
+  delete: async (id: string): Promise<DeleteReportResponse> => {
+    const { data } = await api.delete<DeleteReportResponse>(`/tenant/deletereportById/${id}`);
+    return data;
   },
 };

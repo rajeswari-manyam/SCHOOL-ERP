@@ -29,7 +29,7 @@ const LeaveCalendar = ({ days, monthLabel, onPrev, onNext }: Props) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <h3 className="text-sm font-extrabold text-gray-900">Leave Calendar</h3>

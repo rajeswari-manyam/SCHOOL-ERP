@@ -31,7 +31,7 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Prop
   // Idle state: no search triggered yet
   if (!hasSearched && !loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <div className="text-4xl mb-3">🔍</div>
         <p className="text-sm font-semibold text-gray-500">Select filters and click Search</p>
         <p className="text-xs text-gray-400 mt-1">
@@ -43,7 +43,7 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Prop
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <div className="inline-block w-8 h-8 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin mb-3" />
         <p className="text-sm font-semibold text-gray-500">Loading submitted marks…</p>
       </div>
@@ -52,7 +52,7 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Prop
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <div className="text-3xl mb-3 text-red-400">⚠</div>
         <p className="text-sm font-semibold text-gray-500 mb-2">Failed to load submitted marks</p>
         {onRetry && (
@@ -66,7 +66,7 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Prop
 
   if (exams.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 text-center">
         <div className="text-4xl mb-3">📤</div>
         <p className="text-sm font-semibold text-gray-500">No submitted exams found</p>
         <p className="text-xs text-gray-400 mt-1">Try adjusting the filters above</p>
@@ -75,7 +75,7 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Prop
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Results count */}
       <div className="px-5 py-3 border-b border-gray-50 flex items-center justify-between">
         <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">

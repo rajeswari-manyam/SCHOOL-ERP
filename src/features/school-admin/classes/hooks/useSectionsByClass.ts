@@ -14,7 +14,7 @@ const LOAD_TIMEOUT_MS = 30_000;
 
 export const useSectionsByClass = (
   classId: string | null,
-  onSectionsLoaded?: (classId: string, sections: SectionItem[]) => void
+  onSectionsLoaded?: (classId: string, sections: SectionItem[]) => void,
 ) => {
   const [sections, setSections] = useState<SectionItem[]>([]);
   const [loading, setLoading] = useState(false);

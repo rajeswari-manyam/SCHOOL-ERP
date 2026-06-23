@@ -67,6 +67,23 @@ export const useClasses = () => {
     return newClass;
   };
 
+  const handleBulkAddClasses = async (data: CreateClassPayload[]) => {
+    const res = await classesApi.bulkAddClasses(data);
+    if (mountedRef.current) {
+      const newItems: ClassItem[] = res.data.map((d) => ({
+        id: d.id,
+        className: d.class_name,
+        sections: [],
+        classTeacher: "",
+        totalStudents: 0,
+        capacity: 0,
+        status: "ACTIVE" as const,
+      }));
+      setClasses((prev) => [...prev, ...newItems]);
+    }
+    return res;
+  };
+
   const handleAddSection = async (className: string, payload: AddSectionPayload) => {
     const newSection = await classesApi.addSection(payload);
     if (mountedRef.current) {
@@ -79,6 +96,14 @@ export const useClasses = () => {
       );
     }
     return newSection;
+  };
+
+  const handleBulkAddSections = async (payload: AddSectionPayload[]) => {
+    const res = await classesApi.bulkAddSections(payload);
+    if (mountedRef.current) {
+      loadClasses();
+    }
+    return res;
   };
 
   const handleAddSubject = async (payload: AddSubjectPayload) => {
@@ -100,6 +125,78 @@ export const useClasses = () => {
       );
     }
     return newSubject;
+  };
+
+  const handleBulkAddSubjects = async (payload: AddSubjectPayload[]) => {
+    const res = await classesApi.bulkAddSubjects(payload);
+    if (mountedRef.current) {
+      loadClasses();
+    }
+    return res;
+  };
+
+  const handleDeleteClass = async (id: string) => {
+    await classesApi.deleteClass(id);
+    if (mountedRef.current) {
+      setClasses((prev) => prev.filter((c) => c.id !== id));
+    }
+  };
+
+  const handleUpdateSection = async (id: string, payload: classesApi.UpdateSectionPayload) => {
+    const updated = await classesApi.updateSection(id, payload);
+    if (mountedRef.current) {
+      setClasses((prev) =>
+        prev.map((c) => ({
+          ...c,
+          sections: c.sections.map((s) =>
+            s.id === id ? { ...s, ...updated, name: updated.sectionName ?? s.name } : s
+          ),
+        }))
+      );
+    }
+    return updated;
+  };
+
+  const handleDeleteSection = async (id: string) => {
+    await classesApi.deleteSection(id);
+    if (mountedRef.current) {
+      setClasses((prev) =>
+        prev.map((c) => ({ ...c, sections: c.sections.filter((s) => s.id !== id) }))
+      );
+    }
+  };
+
+  const handleUpdateSubject = async (id: string, payload: classesApi.UpdateSubjectPayload) => {
+    const updated = await classesApi.updateSubject(id, payload);
+    if (mountedRef.current) {
+      setClasses((prev) =>
+        prev.map((c) => ({
+          ...c,
+          sections: c.sections.map((s) => ({
+            ...s,
+            subjects: s.subjects.map((sub) =>
+              sub.id === id ? { ...sub, name: updated.subject_name ?? sub.name } : sub
+            ),
+          })),
+        }))
+      );
+    }
+    return updated;
+  };
+
+  const handleDeleteSubject = async (id: string) => {
+    await classesApi.deleteSubject(id);
+    if (mountedRef.current) {
+      setClasses((prev) =>
+        prev.map((c) => ({
+          ...c,
+          sections: c.sections.map((s) => ({
+            ...s,
+            subjects: s.subjects.filter((sub) => sub.id !== id),
+          })),
+        }))
+      );
+    }
   };
 
   const updateClassSections = (classId: string, sections: SectionItem[]) => {
@@ -135,8 +232,16 @@ export const useClasses = () => {
     stats,
     loadClasses,
     addClass: handleAddClass,
+    bulkAddClasses: handleBulkAddClasses,
     addSection: handleAddSection,
+    bulkAddSections: handleBulkAddSections,
     addSubject: handleAddSubject,
+    bulkAddSubjects: handleBulkAddSubjects,
+    deleteClass: handleDeleteClass,
+    updateSection: handleUpdateSection,
+    deleteSection: handleDeleteSection,
+    updateSubject: handleUpdateSubject,
+    deleteSubject: handleDeleteSubject,
     updateClassSections,
     updateSectionSubjects,
   };

@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useRef, useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Trash2, Upload, Download, ExternalLink, MoreVertical, FileText, Presentation, Image, Link, File } from "lucide-react";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
+import { useUploadMaterialForm } from "../hooks/useUploadMaterialForm";
 
 const FILE_TYPE_CONFIG = {
   PDF:   { Icon: File,         bg: "bg-red-50",    text: "text-red-600",    badgeBg: "bg-red-50",    badgeText: "text-red-600",    label: "PDF"  },
@@ -104,31 +105,40 @@ const schema = z.object({
 }) satisfies z.ZodType<UploadMaterialFormValues>;
 type FormValues = z.infer<typeof schema>;
 
-interface Option {
-  id: string;
-  name: string;
-}
-
 interface ModalProps {
   open: boolean;
   onClose: () => void;
   onUpload: (data: UploadMaterialFormValues) => void;
-  classes?: Option[];
-  sections?: Option[];
-  subjects?: Option[];
 }
 
-export const UploadMaterialModal = ({ open, onClose, onUpload, classes = [], sections = [], subjects = [] }: ModalProps) => {
+export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
-  const { register, watch, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { materialType: "FILE" },
   });
 
-  const materialType = watch("materialType");
+  const selectedClassId   = useWatch({ control, name: "classId" });
+  const selectedSectionId = useWatch({ control, name: "sectionId" });
+  const materialType      = useWatch({ control, name: "materialType" });
+
+  const { classes, sections, subjects, sectionsLoading, subjectsLoading } = useUploadMaterialForm({
+    open,
+    selectedClassId,
+    selectedSectionId,
+    onClassChange:   () => { setValue("sectionId", ""); setValue("subjectId", ""); },
+    onSectionChange: () => { setValue("subjectId", ""); },
+  });
+
+  // Reset form when modal opens (no API call — pure state reset)
+  useEffect(() => {
+    if (!open) return;
+    reset({ materialType: "FILE" });
+    setFileName(null);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClose = () => {
     reset();
@@ -176,22 +186,24 @@ export const UploadMaterialModal = ({ open, onClose, onUpload, classes = [], sec
           <div className="grid grid-cols-3 gap-[10px]">
             <FormField label="Class *" error={errors.classId?.message as string | undefined}>
               <Select
-                options={classes.map((c) => ({ label: c.name, value: c.id }))}
+                options={classes.map((c) => ({ label: c.class_name, value: c.id }))}
                 placeholder="Select class"
                 {...register("classId")}
               />
             </FormField>
             <FormField label="Section *" error={errors.sectionId?.message as string | undefined}>
               <Select
-                options={sections.map((s) => ({ label: s.name, value: s.id }))}
-                placeholder="Select section"
+                options={sections.map((s) => ({ label: s.sectionName, value: s.id }))}
+                placeholder={sectionsLoading ? "Loading…" : selectedClassId ? "Select section" : "Select class first"}
+                disabled={!selectedClassId || sectionsLoading}
                 {...register("sectionId")}
               />
             </FormField>
             <FormField label="Subject *" error={errors.subjectId?.message as string | undefined}>
               <Select
-                options={subjects.map((s) => ({ label: s.name, value: s.id }))}
-                placeholder="Select subject"
+                options={subjects.map((s) => ({ label: s.subject_name, value: s.id }))}
+                placeholder={subjectsLoading ? "Loading…" : selectedSectionId ? "Select subject" : "Select section first"}
+                disabled={!selectedSectionId || subjectsLoading}
                 {...register("subjectId")}
               />
             </FormField>

@@ -21,28 +21,13 @@ const MOCK_DASHBOARD: DashboardData = {
     { id: 'fees', label: 'COLLECTED THIS MONTH', value: '—', sub: 'Loading…', icon: 'rupee' },
     { id: 'admissions', label: 'ADMISSIONS THIS WEEK', value: '—', sub: 'Loading…', icon: 'user-plus' },
   ],
-  attendanceClasses: [
-    { id: '1', className: '10A', section: 'A', teacher: 'Mrs. Lakshmi Reddy', present: null, absent: null, status: 'not_marked' },
-    { id: '2', className: '10B', section: 'B', teacher: 'Mr. Srikant Ch.', present: 38, absent: 2, status: 'marked' },
-    { id: '3', className: '9A', section: 'A', teacher: 'Mrs. Vanaja M.', present: null, absent: null, status: 'not_marked' },
-    { id: '4', className: '9B', section: 'B', teacher: 'Mr. Anand G.', present: 35, absent: 5, status: 'marked' },
-    { id: '5', className: '8A', section: 'A', teacher: 'Mrs. Sharada P.', present: null, absent: null, status: 'not_marked' },
-  ],
-  feeDefaulters: [
-    { id: '1', initials: 'RT', name: 'Ravi Teja', className: 'Class 10A', amount: 14500, overdueDays: 15, color: '#818cf8' },
-    { id: '2', initials: 'PS', name: 'Priya Sharma', className: 'Class 9B', amount: 12000, overdueDays: 10, color: '#f87171' },
-    { id: '3', initials: 'KK', name: 'Kiran Kumar', className: 'Class 8A', amount: 10500, overdueDays: 5, color: '#4ade80' },
-  ],
-  feeCollected: 234000,
-  feePending: 118000,
-  feeTotalOutstanding: 118000,
-  feePaidPercent: 66,
-  whatsappActivity: [
-    { id: '1', type: 'alert', message: '24 absence alerts sent to parents', time: '10:32 AM', delivered: 'Delivered to all recipients' },
-    { id: '2', type: 'fee', message: 'Fee reminder sent to Class 10A Defaulters', time: '09:45 AM', delivered: '12 parents notified' },
-    { id: '3', type: 'broadcast', message: 'Broadcast: "Annual Sports Day Date Finalized"', time: '09:15 AM', delivered: '342 parents reached' },
-    { id: '4', type: 'staff', message: 'Staff attendance reminder sent', time: 'Yesterday, 06:00 PM', delivered: '' },
-  ],
+  attendanceClasses: [],
+  feeDefaulters: [],
+  feeCollected: 0,
+  feePending: 0,
+  feeTotalOutstanding: 0,
+  feePaidPercent: 0,
+  whatsappActivity: [],
   admissionPipeline: [],
 };
 
@@ -178,8 +163,8 @@ const mapClassAttendanceItem = (item: RawClassAttendanceItem, index: number): At
     className,
     section,
     teacher,
-    present: item.present ?? null,
-    absent: item.absent ?? null,
+    present: item.present ?? item.present_students ?? item.presentStudents ?? null,
+    absent: item.absent ?? item.absent_students ?? item.absentStudents ?? null,
     status: CLASS_STATUS_MARKED.has(String(item.status ?? item.attendance_status ?? item.attendanceStatus ?? '').toLowerCase())
       ? 'marked'
       : 'not_marked',
@@ -242,7 +227,7 @@ const extractClassTodayAttendance = (raw: unknown): AttendanceClass[] => {
   return items.map((item: unknown, i: number) => mapClassAttendanceItem(item as RawClassAttendanceItem, i));
 };
 
-// ─── Response extraction: /tenant/getallclassestodayattendance ──────────────
+
 
 const extractAllClassesTodayAttendance = (raw: unknown): AttendanceClass[] => {
   if (!raw || typeof raw !== 'object') {
@@ -311,7 +296,7 @@ const STAGE_VALUE_MAP: Record<string, string> = {
   enquire: 'ENQUIRY', enq: 'ENQUIRY', new: 'ENQUIRY',
   interview_scheduled: 'INTERVIEW', 'interview-scheduled': 'INTERVIEW', scheduled: 'INTERVIEW',
   docs_uploaded: 'DOCS', docs_pending: 'DOCS', 'docs-pending': 'DOCS',
-  confirmed_admission: 'CONFIRMED', 'confirmed-admission': 'CONFIRMED', enrolled_confirmed: 'CONFIRMED',
+  confirmed_admission: 'CONFIRMED', 'confirmed-admission': 'CONFIRMED',
 };
 
 const normalizeStage = (val: string): string | null => {
@@ -509,8 +494,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<DashboardData>("/tenant/dashboard");
       // Unwrap common envelope: { status, message, data: { ... } } → use inner data
-      if (data && typeof data === 'object' && 'status' in (data as Record<string, unknown>) && 'data' in (data as Record<string, unknown>)) {
-        const inner = (data as Record<string, unknown>).data;
+      if (data && typeof data === 'object' && 'status' in (data as unknown as Record<string, unknown>) && 'data' in (data as unknown as Record<string, unknown>)) {
+        const inner = (data as unknown as Record<string, unknown>).data;
         if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
           return inner as DashboardData;
         }
@@ -605,20 +590,11 @@ export const dashboardApi = {
 
   /** GET /tenant/getallclassestodayattendance */
   async getAllClassesTodayAttendance(): Promise<AttendanceClass[]> {
-    try {
-      const { data } = await api.get<RawAllClassesTodayAttendanceResponse>("/tenant/getallclassestodayattendance");
-      if (import.meta.env.DEV) {
-        console.log("[dashboard] GET /tenant/getallclassestodayattendance response", JSON.stringify(data));
-      }
-      return extractAllClassesTodayAttendance(data);
-    } catch (err: any) {
-      const status: number | undefined = err?.response?.status;
-      const body = err?.response?.data;
-      const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-      const msg = err?.message ?? '';
-      console.error(`[dashboard] GET /tenant/getallclassestodayattendance FAILED (${status ?? 'network'})`, bodyStr || msg);
-      return [];
+    const { data } = await api.get<RawAllClassesTodayAttendanceResponse>("/tenant/getallclassestodayattendance");
+    if (import.meta.env.DEV) {
+      console.log("[dashboard] GET /tenant/getallclassestodayattendance response", JSON.stringify(data));
     }
+    return extractAllClassesTodayAttendance(data);
   },
 
   /** GET /tenant/getenquiries — build pipeline stages for AdmissionsPipeline */

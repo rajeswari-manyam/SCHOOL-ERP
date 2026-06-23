@@ -4,16 +4,15 @@ import { Upload, Check, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApplyLeaveFormData, LeaveType } from "../types/leave.types";
+import type { ApplyLeaveFormData, LeaveBalance } from "../types/leave.types";
 import { LEAVE_TYPE_META } from "../hooks/useLeave";
 import LeaveCalendarPreview from "./LeaveCalendarPreview";
 import type { LeaveCalendarDay } from "../types/leave.types";
 
-const LEAVE_TYPES: LeaveType[] = ["CASUAL", "SICK", "PERSONAL", "EMERGENCY"];
-
 interface Props {
   open: boolean;
   onClose: () => void;
+  balances: LeaveBalance[];
   form: ApplyLeaveFormData;
   patchForm: (patch: Partial<ApplyLeaveFormData>) => void;
   totalDays: number;
@@ -28,6 +27,7 @@ interface Props {
 
 const ApplyLeaveModal = ({
   open, onClose,
+  balances,
   form, patchForm,
   totalDays, needsMedicalCert, formValid,
   submitting, submitSuccess,
@@ -66,7 +66,7 @@ const ApplyLeaveModal = ({
             <div className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-gray-200 sm:hidden" />
 
             <h2 className="text-lg font-extrabold text-gray-900">Apply for Leave</h2>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <p className="text-sm text-gray-500 mt-0.5">
               Fill in the details below to submit your application
             </p>
           </div>
@@ -100,7 +100,8 @@ const ApplyLeaveModal = ({
                     Leave Type
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {LEAVE_TYPES.map((type) => {
+                    {balances.map((b) => {
+                      const type = b.type;
                       const m = LEAVE_TYPE_META[type];
                       const selected = form.type === type;
                       return (

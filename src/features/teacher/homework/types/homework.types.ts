@@ -164,6 +164,8 @@ export interface HomeworkState {
   activeHomework: HomeworkItem[];
   pastHomework: HomeworkItem[];
   materials: StudyMaterial[];
+  isMaterialsError: boolean;
+  refetchMaterials: () => void;
 
   isLoading: boolean;
   isError: boolean;

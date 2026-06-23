@@ -179,7 +179,7 @@ const MyHistoryTab = ({
     <div className="flex flex-col gap-6">
 
       {/* ── Date range picker ──────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
         <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
           <Calendar size={14} className="text-indigo-500" />
           Select Date Range
@@ -235,13 +235,13 @@ const MyHistoryTab = ({
           Loading attendance…
         </div>
       ) : days.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-12 text-center">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-12 text-center">
           <p className="text-sm text-gray-400">No attendance records found for selected date range.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           {days.map((day) => (
-            <div key={day.attendance_date} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={day.attendance_date} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               {/* Day header */}
               <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
                 <p className="text-sm font-bold text-gray-800">
