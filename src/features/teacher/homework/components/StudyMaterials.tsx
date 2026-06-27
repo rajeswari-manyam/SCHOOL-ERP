@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Trash2, Upload, Download, ExternalLink, MoreVertical, FileText, Presentation, Image, Link, File } from "lucide-react";
+import { Trash2, Upload, Download, ExternalLink, Pencil, FileText, Presentation, Image, Link, File } from "lucide-react";
 import type { StudyMaterial, UploadMaterialFormValues } from "../types/homework.types";
+import { downloadStudyMaterial } from "@/services/studymaterial.api";
+import { downloadBlob } from "@/features/school-admin/attendance/utils/attendance.utils";
 import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -11,6 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/ui/modal";
 import { useUploadMaterialForm } from "../hooks/useUploadMaterialForm";
+import toast from "react-hot-toast";
 
 const FILE_TYPE_CONFIG = {
   PDF:   { Icon: File,         bg: "bg-red-50",    text: "text-red-600",    badgeBg: "bg-red-50",    badgeText: "text-red-600",    label: "PDF"  },
@@ -22,12 +25,26 @@ const FILE_TYPE_CONFIG = {
 
 interface CardProps {
   material: StudyMaterial;
+  onEdit: () => void;
   onDelete: () => void;
 }
 
-export const StudyMaterialCard = ({ material, onDelete }: CardProps) => {
+export const StudyMaterialCard = ({ material, onEdit, onDelete }: CardProps) => {
   const cfg = FILE_TYPE_CONFIG[material.fileType];
   const IconComp = cfg.Icon;
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    try {
+      const blob = await downloadStudyMaterial(material.id);
+      downloadBlob(blob, material.title || "study-material");
+    } catch {
+      toast.error("Failed to download file");
+    } finally {
+      setDownloading(false);
+    }
+  }, [material.id, material.title]);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-[11px] transition-all duration-200 hover:shadow-[0_4px_18px_rgba(15,23,42,0.07)] hover:border-slate-300 hover:-translate-y-px">
@@ -44,19 +61,20 @@ export const StudyMaterialCard = ({ material, onDelete }: CardProps) => {
           <Button
             variant="ghost"
             size="sm"
+            className="p-[6px] h-auto rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50"
+            onClick={onEdit}
+            title="Edit"
+          >
+            <Pencil size={13} className="text-current" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             className="p-[6px] h-auto rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
             onClick={onDelete}
             title="Delete"
           >
             <Trash2 size={13} className="text-current" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-[6px] h-auto rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-            title="More options"
-          >
-            <MoreVertical size={13} className="text-current" />
           </Button>
         </div>
       </div>
@@ -78,17 +96,26 @@ export const StudyMaterialCard = ({ material, onDelete }: CardProps) => {
       </div>
 
       {/* Action button */}
-      <a
-        href={material.url ?? "#"}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex w-full items-center justify-center gap-2 h-[30px] rounded-xl border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-900 transition hover:bg-slate-100"
-      >
-        {material.type === "LINK"
-          ? <><ExternalLink size={12} className="text-current" /> Open link</>
-          : <><Download size={12} className="text-current" /> Download</>
-        }
-      </a>
+      {material.type === "LINK" ? (
+        <a
+          href={material.url ?? material.openLink ?? "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex w-full items-center justify-center gap-2 h-[30px] rounded-xl border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-900 transition hover:bg-slate-100"
+        >
+          <ExternalLink size={12} className="text-current" /> Open link
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="inline-flex w-full items-center justify-center gap-2 h-[30px] rounded-xl border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-900 transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download size={12} className={downloading ? "animate-bounce text-current" : "text-current"} />
+          {downloading ? "Downloading…" : "Download"}
+        </button>
+      )}
     </div>
   );
 };
@@ -108,13 +135,16 @@ type FormValues = z.infer<typeof schema>;
 interface ModalProps {
   open: boolean;
   onClose: () => void;
-  onUpload: (data: UploadMaterialFormValues) => void;
+  onUpload?: (data: UploadMaterialFormValues) => void;
+  editMaterial?: StudyMaterial | null;
+  onUpdate?: (id: string, data: UploadMaterialFormValues) => void;
 }
 
-export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => {
+export const UploadMaterialModal = ({ open, onClose, onUpload, editMaterial, onUpdate }: ModalProps) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const isEdit = !!editMaterial;
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -133,12 +163,27 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
     onSectionChange: () => { setValue("subjectId", ""); },
   });
 
-  // Reset form when modal opens (no API call — pure state reset)
+  // Reset form when modal opens
   useEffect(() => {
     if (!open) return;
-    reset({ materialType: "FILE" });
-    setFileName(null);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (editMaterial) {
+      reset({
+        materialType: editMaterial.type,
+        classId: editMaterial.class?.id ?? "",
+        sectionId: editMaterial.section?.id ?? "",
+        subjectId: editMaterial.subject?.id ?? "",
+        title: editMaterial.title,
+        url: editMaterial.openLink ?? "",
+        description: editMaterial.description ?? "",
+      });
+      if (editMaterial.type === "FILE" && editMaterial.pdf) {
+        setFileName(editMaterial.pdf.split("/").pop() ?? "file");
+      }
+    } else {
+      reset({ materialType: "FILE" });
+      setFileName(null);
+    }
+  }, [open, editMaterial]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClose = () => {
     reset();
@@ -147,7 +192,11 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
   };
 
   const onSubmit = (values: FormValues) => {
-    onUpload({ ...values, file: fileRef.current?.files ?? undefined } as UploadMaterialFormValues);
+    if (isEdit && editMaterial && onUpdate) {
+      onUpdate(editMaterial.id, { ...values, file: fileRef.current?.files ?? undefined } as UploadMaterialFormValues);
+    } else if (onUpload) {
+      onUpload({ ...values, file: fileRef.current?.files ?? undefined } as UploadMaterialFormValues);
+    }
     handleClose();
   };
 
@@ -165,14 +214,14 @@ export const UploadMaterialModal = ({ open, onClose, onUpload }: ModalProps) => 
       open={open}
       onClose={handleClose}
       title="Upload study material"
-      description="Share files or links with your students"
+      description={isEdit ? "Update the study material details" : "Share files or links with your students"}
       size="md"
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end sm:gap-2">
           <Button variant="outline" onClick={handleClose} className="rounded-[10px] h-9 text-[13px] font-semibold border-slate-200">Cancel</Button>
           <Button type="submit" form="upload-material-form" className="rounded-[10px] h-9 text-[13px] font-semibold bg-indigo-600 hover:bg-indigo-700 gap-1.5">
-            <Upload size={14} className="text-current" />
-            Upload material
+            {isEdit ? <Pencil size={14} className="text-current" /> : <Upload size={14} className="text-current" />}
+            {isEdit ? "Update material" : "Upload material"}
           </Button>
         </div>
       }

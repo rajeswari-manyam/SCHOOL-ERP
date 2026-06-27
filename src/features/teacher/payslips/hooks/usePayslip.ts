@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { payslipApi } from "@/services/teacher-payslip.api";
 import type { Payslip, AnnualSummary } from "../types/payslip.types";
@@ -21,30 +21,11 @@ export function usePayslip() {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(currentMonthIndex);
 
   const monthLabel = `${MONTHS[selectedMonthIndex]} ${selectedYear}`;
-  void selectedMonthIndex;
-  void selectedYear;
 
-  const filteredPayslips = useMemo(
-    () =>
-      payslips.filter((p) => {
-        const pMonth = parseInt(p.month ?? "", 10);
-        const pYear = parseInt(p.year ?? "", 10);
-        if (!isNaN(pMonth) && !isNaN(pYear)) {
-          return pMonth === selectedMonthIndex + 1 && pYear === selectedYear;
-        }
-        return p.monthLabel === monthLabel;
-      }),
-    [payslips, selectedMonthIndex, selectedYear, monthLabel],
-  );
+  const currentPayslip = payslips.length > 0 ? payslips[0] : null;
+  const hasMonthMatch = currentPayslip !== null;
 
-  const hasMonthMatch = filteredPayslips.length > 0;
-  const currentPayslip = hasMonthMatch
-    ? filteredPayslips[0]
-    : payslips.length > 0
-      ? payslips[0]
-      : null;
-
-  // ── Fetch all payslips ────────────────────────────────────────────
+  // ── Fetch payslip for the selected month/year ─────────────────────
   const loadPayslips = useCallback(async () => {
     if (!staffId) {
       setError("No staff ID found. Please log in again.");
@@ -54,14 +35,18 @@ export function usePayslip() {
     setLoading(true);
     setError(null);
     try {
-      const data = await payslipApi.getPayslips(staffId, "", "");
+      const data = await payslipApi.getPayslips(
+        staffId,
+        String(selectedMonthIndex + 1),
+        String(selectedYear),
+      );
       setPayslips(data);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to load payslips");
     } finally {
       setLoading(false);
     }
-  }, [staffId]);
+  }, [staffId, selectedMonthIndex, selectedYear]);
 
   // ── Fetch annual summary ─────────────────────────────────────────
   const loadAnnualSummary = useCallback(async () => {
@@ -137,6 +122,8 @@ export function usePayslip() {
     selectedYear,
     selectedMonthIndex,
     monthIndex: selectedMonthIndex,
+    setSelectedMonthIndex,
+    setSelectedYear,
     goToPrevMonth,
     goToNextMonth,
     downloadPayslip,

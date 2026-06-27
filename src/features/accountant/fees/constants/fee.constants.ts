@@ -8,6 +8,7 @@ export type BillingCycle = typeof BILLING_CYCLES[number];
 
 
 export const CONCESSION_TYPES = [
+  "Scholarship",
   "Sibling Discount",
   "Merit Scholarship",
   "Financial Aid",
@@ -118,11 +119,10 @@ export const TRANSACTIONS_TABLE_COLS =
 export const CONCESSIONS_PAGE_SIZE = 6;
 
 export const CONCESSION_TABLE_COLS =
-  "grid-cols-[2.2fr_0.65fr_1.2fr_0.9fr_1.6fr_1.3fr_0.9fr_0.6fr]";
+  "grid-cols-[2fr_1fr_1.2fr_0.8fr_0.9fr_0.9fr_1.4fr_1.2fr_0.6fr]";
 
 export const CONCESSION_TABLE_HEADERS = [
-  "Student", "Class", "Type", "Amount",
-  "Reason", "Approved By", "Status", "Actions",
+  "Student", "Fee Head", "Type", "Discount", "Total Amount", "Payable", "Reason", "Period", "Actions",
 ];
 
 export const SECTION_LABELS = ["Section A", "Section B", "Both Same"] as const;

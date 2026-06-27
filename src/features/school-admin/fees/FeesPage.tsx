@@ -6,6 +6,7 @@ import { PaymentSuccessModal } from "../fees/components/Paymentsuccessmodal";
 import { AllTransactionsTab } from "../fees/components/Alltransactionstab";
 import { FeeStructureTab } from "../fees/components/Feestructuretab";
 import { CommunicationCenter } from "./components/Communicationcenter";
+import { StaffSalaryTab } from "./components/StaffSalaryTab";
 
 import { useFeeCollection } from "./hooks/Usefeecollection";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ const TABS = [
   { key: "pending",      label: "Pending Fees",  icon: "⏳" },
   { key: "transactions", label: "Transactions",  icon: "💳" },
   { key: "structure",    label: "Fee Structure", icon: "🏗️" },
+  { key: "staffsalary",  label: "Staff Salary",  icon: "💰" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -25,14 +27,18 @@ const FeeCollectionPage = () => {
     activeTab, setActiveTab,
     stats,
     filteredFees, filteredTransactions,
-    feeHeads, transportSlabs, classFeeStructure,
+    feeHeads, transportSlabs, classFeeStructure, concessions,
+    periodSummary,
     loading,
     searchQuery, setSearchQuery,
     classFilter, setClassFilter,
     sectionFilter, setSectionFilter,
-    statusFilter, setStatusFilter,
-    feeHeadFilter, setFeeHeadFilter,
-    sortOption, setSortOption,
+    classOptions, sectionOptions,
+    txSearch, setTxSearch,
+    txClassFilter, setTxClassFilter,
+    txSectionFilter, setTxSectionFilter,
+    txSectionOptions,
+    txDateRange,
     selectedIds, toggleSelect, toggleSelectAll,
     selectedClass, setSelectedClass,
     showRecordPayment, recordPaymentStudent,
@@ -64,17 +70,7 @@ const FeeCollectionPage = () => {
             Manage pending dues, payments, and fee structure
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                 
-                  <Button
-                    onClick={() => openRecordPayment()}
-                    className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 gap-1.5 text-sm px-3 sm:px-4 py-2 whitespace-nowrap"
-                  >
-                    <span className="text-base leading-none">+</span>
-                    <span className="hidden sm:inline">Record Payment</span>
-                    <span className="sm:hidden">Record Payment</span>
-                  </Button>
-                </div>
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0"></div>
       </div>
 
       {/* ── Stats ────────────────────────────────────────────────────────── */}
@@ -161,12 +157,8 @@ const FeeCollectionPage = () => {
           onClassChange={setClassFilter}
           sectionFilter={sectionFilter}
           onSectionChange={setSectionFilter}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          feeHeadFilter={feeHeadFilter}
-          onFeeHeadChange={setFeeHeadFilter}
-          sortOption={sortOption}
-          onSortChange={setSortOption}
+          classOptions={classOptions}
+          sectionOptions={sectionOptions}
         />
 
         <PendingFeesTable
@@ -196,14 +188,16 @@ const FeeCollectionPage = () => {
       >
         <AllTransactionsTab
           transactions={filteredTransactions}
-          periodSummary={null}
-          txSearch=""
-          onTxSearchChange={() => {}}
-          txClassFilter="All Classes"
-          onTxClassChange={() => {}}
-          txModeFilter="All Modes (Cash, UPI, Cheque, Bank)"
-          onTxModeChange={() => {}}
-          txDateRange=""
+          periodSummary={periodSummary}
+          txSearch={txSearch}
+          onTxSearchChange={setTxSearch}
+          txClassFilter={txClassFilter}
+          onTxClassChange={setTxClassFilter}
+          txSectionFilter={txSectionFilter}
+          onTxSectionChange={setTxSectionFilter}
+          classOptions={classOptions}
+          txSectionOptions={txSectionOptions}
+          txDateRange={txDateRange}
         />
       </div>
 
@@ -218,9 +212,20 @@ const FeeCollectionPage = () => {
           feeHeads={feeHeads}
           transportSlabs={transportSlabs}
           classFeeStructure={classFeeStructure}
+          concessions={concessions}
           selectedClass={selectedClass}
           onClassChange={setSelectedClass}
         />
+      </div>
+
+      {/* 4️⃣ Staff Salary */}
+      <div
+        role="tabpanel"
+        id="tabpanel-staffsalary"
+        aria-labelledby="tab-staffsalary"
+        hidden={activeTab !== "staffsalary"}
+      >
+        <StaffSalaryTab />
       </div>
 
       {/* ── Modals ───────────────────────────────────────────────────────── */}

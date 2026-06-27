@@ -12,11 +12,15 @@ export function ResultSummaryCard({
    
       <Card className="rounded-2xl border-0 shadow-sm hover:shadow-xl hover:-translate-y-1  hover:border-[#3525CD] hover:border-1 transition-all duration-300">
         <CardContent className="p-6 flex flex-col items-center">
-          <p className="text-[12px] text-gray-1000 text-center">
-            Ravi Kumar | Class 10A
+          <p className="text-[13px] font-semibold text-[#0B1C30] text-center">
+            {summary.studentName}
           </p>
 
-          <p className="text-[12px] text-gray-400 mt-1 mb-4">
+          <p className="text-[12px] text-gray-400 mt-0.5 mb-1">
+            {[summary.className, summary.sectionName].filter(Boolean).join(" · ")}
+          </p>
+
+          <p className="text-[12px] text-gray-400 mb-4">
             {summary.examName}
           </p>
 
@@ -40,8 +44,12 @@ export function ResultSummaryCard({
               {summary.grade}
             </span>
 
-            <span className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-[#DCFCE7] text-[#166534]">
-              PASS
+            <span className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg ${
+              summary.overallStatus === "Pass"
+                ? "bg-[#DCFCE7] text-[#166534]"
+                : "bg-red-100 text-red-700"
+            }`}>
+              {summary.overallStatus.toUpperCase()}
             </span>
 
             <span className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-[#FEF3C7] text-[#92400E]">

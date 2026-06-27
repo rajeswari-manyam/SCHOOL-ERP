@@ -133,7 +133,9 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
     setLoadingTeachers(true);
     getAllStaff()
       .then((res) => setTeacherOptions(
-        res.data.filter((s) => s.role?.toLowerCase() === "teacher").map((s) => ({ value: s.id, label: s.name }))
+        res.data
+          .filter((s) => (s.role ?? "").toLowerCase().includes("teacher"))
+          .map((s) => ({ value: s.id, label: s.name }))
       ))
       .catch(console.error)
       .finally(() => setLoadingTeachers(false));

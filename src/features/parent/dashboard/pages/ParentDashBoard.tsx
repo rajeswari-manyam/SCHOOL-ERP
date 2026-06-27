@@ -5,6 +5,7 @@ import { StatCard } from "../../../../components/ui/statcard"
 import { AttendanceWidget } from "../components/AttendanceWidge"
 import { HomeworkCard } from "../components/HomeWorkCard"
 import { AnnouncementCard } from "../components/AnnouncamentsCard"
+import { PendingFeeCard } from "../components/PendingFeeCard"
 import { UpcomingExamsTable } from "../components/UpCommingExampleTimeTable"
 
 import { useDashboard } from "../hooks/usedashboard";
@@ -163,13 +164,14 @@ const DashboardPage = () => {
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((item, i) => (
-          <Link
-            key={i}
-            to={item.path}
-            className="block cursor-pointer hover:scale-[1.02] transition"
-          >
-            <StatCard {...item} />
-          </Link>
+       <Link
+  key={i}
+  to={item.path}
+  state={{ studentId }}
+  className="block cursor-pointer hover:scale-[1.02] transition"
+>
+  <StatCard {...item} />
+</Link>
         ))}
       </div>
 
@@ -181,6 +183,7 @@ const DashboardPage = () => {
         </div>
         <div className="flex flex-col gap-4">
           <AnnouncementCard variant="announcements" />
+          <PendingFeeCard studentId={studentId} />
         </div>
       </div>
 

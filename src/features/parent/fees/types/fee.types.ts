@@ -4,9 +4,16 @@ export type FeeStatus = "paid" | "pending" | "overdue" | "upcoming";
 
 export interface Fee {
   id: string;
+  feeid: string;
+  fee_type?: string;
+  academicYearId: string;
   term: string;
   dueDate: string;
   amount: number;
+  totalFee?: number;
+  originalAmount?: number;
+  discountAmount?: number;
+  paidAmount?: number;
   status: FeeStatus;
   daysOverdue?: number;
   reminder?: string;
@@ -28,6 +35,7 @@ export interface PaymentHistory {
 
 export interface FeeHistoryProps {
   data: PaymentHistory[];
+  onDelete?: (paymentId: string) => Promise<void>;
 }
 
 export type Tab = "pending" | "history" | "annual";
@@ -117,6 +125,6 @@ export interface SessionSummaryProps {
 export interface StudentCardProps {
   name: string;
   className: string;
-  rollNo: number;
+  rollNo: string;
   status: "good" | "warning" | "blocked";
 }

@@ -1,43 +1,87 @@
 import api from "@/config/axios";
-import type { Payslip, AnnualSummary } from "@/features/teacher/types/payslip.types";
+import type { Payslip, AnnualSummary, SalaryEarning, SalaryDeduction } from "@/features/teacher/payslips/types/payslip.types";
 
-const toCamelCase = (obj: any): any => {
-  if (Array.isArray(obj)) return obj.map(toCamelCase);
-  if (obj !== null && typeof obj === "object") {
-    return Object.keys(obj).reduce((acc, key) => {
-      const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-      acc[camelKey] = toCamelCase(obj[key]);
-      return acc;
-    }, {} as Record<string, any>);
-  }
-  return obj;
-};
+const MONTH_NAMES = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+
+function mapApiPayslip(raw: any): Payslip {
+  const monthNum = Number(raw.month ?? 0);
+  const yearNum  = Number(raw.year  ?? 0);
+
+  const earnings: SalaryEarning[] = [
+    { label: "Base Salary",           amount: raw.base_salary          ?? 0 },
+    ...(raw.hra               > 0 ? [{ label: "HRA",                    amount: raw.hra               }] : []),
+    ...(raw.transport_allowance > 0 ? [{ label: "Transport Allowance",  amount: raw.transport_allowance }] : []),
+    ...(raw.other_allowance   > 0 ? [{ label: "Other Allowance",        amount: raw.other_allowance   }] : []),
+    ...(raw.bonus             > 0 ? [{ label: "Bonus",                  amount: raw.bonus             }] : []),
+    ...(raw.overtime          > 0 ? [{ label: "Overtime",               amount: raw.overtime          }] : []),
+    ...(raw.extra_class_payment > 0 ? [{ label: "Extra Class Payment",  amount: raw.extra_class_payment }] : []),
+  ];
+
+  const deductions: SalaryDeduction[] = [
+    ...(raw.professional_tax  > 0 ? [{ label: "Professional Tax",       amount: raw.professional_tax  }] : []),
+    ...(raw.pf                > 0 ? [{ label: "Provident Fund (PF)",    amount: raw.pf                }] : []),
+    ...(raw.tds_monthly       > 0 ? [{ label: "TDS",                    amount: raw.tds_monthly       }] : []),
+    ...(raw.leave_deduction   > 0 ? [{ label: "Leave Deduction",        amount: raw.leave_deduction   }] : []),
+  ];
+
+  const rawStatus = (raw.payment_status ?? "").toLowerCase();
+  const status: Payslip["status"] =
+    rawStatus === "paid"       ? "PAID"       :
+    rawStatus === "processing" ? "PROCESSING" : "PENDING";
+
+  const presentDays = raw.present_days ?? 0;
+  const absentDays  = raw.absent_days  ?? 0;
+
+  return {
+    id:               raw.id ?? "",
+    month:            String(monthNum),
+    year:             String(yearNum),
+    monthLabel:       `${MONTH_NAMES[monthNum - 1] ?? "Unknown"} ${yearNum}`,
+    status,
+    employeeId:       raw.staff_id   ?? "",
+    employeeName:     raw.staff_name ?? "",
+    designation:      raw.designation ?? "Teacher",
+    department:       raw.department  ?? "",
+    bankAccount:      raw.bankAccount ?? "—",
+    pan:              raw.pan         ?? "—",
+    earnings,
+    grossSalary:      raw.gross_salary     ?? 0,
+    deductions,
+    totalDeductions:  raw.total_deductions ?? 0,
+    netSalary:        raw.net_salary       ?? 0,
+    attendance: {
+      workingDays: presentDays + absentDays,
+      presentDays,
+      absentDays,
+      halfDays:   raw.half_days   ?? 0,
+      leaveDays:  raw.leave_days  ?? 0,
+    },
+  };
+}
 
 export const payslipApi = {
   getPayslips: async (staffId: string, month?: string, year?: string): Promise<Payslip[]> => {
-    void staffId;
-    const params: Record<string, string> = { staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac" };
+    const params: Record<string, string> = { staff_id: staffId };
     if (month) params.month = month;
-    if (year) params.year = year;
+    if (year)  params.year  = year;
     const { data } = await api.get("/tenant/getallpayslips", { params });
-    console.log("getPayslips RAW response:", JSON.stringify(data));
     let list: any[] = [];
-    if (Array.isArray(data)) list = data;
+    if (Array.isArray(data))                              list = data;
     else if (data?.payslips && Array.isArray(data.payslips)) list = data.payslips;
-    else if (data?.data && Array.isArray(data.data)) list = data.data;
-    else console.warn("getPayslips: unexpected shape", data);
-    const result = list.map(toCamelCase) as Payslip[];
-    if (result.length > 0) console.log("getPayslips FIRST item (camelCase):", JSON.stringify(result[0]));
-    return result;
+    else if (data?.data    && Array.isArray(data.data))  list = data.data;
+    return list.map(mapApiPayslip);
   },
 
   getPayslip: async (id: string): Promise<Payslip | null> => {
     const { data } = await api.get(`/tenant/teacher/payslips/${id}`);
-    return data ? (toCamelCase(data) as Payslip) : null;
+    return data ? mapApiPayslip(data) : null;
   },
 
   downloadPdf: async (payslipId: string): Promise<void> => {
-    const res = await api.get(`/tenant/teacher/payslips/${payslipId}/pdf`, { responseType: "blob" });
+    const res = await api.get(`/tenant/downloadpayslip/${payslipId}`, { responseType: "blob" });
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement("a");
     link.href = url;
@@ -69,7 +113,7 @@ export const payslipApi = {
       const { data } = await api.get(`/tenant/teacher/payslips/annual/${year}/summary`, {
         params: { staff_id: staffId },
       });
-      return data ? (toCamelCase(data) as AnnualSummary) : null;
+      return data ?? null;
     } catch {
       return null;
     }

@@ -52,7 +52,7 @@ export function PaymentModal({
 
   const handleProceed = async () => {
     setApiError(null);
-    const txnId = generateTxnId();
+    const refNo = generateTxnId();
     const date = new Date().toLocaleDateString("en-IN", {
       day: "numeric",
       month: "long",
@@ -60,17 +60,17 @@ export function PaymentModal({
     });
 
     try {
-      await recordPayment(
+      const receiptNo = await recordPayment(
         fee.id,
         {
           amount_paid: value,
           payment_method: paymentMethod,
-          transaction_id: txnId,
+          transaction_id: refNo,
         },
         studentId ?? ""
       );
 
-      onSuccess(paymentMethod, value, txnId, date);
+      onSuccess(paymentMethod, value, receiptNo, date);
     } catch (e: any) {
       setApiError(e?.message ?? "Payment failed. Please try again.");
     }
@@ -124,14 +124,31 @@ export function PaymentModal({
         </div>
 
         {/* FEE INFO */}
-        <CardContent className="p-0 space-y-1">
+        <CardContent className="p-0 space-y-2">
           <p className="font-bold text-[#0B1C30]">{fee.term}</p>
-          <p className="text-sm text-gray-500">
-            Amount Due: Rs.{fee.amount.toLocaleString("en-IN")}
-          </p>
-          <p className="text-sm text-[#E07B2A] font-medium">
-            Due: {fee.dueDate}
-          </p>
+          {fee.totalFee != null && (
+            <div className="grid grid-cols-3 gap-2 bg-[#F5F4FF] rounded-xl px-4 py-3">
+              <div className="text-center">
+                <p className="text-[11px] text-gray-400 mb-0.5">Total Fee</p>
+                <p className="text-sm font-semibold text-[#0B1C30]">
+                  ₹{fee.totalFee.toLocaleString("en-IN")}
+                </p>
+              </div>
+              <div className="text-center border-x border-[#E8EBF2]">
+                <p className="text-[11px] text-gray-400 mb-0.5">Paid</p>
+                <p className="text-sm font-semibold text-green-600">
+                  ₹{(fee.paidAmount ?? 0).toLocaleString("en-IN")}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-[11px] text-gray-400 mb-0.5">Balance</p>
+                <p className="text-sm font-semibold text-[#E07B2A]">
+                  ₹{fee.amount.toLocaleString("en-IN")}
+                </p>
+              </div>
+            </div>
+          )}
+          <p className="text-sm text-[#E07B2A] font-medium">Due: {fee.dueDate}</p>
         </CardContent>
 
         {/* AMOUNT OPTIONS */}

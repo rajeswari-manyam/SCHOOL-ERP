@@ -138,7 +138,7 @@ const HomeworkPage = () => {
     modal, setModal,
     reminderSent, sendReminder,
     createHomework, updateHomework, deleteHomework,
-    uploadMaterial, deleteMaterial,
+    uploadMaterial, updateMaterial, deleteMaterial,
     isCreating, isUpdating,
   } = useHomework();
 
@@ -229,6 +229,11 @@ const HomeworkPage = () => {
     return materials.find((m) => m.id === modal.id) ?? null;
   }, [modal, materials]);
 
+  const editingMat = useMemo(() => {
+    if (modal.type !== "editMaterial") return null;
+    return materials.find((m) => m.id === modal.id) ?? null;
+  }, [modal, materials]);
+
   // ── Payload builders ──────────────────────────────────────────────────────
   const toCreatePayload = useCallback(
     (values: AssignHomeworkFormValues): CreateHomeworkPayload => ({
@@ -308,6 +313,15 @@ const HomeworkPage = () => {
       toast.error(err instanceof Error ? err.message : "Failed to upload material");
     }
   }, [uploadMaterial, toCreateStudyMaterialPayload]);
+
+  const handleUpdateMaterial = useCallback(async (id: string, values: UploadMaterialFormValues) => {
+    try {
+      await updateMaterial(id, toCreateStudyMaterialPayload(values));
+      toast.success("Material updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update material");
+    }
+  }, [updateMaterial, toCreateStudyMaterialPayload]);
 
   const handleDeleteMaterial = useCallback(async () => {
     if (modal.type !== "deleteMaterial") return;
@@ -598,6 +612,7 @@ const HomeworkPage = () => {
                 <StudyMaterialCard
                   key={m.id}
                   material={m}
+                  onEdit={() => setModal({ type: "editMaterial", id: m.id })}
                   onDelete={() => setModal({ type: "deleteMaterial", id: m.id })}
                 />
               ))}
@@ -648,6 +663,13 @@ const HomeworkPage = () => {
         open={modal.type === "uploadMaterial"}
         onClose={() => setModal({ type: "none" })}
         onUpload={handleUploadMaterial}
+      />
+
+      <UploadMaterialModal
+        open={modal.type === "editMaterial"}
+        onClose={() => setModal({ type: "none" })}
+        editMaterial={editingMat}
+        onUpdate={handleUpdateMaterial}
       />
 
     </div>

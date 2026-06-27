@@ -1,28 +1,34 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { FeeTabs } from "../components/FeeTabs";
 import { FilterBar } from "../components/FilterBar";
 import { PendingFeesTable } from "../components/PendingFeeTable";
 import { useFeeData } from "../hooks/useFees";
 import { StatCard } from "../../../../components/ui/statcard";
-import { ChevronLeft, ChevronRight, Send, Download} from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, Download } from "lucide-react";
 import typography from "@/styles/typography";
 import { RecordFeePaymentModal } from "../components/RecordPaymentModal";
 import { AllTransactionsTable } from "../components/AllTransactionTable";
 import { FeeStructure } from "../components/FeeStructure";
 import { TransportFees } from "../components/TransportFee";
-import { Concessions } from "../components/ConcessionTable";
-import { AddFeeConcessionModal } from "../components/AddFeeConcessionModal";
+import { deleteRecordFeePayment } from "@/services/fee.api";
+import { toast } from "sonner";
+
 import { FEE_STATS } from "../constants/fee.constants";
 import { applyDueStatus, applySortBy } from "../utils/fee.utils";
 import type { FeeRow, FilterValues } from "../types/fees.types";
 
 export default function FeeManagementPage() {
   const [activeTab, setActiveTab] = useState("Pending Fees");
-  const { fees, transactions } = useFeeData();
+  const { fees, feesLoading, transactions, refreshTransactions } = useFeeData();
+
+  const handleDeleteRecord = useCallback(async (id: string) => {
+    await deleteRecordFeePayment(id);
+    toast.success("Payment record deleted");
+    refreshTransactions();
+  }, [refreshTransactions]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showConcessionModal, setShowConcessionModal] = useState(false);
   const [showFeeHeadModal, setShowFeeHeadModal] = useState(false);
   const [triggerAddSlab, setTriggerAddSlab] = useState(false);
   const [triggerEditSlabs, setTriggerEditSlabs] = useState(false);
@@ -32,10 +38,8 @@ export default function FeeManagementPage() {
   const isAllTx         = activeTab === "All Transactions";
   const isFeeStructure  = activeTab === "Fee Structure";
   const isTransportFees = activeTab === "Transport Fees";
-  const isConcessions   = activeTab === "Concessions";
-
-  const hideFilterBar      = isFeeStructure || isTransportFees || isConcessions;
-  const hideStandardHeader = isFeeStructure || isTransportFees || isConcessions || isAllTx;
+  const hideFilterBar      = isFeeStructure || isTransportFees;
+  const hideStandardHeader = isFeeStructure || isTransportFees || isAllTx;
 
   const handlePrevMonth = () =>
     setCurrentDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d; });
@@ -71,9 +75,6 @@ export default function FeeManagementPage() {
     <div className="flex flex-col w-full min-h-screen bg-[#EFF4FF] overflow-hidden">
       {showPaymentModal && (
         <RecordFeePaymentModal onClose={() => setShowPaymentModal(false)} />
-      )}
-      {showConcessionModal && (
-        <AddFeeConcessionModal onClose={() => setShowConcessionModal(false)} />
       )}
 
       {/* ── Stats Cards ── */}
@@ -198,6 +199,7 @@ export default function FeeManagementPage() {
                   </Button>
                 </>
               )}
+
             </div>
           </div>
         </div>
@@ -238,15 +240,14 @@ export default function FeeManagementPage() {
               <p className="text-sm font-medium">No pending fees found</p>
               <p className="text-xs mt-1">All fees are up to date for this period</p>
             </div>
-          ) : isPendingFees && <PendingFeesTable data={filteredFees} />}
+          ) : isPendingFees && <PendingFeesTable data={filteredFees} isLoading={feesLoading} />}
 
-          {isAllTx && (transactions || []).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-              <span className="text-4xl mb-3">🧾</span>
-              <p className="text-sm font-medium">No transactions found</p>
-              <p className="text-xs mt-1">Transactions will appear here once recorded</p>
-            </div>
-          ) : isAllTx && <AllTransactionsTable data={transactions || []} />}
+          {isAllTx && (
+            <AllTransactionsTable
+              data={transactions ?? []}
+              onDelete={handleDeleteRecord}
+            />
+          )}
 
           {isFeeStructure && (
             <FeeStructure
@@ -262,9 +263,7 @@ export default function FeeManagementPage() {
               onEditSlabsHandled={() => setTriggerEditSlabs(false)}
             />
           )}
-          {isConcessions && (
-            <Concessions onAddConcession={() => setShowConcessionModal(true)} />
-          )}
+
         </div>
 
         {/* ── Footer ── */}

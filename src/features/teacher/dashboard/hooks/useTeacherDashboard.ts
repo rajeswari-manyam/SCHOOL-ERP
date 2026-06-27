@@ -1,13 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { leaveApi } from "@/services/teacher-leave.api";
 import { teacherDashboardApi } from "@/services/teacher-dashboard.api";
+import { getMonthlyStaffAttendance } from "@/services/attendance.api";
+import { getSectionsByTeacherId } from "@/services/section.api";
 
 export const TEACHER_KEYS = {
-  all:                ["teacher"] as const,
-  dashboard:          () => [...TEACHER_KEYS.all, "dashboard"] as const,
-  pendingHomework:    (teacherId: string) => [...TEACHER_KEYS.all, "pending-homework", teacherId] as const,
-  todayTimetable:     (teacherId: string) => [...TEACHER_KEYS.all, "timetable", teacherId] as const,
-  allHomework:        (teacherId: string) => [...TEACHER_KEYS.all, "all-homework", teacherId] as const,
+  all:                    ["teacher"] as const,
+  dashboard:              () => [...TEACHER_KEYS.all, "dashboard"] as const,
+  pendingHomework:        (teacherId: string) => [...TEACHER_KEYS.all, "pending-homework", teacherId] as const,
+  todayTimetable:         (teacherId: string) => [...TEACHER_KEYS.all, "timetable", teacherId] as const,
+  allHomework:            (teacherId: string) => [...TEACHER_KEYS.all, "all-homework", teacherId] as const,
+  monthlyAttendance:      (staffId: string, month: number, year: number) => [...TEACHER_KEYS.all, "monthly-attendance", staffId, month, year] as const,
+  sections:               (teacherId: string) => [...TEACHER_KEYS.all, "sections", teacherId] as const,
 };
 
 export const useTeacherDashboard = () =>
@@ -59,13 +63,29 @@ export const useTeacherTodayTimetableV2 = (teacherId: string, options?: { enable
     refetchOnWindowFocus: true,
   });
 
-export const useTeacherLeaveBalance = (staffId?: string) =>
+export const useTeacherSections = (teacherId: string) =>
   useQuery({
-    queryKey: ["teacher", "leave-balance", staffId],
-    queryFn: () => leaveApi.getLeaveBalances(staffId ?? ""),
-    enabled: Boolean(staffId),
+    queryKey: TEACHER_KEYS.sections(teacherId),
+    queryFn: () => getSectionsByTeacherId(teacherId),
+    enabled: Boolean(teacherId),
+    staleTime: 10 * 60_000,
+  });
+
+export const useTeacherLeaveBalance = (staffId?: string, academicYearId?: string) =>
+  useQuery({
+    queryKey: ["teacher", "leave-balance", staffId, academicYearId],
+    queryFn: () => leaveApi.getLeaveBalances(staffId ?? "", academicYearId),
+    enabled: Boolean(staffId) && Boolean(academicYearId),
     staleTime: 5 * 60_000,
     retry: 1,
+  });
+
+export const useTeacherMonthlyAttendance = (staffId: string, month: number, year: number) =>
+  useQuery({
+    queryKey: TEACHER_KEYS.monthlyAttendance(staffId, month, year),
+    queryFn: () => getMonthlyStaffAttendance({ staff_id: staffId, month, year }),
+    enabled: Boolean(staffId),
+    staleTime: 5 * 60_000,
   });
 
 export const useMarkAttendance = () => {

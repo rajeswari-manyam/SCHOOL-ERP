@@ -1,59 +1,45 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-import typography from "@/styles/typography";
-
 import { MonthlyPayrollTab } from "../components/payroll/MonthlyPayRollTab";
 import { SalaryConfigTab } from "../components/salaryconfig/SalaryConfigTab";
 import { PayrollHistoryTab } from "../components/payrollhistory/PayrollHistoryTab";
 import { ProcessPayrollModal } from "../common/ProcessPayroll";
 import { PayslipModal } from "../components/PayslipModal";
-
-import {
-  usePayroll,
-  useSalaryConfig,
-  usePayrollHistory,
-} from "../hooks/usePayrolls";
-
+import { usePayroll, useSalaryConfig, usePayrollHistory, useMonthlyPayrollData } from "../hooks/usePayrolls";
+import { useUIStore } from "@/store/uiStore";
 import type { StaffPayroll } from "../types/payroll.types";
 
-type Tab = "monthly" | "config" | "history";
+type Tab = "structure" | "monthly" | "history";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "monthly", label: "Monthly Payroll" },
-  { id: "config", label: "Salary Config" },
-  { id: "history", label: "Payroll History" },
+  { id: "structure",  label: "Salary Structure"  },
+  { id: "monthly",    label: "Monthly Payroll"   },
+  { id: "history",    label: "Payroll History"   },
 ];
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function PayrollPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("monthly");
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 3, 1));
-  const [showProcessModal, setShowProcessModal] = useState(false);
-  const [showPayslipModal, setShowPayslipModal] = useState(false);
+  const [activeTab, setActiveTab]                       = useState<Tab>("monthly");
+  const [currentMonth, setCurrentMonth]                 = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const [showProcessModal, setShowProcessModal]         = useState(false);
+  const [showPayslipModal, setShowPayslipModal]         = useState(false);
   const [selectedPayslipStaff, setSelectedPayslipStaff] = useState<StaffPayroll | null>(null);
 
-  const {
-    staffData,
-    summary,
-    isProcessed,
-    processedDate,
-    processedBy,
-    processPayroll,
-    getAttendanceDeductions,
-  } = usePayroll();
+  const academicYearName = useUIStore((s) => s.academicYearName);
+
+  const { processPayroll, paySalary, paySelected, getAttendanceDeductions } = usePayroll();
 
   const {
-    salaryData,
-    selectedStaff,
-    isEditing,
-    openEditModal,
-    closeEditModal,
-    updateSalary,
+    staffData, summary, isProcessed, isLoading: monthlyLoading,
+    processedDate, processedBy, generatePayslip, deletePayslip,
+  } = useMonthlyPayrollData(currentMonth.getMonth() + 1, currentMonth.getFullYear());
+  const {
+    salaryData, isLoading: salaryLoading, selectedStaff, isEditing,
+    openEditModal, closeEditModal, updateSalary, deletePayroll, refresh: refreshSalary,
   } = useSalaryConfig();
-
-  const { history, totalPayrollFY, avgMonthlyPayroll, staffCount } =
-    usePayrollHistory();
+  const { history, totalPayrollFY, avgMonthlyPayroll, staffCount } = usePayrollHistory();
 
   const navigate = (dir: -1 | 1) => {
     setCurrentMonth((prev) => {
@@ -63,16 +49,9 @@ export default function PayrollPage() {
     });
   };
 
-  const formattedMonth = currentMonth.toLocaleString("default", {
-    month: "short",
-    year: "numeric",
-  });
+  const formattedMonthShort = currentMonth.toLocaleString("default", { month: "short", year: "numeric" });
 
-  const handleProcessPayroll = (data: {
-    paymentMode: string;
-    paymentDate: string;
-    approvalNote?: string;
-  }) => {
+  const handleProcessPayroll = (data: { paymentMode: string; paymentDate: string; approvalNote?: string }) => {
     processPayroll(data);
     setShowProcessModal(false);
   };
@@ -86,130 +65,138 @@ export default function PayrollPage() {
     if (!selectedPayslipStaff) return null;
     const config = salaryData.find((s) => s.id === selectedPayslipStaff.id);
     return {
-      name: selectedPayslipStaff.name,
-      role: selectedPayslipStaff.role,
-      basic: config?.basic ?? 0,
-      hra: config?.hra ?? 0,
-      transport: config?.transport ?? 0,
-      other: config?.other ?? 0,
-      pfPercentage: config?.pfPercentage ?? 0,
+      name:            selectedPayslipStaff.name,
+      role:            selectedPayslipStaff.role,
+      basic:           config?.basic ?? 0,
+      hra:             config?.hra ?? 0,
+      transport:       config?.transport ?? 0,
+      other:           config?.other ?? 0,
+      pfPercentage:    config?.pfPercentage ?? 0,
       professionalTax: config?.professionalTax ?? 0,
-      gross: selectedPayslipStaff.gross,
-      net: selectedPayslipStaff.net,
-      deductions: selectedPayslipStaff.deductions,
+      gross:           selectedPayslipStaff.gross,
+      net:             selectedPayslipStaff.net,
+      deductions:      selectedPayslipStaff.deductions,
     };
   }, [selectedPayslipStaff, salaryData]);
 
   return (
-    <div className="space-y-4 p-3 md:p-6 bg-[#EFF4FF] min-h-screen">
-      {/* ── Header ── */}
-   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-  <div>
-    <h2 className={typography.heading.h5 + " text-gray-900"}>
-      Payroll Management
-    </h2>
-    <p className={typography.body.xs + " text-gray-500"}>
-      Manage staff salary and monthly payouts
-    </p>
-  </div>
-
-  <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          {/* Month Picker */}
-        <div className="flex items-center justify-between px-3 h-10 rounded-xl bg-white border border-gray-200 w-full md:w-auto">
-  <button onClick={() => navigate(-1)} className="p-2">
-    <ChevronLeft className="w-4 h-4 text-gray-600" />
-  </button>
-
-  <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
-    {formattedMonth}
-  </span>
-
-  <button onClick={() => navigate(1)} className="p-2">
-    <ChevronRight className="w-4 h-4 text-gray-600" />
-  </button>
-</div>
-
-       {activeTab === "monthly" && !isProcessed && (
-  <Button
-    size="sm"
-    className="h-10 w-full md:w-auto text-xs bg-[#3525CD] hover:bg-[#2a1fb5]"
-    onClick={() => setShowProcessModal(true)}
-  >
-    Process Payroll
-  </Button>
-)}
+    <div className="min-h-screen bg-[#EFF4FF]">
+      {/* ── Page Header ── */}
+      <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-lg font-bold text-slate-900">Payroll Management</h1>
+              {academicYearName && (
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EEF2FF] border border-indigo-100 text-[11px] font-semibold text-[#3525CD] whitespace-nowrap">
+                  <BookOpen className="w-3 h-3" />
+                  {academicYearName}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Manage staff salaries · individual & bulk salary processing
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Month Navigator */}
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl px-1 py-1">
+              <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-white transition-colors">
+                <ChevronLeft className="w-4 h-4 text-slate-600" />
+              </button>
+              <span className="text-xs font-semibold text-slate-700 px-2 min-w-[96px] text-center">
+                {formattedMonthShort}
+              </span>
+              <button onClick={() => navigate(1)} className="p-1.5 rounded-lg hover:bg-white transition-colors">
+                <ChevronRight className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
+            {/* Generate Payroll button — only on Monthly tab when not processed */}
+            {activeTab === "monthly" && !isProcessed && (
+              <Button
+                size="sm"
+                className="h-9 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white px-4"
+                onClick={() => setShowProcessModal(true)}
+              >
+                Generate Payroll
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ── Tabs (FIGMA STYLE) ── */}
-<div className="border-b border-gray-200">
-  <div className="flex gap-6 overflow-x-auto no-scrollbar px-1">
-    {TABS.map((tab) => {
-      const isActive = activeTab === tab.id;
+      <div className="p-4 sm:p-6 space-y-5">
+        {/* ── Tab Container ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          {/* Tab Nav */}
+          <div className="border-b border-slate-100 overflow-x-auto">
+            <div className="flex min-w-max">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative px-5 py-4 text-sm font-medium transition-colors whitespace-nowrap ${
+                      isActive ? "text-[#3525CD]" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {tab.label}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-[#3525CD] rounded-t-full" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      return (
-        <button
-          key={tab.id}
-          onClick={() => setActiveTab(tab.id)}
-          className={`
-            relative py-3 whitespace-nowrap text-sm font-medium transition-colors
-            ${
-              isActive
-                ? "text-[#3525CD]"
-                : "text-gray-500 hover:text-gray-700"
-            }
-          `}
-        >
-          {tab.label}
+          {/* Tab Content */}
+          <div className="p-4 sm:p-6">
+            {activeTab === "structure" && (
+              <SalaryConfigTab
+                salaryData={salaryData}
+                isLoading={salaryLoading}
+                isEditing={isEditing}
+                selectedStaff={selectedStaff}
+                onEdit={openEditModal}
+                onClose={closeEditModal}
+                onSave={updateSalary}
+                onDelete={deletePayroll}
+                onRefresh={refreshSalary}
+              />
+            )}
 
-          {/* ACTIVE INDICATOR */}
-          <span
-            className={`
-              absolute left-0 -bottom-[1px] h-[2px] w-full rounded-full transition-all
-              ${isActive ? "bg-[#3525CD]" : "bg-transparent"}
-            `}
-          />
-        </button>
-      );
-    })}
-  </div>
-</div>
+            {activeTab === "monthly" && (
+              <MonthlyPayrollTab
+                staffData={staffData}
+                summary={summary}
+                isProcessed={isProcessed}
+                isLoading={monthlyLoading}
+                processedDate={processedDate}
+                processedBy={processedBy}
+                onStartProcessing={() => setShowProcessModal(true)}
+                onViewPayslip={handleViewPayslip}
+                onGeneratePayslip={generatePayslip}
+                onPaySalary={paySalary}
+                onPaySelected={paySelected}
+                onDeletePayslip={deletePayslip}
+              />
+            )}
 
-      {/* ── Tab Content ── */}
-      {activeTab === "monthly" && (
-        <MonthlyPayrollTab
-          staffData={staffData}
-          summary={summary}
-          isProcessed={isProcessed}
-          processedDate={processedDate}
-          processedBy={processedBy}
-          onStartProcessing={() => setShowProcessModal(true)}
-          onViewPayslip={handleViewPayslip}
-        />
-      )}
+            {activeTab === "history" && (
+              <PayrollHistoryTab
+                history={history}
+                totalPayrollFY={totalPayrollFY}
+                avgMonthlyPayroll={avgMonthlyPayroll}
+                staffCount={staffCount}
+              />
+            )}
+          </div>
+        </div>
+      </div>
 
-      {activeTab === "config" && (
-        <SalaryConfigTab
-          salaryData={salaryData}
-          isEditing={isEditing}
-          selectedStaff={selectedStaff}
-          onEdit={openEditModal}
-          onClose={closeEditModal}
-          onSave={updateSalary}
-          onAdd={() => openEditModal(null)}
-        />
-      )}
-
-      {activeTab === "history" && (
-        <PayrollHistoryTab
-          history={history}
-          totalPayrollFY={totalPayrollFY}
-          avgMonthlyPayroll={avgMonthlyPayroll}
-          staffCount={staffCount}
-        />
-      )}
-
-      {/* ── Modal ── */}
+      {/* ── Modals ── */}
       {showProcessModal && (
         <ProcessPayrollModal
           onClose={() => setShowProcessModal(false)}
@@ -218,11 +205,10 @@ export default function PayrollPage() {
           attendanceDeductions={getAttendanceDeductions()}
         />
       )}
-
       {showPayslipModal && payslipStaff && (
         <PayslipModal
           staff={payslipStaff}
-          month={formattedMonth}
+          month={formattedMonthShort}
           onClose={() => {
             setShowPayslipModal(false);
             setSelectedPayslipStaff(null);

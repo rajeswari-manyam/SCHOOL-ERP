@@ -11,19 +11,10 @@ import {
 } from "recharts";
 import type { MonthlyTrendItem } from "../types/dashboard.types";
 
-const data: MonthlyTrendItem[] = [
-  { month: "NOV", actual: 180000, target: 352000 },
-  { month: "DEC", actual: 210000, target: 352000 },
-  { month: "JAN", actual: 240000, target: 352000 },
-  { month: "FEB", actual: 195000, target: 352000 },
-  { month: "MAR", actual: 320000, target: 352000 },
-  { month: "APR", actual: 352000, target: 352000 },
-];
-
 const formatY = (val: number) =>
     val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : `₹${val / 1000}k`;
 
-export const MonthlyCollectionTrend = () => {
+export const MonthlyCollectionTrend = ({ data }: { data: MonthlyTrendItem[] }) => {
     return (
         <Card className="border border-slate-200 shadow-none rounded-xl hover:border-[#3525CD]">
 

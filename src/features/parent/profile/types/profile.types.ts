@@ -40,6 +40,10 @@ export interface ProfileCardProps {
   initials: string;
   role: string;
   phone: string;
+  email?: string;
+  relation?: string;
+  occupation?: string;
+  address?: string;
   onEdit?: () => void;
 }
 

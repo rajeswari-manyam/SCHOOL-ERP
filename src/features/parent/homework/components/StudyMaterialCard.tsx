@@ -1,11 +1,16 @@
 // src/features/homework/components/StudyMaterialCard.tsx
 
+import { useState, useCallback } from "react";
 import type { StudyMaterial } from "../../../../services/studymaterial.api";
+import { downloadStudyMaterial } from "../../../../services/studymaterial.api";
+import { downloadBlob } from "@/features/school-admin/attendance/utils/attendance.utils";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import typography, { combineTypography } from "@/styles/typography";
 import { Download, Link } from "lucide-react";
+
+import toast from "react-hot-toast";
 
 /* ── File icon config ── */
 type FileIconConfig = { bg: string; color: string; label: string };
@@ -38,15 +43,24 @@ export function StudyMaterialCard({ item }: { item: StudyMaterial }) {
   const iconType = resolveIconType(item);
   const icon     = FILE_ICONS[iconType] ?? FILE_ICONS.pdf;
   const isLink   = iconType === "link";
+  const [downloading, setDownloading] = useState(false);
 
-  const handleAction = () => {
+  const handleAction = useCallback(async () => {
     if (isLink && item.open_link) {
       window.open(item.open_link, "_blank", "noopener,noreferrer");
-    } else if (item.pdf) {
-      window.open(item.pdf, "_blank", "noopener,noreferrer");
+      return;
     }
-  };
-
+    setDownloading(true);
+    try {
+      const blob = await downloadStudyMaterial(item.id);
+      const filename = item.title || "study-material";
+      downloadBlob(blob, filename);
+    } catch {
+      toast.error("Failed to download file");
+    } finally {
+      setDownloading(false);
+    }
+  }, [isLink, item.open_link, item.id, item.title]);
   return (
     <Card className="border border-[#E8EBF2] shadow-none bg-white transition-all duration-200 hover:border-[#3525CD] hover:shadow-md hover:scale-[1.02] group">
       <CardContent className="p-4 flex flex-col gap-3 h-full">
@@ -63,21 +77,31 @@ export function StudyMaterialCard({ item }: { item: StudyMaterial }) {
           </div>
         </div>
 
-        {/* Title — use subject name */}
+        {/* Title */}
         <h3 className={combineTypography(typography.body.small, "font-semibold text-[#0B1C30] leading-snug group-hover:text-[#3525CD]")}>
-          {item.subject?.name ?? item.title}
+          {item.title}
         </h3>
 
+        {/* Description */}
+        {item.description && (
+          <p className={combineTypography(typography.body.xs, "text-gray-500 line-clamp-2")}>
+            {item.description}
+          </p>
+        )}
+
+        {/* Meta: subject · class · section */}
         <p className={combineTypography(typography.body.xs, "text-gray-400 group-hover:text-[#3525CD]/70")}>
+          {item.subject?.name && <span className="font-medium">{item.subject.name}</span>}
+          {item.subject?.name && (item.class?.name || item.section?.name) && " · "}
           {item.class?.name}
-          {item.section?.name ? ` • ${item.section.name}` : ""}
+          {item.section?.name ? ` · ${item.section.name}` : ""}
         </p>
 
-        {/* Download count badge */}
-        {item.download > 0 && (
-          <span className={combineTypography(typography.body.xs, "text-gray-300")}>
-            {item.download} download{item.download !== 1 ? "s" : ""}
-          </span>
+        {/* Teacher */}
+        {item.teacher?.name && (
+          <p className={combineTypography(typography.body.xs, "text-gray-400")}>
+            By {item.teacher.name}
+          </p>
         )}
 
         {isLink ? (
@@ -92,10 +116,11 @@ export function StudyMaterialCard({ item }: { item: StudyMaterial }) {
           <Button
             variant="outline"
             onClick={handleAction}
-            className="mt-auto w-full gap-2 border-[#E8EBF2] text-[#3525CD] hover:border-[#3525CD]"
+            disabled={downloading}
+            className="mt-auto w-full gap-2 border-[#E8EBF2] text-[#3525CD] hover:border-[#3525CD] disabled:opacity-50"
           >
-            <Download size={12} strokeWidth={1.5} />
-            Download
+            <Download size={12} strokeWidth={1.5} className={downloading ? "animate-bounce" : ""} />
+            {downloading ? "Downloading…" : "Download"}
           </Button>
         )}
 

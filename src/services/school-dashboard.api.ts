@@ -707,6 +707,21 @@ export const dashboardApi = {
     }
   },
 
+  /** GET /tenant/getdashboardsummary — collected today, month, weekly, etc. */
+  async getFeeSummary(): Promise<{
+    collected_today: number; month_collection: number; weekly_collection: number;
+    fee_collection: number; other_income: number; total_income: number;
+    total_expense: number; total_pending_fees: number; net_profit: number; net_loss: number;
+  } | null> {
+    try {
+      const { data } = await api.get<{ status: boolean; data: Record<string, number> }>("/tenant/getdashboardsummary");
+      return (data?.status && data?.data) ? data.data as any : null;
+    } catch (err: any) {
+      console.error('[dashboard] GET /tenant/getdashboardsummary FAILED', err?.message);
+      return null;
+    }
+  },
+
   /** GET /tenant/getfeesbyacademicyear/{academicYearId} */
   async getFeesByAcademicYear(academicYearId: string): Promise<AcademicYearListResponse<AcademicYearFeeItem>> {
     try {

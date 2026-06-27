@@ -1,4 +1,5 @@
 import type { FeeHead, TransportSlab, ClassFeeStructure } from "../types/fees.types";
+import type { ConcessionRecord } from "@/services/fee.api";
 import { formatCurrency } from "../utils/Fee.utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ interface FeeStructureTabProps {
   feeHeads: FeeHead[];
   transportSlabs: TransportSlab[];
   classFeeStructure: ClassFeeStructure[];
+  concessions?: ConcessionRecord[];
   selectedClass: string;
   onClassChange: (cls: string) => void;
 }
@@ -76,6 +78,7 @@ export function FeeStructureTab({
   feeHeads,
   transportSlabs,
   classFeeStructure,
+  concessions = [],
   selectedClass,
   onClassChange,
 }: FeeStructureTabProps) {
@@ -83,19 +86,6 @@ export function FeeStructureTab({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-
-      {/* ── Header actions ─────────────────────────────────────────────── */}
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button
-          variant="outline"
-          className="w-full sm:w-auto text-sm font-medium"
-        >
-          + Add Fee Head
-        </Button>
-        <Button className="w-full sm:w-auto text-sm font-medium">
-          💾 Save Fee Structure
-        </Button>
-      </div>
 
       {/* ── Fee Heads + Transport Slabs ────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -336,6 +326,79 @@ export function FeeStructureTab({
           <span className="text-base sm:text-lg font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">
             {formatCurrency(totalAnnual)}
           </span>
+        </div>
+      </Card>
+
+      {/* ── Concessions ───────────────────────────────────────────────── */}
+      <Card>
+        <SectionHead
+          title="Concessions"
+          sub="Fee concessions applied to students for the current academic year."
+        />
+        <div className="overflow-x-auto -mx-1 px-1">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TH>Student</TH>
+                <TH>Fee Head</TH>
+                <TH>Type</TH>
+                <TH>Discount</TH>
+                <TH>Total Amount (₹)</TH>
+                <TH>Payable (₹)</TH>
+                <TH>Period</TH>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {concessions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-xs text-gray-400">
+                    No concessions found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                concessions.map((c) => {
+                  const discountLabel =
+                    c.discountType === "PERCENTAGE"
+                      ? `${c.discountValue}%`
+                      : `₹${(c.discountValue ?? 0).toLocaleString("en-IN")}`;
+                  return (
+                    <TableRow key={c.id} className="border-b border-gray-50 dark:border-slate-800">
+                      <TableCell className="py-2.5 font-medium text-gray-800 dark:text-slate-100 whitespace-nowrap">
+                        {c.studentName ?? "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-gray-600 dark:text-slate-300 whitespace-nowrap">
+                        {c.feeHeadName ?? "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-gray-600 dark:text-slate-300 whitespace-nowrap">
+                        {c.discountType ?? "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5 whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {discountLabel}
+                          </span>
+                          {c.discountAmount != null && (
+                            <span className="text-xs font-medium text-red-500">
+                              - ₹{c.discountAmount.toLocaleString("en-IN")}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2.5 font-semibold text-gray-800 dark:text-slate-100 tabular-nums whitespace-nowrap">
+                        {c.totalAmount != null ? `₹${c.totalAmount.toLocaleString("en-IN")}` : "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5 font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap">
+                        {c.finalAmount != null ? `₹${c.finalAmount.toLocaleString("en-IN")}` : "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-gray-500 dark:text-slate-400 whitespace-nowrap text-xs">
+                        {c.effectiveFrom ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </div>
       </Card>
     </div>

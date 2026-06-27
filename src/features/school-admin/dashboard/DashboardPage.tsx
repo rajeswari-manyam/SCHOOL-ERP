@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import {
   useDashboard, useAdmissionsThisWeek, useSchoolTodayAttendance,
   useAllClassesTodayAttendance, useClassAttendanceStatus,
-  useEnquiriesPipeline, useSendReminders, useActiveAcademicYear,
+  useEnquiriesPipeline, useSendReminders, useActiveAcademicYear, useFeeSummary,
 } from './hooks/index';
 import { useSetupStatus } from './hooks/useSetupStatus';
 import { AlertBanner }         from './components/AlertBanner';
@@ -13,6 +13,7 @@ import { SetupSuggestions }     from './components/SetupSuggestions';
 import { StatsGrid }           from './components/StatsGrid';
 import { AttendanceTable }     from './components/AttendanceTable';
 import { FeesDueSummary }      from './components/FeesDueSummary';
+import { PendingFeesModal }    from './components/PendingFeesModal';
 import { WhatsAppActivityFeed } from './components/WhatsAppActivity';
 import { AdmissionsPipeline }  from './components/AdmissionsPipeline';
 import { DashboardSkeleton }   from './components/DashboardSkeleton';
@@ -47,7 +48,9 @@ export function DashboardPage() {
   const { data: activeAcademicYear }                                    = useActiveAcademicYear();
   const { data: setupItems, isLoading: isSetupLoading }                  = useSetupStatus();
   const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
+  const { data: feeSummary }                                            = useFeeSummary();
   const [setupDismissed, setSetupDismissed]                             = useState(false);
+  const [showPendingModal, setShowPendingModal]                         = useState(false);
 
   const pendingSetupCount = setupItems ? setupItems.filter((i) => !i.done).length : 0;
   const showSetup = !setupDismissed && !isSetupLoading && pendingSetupCount > 0;
@@ -62,6 +65,13 @@ export function DashboardPage() {
       if (stat.id === 'attendance') {
         if (todayAttendance) return { ...stat, value: `${todayAttendance.present}/${todayAttendance.totalStudents}`, sub: `${todayAttendance.absent} absent across ${todayAttendance.classesMarked} classes` };
         return { ...stat, value: '—', sub: 'No data', action: undefined };
+      }
+      if (stat.id === 'fees') {
+        if (feeSummary) {
+          const formatted = `₹${feeSummary.month_collection.toLocaleString('en-IN')}`;
+          return { ...stat, value: formatted, sub: `₹${feeSummary.collected_today.toLocaleString('en-IN')} collected today` };
+        }
+        return { ...stat, value: '—', sub: 'No data' };
       }
       if (stat.id === 'classes') {
         if (classAttendance.length > 0) {
@@ -79,7 +89,7 @@ export function DashboardPage() {
       }
       return stat;
     });
-  }, [data?.stats, admissionsWeek, todayAttendance, classStatus, classAttendance]);
+  }, [data?.stats, admissionsWeek, todayAttendance, classStatus, classAttendance, feeSummary]);
 
   const loadingStatIds = useMemo(() => {
     const ids = new Set<string>();
@@ -119,6 +129,7 @@ export function DashboardPage() {
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -193,9 +204,11 @@ export function DashboardPage() {
           </div>
           <div className="lg:col-span-2">
             <FeesDueSummary
-              totalOutstanding={data.feeTotalOutstanding}
+              totalOutstanding={feeSummary?.total_pending_fees ?? data.feeTotalOutstanding}
+              feeCollected={feeSummary?.fee_collection ?? 0}
               paidPercent={data.feePaidPercent}
               defaulters={data.feeDefaulters}
+              onViewAll={() => setShowPendingModal(true)}
             />
           </div>
         </div>
@@ -207,5 +220,10 @@ export function DashboardPage() {
         </div>
       </div>
     </motion.div>
+
+    {showPendingModal && (
+      <PendingFeesModal onClose={() => setShowPendingModal(false)} />
+    )}
+    </>
   );
 }

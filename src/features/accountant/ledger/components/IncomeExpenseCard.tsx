@@ -13,6 +13,8 @@ export const IncomeExpenseCards = ({
   payrollExpense,
   operatingExpenses,
   type,
+  apiTotalExpenses,
+  apiPaidPayroll,
 }: IncomeExpenseCardsProps) => {
   if (type === "income") {
     const { feePercentage, otherPercentage } = calculateIncomeBreakdown(
@@ -50,7 +52,7 @@ export const IncomeExpenseCards = ({
     );
   }
 
-  const { payrollPercentage, operatingPercentage } =
+  const { payrollPercentage } =
     calculateExpenseBreakdown(
       totalExpense,
       payrollExpense,
@@ -58,29 +60,21 @@ export const IncomeExpenseCards = ({
     );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <StatCard
-        title="Total Expenses April"
-        amount={totalExpense}
+        title="Total Expenses"
+        amount={apiTotalExpenses ?? totalExpense}
         trend="+12% vs last month"
         icon="expense"
         variant="red"
       />
       <StatCard
-        title="Payroll (March Paid)"
-        amount={payrollExpense}
+        title="Payroll Paid"
+        amount={apiPaidPayroll ?? payrollExpense}
         subtitle="Budget Utilization"
         icon="payroll"
         variant="blue"
         progress={payrollPercentage}
-      />
-      <StatCard
-        title="Operating Expenses"
-        amount={operatingExpenses}
-        subtitle="Total Allocation"
-        icon="expense"
-        variant="purple"
-        progress={operatingPercentage}
       />
     </div>
   );

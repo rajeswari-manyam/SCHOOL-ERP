@@ -14,6 +14,10 @@ import type {
   StaffReportResponse,
   GetRecentlyGeneratedReportsResponse,
   DeleteReportResponse,
+  AttendanceReportPayload,
+  AttendanceReportResponse,
+  FeeCollectionReportPayload,
+  FeeCollectionReportResponse,
 } from "../features/school-admin/reports/types/reports.types";
 
 // ─── Map reportype string → ReportType enum ───────────────────────────────────
@@ -27,7 +31,7 @@ const REPORT_TYPE_MAP: Record<string, ReportType> = {
   student:                  "STUDENT",
   "student report":         "STUDENT",
   "students report":        "STUDENT",
-  whatsapp:                 "WHATSAPP_ACTIVITY",
+  "whatsapp":                 "WHATSAPP_ACTIVITY",
   "whatsapp activity":      "WHATSAPP_ACTIVITY",
   admissions:               "ADMISSIONS",
   "admissions report":      "ADMISSIONS",
@@ -66,11 +70,17 @@ function normalise(raw: RawReport): GeneratedReport {
 
 export const reportsApi = {
 
-  /** GET /tenant/getallreports */
+  /** GET /tenant/getallreports — returns mapped GeneratedReport[] */
   getAll: async (): Promise<GeneratedReport[]> => {
     const { data } = await api.get<GetAllReportsResponse>("/tenant/getallreports");
     const list: RawReport[] = Array.isArray(data?.data) ? data.data : [];
     return list.map(normalise);
+  },
+
+  /** GET /tenant/getallreports — returns raw RawReport[] for the table */
+  getAllRaw: async (): Promise<RawReport[]> => {
+    const { data } = await api.get<GetAllReportsResponse>("/tenant/getallreports");
+    return Array.isArray(data?.data) ? data.data : [];
   },
 
   /** POST /tenant/createreports */
@@ -94,16 +104,34 @@ export const reportsApi = {
     return data.data;
   },
 
-  /** Download — fetches metadata and triggers a JSON download since no file URL exists */
-  download: async (reportId: string): Promise<void> => {
-    const raw = await reportsApi.getById(reportId);
-    const blob = new Blob([JSON.stringify(raw, null, 2)], { type: "application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `report-${raw.reportype.replace(/\s+/g, "-")}-${reportId.slice(0, 8)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  /** GET /tenant/downloadreport/:id — returns blob + resolved filename */
+  download: async (reportId: string): Promise<{ blob: Blob; filename: string }> => {
+    const response = await api.get(`/tenant/downloadreport/${reportId}`, {
+      responseType: "blob",
+    });
+    const blob: Blob = response.data;
+
+    // 1. Try Content-Disposition: attachment; filename="report.csv"
+    const disposition = String(response.headers["content-disposition"] ?? "");
+    const nameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (nameMatch) {
+      return { blob, filename: nameMatch[1].replace(/['"]/g, "").trim() };
+    }
+
+    // 2. Derive extension from Content-Type
+    const contentType = String(response.headers["content-type"] ?? "");
+    const ext = contentType.includes("pdf")  ? ".pdf"
+              : contentType.includes("csv")  ? ".csv"
+              : contentType.includes("json") ? ".json"
+              : ".csv"; // API always returns CSV
+
+    return { blob, filename: `report-${reportId.slice(0, 8)}${ext}` };
+  },
+
+  /** POST /tenant/attendance-report — generate attendance report */
+  generateAttendanceReport: async (payload: AttendanceReportPayload): Promise<AttendanceReportResponse> => {
+    const { data } = await api.post<AttendanceReportResponse>("/tenant/attendance-report", payload);
+    return data;
   },
 
   /** POST /tenant/student-report — generate student report */
@@ -127,6 +155,12 @@ export const reportsApi = {
   /** DELETE /tenant/deletereportById/:id */
   delete: async (id: string): Promise<DeleteReportResponse> => {
     const { data } = await api.delete<DeleteReportResponse>(`/tenant/deletereportById/${id}`);
+    return data;
+  },
+
+  /** POST /tenant/monthlyfeecollectionreport */
+  monthlyFeeCollectionReport: async (payload: FeeCollectionReportPayload): Promise<FeeCollectionReportResponse> => {
+    const { data } = await api.post<FeeCollectionReportResponse>("/tenant/monthlyfeecollectionreport", payload);
     return data;
   },
 };

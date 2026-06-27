@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
+import { logout as logoutApi } from "@/services/auth.api";
 import {
     Bell,
     LogOut,
@@ -29,16 +31,16 @@ const navLinks = [
 ];
 
 interface ParentTopNavBarProps {
-    activeChild: {
-        id?: number | string;
-        name?: string;
-        class?: string;
-        school?: string;
-        avatar?: string;
-    };
-    onSwitchChild: () => void;
+  activeChild: {
+    id?: number | string;
+    studentId?: number | string;
+    name?: string;
+    class?: string;
+    school?: string;
+    avatar?: string;
+  };
+  onSwitchChild: () => void;
 }
-
 const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -46,7 +48,9 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
     const [notifOpen, setNotifOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
 
-    const studentId = activeChild?.id ? String(activeChild.id) : "";
+   const studentId = activeChild?.studentId
+  ? String(activeChild.studentId)
+  : String(activeChild.id ?? "");
     const { student } = useStudentById(studentId);
 
     // ✅ Close all dropdowns on route change — prevents overlay blocking clicks
@@ -56,7 +60,11 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
         setMobileOpen(false);
     }, [location.pathname]);
 
+    const storeLogout = useAuthStore((s) => s.logout);
+
     const handleLogout = () => {
+        logoutApi().catch(() => {}); // fire-and-forget — don't block on server response
+        storeLogout();
         navigate("/login");
     };
 
@@ -155,7 +163,7 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                             </button>
 
                             {notifOpen && (
-                                <div className="absolute right-0 top-11 w-72 bg-white border border-[#E8EBF2] rounded-xl shadow-lg py-2 z-50">
+                                <div className="absolute right-0 top-11 w-72 max-w-[calc(100vw-1rem)] bg-white border border-[#E8EBF2] rounded-xl shadow-lg py-2 z-[55]">
                                     <p className={`${typography.body.small} font-medium text-[#0B1C30] px-4 py-2`}>
                                         Notifications
                                     </p>
@@ -197,7 +205,7 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                             </button>
 
                             {profileOpen && (
-                                <div className="absolute right-0 top-11 w-48 bg-white border border-[#E8EBF2] rounded-xl shadow-lg py-1.5 z-50">
+                                <div className="absolute right-0 top-11 w-48 bg-white border border-[#E8EBF2] rounded-xl shadow-lg py-1.5 z-[55]">
                                     <Link
                                         to="/parent/profile"
                                         onClick={() => setProfileOpen(false)}
@@ -233,10 +241,10 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                             )}
                         </div>
 
-                        {/* Logout icon — xs only */}
+                        {/* Logout icon — xs only (rendered last so it's on top of backdrop) */}
                         <button
                             onClick={handleLogout}
-                            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#F4F6FA] text-[#6B7280] hover:text-red-500 transition"
+                            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full hover:bg-[#F4F6FA] text-[#6B7280] hover:text-red-500 transition relative z-[60]"
                         >
                             <LogOut size={16} />
                         </button>
@@ -329,7 +337,7 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
        
 {(notifOpen || profileOpen) && (
   <div
-    className="fixed inset-0 z-50"
+    className="fixed inset-0 z-40"
     onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
   />
 )}

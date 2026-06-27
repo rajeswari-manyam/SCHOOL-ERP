@@ -28,6 +28,10 @@ export default function ProfilePage() {
   const {
     parentName,
     parentPhone,
+    parentEmail,
+    parentRelation,
+    parentOccupation,
+    parentAddress,
     contact,
     notifications,
     children,
@@ -172,6 +176,10 @@ export default function ProfilePage() {
               initials={initials}
               role="Parent"
               phone={parentPhone}
+              email={parentEmail}
+              relation={parentRelation}
+              occupation={parentOccupation}
+              address={parentAddress}
               onEdit={() => setIsEditing(true)}
             />
             <ChildrenCard children={children} />

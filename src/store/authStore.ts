@@ -6,40 +6,44 @@ import type { AuthUser, UserType, GetUserByIdResponse } from "@/features/auth/ty
 // ── API userType  →  dashboard route ─────────────────────────────────────────
 export const USER_TYPE_ROUTE_MAP: Record<string, string> = {
   // PascalCase (from API)
-  SuperAdmin:  "/superadmin/dashboard",
-  Admin:       "/schooladmin/dashboard",
-  SchoolAdmin: "/schooladmin/dashboard",
-  Teacher:     "/teacher/dashboard",
-  Accountant:  "/accountant/dashboard",
-  Parent:      "/parent/dashboard",
-  Student:     "/student/dashboard",
+  SuperAdmin:       "/superadmin/dashboard",
+  Admin:            "/schooladmin/dashboard",
+  SchoolAdmin:      "/schooladmin/dashboard",
+  Teacher:          "/teacher/dashboard",
+  "Class Teacher":  "/teacher/dashboard",
+  Accountant:       "/accountant/dashboard",
+  Parent:           "/parent/dashboard",
+  Student:          "/student/dashboard",
   // lowercase (safe fallbacks)
-  superadmin:  "/superadmin/dashboard",
-  admin:       "/schooladmin/dashboard",
-  schooladmin: "/schooladmin/dashboard",
-  teacher:     "/teacher/dashboard",
-  accountant:  "/accountant/dashboard",
-  parent:      "/parent/dashboard",
-  student:     "/student/dashboard",
+  superadmin:       "/superadmin/dashboard",
+  admin:            "/schooladmin/dashboard",
+  schooladmin:      "/schooladmin/dashboard",
+  teacher:          "/teacher/dashboard",
+  "class teacher":  "/teacher/dashboard",
+  accountant:       "/accountant/dashboard",
+  parent:           "/parent/dashboard",
+  student:          "/student/dashboard",
 };
 
 // ── API userType  →  lowercase role key (used in ProtectedRoute) ─────────────
 export const USER_TYPE_ROLE_MAP: Record<string, string> = {
-  SuperAdmin:  "superadmin",
-  Admin:       "schooladmin",
-  SchoolAdmin: "schooladmin",
-  Teacher:     "teacher",
-  Accountant:  "accountant",
-  Parent:      "parent",
-  Student:     "student",
+  SuperAdmin:       "superadmin",
+  Admin:            "schooladmin",
+  SchoolAdmin:      "schooladmin",
+  Teacher:          "teacher",
+  "Class Teacher":  "teacher",
+  Accountant:       "accountant",
+  Parent:           "parent",
+  Student:          "student",
   // already lowercase — pass through
-  superadmin:  "superadmin",
-  admin:       "schooladmin",
-  schooladmin: "schooladmin",
-  teacher:     "teacher",
-  accountant:  "accountant",
-  parent:      "parent",
-  student:     "student",
+  superadmin:       "superadmin",
+  admin:            "schooladmin",
+  schooladmin:      "schooladmin",
+  teacher:          "teacher",
+  "class teacher":  "teacher",
+  accountant:       "accountant",
+  parent:           "parent",
+  student:          "student",
 };
 
 // ── Store interface ───────────────────────────────────────────────────────────
@@ -49,14 +53,11 @@ interface AuthState {
   userType: UserType | null;
   role: string | null;           // lowercase role key, e.g. "teacher"
 
-  // Called right after LOGIN API — saves userType before OTP
+  
   setLoginMeta: (userType: UserType, phone: string, schoolcode: string) => void;
 
-  // Called after OTP verify — saves full session
   setAuth: (user: AuthUser, token: string) => void;
 
-  // ⬇️  login() — backward-compatible alias used by old OtpPage code
-  //    login(token, user, rawRole)  where rawRole can be "Teacher" or "teacher"
   login: (token: string, user: Partial<AuthUser>, rawRole: string) => void;
 
   // Called after getUserById — merges full profile into user

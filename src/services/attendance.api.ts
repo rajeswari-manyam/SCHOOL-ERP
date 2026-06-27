@@ -454,6 +454,14 @@ export const getAllStaffAttendance = async (): Promise<GetAllStaffAttendanceResp
   return data;
 };
 
+/** GET /tenant/getstaffattendanceByStaffId/{staffId} */
+export const getStaffAttendanceByStaffId = async (
+  staffId: string
+): Promise<GetAllStaffAttendanceResponse> => {
+  const { data } = await api.get(`/tenant/getstaffattendanceByStaffId/${staffId}`);
+  return data;
+};
+
 /** GET /tenant/getstaffattendanceById/{id} */
 export const getStaffAttendanceById = async (
   id: string

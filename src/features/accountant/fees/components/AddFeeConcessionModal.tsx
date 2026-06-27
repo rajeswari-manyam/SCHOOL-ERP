@@ -1,44 +1,88 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Search, Pencil } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import typography from "@/styles/typography";
-import {
-  CONCESSION_TYPES,
-  FEE_TYPES,
-  DEFAULT_STUDENT,
-} from "../constants/fee.constants";
+import { toast } from "sonner";
+import { CONCESSION_TYPES } from "../constants/fee.constants";
+import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
+import type { ClassRecord, SectionRecord } from "@/services/class.api";
+import { getStudentsByClassSection, getFeeStructures, addConcession, updateConcession } from "@/services/fee.api";
 
+interface ConcessionRecord {
+  id: string;
+  studentId?: string;
+  feeStructureId?: string;
+  concessionType?: string;
+  discountType?: string;
+  discountValue?: number;
+  reason?: string;
+  effectiveFrom?: string;
+  effectiveUntil?: string;
+  studentName?: string;
+}
 
+interface FeeHeadMappingDTO {
+  id: string;
+  feeHeadName: string;
+  className: string;
+  classId: string;
+  sectionName: string | null;
+  sectionId: string | null;
+  amount: number;
+  billingCycle?: string;
+}
 
-const schema = z.object({
-  student: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      class: z.string(),
-      admissionId: z.string(),
-      initials: z.string(),
-    })
-    .nullable(),
+// ── Add schema ────────────────────────────────────────────────────────────────
+const addSchema = z.object({
+  studentId:      z.string().min(1, "Select a student"),
+  feeStructureId: z.string().min(1, "Select a fee structure"),
   concessionType: z.string().min(1, "Required"),
-  amountType: z.enum(["fixed", "percentage"]),
-  amount: z.string().min(1, "Required"),
-  applicableFees: z.array(z.string()).min(1, "Select at least one fee"),
-  reason: z.string().min(1, "Reason is required"),
-  effectiveFrom: z.string().min(1, "Required"),
+  discountType:   z.enum(["percentage", "fixed"]),
+  discountValue:  z.string().min(1, "Required"),
+  reason:         z.string().min(1, "Reason is required"),
+  effectiveFrom:  z.string().min(1, "Required"),
   effectiveUntil: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof schema>;
+// ── Edit schema ───────────────────────────────────────────────────────────────
+const editSchema = z.object({
+  studentId:      z.string().optional(),
+  feeStructureId: z.string().optional(),
+  concessionType: z.string().min(1, "Required"),
+  discountType:   z.enum(["percentage", "fixed"]),
+  discountValue:  z.string().min(1, "Required"),
+  reason:         z.string().min(1, "Reason is required"),
+  effectiveFrom:  z.string().min(1, "Required"),
+  effectiveUntil: z.string().optional(),
+});
 
-export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
-  const [selectedStudent, setSelectedStudent] = useState<FormValues["student"]>(
-    DEFAULT_STUDENT
-  );
+type AddFormValues = z.infer<typeof addSchema>;
+type FormValues    = AddFormValues;
+
+interface Props {
+  onClose: () => void;
+  onSuccess?: () => void;
+  editData?: ConcessionRecord;
+}
+
+export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
+  const isEdit = !!editData;
+
+  // ── Student cascade filters (not form fields) ──────────────────────────────
+  const [classFilter, setClassFilter]     = useState("");
+  const [sectionFilter, setSectionFilter] = useState("");
+  const [classes,  setClasses]            = useState<ClassRecord[]>([]);
+  const [sections, setSections]           = useState<SectionRecord[]>([]);
+  const [students, setStudents]           = useState<{ id: string; label: string }[]>([]);
+
+  // ── Fee structures for selected class ────────────────────────────────────
+  const [feeStructures, setFeeStructures] = useState<FeeHeadMappingDTO[]>([]);
+  const [selectedStructure, setSelectedStructure] = useState<FeeHeadMappingDTO | null>(null);
+
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     register,
@@ -47,225 +91,335 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(isEdit ? editSchema : addSchema) as any,
     defaultValues: {
-      student: DEFAULT_STUDENT,
-      concessionType: "Sibling Discount",
-      amountType: "fixed",
-      amount: "1000",
-      applicableFees: ["tuition"],
-      reason: "",
-      effectiveFrom: "01 Apr 2025",
-      effectiveUntil: "31 Mar 2026",
+      studentId:      "",
+      feeStructureId: "",
+      concessionType: editData?.concessionType ?? CONCESSION_TYPES[0],
+      discountType:   (editData?.discountType === "PERCENTAGE" ? "percentage" : "fixed") as "percentage" | "fixed",
+      discountValue:  editData?.discountValue != null ? String(editData.discountValue) : "",
+      reason:         editData?.reason ?? "",
+      effectiveFrom:  editData?.effectiveFrom  ?? "",
+      effectiveUntil: editData?.effectiveUntil ?? "",
     },
   });
 
-  const values = watch();
+  const watchStudentId      = watch("studentId");
+  const watchFeeStructureId = watch("feeStructureId");
+  const watchDiscountType   = watch("discountType");
+  const watchDiscountValue  = watch("discountValue");
 
- 
+  // Load classes on mount (add mode)
+  useEffect(() => {
+    if (!isEdit) {
+      getAllClasses().then((r) => setClasses(r.data ?? [])).catch(() => {});
+    }
+  }, [isEdit]);
 
-  const toggleFee = (feeId: string) => {
-    const current = values.applicableFees || [];
-    if (feeId === "all") {
-      setValue(
-        "applicableFees",
-        current.includes("all") ? ["tuition"] : FEE_TYPES.map((f) => f.id)
-      );
+  // Load sections when class filter changes
+  useEffect(() => {
+    if (!classFilter) {
+      setSections([]);
+      setStudents([]);
+      setFeeStructures([]);
+      setSelectedStructure(null);
       return;
     }
-    setValue(
-      "applicableFees",
-      current.includes(feeId)
-        ? current.filter((id) => id !== feeId)
-        : [...current, feeId]
-    );
+    getSectionsByClassId(classFilter)
+      .then((r) => setSections(Array.isArray(r.data) ? r.data : []))
+      .catch(() => {});
+  }, [classFilter]);
+
+  // Load students when class + section filter changes
+  useEffect(() => {
+    if (!classFilter || !sectionFilter) { setStudents([]); return; }
+    getStudentsByClassSection(classFilter, sectionFilter)
+      .then((res) => {
+        if (res.status && Array.isArray(res.data)) {
+          setStudents(res.data.map((s) => ({ id: s.id, label: `${s.first_name} ${s.last_name} (${s.admission_number})` })));
+        }
+      })
+      .catch(() => {});
+  }, [classFilter, sectionFilter]);
+
+  // Load fee structures when class filter changes
+  useEffect(() => {
+    if (!classFilter) { setFeeStructures([]); return; }
+    getFeeStructures({ class_id: classFilter, section_id: "", fromDate: "2020-01-01", toDate: "2030-12-31" })
+      .then((res) => {
+        if (res.status && Array.isArray(res.data)) {
+          setFeeStructures(res.data.map((m) => ({
+            id: m.id,
+            feeHeadName: m.feeHeadName,
+            className: m.className,
+            classId: m.classId,
+            sectionName: m.sectionName,
+            sectionId: m.sectionId,
+            amount: m.amount,
+            billingCycle: m.billingCycle,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, [classFilter]);
+
+  // Track selected structure
+  useEffect(() => {
+    if (!watchFeeStructureId) { setSelectedStructure(null); return; }
+    const found = feeStructures.find((f) => f.id === watchFeeStructureId) ?? null;
+    setSelectedStructure(found);
+  }, [watchFeeStructureId, feeStructures]);
+
+  // Calculate preview amount
+  const previewAmount = (() => {
+    if (!selectedStructure || !watchDiscountValue) return null;
+    const val = Number(watchDiscountValue);
+    if (isNaN(val) || val <= 0) return null;
+    if (watchDiscountType === "percentage") {
+      return Math.round((val / 100) * selectedStructure.amount);
+    }
+    return Math.min(val, selectedStructure.amount);
+  })();
+
+  const onSubmit = async (data: FormValues) => {
+    setSubmitting(true);
+    try {
+      const payload = {
+        studentId: data.studentId,
+        feeStructureId: data.feeStructureId,
+        concessionType: data.concessionType,
+        discountType: (data.discountType === "percentage" ? "PERCENTAGE" : "FIXED") as "PERCENTAGE" | "FIXED",
+        discountValue: Number(data.discountValue),
+        reason: data.reason,
+        effectiveFrom: data.effectiveFrom,
+        effectiveUntil: data.effectiveUntil || undefined,
+      };
+      if (isEdit && editData) {
+        await updateConcession(editData.id, payload);
+      } else {
+        await addConcession(payload);
+      }
+      toast.success(isEdit ? "Concession updated successfully" : "Concession added successfully");
+      onSuccess?.();
+      onClose();
+    } catch {
+      toast.error("Failed to save concession");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Submitted:", data);
-    onClose();
-  };
-
-  const clearStudent = () => {
-    setSelectedStudent(null);
-    setValue("student", null);
-  };
-
-
+  const selectCls =
+    "w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white " +
+    "focus:outline-none focus:ring-2 focus:ring-[#3525CD]/20 focus:border-[#3525CD] disabled:bg-gray-50 disabled:text-gray-400";
+  const inputCls =
+    "w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white " +
+    "focus:outline-none focus:ring-2 focus:ring-[#3525CD]/20 focus:border-[#3525CD]";
+  const errorCls = "text-red-500 text-[11px] mt-1";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm px-2 sm:px-4">
       <form
         onSubmit={handleSubmit(onSubmit)}
-     className="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full max-w-[480px] h-[95vh] md:h-auto md:max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full max-w-[520px] h-[95vh] md:h-auto md:max-h-[92vh] overflow-y-auto"
       >
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
-          <div>
-            <h2 className={typography.heading.h6}>Add fee concession</h2>
-            <p className={`${typography.body.xs} text-gray-500 mt-0.5`}>
-              Concession requires principal approval
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5"
-          >
+        {/* Header */}
+        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <h2 className={typography.heading.h6}>
+            {isEdit ? "Edit Concession" : "Add Fee Concession"}
+          </h2>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 mt-0.5">
             <X size={18} />
           </button>
         </div>
 
-        <div className="px-3 sm:px-5 py-3 sm:py-4 space-y-4">
-          {/* ── Student ── */}
-          <div>
-            <label className={`${typography.form.label} text-gray-700`}>
-              Student <span className="text-red-500">*</span>
-            </label>
+        <div className="px-5 py-4 space-y-4">
 
-            {!selectedStudent ? (
-              <div className="relative mt-1.5">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <Input
-                  type="text"
-                  placeholder="Search by name or admission ID..."
-                  className="pl-8"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2.5 mt-1.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
-                    {selectedStudent.initials}
-                  </div>
-                  <div>
-                    <p className={`${typography.body.small} font-semibold text-gray-900`}>
-                      {selectedStudent.name}
-                    </p>
-                    <p className={`${typography.body.xs} text-gray-500`}>
-                      {selectedStudent.class}&nbsp;·&nbsp;ID:{" "}
-                      {selectedStudent.admissionId}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearStudent}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <Pencil size={14} />
-                </button>
-              </div>
-            )}
-
-            {errors.student && (
-              <p className={typography.form.error}>{errors.student.message}</p>
-            )}
-          </div>
-
-          {/* ── Concession Type ── */}
-          <div>
-            <label className={`${typography.form.label} text-gray-700`}>
-              Concession type <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register("concessionType")}
-              className="w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              {CONCESSION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            {errors.concessionType && (
-              <p className={typography.form.error}>
-                {errors.concessionType.message}
-              </p>
-            )}
-          </div>
-
-          {/* ── Amount Type + Amount ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* ── Student Section ────────────────────────────────────────────── */}
+          {isEdit ? (
             <div>
-              <label className={`${typography.form.label} text-gray-700`}>
-                Amount type <span className="text-red-500">*</span>
-              </label>
-              <div className="flex mt-1.5 border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setValue("amountType", "fixed")}
-                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    values.amountType === "fixed"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  Fixed amount
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setValue("amountType", "percentage")}
-                  className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    values.amountType === "percentage"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  Percentage
-                </button>
+              <label className={`${typography.form.label} text-gray-700`}>Student</label>
+              <div className="mt-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-800">
+                {editData!.studentName}
               </div>
             </div>
+          ) : (
+            <div className="space-y-3 rounded-xl border border-[#EFF4FF] bg-[#F8FAFF] p-4">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                Find Student
+              </p>
 
+              {/* Class filter */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`${typography.form.label} text-gray-600`}>Class</label>
+                  <select
+                    value={classFilter}
+                    onChange={(e) => { setClassFilter(e.target.value); setSectionFilter(""); setValue("studentId", ""); setValue("feeStructureId", ""); }}
+                    className={selectCls}
+                  >
+                    <option value="">All Classes</option>
+                    {classes.map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={`${typography.form.label} text-gray-600`}>Section</label>
+                  <select
+                    value={sectionFilter}
+                    onChange={(e) => { setSectionFilter(e.target.value); setValue("studentId", ""); setValue("feeStructureId", ""); }}
+                    disabled={!classFilter}
+                    className={selectCls}
+                  >
+                    <option value="">All Sections</option>
+                    {sections.map((s) => <option key={s.id} value={s.id}>{s.sectionName}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Student required field */}
+              <div>
+                <label className={`${typography.form.label} text-gray-700`}>
+                  Student <span className="text-red-500">*</span>
+                </label>
+                <select
+                  {...register("studentId")}
+                  className={selectCls}
+                  disabled={!classFilter}
+                >
+                  <option value="">Select student…</option>
+                  {students.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                </select>
+                {errors.studentId && <p className={errorCls}>{errors.studentId.message}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* ── Fee Structure (filtered by student) ──────────────────────── */}
+          {!isEdit && (
             <div>
               <label className={`${typography.form.label} text-gray-700`}>
-                Amount <span className="text-red-500">*</span>
+                Fee Structure <span className="text-red-500">*</span>
               </label>
-              <div className="relative mt-1.5">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 select-none pointer-events-none z-10">
-                  {values.amountType === "fixed" ? "Rs." : "%"}
-                </span>
-                <Input {...register("amount")} className="pl-8" />
-              </div>
-              {errors.amount && (
-                <p className={typography.form.error}>{errors.amount.message}</p>
+              <select
+                {...register("feeStructureId")}
+                disabled={!watchStudentId || feeStructures.length === 0}
+                className={selectCls}
+              >
+                <option value="">
+                  {!watchStudentId
+                    ? "Select a student first…"
+                    : feeStructures.length === 0
+                    ? "No fee structures assigned"
+                    : "Select fee structure…"}
+                </option>
+                {feeStructures.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.feeHeadName} — ₹{f.amount?.toLocaleString("en-IN")}
+                  </option>
+                ))}
+              </select>
+              {errors.feeStructureId && <p className={errorCls}>{errors.feeStructureId.message}</p>}
+              {selectedStructure && (
+                <div className="mt-2 flex items-center gap-3 text-xs text-gray-500 bg-[#EFF4FF] rounded-lg px-3 py-2">
+                  <span>Original: <strong className="text-gray-800">₹{selectedStructure.amount?.toLocaleString("en-IN")}</strong></span>
+                  <span className="w-px h-4 bg-gray-300" />
+                  <span>{selectedStructure.billingCycle}</span>
+                </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* ── Applicable Fees ── */}
+          {/* ── Concession Type ───────────────────────────────────────────── */}
           <div>
             <label className={`${typography.form.label} text-gray-700`}>
-              Applicable on <span className="text-red-500">*</span>
+              Concession Type <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2.5 gap-x-4 mt-2">
-              {FEE_TYPES.map((fee) => (
-                <label
-                  key={fee.id}
-                  className={`flex items-center gap-2 ${typography.body.small} text-gray-700 cursor-pointer`}
-                >
-                  {/* Use native <input type="checkbox"> — not the Input component */}
+            <select {...register("concessionType")} className={selectCls}>
+              {CONCESSION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            {errors.concessionType && <p className={errorCls}>{errors.concessionType.message}</p>}
+          </div>
+
+          {/* ── Discount Type ─────────────────────────────────────────────── */}
+          <div>
+            <label className={`${typography.form.label} text-gray-700`}>
+              Discount Type <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4 mt-2">
+              {(["percentage", "fixed"] as const).map((type) => (
+                <label key={type} className="flex items-center gap-2 cursor-pointer">
                   <input
-                    type="checkbox"
-                    checked={values.applicableFees?.includes(fee.id) || false}
-                    onChange={() => toggleFee(fee.id)}
-                    className="w-3.5 h-3.5 accent-blue-600 rounded cursor-pointer"
+                    type="radio"
+                    {...register("discountType")}
+                    value={type}
+                    className="accent-[#3525CD]"
                   />
-                  {fee.label}
+                  <span className="text-sm text-gray-700 capitalize">
+                    {type === "percentage" ? "Percentage (%)" : "Fixed Amount (₹)"}
+                  </span>
                 </label>
               ))}
             </div>
-            {errors.applicableFees && (
-              <p className={typography.form.error}>
-                {errors.applicableFees.message}
-              </p>
+          </div>
+
+          {/* ── Discount Value ────────────────────────────────────────────── */}
+          <div>
+            <label className={`${typography.form.label} text-gray-700`}>
+              Discount Value <span className="text-red-500">*</span>
+            </label>
+            <div className="relative mt-1.5">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                {watchDiscountType === "percentage" ? "%" : "₹"}
+              </span>
+              <input
+                {...register("discountValue")}
+                type="number"
+                min="0"
+                max={watchDiscountType === "percentage" ? "100" : undefined}
+                placeholder={watchDiscountType === "percentage" ? "e.g. 20" : "e.g. 1000"}
+                className={`${inputCls} pl-8`}
+              />
+            </div>
+            {errors.discountValue && <p className={errorCls}>{errors.discountValue.message}</p>}
+
+            {/* Balance summary card */}
+            {selectedStructure && (
+              <div className="mt-3 rounded-xl border border-indigo-100 bg-[#F8FAFF] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-indigo-100">
+                  <span className="text-xs text-gray-500">Original Amount</span>
+                  <span className="text-sm font-semibold text-gray-800">
+                    ₹{selectedStructure.amount.toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-indigo-100">
+                  <span className="text-xs text-gray-500">
+                    Discount{" "}
+                    {previewAmount != null && watchDiscountType === "percentage"
+                      ? `(${watchDiscountValue}%)`
+                      : previewAmount != null
+                      ? "(Fixed)"
+                      : ""}
+                  </span>
+                  <span className={`text-sm font-semibold ${previewAmount != null ? "text-red-500" : "text-gray-300"}`}>
+                    {previewAmount != null
+                      ? `- ₹${previewAmount.toLocaleString("en-IN")}`
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3 bg-[#EEF2FF]">
+                  <span className="text-sm font-bold text-[#3525CD]">Remaining Balance</span>
+                  <span className="text-base font-extrabold text-[#3525CD]">
+                    {previewAmount != null
+                      ? `₹${(selectedStructure.amount - previewAmount).toLocaleString("en-IN")}`
+                      : `₹${selectedStructure.amount.toLocaleString("en-IN")}`}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* ── Reason ── */}
+          {/* ── Reason ───────────────────────────────────────────────────── */}
           <div>
             <label className={`${typography.form.label} text-gray-700`}>
               Reason <span className="text-red-500">*</span>
@@ -274,41 +428,42 @@ export function AddFeeConcessionModal({ onClose }: { onClose: () => void }) {
               {...register("reason")}
               rows={3}
               placeholder="Reason for granting concession"
-              className={`w-full mt-1.5 px-3 py-2 ${typography.form.input} border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-gray-400`}
+              className={`w-full mt-1.5 px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#3525CD]/20 focus:border-[#3525CD] placeholder:text-gray-400`}
             />
-            {errors.reason && (
-              <p className={typography.form.error}>{errors.reason.message}</p>
-            )}
+            {errors.reason && <p className={errorCls}>{errors.reason.message}</p>}
           </div>
 
-          {/* ── Dates ── */}
+          {/* ── Dates ────────────────────────────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={`${typography.form.label} text-gray-700`}>
-                Effective from <span className="text-red-500">*</span>
+                Effective From <span className="text-red-500">*</span>
               </label>
-              <Input {...register("effectiveFrom")} className="mt-1.5" />
-              {errors.effectiveFrom && (
-                <p className={typography.form.error}>
-                  {errors.effectiveFrom.message}
-                </p>
-              )}
+              <input {...register("effectiveFrom")} type="date" className={inputCls} />
+              {errors.effectiveFrom && <p className={errorCls}>{errors.effectiveFrom.message}</p>}
             </div>
             <div>
-              <label className={`${typography.form.label} text-gray-700`}>
-                Effective until
-              </label>
-              <Input {...register("effectiveUntil")} className="mt-1.5" />
+              <label className={`${typography.form.label} text-gray-700`}>Effective Until</label>
+              <input {...register("effectiveUntil")} type="date" className={inputCls} />
             </div>
           </div>
+
         </div>
 
-        {/* ── Footer ── */}
-       <div className="flex flex-col sm:flex-row gap-2 px-3 sm:px-5 py-3 sm:py-4 border-t border-gray-100"> 
-          <Button type="button" variant="outline" onClick={onClose}>
+        {/* Footer */}
+        <div className="flex flex-col sm:flex-row gap-2 px-5 py-4 border-t border-gray-100 sticky bottom-0 bg-white">
+          <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button type="submit">Add concession</Button>
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full sm:w-auto bg-[#3525CD] hover:bg-[#2d1fb5] text-white disabled:opacity-60"
+          >
+            {submitting
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : isEdit ? "Update Concession" : "Add Concession"}
+          </Button>
         </div>
       </form>
     </div>

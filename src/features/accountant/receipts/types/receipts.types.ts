@@ -38,6 +38,8 @@ export type Student = {
   fatherName: string;
   parentContact: string;
   avatar: string;
+  classId?: string;
+  sectionId?: string;
 };
 
 export type GenerateReceiptModalProps = {

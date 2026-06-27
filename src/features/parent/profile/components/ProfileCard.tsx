@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Phone, Pencil } from "lucide-react";
+import { Phone, Mail, MapPin, Briefcase, Pencil } from "lucide-react";
 
 import type { ProfileCardProps } from "../types/profile.types";
 export function ProfileCard({
@@ -7,6 +7,10 @@ export function ProfileCard({
   initials,
   role,
   phone,
+  email,
+  relation,
+  occupation,
+  address,
   onEdit,
 }: ProfileCardProps) {
   return (
@@ -37,18 +41,37 @@ export function ProfileCard({
           {name}
         </p>
 
-        {/* ROLE */}
+        {/* ROLE / RELATION */}
         <p className="text-[12px] text-gray-400 mt-0.5">
-          {role}
+          {relation ? `${role} · ${relation}` : role}
         </p>
 
-        {/* PHONE */}
-        <div className="
-          flex items-center justify-center gap-1.5
-          text-[12px] text-gray-500 mt-2
-        ">
-          <Phone size={12} strokeWidth={1.2} style={{ display: "block" }} />
-          {phone}
+        {/* DETAILS */}
+        <div className="flex flex-col items-start gap-2 mt-4 text-left">
+          {phone && (
+            <div className="flex items-center gap-2 text-[12px] text-gray-500">
+              <Phone size={12} strokeWidth={1.2} className="shrink-0" />
+              <span>{phone}</span>
+            </div>
+          )}
+          {email && (
+            <div className="flex items-center gap-2 text-[12px] text-gray-500">
+              <Mail size={12} strokeWidth={1.2} className="shrink-0" />
+              <span className="truncate">{email}</span>
+            </div>
+          )}
+          {occupation && occupation.toLowerCase() !== "not specified" && (
+            <div className="flex items-center gap-2 text-[12px] text-gray-500">
+              <Briefcase size={12} strokeWidth={1.2} className="shrink-0" />
+              <span>{occupation}</span>
+            </div>
+          )}
+          {address && (
+            <div className="flex items-center gap-2 text-[12px] text-gray-500">
+              <MapPin size={12} strokeWidth={1.2} className="shrink-0" />
+              <span>{address}</span>
+            </div>
+          )}
         </div>
 
         {/* BUTTON */}

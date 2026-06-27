@@ -1,230 +1,295 @@
-import { useState, useEffect } from "react";
-import type { TransportSlab, TransportFeesProps } from "../types/fees.types";
-import { useTransportFees } from "../hooks/useFees";
-import { TransportSlabsTable } from "./TransportSlabTab";
+import { useState, useEffect, useCallback } from "react";
+import { Pencil, Trash2, Bus, Wallet, BarChart3, Plus, GraduationCap, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Pagination from "@/components/ui/pagination";
+import { StatCard } from "../../../../components/ui/statcard";
+import type { TransportFeesProps } from "../types/fees.types";
 import { SlabModal } from "./SlabModal";
-import { StudentSlabAssignment } from "./StudentSlabAssignment";
-import { ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from "lucide-react";
-import { distanceLabel } from "../utils/fee.utils";
 import { formatINR } from "../../../../utils/formatters";
+import { getAllTransportFees, deleteTransportFee } from "@/services/fee.api";
+import type { TransportFeeRecord } from "@/services/fee.api";
+import { toast } from "sonner";
 
+const PAGE_SIZE = 8;
+
+const TH = "text-xs font-bold uppercase text-gray-400 tracking-wider px-4 py-3 text-left whitespace-nowrap";
+const TD = "px-4 py-3 text-sm";
+
+const distanceLabel = (r: TransportFeeRecord) =>
+  r.to_km ? `${r.from_km}–${r.to_km} km` : `${r.from_km}+ km`;
+
+const getInitials = (name?: string) => {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+};
+
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-violet-500", "bg-rose-500",
+  "bg-emerald-500", "bg-amber-500", "bg-indigo-500",
+];
+const avatarColor = (name?: string) =>
+  AVATAR_COLORS[(name?.charCodeAt(0) ?? 0) % AVATAR_COLORS.length];
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+      <GraduationCap className="w-7 h-7 text-indigo-400" />
+    </div>
+    <p className="text-slate-700 font-semibold text-sm mb-1">No transport fees configured</p>
+    <p className="text-slate-400 text-xs">Add a transport fee assignment to get started.</p>
+  </div>
+);
+
+// ── Row ────────────────────────────────────────────────────────────────────────
+interface RowProps {
+  row: TransportFeeRecord;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleting: boolean;
+}
+
+const TransportRow = ({ row, onEdit, onDelete, deleting }: RowProps) => (
+  <>
+    {/* Desktop */}
+    <tr className="hover:bg-gray-50/60 transition-colors border-b border-gray-100 last:border-0 group">
+      <td className={TD}>
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-full ${avatarColor(row.studentName)} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
+            {getInitials(row.studentName)}
+          </div>
+          <div>
+            <p className="font-medium text-slate-800 text-sm leading-tight">{row.studentName ?? "—"}</p>
+            <p className="text-xs text-slate-400">{row.className} {row.sectionName ? `· ${row.sectionName}` : ""}</p>
+          </div>
+        </div>
+      </td>
+      <td className={TD}>
+        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+          {row.slab_name}
+        </span>
+      </td>
+      <td className={`${TD} text-slate-500`}>{distanceLabel(row)}</td>
+      <td className={`${TD} font-semibold text-slate-800`}>{formatINR(row.monthly_fee)}</td>
+      <td className={`${TD} text-indigo-700 font-semibold`}>{formatINR(row.annual_fee)}</td>
+      <td className={TD}>
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={onEdit} title="Edit" className="p-1 rounded hover:bg-blue-100 transition-colors">
+            <Pencil className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
+          </button>
+          <button onClick={onDelete} disabled={deleting} title="Delete" className="p-1 rounded hover:bg-red-100 transition-colors">
+            {deleting
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+              : <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-500" />}
+          </button>
+        </div>
+      </td>
+    </tr>
+
+    {/* Mobile Card (hidden on md+) */}
+    <tr className="md:hidden">
+      <td colSpan={6} className="px-4 py-2">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-9 h-9 rounded-full ${avatarColor(row.studentName)} text-white flex items-center justify-center text-xs font-bold`}>
+                {getInitials(row.studentName)}
+              </div>
+              <div>
+                <p className="font-semibold text-slate-800 text-sm">{row.studentName ?? "—"}</p>
+                <p className="text-xs text-slate-400">{row.className} {row.sectionName}</p>
+              </div>
+            </div>
+            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+              {row.slab_name}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="bg-slate-50 rounded-lg px-3 py-2">
+              <p className="text-slate-400 mb-0.5">Distance</p>
+              <p className="font-medium text-slate-700">{distanceLabel(row)}</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg px-3 py-2">
+              <p className="text-slate-400 mb-0.5">Monthly</p>
+              <p className="font-semibold text-slate-800">{formatINR(row.monthly_fee)}</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg px-3 py-2">
+              <p className="text-slate-400 mb-0.5">Annual</p>
+              <p className="font-semibold text-indigo-700">{formatINR(row.annual_fee)}</p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end pt-1 border-t border-slate-100">
+            <button onClick={onEdit} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+              <Pencil className="w-3 h-3" /> Edit
+            </button>
+            <button onClick={onDelete} disabled={deleting} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
+              <Trash2 className="w-3 h-3" /> Delete
+            </button>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </>
+);
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 export function TransportFees({
   triggerAddSlab,
   onAddSlabHandled,
-  triggerEditSlabs,
-  onEditSlabsHandled,
+  triggerEditSlabs: _triggerEditSlabs,
+  onEditSlabsHandled: _onEditSlabsHandled,
 }: TransportFeesProps) {
-  const {
-    slabs,
-    search,
-    setSearch,
-    pendingSlabs,
-    setPendingSlabs,
-    filteredStudents,
-    handleSaveSlab,
-    handleDeleteSlab,
-    handleSaveStudentSlab,
-  } = useTransportFees();
+  const [records,        setRecords]        = useState<TransportFeeRecord[]>([]);
+  const [page,           setPage]           = useState(1);
+  const [showAddModal,   setShowAddModal]   = useState(false);
+  const [editingRecord,  setEditingRecord]  = useState<TransportFeeRecord | null>(null);
+  const [deletingId,     setDeletingId]     = useState<string | null>(null);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingSlab, setEditingSlab] = useState<TransportSlab | null>(null);
-  const [isAdd, setIsAdd] = useState(false);
-  const [expandedSlab, setExpandedSlab] = useState<string | null>(null);
+  const refresh = useCallback(() => {
+    getAllTransportFees()
+      .then((res) => { if (res.status) setRecords(res.data ?? []); })
+      .catch(() => {});
+  }, []);
 
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteTransportFee(id);
+      toast.success("Transport fee deleted");
+      refresh();
+    } catch {
+      toast.error("Failed to delete transport fee");
+    } finally {
+      setDeletingId(null);
+    }
+  }, [refresh]);
+
+  // Let parent's "+ Add Slab" button open our modal
   useEffect(() => {
     if (triggerAddSlab) {
-      setEditingSlab(null);
-      setIsAdd(true);
-      setModalOpen(true);
+      setShowAddModal(true);
       onAddSlabHandled();
     }
   }, [triggerAddSlab, onAddSlabHandled]);
 
-  useEffect(() => {
-    if (triggerEditSlabs) {
-      if (slabs.length > 0) {
-        setEditingSlab(slabs[0]);
-        setIsAdd(false);
-        setModalOpen(true);
-      }
-      onEditSlabsHandled();
-    }
-  }, [triggerEditSlabs, slabs, onEditSlabsHandled]);
-
-  const openEdit = (slab: TransportSlab) => {
-    setEditingSlab(slab);
-    setIsAdd(false);
-    setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setEditingSlab(null);
-  };
-
-  const handleSave = (data: Omit<TransportSlab, "id" | "students">) => {
-    handleSaveSlab(editingSlab, data);
-    closeModal();
-  };
-
-  const handleSlabChange = (studentId: string, slabId: string) => {
-    setPendingSlabs((prev) => ({
-      ...prev,
-      [studentId]: slabId,
-    }));
-  };
-
-  const toggleSlabExpand = (slabId: string) => {
-    setExpandedSlab((prev) => (prev === slabId ? null : slabId));
-  };
+  const totalMonthly  = records.reduce((s, r) => s + (r.monthly_fee ?? 0), 0);
+  const uniqueSlabs   = new Set(records.map((r) => r.slab_name)).size;
+  const totalPages    = Math.ceil(records.length / PAGE_SIZE);
+  const pagedData     = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div className="w-full">
-      {/* Modal */}
-      {modalOpen && (
-        <SlabModal
-          slab={editingSlab}
-          isAdd={isAdd}
-          onClose={closeModal}
-          onSave={handleSave}
-        />
-      )}
+    <div className="space-y-5 pb-8">
 
-      {/* ── Slabs Section ── */}
-      <div className="px-4 sm:px-5 pt-4 pb-2 border-t border-gray-100">
-        <div className="flex items-center justify-between">
-        
-         {/* Mobile Add Button */}
-          <button
-            onClick={() => {
-              setEditingSlab(null);
-              setIsAdd(true);
-              setModalOpen(true);
-            }}
-            className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#3525CD] text-white text-xs font-medium"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add
-          </button>
+      {/* Stats */}
+      <div className="mx-5 mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Total Assignments"
+          value={String(records.length)}
+          suffixLabel="students"
+          icon={<Bus className="w-4 h-4 text-indigo-600" />}
+        />
+        <StatCard
+          label="Monthly Revenue"
+          value={formatINR(totalMonthly)}
+          icon={<Wallet className="w-4 h-4 text-orange-500" />}
+        />
+        <StatCard
+          label="Slabs Configured"
+          value={String(uniqueSlabs)}
+          icon={<BarChart3 className="w-4 h-4 text-purple-600" />}
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="px-5 flex items-center justify-between">
+        <p className="text-sm text-slate-500">
+          Showing <span className="font-semibold text-slate-700">{records.length}</span> assignments
+        </p>
+        <Button
+          onClick={() => setShowAddModal(true)}
+          size="sm"
+          className="bg-[#3525CD] hover:bg-[#2d1fb5] text-white gap-1.5"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add Transport Fee
+        </Button>
+      </div>
+
+      {/* Table */}
+      <div className="px-5">
+        <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+          {records.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className={TH}>Student</th>
+                    <th className={TH}>Slab</th>
+                    <th className={TH}>Distance</th>
+                    <th className={TH}>Monthly</th>
+                    <th className={TH}>Annual</th>
+                    <th className={TH}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedData.map((row) => (
+                    <TransportRow
+                      key={row.id}
+                      row={row}
+                      onEdit={() => setEditingRecord(row)}
+                      onDelete={() => handleDelete(row.id)}
+                      deleting={deletingId === row.id}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {pagedData.length > 0 && (
+            <div className="flex px-5 py-2.5 bg-slate-50 border-t border-slate-100 items-center justify-between">
+              <span className="text-xs text-slate-400">Page {page} of {totalPages}</span>
+              <span className="text-xs text-slate-400">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, records.length)} of {records.length}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Desktop: Original Table */}
-      <div className="hidden md:block">
-        <TransportSlabsTable
-          slabs={slabs}
-          onEdit={openEdit}
-          onDelete={handleDeleteSlab}
+      {/* Pagination */}
+      {records.length > PAGE_SIZE && (
+        <Pagination
+          page={page}
+          total={records.length}
+          pageSize={PAGE_SIZE}
+          onChange={setPage}
+          itemLabel="assignments"
+          showPageNumbers={true}
         />
-      </div>
+      )}
 
-      {/* Mobile: Slab Cards */}
-      <div className="md:hidden px-3 pb-4 space-y-2">
-        {slabs.map((slab) => {
-          const isExpanded = expandedSlab === slab.id;
-          return (
-            <div
-              key={slab.id}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-            >
-              {/* Card Header */}
-              <div
-                className="flex items-center justify-between p-3 cursor-pointer active:bg-gray-50"
-                onClick={() => toggleSlabExpand(slab.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-[#3525CD] flex items-center justify-center text-xs font-bold">
-                    {slab.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">{slab.name}</p>
-                    <p className="text-[11px] text-gray-400">
-                      {distanceLabel(slab)} • {slab.students} students
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-800">
-                    {formatINR(slab.monthly)}
-                  </span>
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  )}
-                </div>
-              </div>
+      {/* Add Modal */}
+      {showAddModal && (
+        <SlabModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => { setShowAddModal(false); refresh(); }}
+        />
+      )}
 
-              {/* Expanded Details */}
-              {isExpanded && (
-                <div className="px-3 pb-3 border-t border-gray-100">
-                  <div className="pt-3 space-y-2.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Distance Range</span>
-                      <span className="font-medium text-gray-700">
-                        {distanceLabel(slab)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Monthly Fee</span>
-                      <span className="font-medium text-gray-700">
-                        {formatINR(slab.monthly)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Assigned Students</span>
-                      <span className="font-medium text-gray-700">
-                        {slab.students}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Monthly Revenue</span>
-                      <span className="font-medium text-indigo-700">
-                        {formatINR(slab.monthly * slab.students)}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2 border-t border-gray-50">
-                      <button
-                        onClick={() => openEdit(slab)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-50 text-[#3525CD] text-xs font-medium active:bg-indigo-100"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSlab(slab.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-medium active:bg-red-100"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {slabs.length === 0 && (
-          <div className="text-center py-8 text-xs text-gray-400 bg-white rounded-xl border border-gray-200">
-            No slabs configured yet.
-          </div>
-        )}
-      </div>
-
-      {/* ── Student Assignment Section ── */}
-      <StudentSlabAssignment
-        students={filteredStudents}
-        slabs={slabs}
-        search={search}
-        onSearchChange={setSearch}
-        pendingSlabs={pendingSlabs}
-        onSlabChange={handleSlabChange}
-        onSaveStudentSlab={handleSaveStudentSlab}
-      />
+      {/* Edit Modal */}
+      {editingRecord && (
+        <SlabModal
+          editData={editingRecord}
+          onClose={() => setEditingRecord(null)}
+          onSuccess={() => { setEditingRecord(null); refresh(); }}
+        />
+      )}
     </div>
   );
 }

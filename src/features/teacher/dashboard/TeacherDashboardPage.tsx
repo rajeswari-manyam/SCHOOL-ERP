@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import TeacherStatCards from "./components/TeacherStatCards";
@@ -8,10 +8,10 @@ import HomeworkDueCard from "./components/HomeworkDueCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
-import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher } from "./hooks/useTeacherDashboard";
-import { useTodayAttendanceSummary, useTeacherAttendanceSummaryRange } from "../attendance/hooks/useAttendance";
+import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher, useTeacherMonthlyAttendance, useTeacherSections } from "./hooks/useTeacherDashboard";
+import { useTodayAttendanceSummary } from "../attendance/hooks/useAttendance";
 import { useAuthStore } from "../../../store/authStore";
-import { format, startOfMonth } from "date-fns";
+import { format } from "date-fns";
 
 const MOCK_STATS = { classStrength: 42, homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
 
@@ -21,40 +21,39 @@ const TeacherDashboardPage = () => {
   const teacherId = localStorage.getItem("teacherStaffId") || staffId;
   const { data } = useTeacherDashboard();
   const { data: todayAttendance } = useTodayAttendanceSummary(teacherId);
-  const { data: leaveBalances = [] } = useTeacherLeaveBalance(staffId);
+  const { data: sections = [] } = useTeacherSections(staffId);
   const { data: allHomework = [] } = usePendingHomeworkByTeacher(teacherId);
 
-  const todayStr      = format(new Date(), "yyyy-MM-dd");
-  const monthStartStr = format(startOfMonth(new Date()), "yyyy-MM-dd");
-  const { data: monthlyRaw } = useTeacherAttendanceSummaryRange(teacherId, monthStartStr, todayStr);
+  const academicYearId = sections[0]?.academicYearId ?? "";
+  const { data: leaveBalances = [] } = useTeacherLeaveBalance(staffId, academicYearId);
 
-  const liveAttendancePct = useMemo(() => {
-    type DayData = { sections: { summary?: { present_count?: number; total_strength?: number }; total_strength?: number }[] };
-    const days = (monthlyRaw as { data?: DayData[] } | null)?.data;
-    if (!days?.length) return null;
-    let totalPresent = 0, totalPossible = 0;
-    for (const day of days) {
-      for (const sec of day.sections) {
-        totalPresent  += sec.summary?.present_count  ?? 0;
-        totalPossible += sec.summary?.total_strength ?? sec.total_strength ?? 0;
-      }
-    }
-    return totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : null;
-  }, [monthlyRaw]);
+  const now = new Date();
+  const { data: monthlyAttendance } = useTeacherMonthlyAttendance(staffId, now.getMonth() + 1, now.getFullYear());
+
+  const liveAttendancePct = (() => {
+    const s = monthlyAttendance?.summary;
+    if (!s || s.workingDays === 0) return null;
+    return Math.round((s.present / s.workingDays) * 100);
+  })();
 
   const [hwModal,         setHwModal]         = useState(false);
   const [attendanceModal, setAttendanceModal] = useState(false);
   const [leaveModal,      setLeaveModal]      = useState(false);
   const [uploadModal,     setUploadModal]     = useState(false);
 
-  const liveLeaveBalance  = leaveBalances.reduce((sum, item) => sum + Number(item.remaining ?? 0), 0);
-  const liveClassStrength = todayAttendance?.totalStudents ?? 0;
+  const section        = sections[0];
+  const leaveUsed      = leaveBalances.reduce((sum, item) => sum + Number(item.used  ?? 0), 0);
+  const leaveAllocated = leaveBalances.reduce((sum, item) => sum + Number(item.total ?? 0), 0);
 
   const stats = {
-    classStrength:       liveClassStrength > 0   ? liveClassStrength  : (data?.stats?.classStrength       ?? MOCK_STATS.classStrength),
+    currentStrength:     section?.currentStrength ?? (todayAttendance?.totalStudents ?? 0),
+    totalStrength:       section?.totalStrength   ?? MOCK_STATS.classStrength,
+    className:           section?.className,
+    sectionName:         section?.sectionName,
     homeworkPending:     allHomework.length,
     attendanceThisMonth: liveAttendancePct != null ? liveAttendancePct : (data?.stats?.attendanceThisMonth ?? MOCK_STATS.attendanceThisMonth),
-    leaveBalance:        leaveBalances.length > 0 ? liveLeaveBalance  : (data?.stats?.leaveBalance         ?? MOCK_STATS.leaveBalance),
+    leaveUsed,
+    leaveAllocated,
   };
   const teacher = data?.teacher;
 
@@ -107,10 +106,14 @@ const TeacherDashboardPage = () => {
 
       {/* Stat cards */}
       <TeacherStatCards
-        classStrength={stats.classStrength}
+        currentStrength={stats.currentStrength}
+        totalStrength={stats.totalStrength}
+        className={stats.className}
+        sectionName={stats.sectionName}
         homeworkPending={stats.homeworkPending}
         attendanceThisMonth={stats.attendanceThisMonth}
-        leaveBalance={stats.leaveBalance}
+        leaveUsed={stats.leaveUsed}
+        leaveAllocated={stats.leaveAllocated}
       />
 
       {/* Main grid */}
@@ -127,7 +130,7 @@ const TeacherDashboardPage = () => {
       </div>
 
       {/* Modals */}
-      <MarkAttendanceModal open={attendanceModal} onClose={() => setAttendanceModal(false)} totalStudents={stats.classStrength} />
+      <MarkAttendanceModal open={attendanceModal} onClose={() => setAttendanceModal(false)} totalStudents={stats.totalStrength} />
       <AssignHomeworkModal  open={hwModal}     onClose={() => setHwModal(false)} teacherId={teacherId} />
       <ApplyLeaveModal      open={leaveModal}  onClose={() => setLeaveModal(false)} />
       <UploadMaterialModal  open={uploadModal} onClose={() => setUploadModal(false)} />

@@ -5,7 +5,6 @@ const tabs = [
   "All Transactions",
   "Fee Structure",
   "Transport Fees",
-  "Concessions",
 ];
 
 export const FeeTabs = ({

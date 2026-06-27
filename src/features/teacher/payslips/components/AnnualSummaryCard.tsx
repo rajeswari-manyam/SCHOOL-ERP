@@ -1,5 +1,4 @@
-import { FileText, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download, TrendingUp } from "lucide-react";
 import type { AnnualSummary } from "../types/payslip.types";
 
 const inr = (n: number | undefined | null) => "₹" + (n ?? 0).toLocaleString("en-IN");
@@ -11,47 +10,45 @@ interface Props {
 
 const AnnualSummaryCard = ({ summary, onDownload }: Props) => {
   if (!summary) return null;
-  const s = summary;
+
+  const stats = [
+    { label: "Total Earned",     value: inr(summary.totalEarned),    bg: "bg-gray-50",    text: "text-gray-900", sub: "text-gray-400"   },
+    { label: "Total Deductions", value: inr(summary.totalDeductions), bg: "bg-rose-50",   text: "text-rose-700", sub: "text-rose-400"   },
+    { label: "Net Received",     value: inr(summary.totalNet),        bg: "bg-indigo-50", text: "text-indigo-700", sub: "text-indigo-400" },
+  ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-5 sm:px-6 py-4 border-b border-gray-100 bg-gray-50/60 flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1">Annual Summary</p>
-          <p className="text-base font-extrabold text-gray-900">FY {s.year}–{String(s.year + 1).slice(-2)}</p>
+          <h3 className="text-sm font-bold text-gray-900">Annual Summary</h3>
+          <p className="text-[11px] text-gray-400 mt-0.5">
+            FY {summary.year}–{String(summary.year + 1).slice(-2)}
+          </p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
-          <FileText size={16} className="text-indigo-600" strokeWidth={2} />
-        </div>
-      </div>
-
-      {/* Three stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Earned</p>
-          <p className="text-base font-extrabold text-gray-900">{inr(s.totalEarned)}</p>
-        </div>
-        <div className="bg-red-50 rounded-xl p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-1">Deductions</p>
-          <p className="text-base font-extrabold text-red-600">{inr(s.totalDeductions)}</p>
-        </div>
-        <div className="bg-indigo-50 rounded-xl p-3 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-1">Total Net</p>
-          <p className="text-base font-extrabold text-indigo-700">{inr(s.totalNet)}</p>
+        <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+          <TrendingUp size={16} className="text-indigo-600" strokeWidth={2} />
         </div>
       </div>
 
-      {/* Download Annual Statement */}
-      <Button
-        onClick={onDownload}
-        variant="outline"
-        className="gap-2 w-full justify-center border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white"
-        style={{ height: 40 }}
-      >
-        <Download size={14} className="text-current" strokeWidth={2} />
-        <span className="hidden sm:inline"> Annual Statement</span>Download
-      </Button>
+      <div className="px-5 sm:px-6 py-5 space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {stats.map(({ label, value, bg, text, sub }) => (
+            <div key={label} className={`${bg} rounded-xl p-4`}>
+              <p className={`text-[10px] font-bold uppercase tracking-widest ${sub} mb-1`}>{label}</p>
+              <p className={`text-lg font-extrabold ${text} tabular-nums`}>{value}</p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={onDownload}
+          className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border-2 border-indigo-600 text-indigo-600 text-sm font-bold hover:bg-indigo-600 hover:text-white active:scale-[0.98] transition-all duration-200"
+        >
+          <Download size={15} strokeWidth={2} />
+          Download Annual Statement
+        </button>
+      </div>
     </div>
   );
 };

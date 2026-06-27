@@ -1,4 +1,4 @@
-export type ReportType = "ATTENDANCE" | "FEE_COLLECTION" | "STUDENT" | "WHATSAPP" | "ADMISSIONS" | "STAFF";
+export type ReportType = "ATTENDANCE" | "FEE_COLLECTION" | "STUDENT" | "WHATSAPP" | "WHATSAPP_ACTIVITY" | "ADMISSIONS" | "STAFF";
 export type ReportFormat = "PDF" | "CSV";
 export type ReportStatus = "READY" | "GENERATING" | "FAILED";
 
@@ -70,19 +70,93 @@ export interface GenerateReportPayload {
 
 // ─── Raw API shapes (used by school-reports.api.ts) ────────────────────────────
 
+export interface RawReportFilters {
+  from_date: string;
+  to_date: string;
+  class_id: string;
+  section_id: string;
+  report_range: string;
+  academic_year_id: string;
+}
+
+export interface RawReportDashboardStats {
+  total_students: number;
+  teachers_marked: number;
+  teachers_pending: number;
+  chronic_absentees: number;
+  average_attendance: number;
+}
+
+export interface RawReportDailyAttendance {
+  date: string;
+  absent: number;
+  present: number;
+  attendance_percentage: number;
+}
+
+export interface RawReportChronicAbsentee {
+  absent_days: number;
+  roll_number: string;
+  present_days: number;
+  student_name: string;
+  attendance_percentage: number;
+}
+
+export interface RawReportClassWiseSummary {
+  leave: number;
+  absent: number;
+  present: number;
+  class_name: string;
+  section_name: string;
+  working_days: number;
+  total_students: number;
+  attendance_percentage: number;
+}
+
+export interface RawReportTeacherStatus {
+  teacher_id: string;
+  teacher_name: string;
+  attendance_marked: number;
+  attendance_pending: number;
+  marking_percentage: number;
+  total_classes_assigned: number;
+}
+
+export interface RawReportStudentDetail {
+  student_id: string;
+  roll_number: string;
+  total_leave: number;
+  student_name: string;
+  total_absent: number;
+  total_present: number;
+  attendance_percentage: number;
+}
+
 export interface RawReport {
   id: string;
   reportype: string;
+  report_type?: string;
   from: string;
   to: string;
   class_id: string;
+  class_name: string | null;
   section_id: string;
+  section_name: string | null;
   academic_year_id: string;
+  academic_year: string | null;
   format: string;
   emailreport: boolean;
   school_code: string;
   createdAt: string;
   updatedAt: string;
+  generated_at?: string;
+  filters?: RawReportFilters;
+  dashboard_stats?: RawReportDashboardStats;
+  daily_attendance?: RawReportDailyAttendance[];
+  chronic_absentees?: RawReportChronicAbsentee[];
+  class_wise_summary?: RawReportClassWiseSummary;
+  teacher_wise_status?: RawReportTeacherStatus[];
+  student_attendance_details?: RawReportStudentDetail[];
 }
 
 export interface GeneratedReport {
@@ -186,6 +260,103 @@ export interface StaffReportResponse {
   };
 }
 
+// ─── Attendance Report ──────────────────────────────────────────────────────────
+
+export interface AttendanceReportIncludeSections {
+  class_summary: boolean;
+  daily_attendance: boolean;
+  chronic_absentees: boolean;
+  teacher_wise_status: boolean;
+}
+
+export interface AttendanceReportPayload {
+  academic_year_id: string;
+  class_id: string;
+  section_id: string;
+  report_range: string;
+  from_date: string;
+  to_date: string;
+  include_sections: AttendanceReportIncludeSections;
+}
+
+export interface AttendanceReportClassSummary {
+  class_name: string;
+  section_name: string;
+  total_students: number;
+  working_days: number;
+  present: number;
+  absent: number;
+  leave: number;
+  attendance_percentage: number;
+}
+
+export interface AttendanceReportDaily {
+  date: string;
+  present: number;
+  absent: number;
+  attendance_percentage: number;
+}
+
+export interface AttendanceReportStudentDetail {
+  student_id: string;
+  student_name: string;
+  roll_number: string;
+  total_present: number;
+  total_absent: number;
+  total_leave: number;
+  attendance_percentage: number;
+}
+
+export interface AttendanceReportChronicAbsentee {
+  student_name: string;
+  roll_number: string;
+  present_days: number;
+  absent_days: number;
+  attendance_percentage: number;
+}
+
+export interface AttendanceReportTeacherStatus {
+  teacher_id: string;
+  teacher_name: string;
+  total_classes_assigned: number;
+  attendance_marked: number;
+  attendance_pending: number;
+  marking_percentage: number;
+}
+
+export interface AttendanceReportDashboardStats {
+  total_students: number;
+  average_attendance: number;
+  chronic_absentees: number;
+  teachers_marked: number;
+  teachers_pending: number;
+}
+
+export interface AttendanceReportFilters {
+  class_id: string;
+  section_id: string;
+  academic_year_id: string;
+  report_range: string;
+  from_date: string;
+  to_date: string;
+}
+
+export interface AttendanceReportResponse {
+  status: boolean;
+  message: string;
+  report_id: string;
+  report_type: string;
+  generated_at: string;
+  email_sent: boolean;
+  filters: AttendanceReportFilters;
+  class_wise_summary: AttendanceReportClassSummary;
+  daily_attendance: AttendanceReportDaily[];
+  student_attendance_details: AttendanceReportStudentDetail[];
+  chronic_absentees: AttendanceReportChronicAbsentee[];
+  teacher_wise_status: AttendanceReportTeacherStatus[];
+  dashboard_stats: AttendanceReportDashboardStats;
+}
+
 // ─── Recently Generated Reports ────────────────────────────────────────────────
 
 export interface RecentlyGeneratedReport {
@@ -212,4 +383,63 @@ export interface GetRecentlyGeneratedReportsResponse {
 export interface DeleteReportResponse {
   status: boolean;
   message: string;
+}
+
+// ─── Fee Collection Report ─────────────────────────────────────────────────────
+
+export interface FeeCollectionReportIncludeSections {
+  monthly_collection_summary: boolean;
+  student_overdue_list: boolean;
+  fee_breakdown: boolean;
+  partial_payments: boolean;
+  late_fee_report: boolean;
+}
+
+export interface FeeCollectionReportPayload {
+  academic_year_id: string;
+  class_id: string;
+  section_id: string;
+  student_id?: string;
+  report_range: string;
+  from_date: string;
+  to_date: string;
+  include_sections: FeeCollectionReportIncludeSections;
+}
+
+export interface FeeCollectionReportStudentSummary {
+  id: string;
+  name: string;
+}
+
+export interface FeeCollectionReportSummary {
+  totalOriginal: number;
+  totalDiscount: number;
+  totalFinal: number;
+  totalPaid: number;
+  totalDue: number;
+  overallStatus: string;
+}
+
+export interface FeeCollectionReportDetail {
+  id: string;
+  fee_type?: string;
+  feeHeadName: string;
+  originalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+  status: string;
+  dueDate: string | null;
+}
+
+export interface FeeCollectionReportData {
+  student: FeeCollectionReportStudentSummary;
+  summary: FeeCollectionReportSummary;
+  details: FeeCollectionReportDetail[];
+}
+
+export interface FeeCollectionReportResponse {
+  status: boolean;
+  data: FeeCollectionReportData;
 }

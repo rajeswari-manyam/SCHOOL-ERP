@@ -2,7 +2,6 @@ import type { FeeTransaction, PeriodSummary } from "../types/fees.types";
 import { formatCurrency } from "../utils/Fee.utils";
 import { PaymentModeBadge } from "../components/Feebadges";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,6 +11,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { ChevronDown } from "lucide-react";
 
 interface AllTransactionsTabProps {
   transactions: FeeTransaction[];
@@ -20,22 +20,41 @@ interface AllTransactionsTabProps {
   onTxSearchChange: (v: string) => void;
   txClassFilter: string;
   onTxClassChange: (v: string) => void;
-  txModeFilter: string;
-  onTxModeChange: (v: string) => void;
+  txSectionFilter: string;
+  onTxSectionChange: (v: string) => void;
+  classOptions: string[];
+  txSectionOptions: string[];
   txDateRange: string;
 }
 
-const CLASSES = ["All Classes", "6A", "7B", "8A", "9B", "10A", "10B", "11C", "12A"];
-const MODES = [
-  "All Modes (Cash, UPI, Cheque, Bank)",
-  "Cash",
-  "UPI",
-  "Cheque",
-  "Bank Transfer",
-];
-
-const CLASS_OPTIONS = CLASSES.map((name) => ({ label: name, value: name }));
-const MODE_OPTIONS = MODES.map((mode) => ({ label: mode, value: mode }));
+function PillSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <div className="relative inline-flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-sm px-4 h-11 min-w-0 w-full">
+      <select
+        aria-label={value}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </select>
+      <span className="flex-1 truncate text-sm font-medium text-gray-800 dark:text-slate-200 select-none pointer-events-none">
+        {value}
+      </span>
+      <ChevronDown className="w-4 h-4 text-gray-500 dark:text-slate-400 shrink-0 pointer-events-none" />
+    </div>
+  );
+}
 
 export function AllTransactionsTab({
   transactions,
@@ -44,44 +63,49 @@ export function AllTransactionsTab({
   onTxSearchChange,
   txClassFilter,
   onTxClassChange,
-  txModeFilter,
-  onTxModeChange,
+  txSectionFilter,
+  onTxSectionChange,
+  classOptions,
+  txSectionOptions,
   txDateRange,
 }: AllTransactionsTabProps) {
   return (
     <div>
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap mb-4">
-        <div className="relative flex-1 min-w-48">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+      {/* ── Filters — same layout as Pending Fees tab ── */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-[1fr_168px_168px] mb-4">
+        {/* Search */}
+        <div className="relative sm:col-span-2 lg:col-span-1">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
+            </svg>
+          </span>
           <Input
+            type="search"
             placeholder="Search by student, receipt no."
             value={txSearch}
             onChange={(e) => onTxSearchChange(e.target.value)}
-            className="w-full pl-9"
+            aria-label="Search transactions"
+            className="h-11 w-full rounded-2xl border border-gray-200 dark:border-slate-700
+              bg-white dark:bg-slate-900 pl-10 pr-4
+              text-sm text-gray-800 dark:text-slate-200
+              shadow-sm placeholder:text-gray-400
+              focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
           />
         </div>
-        <Button variant="outline" className="flex items-center gap-2 text-sm">
-          📅 {txDateRange}
-        </Button>
-        <Select
-          options={CLASS_OPTIONS}
-          value={txClassFilter}
-          onValueChange={(value) => onTxClassChange(value)}
-          className="text-sm"
-        />
-        <Button variant="outline" className="flex items-center gap-1.5 text-sm">
-          ⬇ Export CSV
-        </Button>
-      </div>
 
-      {/* Mode filter */}
-      <div className="mb-4">
-        <Select
-          options={MODE_OPTIONS}
-          value={txModeFilter}
-          onValueChange={(value) => onTxModeChange(value)}
-          className="text-sm"
+        <PillSelect
+          value={txClassFilter}
+          onChange={onTxClassChange}
+          options={classOptions}
+        />
+        <PillSelect
+          value={txSectionFilter}
+          onChange={onTxSectionChange}
+          options={txSectionOptions}
         />
       </div>
 
@@ -123,44 +147,52 @@ export function AllTransactionsTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((tx) => (
-                <TableRow key={tx.receiptNo} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <TableCell className="p-3">
-                    <span className="text-indigo-600 font-semibold text-xs">{tx.receiptNo}</span>
-                  </TableCell>
-                  <TableCell className="p-3 text-xs text-gray-500 whitespace-pre-line">{tx.dateTime}</TableCell>
-                  <TableCell className="p-3 font-medium text-gray-800">{tx.studentName}</TableCell>
-                  <TableCell className="p-3 text-gray-600">{tx.class}</TableCell>
-                  <TableCell className="p-3 text-gray-600">{tx.feeHead}</TableCell>
-                  <TableCell className="p-3 font-semibold text-gray-900">{formatCurrency(tx.amount)}</TableCell>
-                  <TableCell className="p-3">
-                    <PaymentModeBadge mode={tx.mode} />
-                  </TableCell>
-                  <TableCell className="p-3">
-                    {tx.sentToParent && (
-                      <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-                        WA Sent
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="p-3">
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" className="text-xs text-indigo-600 hover:underline p-0">
-                        View
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:underline p-0">
-                        PDF
-                      </Button>
-                    </div>
+              {transactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-10 text-center text-sm text-gray-400">
+                    No transactions found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                transactions.map((tx) => (
+                  <TableRow key={tx.receiptNo} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <TableCell className="p-3">
+                      <span className="text-indigo-600 font-semibold text-xs">{tx.receiptNo}</span>
+                    </TableCell>
+                    <TableCell className="p-3 text-xs text-gray-500 whitespace-pre-line">{tx.dateTime}</TableCell>
+                    <TableCell className="p-3 font-medium text-gray-800">{tx.studentName}</TableCell>
+                    <TableCell className="p-3 text-gray-600">{tx.class}</TableCell>
+                    <TableCell className="p-3 text-gray-600">{tx.feeHead || "—"}</TableCell>
+                    <TableCell className="p-3 font-semibold text-gray-900">{formatCurrency(tx.amount)}</TableCell>
+                    <TableCell className="p-3">
+                      <PaymentModeBadge mode={tx.mode} />
+                    </TableCell>
+                    <TableCell className="p-3">
+                      {tx.sentToParent && (
+                        <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                          WA Sent
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="p-3">
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" className="text-xs text-indigo-600 hover:underline p-0">
+                          View
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:underline p-0">
+                          PDF
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
         <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
-          Showing 1-10 of {transactions.length} transactions this period
+          Showing 1-{transactions.length} of {transactions.length} transactions this period
         </div>
       </div>
     </div>

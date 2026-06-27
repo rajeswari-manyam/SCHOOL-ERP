@@ -32,14 +32,14 @@ export const EditSalaryModal = ({ staff, onClose, onSave }: EditSalaryModalProps
     resolver: zodResolver(schema),
     mode: "onChange",
     defaultValues: {
-      basicSalary:        staff?.basic          || 0,
-      hra:                staff?.hra             || 0,
-      transportAllowance: staff?.transport       || 0,
-      otherAllowance:     staff?.other           || 0,
-      pfPercentage:       staff?.pfPercentage    || 12,
-      professionalTax:    staff?.professionalTax || 0,
-      tds:                0,
-      effectiveFrom:      getTodayISO(),
+      basicSalary:        staff?.basic          ?? 0,
+      hra:                staff?.hra             ?? 0,
+      transportAllowance: staff?.transport       ?? 0,
+      otherAllowance:     staff?.other           ?? 0,
+      pfPercentage:       staff?.pfPercentage    ?? 12,
+      professionalTax:    staff?.professionalTax ?? 0,
+      tds:                staff?.tds             ?? 0,
+      effectiveFrom:      staff?.effectiveFrom   || getTodayISO(),
     },
   });
 

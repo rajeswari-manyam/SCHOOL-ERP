@@ -37,7 +37,7 @@ export const payslipApi = {
   },
 
   downloadPdf: async (payslipId: string): Promise<void> => {
-    const res = await api.get(`/tenant/teacher/payslips/${payslipId}/pdf`, { responseType: "blob" });
+    const res = await api.get(`/tenant/downloadpayslip/${payslipId}`, { responseType: "blob" });
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement("a");
     link.href = url;

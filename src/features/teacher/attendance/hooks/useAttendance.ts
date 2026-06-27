@@ -95,6 +95,30 @@ export const useSubmitCorrectionRequest = () => {
   });
 };
 
+// ── Staff (teacher) own monthly attendance ────────────────────────────────────
+export const useStaffMonthlyAttendance = (staffId: string, month: number, year: number) =>
+  useQuery({
+    queryKey: [...ATTENDANCE_KEYS.all, "staff-monthly", staffId, month, year],
+    queryFn: () => import("@/services/attendance.api").then((m) =>
+      m.getMonthlyStaffAttendance({ staff_id: staffId, month, year })
+    ),
+    enabled: Boolean(staffId),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+// ── All staff attendance records by staff ID ──────────────────────────────────
+export const useStaffAttendanceByStaffId = (staffId: string) =>
+  useQuery({
+    queryKey: [...ATTENDANCE_KEYS.all, "staff-by-id", staffId],
+    queryFn: () => import("@/services/attendance.api").then((m) =>
+      m.getStaffAttendanceByStaffId(staffId)
+    ),
+    enabled: Boolean(staffId),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
 // ── Teacher attendance summary by date range ──────────────────────────────────
 export const useTeacherAttendanceSummaryRange = (
   teacherId: string,

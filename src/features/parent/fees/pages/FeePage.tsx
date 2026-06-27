@@ -23,19 +23,22 @@ type ModalState = "none" | "pay" | "success";
 
 type ParentLayoutContext = {
   activeChild: {
-    id: number;
-    studentId?: string;
+    id: string;
+    studentId: string;
     name: string;
-    class: string;
+    rollNumber: string;
+    admissionNumber: string;
+    classDetail: { id: string; className: string } | null;
+    sectionDetail: { id: string; sectionName: string } | null;
     school: string;
     avatar: string;
   };
 };
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "pending", label: "Pending Fees" },
-  { id: "history", label: "Payment History" },
-  { id: "annual", label: "Annual Overview" },
+  { id: "pending",  label: "Pending Fees"    },
+  { id: "history",  label: "Payment History" },
+  { id: "annual",   label: "Annual Overview" },
 ];
 
 export default function FeesPage() {
@@ -51,10 +54,11 @@ export default function FeesPage() {
 
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
-  const studentId = activeChild.studentId ?? "";
+  const studentId = activeChild.studentId;
+  const className = activeChild.classDetail?.className ?? "";
   const {
     history, pending, allPaid, selectedFee, setSelectedFee,
-    loading, error, fetchFees,
+    loading, error, fetchFees, deletePayment,
     tuitionMonths, examTerms, annualSummary,
   } = useFees(studentId);
 
@@ -138,7 +142,7 @@ export default function FeesPage() {
             Fee Management — {activeChild.name}
           </h1>
           <p className={cn(typography.body.xs, "text-gray-400 mt-0.5")}>
-            Academic Year 2024-25 | Class {activeChild.class}
+            Academic Year 2024-25 | Class {className}
           </p>
         </div>
         <button
@@ -269,8 +273,8 @@ export default function FeesPage() {
               <PaymentMethods />
               <StudentCard
                 name={activeChild.name}
-                className={activeChild.class}
-                rollNo={activeChild.id}
+                className={className}
+                rollNo={activeChild.rollNumber ?? activeChild.admissionNumber ?? ""}
                 status="good"
               />
             </div>
@@ -327,7 +331,10 @@ export default function FeesPage() {
               No payment history found.
             </div>
           ) : (
-            <FeeHistory data={history} />
+            <FeeHistory
+              data={history}
+              onDelete={(id) => deletePayment(id, studentId)}
+            />
           )}
 
           <button
@@ -353,7 +360,7 @@ export default function FeesPage() {
           onSuccess={handlePaySuccess}
           studentId={studentId}
           studentName={activeChild.name}
-          studentClass={activeChild.class}
+          studentClass={className}
         />
       )}
       {modal === "success" && (
@@ -364,7 +371,7 @@ export default function FeesPage() {
           receiptNo={paidReceiptNo}
           date={paidDate}
           studentName={activeChild.name}
-          className={activeChild.class}
+          className={className}
           onBack={handleClose}
         />
       )}

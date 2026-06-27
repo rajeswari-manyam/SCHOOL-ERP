@@ -178,6 +178,22 @@ const MyHistoryTab = ({
   return (
     <div className="flex flex-col gap-6">
 
+      {/* ── Summary stats row ──────────────────────────────────────────────── */}
+      {!isLoading && days.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Present", count: totals.present, cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+            { label: "Absent",  count: totals.absent,  cls: "bg-red-50 border-red-100 text-red-600" },
+            { label: "Total",   count: totals.total,   cls: "bg-indigo-50 border-indigo-100 text-indigo-700" },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-2xl border px-4 py-3 text-center ${s.cls}`}>
+              <p className="text-2xl font-extrabold">{s.count}</p>
+              <p className="text-[11px] font-semibold opacity-80 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── Date range picker ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
         <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -212,22 +228,6 @@ const MyHistoryTab = ({
           </div>
         </div>
       </div>
-
-      {/* ── Summary stats row ──────────────────────────────────────────────── */}
-      {!isLoading && days.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Present", count: totals.present, cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
-            { label: "Absent",  count: totals.absent,  cls: "bg-red-50 border-red-100 text-red-600" },
-            { label: "Total",   count: totals.total,   cls: "bg-indigo-50 border-indigo-100 text-indigo-700" },
-          ].map((s) => (
-            <div key={s.label} className={`rounded-2xl border px-4 py-3 text-center ${s.cls}`}>
-              <p className="text-2xl font-extrabold">{s.count}</p>
-              <p className="text-[11px] font-semibold opacity-80 mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* ── Content area ───────────────────────────────────────────────────── */}
       {isLoading ? (

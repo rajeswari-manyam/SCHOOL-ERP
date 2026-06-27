@@ -206,6 +206,17 @@ export function useFeesByAcademicYear() {
   });
 }
 
+/** GET /tenant/getdashboardsummary — fee collection summary for stat card */
+export function useFeeSummary() {
+  return useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, 'fee-summary'],
+    queryFn: () => dashboardApi.getFeeSummary(),
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
+    retry: 2,
+  });
+}
+
 /** Send WhatsApp reminders to unmarked classes */
 export function useSendReminders() {
   const qc = useQueryClient();

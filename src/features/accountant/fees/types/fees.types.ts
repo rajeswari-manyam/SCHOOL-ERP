@@ -140,6 +140,14 @@ export interface FeeHeadFormValues {
   name: string;
   description?: string;
   displayOrder: string;
+  status: "active" | "inactive";
+}
+
+export interface AssignedStudent {
+  id: string;
+  first_name: string;
+  last_name: string;
+  admission_number: string;
 }
 
 export interface FeeStructureAssignment {
@@ -155,19 +163,27 @@ export interface FeeStructureAssignment {
   dueDate: string;
   amount: number | null;
   annualTotal: number | null;
+  applicableTo?: "ALL_STUDENTS" | "SELECTED_STUDENTS";
+  allowConcession?: boolean;
+  status?: string;
+  academicYear?: string;
   studentIds?: string[];
+  assignedStudents?: AssignedStudent[];
 }
 
 export interface FeeStructureFormValues {
   feeHeadId: string;
   classId: string;
   sectionId: string;
+  applicableTo: "all" | "selected";
   mandatory: boolean;
   billingCycle: BillingCycle;
   dueDate: string;
   amount: string;
   annualTotal: string;
   studentIds: string[];
+  allowConcession: boolean;
+  allowedConcessionTypes: string[];
 }
 
 export interface StudentWithFee {
@@ -239,7 +255,9 @@ export type FeeRow = {
   admissionNo: string;
   className: string;
   feeHead: string;
-  amount: number;
+  originalAmount: number;
+  discountAmount: number;
+  amount: number;       // finalAmount (after discount)
   paidAmount: number;
   remainingAmount: number;
   dueDate: string;

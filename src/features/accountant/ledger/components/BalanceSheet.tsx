@@ -9,13 +9,16 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { BalanceSheetProps } from "../types/Ledger.types";  
-import { SUMMARY_DATA } from "../data/ledger.data";               
+import type { BalanceSheetProps } from "../types/Ledger.types";
 import { TrendingDown, Building2, AlertCircle, FileText } from "lucide-react";
 
-export const BalanceSheet = ({ income, expense, chartData }: BalanceSheetProps) => {
-  const net = income - expense;
-  const isNegative = net < 0;
+export const BalanceSheet = ({ income, expense, chartData, balanceSheetData }: BalanceSheetProps) => {
+  const incomeItems  = balanceSheetData?.income    ?? [];
+  const expenseItems = balanceSheetData?.expenses  ?? [];
+  const totalIn      = balanceSheetData?.totalIncome   ?? income;
+  const totalOut     = balanceSheetData?.totalExpenses ?? expense;
+  const net          = balanceSheetData?.netPosition   ?? (income - expense);
+  const isNegative   = net < 0;
 
   return (
     <div className="space-y-4 sm:space-y-6 px-3 sm:px-0">
@@ -39,9 +42,9 @@ export const BalanceSheet = ({ income, expense, chartData }: BalanceSheetProps) 
                 </span>
               </div>
               <div className="space-y-2">
-                {SUMMARY_DATA.filter((d) => d.type === "income").map((item) => (
-                  <div key={item.label} className="flex justify-between text-sm">
-                    <span className="text-gray-600 text-[13px] sm:text-sm">{item.label}</span>
+                {incomeItems.map((item) => (
+                  <div key={item.description} className="flex justify-between text-sm">
+                    <span className="text-gray-600 text-[13px] sm:text-sm">{item.description}</span>
                     <span className="font-medium text-gray-800 text-[13px] sm:text-sm">
                       {formatINR(item.amount)}
                     </span>
@@ -49,7 +52,7 @@ export const BalanceSheet = ({ income, expense, chartData }: BalanceSheetProps) 
                 ))}
                 <div className="flex justify-between pt-2 border-t border-gray-100">
                   <span className="font-semibold text-gray-700 text-sm">Total Income</span>
-                  <span className="font-bold text-emerald-600 text-sm">{formatINR(income)}</span>
+                  <span className="font-bold text-emerald-600 text-sm">{formatINR(totalIn)}</span>
                 </div>
               </div>
             </div>
@@ -63,9 +66,9 @@ export const BalanceSheet = ({ income, expense, chartData }: BalanceSheetProps) 
                 </span>
               </div>
               <div className="space-y-2">
-                {SUMMARY_DATA.filter((d) => d.type === "expense").map((item) => (
-                  <div key={item.label} className="flex justify-between text-sm">
-                    <span className="text-gray-600 text-[13px] sm:text-sm">{item.label}</span>
+                {expenseItems.map((item) => (
+                  <div key={item.description} className="flex justify-between text-sm">
+                    <span className="text-gray-600 text-[13px] sm:text-sm">{item.description}</span>
                     <span className="font-medium text-gray-800 text-[13px] sm:text-sm">
                       {formatINR(item.amount)}
                     </span>
@@ -73,7 +76,7 @@ export const BalanceSheet = ({ income, expense, chartData }: BalanceSheetProps) 
                 ))}
                 <div className="flex justify-between pt-2 border-t border-gray-100">
                   <span className="font-semibold text-gray-700 text-sm">Total Expenses</span>
-                  <span className="font-bold text-rose-600 text-sm">{formatINR(expense)}</span>
+                  <span className="font-bold text-rose-600 text-sm">{formatINR(totalOut)}</span>
                 </div>
               </div>
             </div>

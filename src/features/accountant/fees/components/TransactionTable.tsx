@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FeeTransaction } from "../types/fees.types";
-import { formatCurrency } from "../../../../utils/formatters";
+import { formatINR as formatCurrency } from "../../../../utils/formatters";
 import { SendFeeReminderModal } from "./SendRemainderModal";
 import {
   getInitials,

@@ -1,5 +1,4 @@
 import { create } from "zustand"
-import type { Fee } from "../../../../services/fee.api";
 import type { Homework } from "../../../../services/homework.api";
 import type { ExamTimetableListItem } from "../../../../services/examtimetable.api";
 import type { Announcement } from "../../../../services/announcements.api";
@@ -19,10 +18,6 @@ interface DashboardState {
   monthlyPct: number
   todayStatus: "present" | "absent" | "not_marked"  // today's actual status
 
-  
-  fees: Fee[]
-  isPaid: boolean
-
   homework: Homework[]
 
   // Exams
@@ -33,7 +28,6 @@ interface DashboardState {
 
   // Loading flags
   isLoadingAttendance: boolean
-  isLoadingFees: boolean
   isLoadingHomework: boolean
   isLoadingExams: boolean
   isLoadingAnnouncements: boolean
@@ -42,12 +36,10 @@ interface DashboardState {
   setWeekDays: (days: WeekDay[], pct: number) => void
   setMonthlyPct: (pct: number) => void
   setTodayStatus: (s: "present" | "absent" | "not_marked") => void
-  setFees: (fees: Fee[]) => void
   setHomework: (hw: Homework[]) => void
   setExams: (exams: ExamTimetableListItem[]) => void
   setAnnouncements: (a: Announcement[]) => void
   setLoadingAttendance: (v: boolean) => void
-  setLoadingFees: (v: boolean) => void
   setLoadingHomework: (v: boolean) => void
   setLoadingExams: (v: boolean) => void
   setLoadingAnnouncements: (v: boolean) => void
@@ -61,15 +53,11 @@ const initialState = {
   monthlyPct: 0,
   todayStatus: "not_marked" as const,
 
-  fees: [],
-  isPaid: false,
-
   homework: [],
   exams: [],
   announcements: [],
 
   isLoadingAttendance: false,
-  isLoadingFees: false,
   isLoadingHomework: false,
   isLoadingExams: false,
   isLoadingAnnouncements: false,
@@ -81,15 +69,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setWeekDays: (days, pct) => set({ weekDays: days, weeklyPct: pct }),
   setMonthlyPct: (pct) => set({ monthlyPct: pct }),
   setTodayStatus: (s) => set({ todayStatus: s }),
-  setFees: (fees) => set({
-    fees,
-    isPaid: fees.length === 0 || fees.every((f) => f.status === "paid"),
-  }),
   setHomework: (hw) => set({ homework: hw }),
   setExams: (exams) => set({ exams }),
   setAnnouncements: (a) => set({ announcements: a }),
   setLoadingAttendance: (v) => set({ isLoadingAttendance: v }),
-  setLoadingFees: (v) => set({ isLoadingFees: v }),
   setLoadingHomework: (v) => set({ isLoadingHomework: v }),
   setLoadingExams: (v) => set({ isLoadingExams: v }),
   setLoadingAnnouncements: (v) => set({ isLoadingAnnouncements: v }),

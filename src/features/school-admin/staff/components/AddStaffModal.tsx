@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, ChevronDown, Plus } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
-import { nanoid } from "nanoid";
 import { createStaff } from "@/services/school-staff.api";
 import { fetchDepartments } from "@/services/department.api";
 import { useStaffStore } from "../store/usestore";
@@ -48,36 +47,8 @@ const Field = ({
   </div>
 );
 
-/* ── Phone input ── */
-const PhoneInput = ({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) => (
-  <div className="flex h-11 rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-300 focus-within:border-indigo-400 transition bg-white">
-    <span className="flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-sm font-semibold text-gray-600 shrink-0">
-      +91
-    </span>
-    <input
-      type="tel"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="98765 43210"
-      className="flex-1 h-full px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
-    />
-  </div>
-);
-
 /* ── Toggle ── */
-const Toggle = ({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) => (
+const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
   <button
     type="button"
     onClick={() => onChange(!checked)}
@@ -94,70 +65,44 @@ const Toggle = ({
 );
 
 const ROLE_OPTIONS = [
-  "Class Teacher",
-  "Subject Teacher",
-  "Principal",
-  "Vice Principal",
-  "Admin",
-  "Librarian",
-  "Lab Assistant",
-  "Accountant",
-  "Support Staff",
+  "Class Teacher", "Subject Teacher", "Principal", "Vice Principal",
+  "Admin", "Librarian", "Lab Assistant", "Accountant", "Support Staff",
 ];
 
-const SECTION_OPTIONS = ["A", "B", "C", "D", "E"];
-const SUBJECT_OPTIONS = [
-  "English", "Hindi", "Mathematics", "Science", "Social Science",
-  "Physics", "Chemistry", "Biology", "History", "Geography",
-  "Computer Science", "Physical Education", "Arts", "Music",
+const STATUS_OPTIONS = [
+  { label: "Active",   value: "ACTIVE" },
+  { label: "On Leave", value: "ON_LEAVE" },
+  { label: "Inactive", value: "INACTIVE" },
 ];
-const CLASS_OPTIONS = [
-  { label: "Class 1", value: "1" }, { label: "Class 2", value: "2" },
-  { label: "Class 3", value: "3" }, { label: "Class 4", value: "4" },
-  { label: "Class 5", value: "5" }, { label: "Class 6", value: "6" },
-  { label: "Class 7", value: "7" }, { label: "Class 8", value: "8" },
-  { label: "Class 9", value: "9" }, { label: "Class 10", value: "10" },
-  { label: "Class 11", value: "11" }, { label: "Class 12", value: "12" },
-];
-
-interface SubjectRow {
-  id: string;
-  classId: string;
-  section: string;
-  subject: string;
-}
 
 const genEmpId = () => `EMP-${String(Math.floor(Math.random() * 900) + 100).padStart(3, "0")}`;
 const getToday = () => new Date().toISOString().slice(0, 10);
 
 const INITIAL_FORM = {
-  fullName: "",
-  role: "",
-  empNumber: "",
-  phone: "",
-  email: "",
+  fullName:    "",
+  role:        "",
+  empNumber:   "",
+  phone:       "",
+  email:       "",
   qualification: "",
-  dob: "",
-  salary: "",
+  dob:         "",
+  salary:      "",
   joiningDate: getToday(),
   departmentId: "",
-  classTeacherOf: "",
+  status:      "ACTIVE",
 };
 
 export const AddStaffModal = ({ onClose }: Props) => {
-  const schoolcode  = useAuthStore((s) => s.user?.schoolcode ?? "");
-  const loadStaff   = useStaffStore((s) => s.loadStaff);
+  const schoolcode     = useAuthStore((s) => s.user?.schoolcode ?? "");
+  const loadStaff      = useStaffStore((s) => s.loadStaff);
   const academicYearId = useUIStore.getState().academicYearId ?? "";
 
-  const [form, setForm]         = useState(INITIAL_FORM);
-  const [errors, setErrors]     = useState<Record<string, string>>({});
-  const [loading, setLoading]   = useState(false);
+  const [form, setForm]       = useState(INITIAL_FORM);
+  const [errors, setErrors]   = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [autoGenEmp, setAutoGenEmp]   = useState(true);
-  const [generatedEmpId]        = useState(genEmpId);
-  const [subjectRows, setSubjectRows] = useState<SubjectRow[]>([
-    { id: nanoid(), classId: "", section: "", subject: "" },
-  ]);
+  const [generatedEmpId]      = useState(genEmpId);
 
   useEffect(() => {
     fetchDepartments().then(setDepartments).catch(() => {});
@@ -167,8 +112,6 @@ export const AddStaffModal = ({ onClose }: Props) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
-
-  const clearErr = (field: string) => setErrors((prev) => ({ ...prev, [field]: "" }));
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -180,25 +123,25 @@ export const AddStaffModal = ({ onClose }: Props) => {
     return errs;
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     if (!schoolcode) { toast.error("Unable to determine school code."); return; }
 
     const payload: CreateStaffPayload = {
-      name:           form.fullName.trim(),
-      email:          form.email.trim(),
-      phone:          form.phone.trim().replace(/[^0-9]/g, ""),
-      emp_number:     autoGenEmp ? generatedEmpId : form.empNumber.trim() || genEmpId(),
-      qualification:  form.qualification.trim(),
-      salary:         form.salary ? Number(form.salary) : undefined,
-      date_of_birth:  form.dob || getToday(),
-      date_of_join:   form.joiningDate,
-      school_code:    schoolcode,
-      role:           form.role,
-      ...(form.departmentId  && { department_id: form.departmentId }),
-      ...(academicYearId     && { academicYearId }),
+      name:          form.fullName.trim(),
+      email:         form.email.trim(),
+      phone:         form.phone.trim().replace(/[^0-9]/g, ""),
+      emp_number:    autoGenEmp ? generatedEmpId : form.empNumber.trim() || genEmpId(),
+      qualification: form.qualification.trim(),
+      salary:        form.salary ? Number(form.salary) : undefined,
+      date_of_birth: form.dob || getToday(),
+      date_of_join:  form.joiningDate,
+      school_code:   schoolcode,
+      role:          form.role,
+      ...(form.departmentId && { department_id: form.departmentId }),
+      ...(academicYearId    && { academicYearId }),
     };
 
     try {
@@ -215,20 +158,13 @@ export const AddStaffModal = ({ onClose }: Props) => {
         message = error.message;
       }
       const lowered = (message || "").toLowerCase();
-      if (lowered.includes("email"))  setErrors((p) => ({ ...p, email: message }));
-      else if (lowered.includes("phone")) setErrors((p) => ({ ...p, phone: message }));
+      if (lowered.includes("email"))       setErrors((p) => ({ ...p, email: message }));
+      else if (lowered.includes("phone"))  setErrors((p) => ({ ...p, phone: message }));
       else toast.error(message);
     } finally {
       setLoading(false);
     }
   };
-
-  const addSubjectRow = () =>
-    setSubjectRows((prev) => [...prev, { id: nanoid(), classId: "", section: "", subject: "" }]);
-  const removeSubjectRow = (id: string) =>
-    setSubjectRows((prev) => prev.filter((r) => r.id !== id));
-  const updateSubjectRow = (id: string, field: keyof Omit<SubjectRow, "id">, value: string) =>
-    setSubjectRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm">
@@ -257,12 +193,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* FULL NAME */}
             <Field label="Full Name" required error={errors.fullName}>
-              <input
-                className={inputCls}
-                placeholder="Priya Reddy"
-                value={form.fullName}
-                onChange={set("fullName")}
-              />
+              <input className={inputCls} placeholder="Priya Reddy" value={form.fullName} onChange={set("fullName")} />
             </Field>
 
             {/* ROLE */}
@@ -270,9 +201,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
               <div className="relative">
                 <select value={form.role} onChange={set("role")} className={selectCls}>
                   <option value="">Select role…</option>
-                  {ROLE_OPTIONS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
+                  {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
@@ -283,35 +212,38 @@ export const AddStaffModal = ({ onClose }: Props) => {
               <label className={labelCls}>
                 Phone Number <span className="text-red-500">*</span>
               </label>
-              <PhoneInput
-                value={form.phone}
-                onChange={(v) => {
-                  setForm((p) => ({ ...p, phone: v }));
-                  clearErr("phone");
-                }}
-              />
+              <div className="flex h-11 rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-300 focus-within:border-indigo-400 transition bg-white">
+                <span className="flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-sm font-semibold text-gray-600 shrink-0">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => { setForm((p) => ({ ...p, phone: e.target.value })); setErrors((p) => ({ ...p, phone: "" })); }}
+                  placeholder="98765 43210"
+                  className="flex-1 h-full px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
+                />
+              </div>
               <p className="text-[10px] text-gray-400 mt-1">Used for OTP login and WhatsApp</p>
-              {errors.phone && (
-                <p className="text-[10px] text-red-500 font-medium mt-0.5">{errors.phone}</p>
-              )}
+              {errors.phone && <p className="text-[10px] text-red-500 font-medium mt-0.5">{errors.phone}</p>}
             </div>
 
-            {/* EMPLOYEE ID with auto-generate toggle */}
+            {/* EMAIL */}
+            <Field label="Email" error={errors.email}>
+              <input className={inputCls} type="email" placeholder="priya@school.edu.in" value={form.email} onChange={set("email")} />
+            </Field>
+
+            {/* EMPLOYEE ID */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className={`${labelCls} mb-0`}>Employee ID</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Auto-Generate
-                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Auto-Generate</span>
                   <Toggle checked={autoGenEmp} onChange={setAutoGenEmp} />
                 </div>
               </div>
               <input
-                className={
-                  inputCls +
-                  (autoGenEmp ? " bg-slate-50 text-gray-500 cursor-not-allowed select-none" : "")
-                }
+                className={inputCls + (autoGenEmp ? " bg-slate-50 text-gray-500 cursor-not-allowed select-none" : "")}
                 value={autoGenEmp ? generatedEmpId : form.empNumber}
                 onChange={(e) => !autoGenEmp && setForm((p) => ({ ...p, empNumber: e.target.value }))}
                 readOnly={autoGenEmp}
@@ -319,25 +251,9 @@ export const AddStaffModal = ({ onClose }: Props) => {
               />
             </div>
 
-            {/* EMAIL */}
-            <Field label="Email" error={errors.email}>
-              <input
-                className={inputCls}
-                type="email"
-                placeholder="priya@hps.edu.in"
-                value={form.email}
-                onChange={set("email")}
-              />
-            </Field>
-
             {/* QUALIFICATION */}
             <Field label="Qualification">
-              <input
-                className={inputCls}
-                placeholder="B.Ed, M.Sc"
-                value={form.qualification}
-                onChange={set("qualification")}
-              />
+              <input className={inputCls} placeholder="B.Ed, M.Sc" value={form.qualification} onChange={set("qualification")} />
             </Field>
 
             {/* DATE OF BIRTH */}
@@ -345,12 +261,15 @@ export const AddStaffModal = ({ onClose }: Props) => {
               <input className={inputCls} type="date" value={form.dob} onChange={set("dob")} />
             </Field>
 
+            {/* DATE OF JOINING */}
+            <Field label="Date of Joining" required error={errors.joiningDate}>
+              <input className={inputCls} type="date" value={form.joiningDate} onChange={set("joiningDate")} />
+            </Field>
+
             {/* MONTHLY SALARY */}
             <Field label="Monthly Salary (₹)">
               <div className="flex h-11 rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-300 focus-within:border-indigo-400 transition bg-white">
-                <span className="flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-sm font-semibold text-gray-600 shrink-0">
-                  ₹
-                </span>
+                <span className="flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-sm font-semibold text-gray-600 shrink-0">₹</span>
                 <input
                   type="number"
                   value={form.salary}
@@ -362,125 +281,29 @@ export const AddStaffModal = ({ onClose }: Props) => {
               </div>
             </Field>
 
-            {/* DATE OF JOINING */}
-            <Field label="Date of Joining" required error={errors.joiningDate}>
-              <input
-                className={inputCls}
-                type="date"
-                value={form.joiningDate}
-                onChange={set("joiningDate")}
-              />
+            {/* STATUS */}
+            <Field label="Status">
+              <div className="relative">
+                <select value={form.status} onChange={set("status")} className={selectCls}>
+                  {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
             </Field>
 
-            {/* DEPARTMENT (shown only when data available) */}
+            {/* DEPARTMENT */}
             {departments.length > 0 && (
               <Field label="Department">
                 <div className="relative">
-                  <select
-                    value={form.departmentId}
-                    onChange={set("departmentId")}
-                    className={selectCls}
-                  >
+                  <select value={form.departmentId} onChange={set("departmentId")} className={selectCls}>
                     <option value="">Select department…</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>{d.departmentName}</option>
-                    ))}
+                    {departments.map((d) => <option key={d.id} value={d.id}>{d.departmentName}</option>)}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
               </Field>
             )}
 
-            {/* ── TEACHING ASSIGNMENTS ── */}
-            <div className="col-span-full pt-2 space-y-3">
-              <p className={labelCls}>Teaching Assignments</p>
-
-              {/* Class Teacher of */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-700 w-36 shrink-0">Class Teacher of:</span>
-                <div className="relative max-w-[200px] flex-1">
-                  <select
-                    value={form.classTeacherOf}
-                    onChange={set("classTeacherOf")}
-                    className="w-full h-10 pl-3 pr-8 rounded-xl border border-slate-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 appearance-none transition"
-                  >
-                    <option value="">Select class…</option>
-                    {CLASS_OPTIONS.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Subject Teacher rows */}
-              <div className="space-y-2">
-                <span className="text-sm text-gray-700">Subject Teacher for:</span>
-                {subjectRows.map((row) => (
-                  <div key={row.id} className="flex items-center gap-2">
-                    {/* Class */}
-                    <div className="relative flex-1">
-                      <select
-                        value={row.classId}
-                        onChange={(e) => updateSubjectRow(row.id, "classId", e.target.value)}
-                        className="w-full h-10 pl-3 pr-7 rounded-xl border border-slate-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 appearance-none"
-                      >
-                        <option value="">Class…</option>
-                        {CLASS_OPTIONS.map((c) => (
-                          <option key={c.value} value={c.value}>{c.label}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                    </div>
-                    {/* Section */}
-                    <div className="relative w-20 shrink-0">
-                      <select
-                        value={row.section}
-                        onChange={(e) => updateSubjectRow(row.id, "section", e.target.value)}
-                        className="w-full h-10 pl-3 pr-7 rounded-xl border border-slate-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 appearance-none"
-                      >
-                        <option value="">Sec…</option>
-                        {SECTION_OPTIONS.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                    </div>
-                    {/* Subject */}
-                    <div className="relative flex-[2]">
-                      <select
-                        value={row.subject}
-                        onChange={(e) => updateSubjectRow(row.id, "subject", e.target.value)}
-                        className="w-full h-10 pl-3 pr-7 rounded-xl border border-slate-200 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 appearance-none"
-                      >
-                        <option value="">Subject…</option>
-                        {SUBJECT_OPTIONS.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                    </div>
-                    {/* Remove */}
-                    <button
-                      type="button"
-                      onClick={() => removeSubjectRow(row.id)}
-                      disabled={subjectRows.length === 1}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addSubjectRow}
-                  className="flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Subject
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* ── Footer ── */}

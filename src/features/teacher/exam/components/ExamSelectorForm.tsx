@@ -135,7 +135,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
         Exam Selector
       </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         {/* Exam Type */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-bold text-gray-500">Exam Type</label>
@@ -155,6 +155,21 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
           </select>
         </div>
 
+        {/* Academic Year — moved next to Exam Type */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-bold text-gray-500">Academic Year</label>
+          <select
+            value={selector.academicYearId ?? ""}
+            onChange={(e) => handleAcademicYearChange(e.target.value)}
+            className={selectCls}
+            title="Academic year"
+            disabled={examCatalogLoading}
+          >
+            <option value="">{examCatalogLoading ? "Loading…" : "Select year…"}</option>
+            {academicYearOptions.map((y) => <option key={y.id} value={y.id}>{y.label}</option>)}
+          </select>
+        </div>
+
         {/* Class */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-bold text-gray-500">Class</label>
@@ -165,7 +180,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
             title="Class"
             disabled={classesLoading || !selector.academicYearId}
           >
-            <option value="">{selector.academicYearId ? "Select class…" : "Select academic year first"}</option>
+            <option value="">{selector.academicYearId ? "Select class…" : "Select year first"}</option>
             {classOptions.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
         </div>
@@ -197,21 +212,6 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
           >
             <option value="">{selector.sectionId ? "Select subject…" : "Select a section first"}</option>
             {subjectOptions.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
-        </div>
-
-        {/* Academic Year */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-gray-500">Academic Year</label>
-          <select
-            value={selector.academicYearId ?? ""}
-            onChange={(e) => handleAcademicYearChange(e.target.value)}
-            className={selectCls}
-            title="Academic year"
-            disabled={examCatalogLoading}
-          >
-            <option value="">{examCatalogLoading ? "Loading academic years…" : "Select academic year…"}</option>
-            {academicYearOptions.map((y) => <option key={y.id} value={y.id}>{y.label}</option>)}
           </select>
         </div>
       </div>

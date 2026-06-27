@@ -13,10 +13,10 @@ import type {
   PayrollHistory,
   SalaryConfig,
   SalaryFormData,
+  PaySalaryFormData,
 } from "../types/payroll.types";
 
 type PayrollStore = {
-
   staffData: StaffPayroll[];
   isProcessed: boolean;
   processedDate: string | null;
@@ -24,11 +24,14 @@ type PayrollStore = {
 
   summary: PayrollSummary;
 
-  processPayroll: (input: {
-    paymentMode: string;
-    paymentDate: string;
-    approvalNote?: string;
-  }) => void;
+  /** Generates payroll records — moves all Draft staff to Pending */
+  processPayroll: (input: { paymentMode: string; paymentDate: string; approvalNote?: string }) => void;
+
+  /** Pay a single employee's salary */
+  paySalary: (staffId: string, data: PaySalaryFormData) => void;
+
+  /** Pay multiple employees at once */
+  paySelected: (ids: string[], data: PaySalaryFormData) => void;
 
   getAttendanceDeductions: () => AttendanceDeduction[];
 
@@ -36,20 +39,18 @@ type PayrollStore = {
   editingStaff: SalaryConfig | null;
   isEditing: boolean;
 
- openEditModal: (staff: SalaryConfig | null) => void;
+  openEditModal: (staff: SalaryConfig | null) => void;
   closeEditModal: () => void;
   updateSalary: (id: string, data: SalaryFormData) => void;
-
 
   history: PayrollHistory[];
 };
 
 export const usePayrollStore = create<PayrollStore>((set) => ({
- 
   staffData: initialStaffData,
-  isProcessed: false,
-  processedDate: null,
-  processedBy: null,
+  isProcessed: true,
+  processedDate: "1 April 2025",
+  processedBy: "Ramu Teja",
 
   summary: {
     totalStaff: initialStaffData.length,
@@ -63,10 +64,9 @@ export const usePayrollStore = create<PayrollStore>((set) => ({
 
   processPayroll: () => {
     set((state) => ({
-      staffData: state.staffData.map((s) => ({
-        ...s,
-        status: "Processed",
-      })),
+      staffData: state.staffData.map((s) =>
+        s.status === "Draft" ? { ...s, status: "Pending" } : s
+      ),
       isProcessed: true,
       processedDate: new Date().toLocaleDateString("en-IN", {
         day: "numeric",
@@ -77,42 +77,69 @@ export const usePayrollStore = create<PayrollStore>((set) => ({
     }));
   },
 
-  getAttendanceDeductions: () => attendanceDeductionsData,
+  paySalary: (staffId, data) => {
+    set((state) => ({
+      staffData: state.staffData.map((s) => {
+        if (s.id !== staffId) return s;
+        const adj = data.bonus + data.overtime + data.extraClass - data.leaveDeductions - data.otherDeductions;
+        const newNet = s.gross + adj - s.deductions;
+        return {
+          ...s,
+          bonus: data.bonus,
+          overtime: data.overtime,
+          extraClass: data.extraClass,
+          leaveDeductions: data.leaveDeductions,
+          otherDeductions: data.otherDeductions,
+          adjustments: adj,
+          net: newNet,
+          status: "Paid",
+          paymentDate: data.paymentDate,
+          paymentMethod: data.paymentMethod,
+          remarks: data.remarks,
+        };
+      }),
+    }));
+  },
 
+  paySelected: (ids, data) => {
+    set((state) => ({
+      staffData: state.staffData.map((s) => {
+        if (!ids.includes(s.id)) return s;
+        const adj = data.bonus + data.overtime + data.extraClass - data.leaveDeductions - data.otherDeductions;
+        const newNet = s.gross + adj - s.deductions;
+        return {
+          ...s,
+          bonus: data.bonus,
+          overtime: data.overtime,
+          extraClass: data.extraClass,
+          leaveDeductions: data.leaveDeductions,
+          otherDeductions: data.otherDeductions,
+          adjustments: adj,
+          net: newNet,
+          status: "Paid",
+          paymentDate: data.paymentDate,
+          paymentMethod: data.paymentMethod,
+          remarks: data.remarks,
+        };
+      }),
+    }));
+  },
+
+  getAttendanceDeductions: () => attendanceDeductionsData,
 
   salaryData: initialSalaryData,
   editingStaff: null,
   isEditing: false,
 
-  openEditModal: (staff) =>
-    set({
-      editingStaff: staff,
-      isEditing: true,
-    }),
-
-  closeEditModal: () =>
-    set({
-      editingStaff: null,
-      isEditing: false,
-    }),
+  openEditModal: (staff) => set({ editingStaff: staff, isEditing: true }),
+  closeEditModal: () => set({ editingStaff: null, isEditing: false }),
 
   updateSalary: (id, data) => {
     set((state) => ({
       salaryData: state.salaryData.map((s) => {
         if (s.id !== id) return s;
-
-        const gross =
-          data.basicSalary +
-          data.hra +
-          data.transportAllowance +
-          data.otherAllowance;
-
-        const net =
-          gross -
-          (data.pfPercentage / 100) * gross -
-          data.professionalTax -
-          data.tds;
-
+        const gross = data.basicSalary + data.hra + data.transportAllowance + data.otherAllowance;
+        const net   = gross - (data.pfPercentage / 100) * gross - data.professionalTax - data.tds;
         return {
           ...s,
           basic: data.basicSalary,

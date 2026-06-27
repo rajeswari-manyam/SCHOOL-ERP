@@ -22,11 +22,15 @@ export interface ExamResult {
 export interface ResultSummary {
   id: string;
   examName: string;
+  studentName: string;
+  className: string;
+  sectionName: string;
   totalObtained: number;
   totalMarks: number;
   percentage: number;
   grade: string;
   rank: string;
+  overallStatus: "Pass" | "Fail";
   strongestSubjects: string[];
   analyticsNote: string;
   results: ExamResult[];

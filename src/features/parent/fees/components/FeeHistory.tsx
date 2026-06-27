@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,12 +7,33 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import { Virtuoso } from "react-virtuoso";
-import { Download, FileDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, FileDown, ChevronLeft, ChevronRight, Trash2, Loader2 } from "lucide-react";
 
-import type { PaymentHistory } from "../types/fee.types";
+import { downloadRecordFeePayment } from "@/services/fee.api";
+import type { FeeHistoryProps, PaymentHistory } from "../types/fee.types";
 
-// ─── Mobile card ──────────────────────────────────────────────────────────────
-function ReceiptCard({ item }: { item: PaymentHistory }) {
+
+function ReceiptCard({
+  item,
+  onDelete,
+}: {
+  item: PaymentHistory;
+  onDelete?: (id: string) => Promise<void>;
+}) {
+  const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setDeleting(true);
+    try { await onDelete(item.id); } finally { setDeleting(false); }
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try { await downloadRecordFeePayment(item.id); } finally { setDownloading(false); }
+  };
+
   return (
     <div className="rounded-xl border border-[#E8EBF2] bg-white p-3.5">
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -35,17 +56,33 @@ function ReceiptCard({ item }: { item: PaymentHistory }) {
           {item.mode}
         </span>
 
-        <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#3525CD] hover:text-[#2a1db5] transition-colors">
-          <Download size={13} strokeWidth={1.5} />
-          Download
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex items-center gap-1.5 text-[12px] font-medium text-[#3525CD] hover:text-[#2a1db5] disabled:opacity-50 transition-colors"
+          >
+            {downloading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} strokeWidth={1.5} />}
+            Download
+          </button>
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-1 text-[12px] font-medium text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+            >
+              {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              Delete
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Mobile view ──────────────────────────────────────────────────────────────
-function MobileView({ data }: { data: PaymentHistory[] }) {
+
+function MobileView({ data, onDelete }: { data: PaymentHistory[]; onDelete?: (id: string) => Promise<void> }) {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
 
   return (
@@ -55,7 +92,7 @@ function MobileView({ data }: { data: PaymentHistory[] }) {
         data={data}
         itemContent={(_, item) => (
           <div className="px-3 pt-3 last:pb-3">
-            <ReceiptCard item={item} />
+            <ReceiptCard item={item} onDelete={onDelete} />
           </div>
         )}
       />
@@ -81,11 +118,24 @@ function MobileView({ data }: { data: PaymentHistory[] }) {
   );
 }
 
-// ─── Desktop view ─────────────────────────────────────────────────────────────
+
 const columnHelper = createColumnHelper<PaymentHistory>();
 
-function DesktopView({ data }: { data: PaymentHistory[] }) {
+function DesktopView({ data, onDelete }: { data: PaymentHistory[]; onDelete?: (id: string) => Promise<void> }) {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    if (!onDelete) return;
+    setDeletingId(id);
+    try { await onDelete(id); } finally { setDeletingId(null); }
+  };
+
+  const handleDownload = async (id: string) => {
+    setDownloadingId(id);
+    try { await downloadRecordFeePayment(id); } finally { setDownloadingId(null); }
+  };
 
   const columns = useMemo(
     () => [
@@ -127,16 +177,41 @@ function DesktopView({ data }: { data: PaymentHistory[] }) {
       }),
       columnHelper.display({
         id: "action",
-        header: "Action",
-        cell: () => (
-          <button className="flex items-center gap-1.5 text-[13px] text-[#3525CD] hover:text-[#2a1db5]">
-            <Download size={14} />
-            Download
-          </button>
-        ),
+        header: "Actions",
+        cell: ({ row }) => {
+          const id = row.original.id;
+          const isDeleting = deletingId === id;
+          const isDownloading = downloadingId === id;
+          return (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleDownload(id)}
+                disabled={isDownloading}
+                className="flex items-center gap-1.5 text-[13px] text-[#3525CD] hover:text-[#2a1db5] disabled:opacity-50 transition-colors"
+              >
+                {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                Download
+              </button>
+              {onDelete && (
+                <button
+                  onClick={() => handleDelete(id)}
+                  disabled={isDeleting}
+                  className="flex items-center gap-1 text-[13px] text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {isDeleting
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Trash2 size={14} />
+                  }
+                  Delete
+                </button>
+              )}
+            </div>
+          );
+        },
       }),
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [deletingId, onDelete]
   );
 
   const table = useReactTable({
@@ -206,11 +281,11 @@ function DesktopView({ data }: { data: PaymentHistory[] }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function FeeHistory({ data = [] }: { data: PaymentHistory[] }) {
+export function FeeHistory({ data = [], onDelete }: FeeHistoryProps) {
   return (
     <>
-      <MobileView data={data} />
-      <DesktopView data={data} />
+      <MobileView data={data} onDelete={onDelete} />
+      <DesktopView data={data} onDelete={onDelete} />
     </>
   );
 }

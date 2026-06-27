@@ -1,112 +1,178 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useCallback } from "react";
 import {
   Pencil, Trash2, Users, Wallet,
-  BarChart3, Download, Plus, GraduationCap,
+  BarChart3, GraduationCap, Loader2, IndianRupee,
 } from "lucide-react";
 import Pagination from "@/components/ui/pagination";
-import { concessionsData } from "../data/fee.data";
-import type {  ConcessionCardProps } from "../types/fees.types";
 import { StatCard } from "../../../../components/ui/statcard";
-import {
-  getAvatarBgColor,
-  typeBadgeClass,
-  statusBadgeClass,
-  statusDotClass,
-} from "../utils/fee.utils";
+import { getAvatarBgColor } from "../utils/fee.utils";
 import {
   CONCESSIONS_PAGE_SIZE,
   CONCESSION_TABLE_COLS,
   CONCESSION_TABLE_HEADERS,
 } from "../constants/fee.constants";
+import { getAllConcessions, deleteConcession } from "@/services/fee.api";
+import type { ConcessionRecord } from "@/services/fee.api";
+import { toast } from "sonner";
+import { AddFeeConcessionModal } from "./AddFeeConcessionModal";
 
+const getInitials = (name: string) => {
+  const parts = name.trim().split(" ");
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+};
 
+const formatDate = (d?: string) => {
+  if (!d) return "—";
+  try {
+    return new Date(d).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+  } catch { return d; }
+};
 
-const ConcessionCard = ({ row, onEdit, onDelete }: ConcessionCardProps) => (
-  <>
-    {/* ── DESKTOP ROW ── */}
-    <div className={`hidden md:grid ${CONCESSION_TABLE_COLS} items-center px-5 py-3.5 border-b border-slate-100 hover:bg-blue-50/40 transition-colors group`}>
-      <div className="flex items-center gap-3 min-w-0">
-        <div className={`w-8 h-8 rounded-full ${getAvatarBgColor(row.studentName)} text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm`}>
-          {row.studentInitials}
-        </div>
-        <span className="font-medium text-slate-800 text-sm truncate">{row.studentName}</span>
-      </div>
-      <div className="text-sm text-slate-500 font-medium">{row.class}</div>
-      <div>
-        <span className={typeBadgeClass(row.typeColor)}>{row.type}</span>
-      </div>
-      <div className="text-sm">
-        <span className="font-semibold text-slate-800">{row.amount}</span>
-        {row.amountUnit && <span className="text-slate-400 ml-1 text-xs">{row.amountUnit}</span>}
-      </div>
-      <div className="text-sm text-slate-500 truncate pr-2">{row.reason}</div>
-      <div className="text-sm text-slate-500 truncate">{row.approvedBy}</div>
-      <div>
-        <span className={statusBadgeClass(row.status)}>
-          <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(row.status)}`} />
-          {row.status}
-        </span>
-      </div>
-      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={onEdit} className="p-1 rounded hover:bg-blue-100 transition-colors" title="Edit">
-          <Pencil className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600 transition-colors" />
-        </button>
-        <button onClick={onDelete} className="p-1 rounded hover:bg-red-100 transition-colors" title="Delete">
-          <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-500 transition-colors" />
-        </button>
-      </div>
-    </div>
+const formatDiscount = (row: ConcessionRecord) => {
+  if (row.discountType === "PERCENTAGE") return `${row.discountValue ?? 0}%`;
+  if (row.discountAmount != null) return `₹${row.discountAmount.toLocaleString()}`;
+  if (row.discountValue != null) return `₹${row.discountValue.toLocaleString()}`;
+  return "—";
+};
 
-    {/* ── MOBILE CARD ── */}
-    <div className="md:hidden bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-9 h-9 rounded-full ${getAvatarBgColor(row.studentName)} text-white flex items-center justify-center text-xs font-bold shadow-sm`}>
-            {row.studentInitials}
+// ── Row Component ──────────────────────────────────────────────────────────────
+
+interface CardProps {
+  row: ConcessionRecord;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleting: boolean;
+}
+
+const ConcessionCard = ({ row, onEdit, onDelete, deleting }: CardProps) => {
+  const initials = getInitials(row.studentName ?? "");
+
+  return (
+    <>
+      {/* Desktop Row */}
+      <div className={`hidden md:grid ${CONCESSION_TABLE_COLS} items-center px-5 py-3.5 border-b border-slate-100 hover:bg-blue-50/40 transition-colors group`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-8 h-8 rounded-full ${getAvatarBgColor(row.studentName ?? "")} text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm`}>
+            {initials}
           </div>
-          <div>
-            <p className="font-semibold text-slate-800 text-sm">{row.studentName}</p>
-            <p className="text-xs text-slate-400">Class {row.class}</p>
+          <span className="font-medium text-slate-800 text-sm truncate">{row.studentName}</span>
+        </div>
+        <div className="text-sm text-slate-500 font-medium truncate">{row.feeHeadName}</div>
+        <div>
+          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 whitespace-nowrap">
+            {row.concessionType}
+          </span>
+        </div>
+        {/* Discount — percentage + rupee amount stacked */}
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-semibold text-slate-800">{formatDiscount(row)}</span>
+          {row.discountAmount != null && (
+            <span className="text-xs font-medium text-red-500">
+              - ₹{row.discountAmount.toLocaleString("en-IN")}
+            </span>
+          )}
+        </div>
+        {/* Total Amount (original fee before discount) */}
+        <div className="text-sm font-semibold text-slate-800">
+          {row.totalAmount != null ? `₹${row.totalAmount.toLocaleString("en-IN")}` : "—"}
+        </div>
+        {/* Payable / final amount */}
+        <div className="text-sm font-bold text-[#3525CD]">
+          {row.finalAmount != null ? `₹${row.finalAmount.toLocaleString("en-IN")}` : "—"}
+        </div>
+        <div className="text-sm text-slate-500 truncate pr-2">{row.reason}</div>
+        <div className="text-xs text-slate-400 whitespace-nowrap">
+          {formatDate(row.effectiveFrom)} – {formatDate(row.effectiveUntil)}
+        </div>
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={onEdit}
+            className="p-1 rounded hover:bg-blue-100 transition-colors"
+            title="Edit"
+          >
+            <Pencil className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600 transition-colors" />
+          </button>
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            className="p-1 rounded hover:bg-red-100 transition-colors"
+            title="Delete"
+          >
+            {deleting
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+              : <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-500 transition-colors" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Card */}
+      <div className="md:hidden bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-9 h-9 rounded-full ${getAvatarBgColor(row.studentName ?? "")} text-white flex items-center justify-center text-xs font-bold shadow-sm`}>
+              {initials}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800 text-sm">{row.studentName}</p>
+              <p className="text-xs text-slate-400">{row.feeHeadName}</p>
+            </div>
+          </div>
+          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+            {row.concessionType}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="bg-slate-50 rounded-lg px-3 py-2">
+            <p className="text-slate-400 mb-0.5">Discount</p>
+            <p className="font-semibold text-slate-800">{formatDiscount(row)}</p>
+            {row.discountAmount != null && (
+              <p className="font-medium text-red-500 mt-0.5">- ₹{row.discountAmount.toLocaleString("en-IN")}</p>
+            )}
+          </div>
+          <div className="bg-slate-50 rounded-lg px-3 py-2">
+            <p className="text-slate-400 mb-0.5">Total Amount</p>
+            <p className="font-semibold text-slate-800">
+              {row.totalAmount != null ? `₹${row.totalAmount.toLocaleString("en-IN")}` : "—"}
+            </p>
+          </div>
+          <div className="bg-[#EEF2FF] rounded-lg px-3 py-2">
+            <p className="text-slate-400 mb-0.5">Payable</p>
+            <p className="font-bold text-[#3525CD]">
+              {row.finalAmount != null ? `₹${row.finalAmount.toLocaleString("en-IN")}` : "—"}
+            </p>
+          </div>
+          <div className="bg-slate-50 rounded-lg px-3 py-2">
+            <p className="text-slate-400 mb-0.5">From</p>
+            <p className="text-slate-600 font-medium">{formatDate(row.effectiveFrom)}</p>
+          </div>
+          <div className="bg-slate-50 rounded-lg px-3 py-2 col-span-2">
+            <p className="text-slate-400 mb-0.5">Reason</p>
+            <p className="text-slate-600 font-medium">{row.reason}</p>
           </div>
         </div>
-        <span className={statusBadgeClass(row.status)}>
-          <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(row.status)}`} />
-          {row.status}
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-slate-50 rounded-lg px-3 py-2">
-          <p className="text-slate-400 mb-0.5">Type</p>
-          <span className={typeBadgeClass(row.typeColor)}>{row.type}</span>
-        </div>
-        <div className="bg-slate-50 rounded-lg px-3 py-2">
-          <p className="text-slate-400 mb-0.5">Amount</p>
-          <p className="font-semibold text-slate-800">
-            {row.amount}
-            {row.amountUnit && <span className="text-slate-400 ml-1 font-normal">{row.amountUnit}</span>}
-          </p>
-        </div>
-        <div className="bg-slate-50 rounded-lg px-3 py-2">
-          <p className="text-slate-400 mb-0.5">Reason</p>
-          <p className="text-slate-600 font-medium">{row.reason}</p>
-        </div>
-        <div className="bg-slate-50 rounded-lg px-3 py-2">
-          <p className="text-slate-400 mb-0.5">Approved By</p>
-          <p className="text-slate-600 font-medium">{row.approvedBy}</p>
+        <div className="flex gap-2 justify-end pt-1 border-t border-slate-100">
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <Pencil className="w-3 h-3" /> Edit
+          </button>
+          <button
+            onClick={onDelete}
+            disabled={deleting}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-3 h-3" /> Delete
+          </button>
         </div>
       </div>
-      <div className="flex gap-2 justify-end pt-1 border-t border-slate-100">
-        <button onClick={onEdit} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-          <Pencil className="w-3 h-3" /> Edit
-        </button>
-        <button onClick={onDelete} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-500 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
-          <Trash2 className="w-3 h-3" /> Delete
-        </button>
-      </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -120,63 +186,101 @@ const EmptyState = () => (
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export function Concessions({ onAddConcession }: { onAddConcession: () => void }) {
-  const [page, setPage] = useState(1);
+interface ConcessionsProps {
+  triggerAdd?: boolean;
+  onAddHandled?: () => void;
+}
 
-  const totalPages = Math.ceil(concessionsData.length / CONCESSIONS_PAGE_SIZE);
+export function Concessions({ triggerAdd, onAddHandled }: ConcessionsProps = {}) {
+  const [concessions, setConcessions]       = useState<ConcessionRecord[]>([]);
+  const [page, setPage]                     = useState(1);
+  const [deletingId, setDeletingId]         = useState<string | null>(null);
+  const [editingRecord, setEditingRecord]   = useState<ConcessionRecord | null>(null);
+  const [showAddModal, setShowAddModal]     = useState(false);
 
-  const pagedData = concessionsData.slice(
+  const refresh = useCallback(() => {
+    getAllConcessions()
+      .then((res) => { if (res.status) setConcessions(res.data ?? []); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  useEffect(() => {
+    if (triggerAdd) {
+      setShowAddModal(true);
+      onAddHandled?.();
+    }
+  }, [triggerAdd, onAddHandled]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteConcession(id);
+      toast.success("Concession deleted");
+      refresh();
+    } catch {
+      toast.error("Failed to delete concession");
+    } finally {
+      setDeletingId(null);
+    }
+  }, [refresh]);
+
+  const totalDiscount  = concessions.reduce((sum, c) => sum + (c.discountAmount ?? 0), 0);
+  const totalFeeAmount = concessions.reduce((sum, c) => sum + (c.totalAmount ?? 0), 0);
+  const uniqueTypes    = new Set(concessions.map((c) => c.concessionType)).size;
+  const totalPages  = Math.ceil(concessions.length / CONCESSIONS_PAGE_SIZE);
+  const pagedData   = concessions.slice(
     (page - 1) * CONCESSIONS_PAGE_SIZE,
-    page * CONCESSIONS_PAGE_SIZE
+    page * CONCESSIONS_PAGE_SIZE,
   );
 
   return (
     <div className="space-y-5 pb-8">
-    
-      <div className="mx-5 mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <AddFeeConcessionModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => { setShowAddModal(false); refresh(); }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingRecord && (
+        <AddFeeConcessionModal
+          editData={editingRecord}
+          onClose={() => setEditingRecord(null)}
+          onSuccess={() => { setEditingRecord(null); refresh(); }}
+        />
+      )}
+
+      {/* Stats */}
+      <div className="mx-5 mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Concessions"
-          value="12"
+          value={String(concessions.length)}
           suffixLabel="students"
           icon={<Users className="w-4 h-4 text-blue-600" />}
         />
         <StatCard
-          label="Monthly Amount"
-          value="₹8,500"
+          label="Total Fee Amount"
+          value={`₹${totalFeeAmount.toLocaleString()}`}
+          icon={<IndianRupee className="w-4 h-4 text-indigo-600" />}
+        />
+        <StatCard
+          label="Total Discount"
+          value={`₹${totalDiscount.toLocaleString()}`}
           icon={<Wallet className="w-4 h-4 text-orange-500" />}
         />
         <StatCard
-          label="Annual Concession"
-          value="₹1,02,000"
+          label="Concession Types"
+          value={String(uniqueTypes)}
           icon={<BarChart3 className="w-4 h-4 text-purple-600" />}
         />
       </div>
 
-      {/* ── ACTIONS ── */}
-      <div className="px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <p className="text-sm text-slate-500">
-          Showing <span className="font-semibold text-slate-700">{concessionsData.length}</span> concessions
-        </p>
-       <div className="flex gap-2 w-full sm:w-auto">
-  <Button
-    variant="outline"
-    size="sm"
-    className="flex-1 sm:flex-none gap-1.5 text-slate-600 border-slate-200"
-  >
-    <Download className="w-3.5 h-3.5" /> Export
-  </Button>
-           <Button
-    onClick={onAddConcession}
-    size="sm"
-    className="flex-1 sm:flex-none bg-[#3525CD] hover:bg-[#2d1fb5] text-white gap-1.5"
-  >
-    <Plus className="w-3.5 h-3.5" /> Add Concession
-  </Button>
-</div>
-       
-      </div>
-
-      {/* ── TABLE ── */}
+      {/* Table */}
       <div className="px-5">
         <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
 
@@ -189,35 +293,39 @@ export function Concessions({ onAddConcession }: { onAddConcession: () => void }
             ))}
           </div>
 
-          {/* Rows */}
           {pagedData.length === 0 ? (
             <EmptyState />
           ) : (
             <div className="px-4 md:px-0 space-y-3 md:space-y-0 py-4 md:py-0">
               {pagedData.map((row) => (
-                <ConcessionCard key={row.studentName} row={row} />
+                <ConcessionCard
+                  key={row.id}
+                  row={row}
+                  onEdit={() => setEditingRecord(row)}
+                  onDelete={() => handleDelete(row.id)}
+                  deleting={deletingId === row.id}
+                />
               ))}
             </div>
           )}
 
-          {/* Desktop Footer */}
           {pagedData.length > 0 && (
             <div className="hidden md:flex px-5 py-2.5 bg-slate-50 border-t border-slate-100 items-center justify-between">
               <span className="text-xs text-slate-400">Page {page} of {totalPages}</span>
               <span className="text-xs text-slate-400">
                 {(page - 1) * CONCESSIONS_PAGE_SIZE + 1}–
-                {Math.min(page * CONCESSIONS_PAGE_SIZE, concessionsData.length)} of {concessionsData.length} entries
+                {Math.min(page * CONCESSIONS_PAGE_SIZE, concessions.length)} of {concessions.length} entries
               </span>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── PAGINATION ── */}
-      {concessionsData.length > CONCESSIONS_PAGE_SIZE && (
+      {/* Pagination */}
+      {concessions.length > CONCESSIONS_PAGE_SIZE && (
         <Pagination
           page={page}
-          total={concessionsData.length}
+          total={concessions.length}
           pageSize={CONCESSIONS_PAGE_SIZE}
           onChange={setPage}
           itemLabel="concessions"

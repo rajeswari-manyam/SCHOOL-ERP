@@ -34,8 +34,8 @@ export type MonthlyData = {
 
 export type AddExpenseModalProps = {
   onClose: () => void;
-  onAdd: (data: LedgerEntry) => void;
- initialData?: ExpenseFormInput;
+  onSave: (data: ExpenseFormInput, file?: File) => Promise<void>;
+  initialData?: ExpenseFormInput;
 };
 
 
@@ -55,10 +55,19 @@ export type SummaryItem = {
   type: "income" | "expense";
 };
 
+export type BalanceSheetItem = { description: string; amount: number };
+
 export type BalanceSheetProps = {
   income: number;
   expense: number;
   chartData: MonthlyData[];
+  balanceSheetData?: {
+    income: BalanceSheetItem[];
+    expenses: BalanceSheetItem[];
+    totalIncome: number;
+    totalExpenses: number;
+    netPosition: number;
+  } | null;
 };
 export interface IncomeExpenseCardsProps {
   totalIncome: number;
@@ -68,6 +77,8 @@ export interface IncomeExpenseCardsProps {
   payrollExpense: number;
   operatingExpenses: number;
   type: "income" | "expense";
+  apiTotalExpenses?: number;
+  apiPaidPayroll?: number;
 }
 export interface StatCardProps {
   title: string;

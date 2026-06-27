@@ -2,7 +2,7 @@
 // 1. CORE DOMAIN TYPES
 // ==========================
 
-export type PayrollStatus = "Draft" | "Processed" | "Paid";
+export type PayrollStatus = "Draft" | "Pending" | "Paid" | "Failed";
 
 export type Payroll = {
   id: string;
@@ -30,6 +30,7 @@ export type SalaryConfig = {
   hra: number;
   transport: number;
   other: number;
+  tds: number;
   pfPercentage: number;
   professionalTax: number;
   gross: number;
@@ -77,9 +78,10 @@ export type PayrollFormData = {
 };
 
 // ==========================
-// 5. SUMMARY & DEDUCTION
+// 5. CORE STAFF / SUMMARY
 // ==========================
-export interface  CreatePayrollInput{
+
+export interface CreatePayrollInput {
   month: string;
   year: number;
   attendanceDeductions: {
@@ -88,20 +90,33 @@ export interface  CreatePayrollInput{
     amountDeducted: number;
   }[];
 }
- 
 
 export interface StaffPayroll {
-  id: string;
+  id: string;            // staff_id
+  payrollId?: string;    // payroll config ID (for createpayslips)
+  payslipId?: string;    // payslip ID (if generated)
   name: string;
   initials: string;
   role: string;
   present: number;
   absent: number;
   gross: number;
+  /** bonus + overtime + extraClass − leaveDeductions − otherDeductions */
+  adjustments: number;
+  bonus: number;
+  overtime: number;
+  extraClass: number;
+  leaveDeductions: number;
+  otherDeductions: number;
+  /** Statutory deductions: PF + PT */
   deductions: number;
   net: number;
   status: PayrollStatus;
+  paymentDate?: string;
+  paymentMethod?: string;
+  remarks?: string;
 }
+
 export interface UpdatePayrollInput {
   totalStaff: number;
   totalGross: number;
@@ -116,30 +131,45 @@ export interface AttendanceDeduction {
   amountDeducted: number;
 }
 
+export interface PaySalaryFormData {
+  bonus: number;
+  overtime: number;
+  extraClass: number;
+  leaveDeductions: number;
+  otherDeductions: number;
+  paymentMethod: "Bank Transfer" | "Cash" | "UPI" | "Cheque";
+  paymentDate: string;
+  remarks: string;
+}
+
 // ==========================
-// 6. UI PROPS TYPES
+// 6. UI PROP TYPES
 // ==========================
 
 export type MonthlyPayrollTabProps = {
   staffData: StaffPayroll[];
   summary: PayrollSummary;
   isProcessed: boolean;
+  isLoading?: boolean;
   processedDate: string | null;
   processedBy: string | null;
   onStartProcessing: () => void;
   onViewPayslip?: (staff: StaffPayroll) => void;
+  onPaySalary: (staffId: string, data: PaySalaryFormData) => void;
+  onPaySelected: (ids: string[], data: PaySalaryFormData) => void;
+  onDeletePayslip?: (staff: StaffPayroll) => void;
+  onGeneratePayslip?: (staff: StaffPayroll, bonus: number, overtime: number, extraClass: number) => Promise<PayslipResult>;
 };
 
 export interface PayrollSummary {
   totalStaff: number;
-  totalGross: number;      
+  totalGross: number;
   totalDeductions: number;
   totalNet: number;
   month: string;
   year: number;
   processingDueDate: string;
 }
-
 
 export interface StatusBannerProps {
   isProcessed: boolean;
@@ -172,17 +202,20 @@ export const MONTHS = [
 
 export interface SalaryConfigTabProps {
   salaryData: SalaryConfig[];
+  isLoading?: boolean;
   isEditing: boolean;
   selectedStaff: SalaryConfig | null;
   onEdit: (staff: SalaryConfig) => void;
   onClose: () => void;
   onSave: (id: string, data: SalaryFormData) => void;
-  onAdd: () => void;
+  onDelete: (id: string) => void;
+  onRefresh: () => void;
 }
 
 export interface SalaryTableProps {
   data: SalaryConfig[];
   onEdit: (staff: SalaryConfig) => void;
+  onDelete: (id: string) => void;
 }
 
 export interface EditSalaryModalProps {
@@ -201,8 +234,13 @@ export interface PayrollStatsProps {
 
 export interface PayrollTableProps {
   data: StaffPayroll[];
-  isProcessed?: boolean;
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
+  onSelectAll: (checked: boolean) => void;
+  onPaySalary: (staff: StaffPayroll) => void;
   onViewPayslip?: (staff: StaffPayroll) => void;
+  onEdit?: (staff: StaffPayroll) => void;
+  onDelete?: (staff: StaffPayroll) => void;
 }
 
 export interface ProcessPayrollModalProps {
@@ -211,4 +249,24 @@ export interface ProcessPayrollModalProps {
   onSubmit: (data: PayrollFormData) => void;
   summary: PayrollSummary;
   attendanceDeductions?: AttendanceDeduction[];
+}
+
+export interface PayslipResult {
+  presentDays: number;
+  absentDays: number;
+  netSalary: number;
+  grossSalary: number;
+  totalDeductions: number;
+}
+
+export interface PaySalaryModalProps {
+  staff: StaffPayroll;
+  onClose: () => void;
+  onPay: (staffId: string, data: PaySalaryFormData) => Promise<PayslipResult | void>;
+}
+
+export interface BulkPayModalProps {
+  staff: StaffPayroll[];
+  onClose: () => void;
+  onPay: (ids: string[], data: PaySalaryFormData) => void;
 }

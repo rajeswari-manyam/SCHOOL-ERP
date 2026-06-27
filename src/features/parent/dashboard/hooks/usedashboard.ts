@@ -46,13 +46,10 @@ export function useDashboard() {
   const weeklyPct             = useDashboardStore((s) => s.weeklyPct)
   const monthlyPct            = useDashboardStore((s) => s.monthlyPct)
   const todayStatus           = useDashboardStore((s) => s.todayStatus)
-  const fees                  = useDashboardStore((s) => s.fees)
-  const isPaid                = useDashboardStore((s) => s.isPaid)
   const homework              = useDashboardStore((s) => s.homework)
   const exams                 = useDashboardStore((s) => s.exams)
   const announcements         = useDashboardStore((s) => s.announcements)
   const isLoadingAttendance   = useDashboardStore((s) => s.isLoadingAttendance)
-  const isLoadingFees         = useDashboardStore((s) => s.isLoadingFees)
   const isLoadingHomework     = useDashboardStore((s) => s.isLoadingHomework)
   const isLoadingExams        = useDashboardStore((s) => s.isLoadingExams)
   const isLoadingAnnouncements = useDashboardStore((s) => s.isLoadingAnnouncements)
@@ -286,13 +283,10 @@ export function useDashboard() {
     weeklyPct,
     monthlyPct,
     todayStatus,
-    fees,
-    isPaid,
     homework,
     exams,
     announcements,
     isLoadingAttendance,
-    isLoadingFees,
     isLoadingHomework,
     isLoadingExams,
     isLoadingAnnouncements,

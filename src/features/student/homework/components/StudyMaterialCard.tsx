@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import type { StudyMaterial } from "../types/homework.types";
 import {
   FileText,
@@ -8,6 +9,9 @@ import {
   ExternalLink,
   MoreHorizontal,
 } from "lucide-react";
+import { downloadStudyMaterial } from "@/services/studymaterial.api";
+import { downloadBlob } from "@/features/school-admin/attendance/utils/attendance.utils";
+import toast from "react-hot-toast";
 
 interface Props {
   item: StudyMaterial;
@@ -26,6 +30,19 @@ const iconConfig: Record<
 export const StudyMaterialCard = ({ item }: Props) => {
   const isLink = item.type === "link";
   const cfg = iconConfig[item.type] ?? iconConfig.doc;
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    try {
+      const blob = await downloadStudyMaterial(item.id);
+      downloadBlob(blob, item.title || "study-material");
+    } catch {
+      toast.error("Failed to download file");
+    } finally {
+      setDownloading(false);
+    }
+  }, [item.id, item.title]);
 
   return (
   <div
@@ -77,19 +94,19 @@ export const StudyMaterialCard = ({ item }: Props) => {
             Open Link
           </a>
         ) : (
-          <a
-            href={item.pdf ?? item.url ?? "#"}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
             className="flex items-center justify-center gap-1.5 w-full
                        py-2.5 sm:py-2 border border-gray-200
                        hover:bg-gray-50 active:scale-[0.98]
                        text-gray-600 text-xs sm:text-sm font-semibold rounded-lg
-                       transition"
+                       transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download size={13} />
-            Download
-          </a>
+            <Download size={13} className={downloading ? "animate-bounce" : ""} />
+            {downloading ? "Downloading…" : "Download"}
+          </button>
         )}
       </div>
     </div>

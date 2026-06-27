@@ -23,18 +23,22 @@ const Card = ({ label, value, sub, accent = "text-gray-900", iconBg = "bg-indigo
 );
 
 interface Props {
-  classStrength: number;
+  currentStrength: number;
+  totalStrength: number;
+  className?: string;
+  sectionName?: string;
   homeworkPending: number;
   attendanceThisMonth: number;
-  leaveBalance: number;
+  leaveUsed: number;
+  leaveAllocated: number;
 }
 
-const TeacherStatCards = ({ classStrength, homeworkPending, attendanceThisMonth, leaveBalance }: Props) => (
+const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionName, homeworkPending, attendanceThisMonth, leaveUsed, leaveAllocated }: Props) => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
     <Card
       label="Class Strength"
-      value={classStrength}
-      sub="Total enrolled"
+      value={`${currentStrength}/${totalStrength}`}
+      sub={className ? `${className}${sectionName ? ` · ${sectionName}` : ""}` : "Total enrolled"}
       icon={<Users size={18} className="text-indigo-600" />}
     />
     <Card
@@ -55,8 +59,8 @@ const TeacherStatCards = ({ classStrength, homeworkPending, attendanceThisMonth,
     />
     <Card
       label="Leave Balance"
-      value={leaveBalance}
-      sub="Days remaining"
+      value={`${leaveUsed}/${leaveAllocated}`}
+      sub="Used / Total days"
       accent="text-indigo-600"
       iconBg="bg-indigo-50"
       icon={<Calendar size={18} className="text-indigo-600" />}

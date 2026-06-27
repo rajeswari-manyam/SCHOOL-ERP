@@ -129,9 +129,6 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   const [departments, setDepartments] = useState<Department[]>([]);
   const [workingDays, setWorkingDays] = useState<WorkingDayRecord[]>([]);
 
-  // Holds the section to auto-select once sections finish loading
-  const [pendingSection, setPendingSection] = useState<{ id: string; label: string } | null>(null);
-
   // ── Loading states ───────────────────────────────────────
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
@@ -196,10 +193,10 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     const defaultAcYear = academicYears.find((y) => y.active)?.id ?? academicYears[0]?.id ?? "";
 
     reset({
-      class_id:     defaultClass?.id    ?? "",
-      className:    defaultClass?.label ?? "",
-      section_id:   "",
-      sectionName:  "",
+      class_id:     defaultClass?.id     ?? "",
+      className:    defaultClass?.label  ?? "",
+      section_id:   defaultSection?.id   ?? "",
+      sectionName:  defaultSection?.label ?? "",
       subject_id:   "",
       subjectname:  "",
       teacher_id:   "",
@@ -216,7 +213,18 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     setEntries([]);
     setSectionOptions([]);
     setSubjectOptions([]);
-    setPendingSection(defaultSection?.id ? defaultSection : null);
+    setTeacherOptions([]);
+
+    // If section is pre-selected, load its subjects immediately
+    if (defaultSection?.id) {
+      setLoadingSubjects(true);
+      getSubjectsBySectionId(defaultSection.id)
+        .then((res: GetSubjectsBySectionIdResponse) => {
+          setSubjectOptions(res.data.map((s) => ({ value: s.id, label: s.subject_name ?? s.id })));
+        })
+        .catch(console.error)
+        .finally(() => setLoadingSubjects(false));
+    }
 
     setLoadingClasses(true);
     getAllClasses()
@@ -246,11 +254,18 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
     setLoadingSections(true);
     setSectionOptions([]);
-    setSubjectOptions([]);
-    setValue("section_id", "");
-    setValue("sectionName", "");
-    setValue("subject_id", "");
-    setValue("subjectname", "");
+
+    // Only clear section & subjects when user manually changes class (not on initial mount with pre-selected section)
+    if (!defaultSection?.id) {
+      setSubjectOptions([]);
+      setTeacherOptions([]);
+      setValue("section_id", "");
+      setValue("sectionName", "");
+      setValue("subject_id", "");
+      setValue("subjectname", "");
+      setValue("teacher_id", "");
+      setValue("teachername", "");
+    }
 
     getSectionsByClassId(selectedClassId)
       .then((res: GetSectionsByClassIdResponse) => {
@@ -258,18 +273,9 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       })
       .catch(console.error)
       .finally(() => setLoadingSections(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClassId, setValue]);
 
-  // ── Auto-select pending section ────────────────────────────
-  useEffect(() => {
-    if (!pendingSection || sectionOptions.length === 0) return;
-    const found = sectionOptions.find((s) => s.value === pendingSection.id);
-    if (found) {
-      setValue("section_id", pendingSection.id);
-      setValue("sectionName", pendingSection.label);
-    }
-    setPendingSection(null);
-  }, [sectionOptions, pendingSection, setValue]);
 
   // ── Auto-select working day when academic year changes ──
   const selectedAcYear = watch("academic_year");

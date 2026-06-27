@@ -1,124 +1,88 @@
 import { create } from "zustand";
 import type { Fee as LocalFee, PaymentHistory, MonthStatus, ExamTerm } from "../types/fee.types";
 import {
-  getAllFees,
-  getFeeById,
-  payFee,
-  type Fee as ApiFee,
+  getPendingFeesByStudentId,
+  getPaymentsByStudentId,
+  createPayment,
+  deletePaymentById,
+  type StudentFeeSummaryDetail,
 } from "../../../../services/fee.api";
+import { getAllAcademicYears } from "../../../../services/academicYear.api";
 
-// ── Month labels in academic year order (Oct → Sep) ───────────────────────────
+const TODAY_STR = () =>
+  new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function buildFees(details: StudentFeeSummaryDetail[]): LocalFee[] {
+  return details
+    .filter((d) => d.dueAmount > 0)
+    .map((d) => {
+      const rawType = d.fee_type ?? d.type;
+      const isConcession = rawType === "concession" || !!d.feeConcessionId;
+      const isTransport  =
+        !isConcession &&
+        (rawType === "transport" ||
+          (d.feeHeadName ?? "").toLowerCase().includes("transport") ||
+          !!d.transportfeeId);
+
+      const feeType = isConcession ? "concession" : isTransport ? "transport" : "feehead";
+      const feeid   = isConcession
+        ? (d.feeConcessionId ?? d.id)
+        : isTransport
+        ? (d.transportfeeId ?? d.id)
+        : (d.feeHeadMappingId ?? d.id);
+
+      const dueDate  = d.dueDate ? new Date(d.dueDate) : null;
+      const diffDays = dueDate
+        ? Math.floor((Date.now() - dueDate.getTime()) / 86_400_000)
+        : 0;
+      return {
+        id:             d.id,
+        feeid,
+        fee_type:       feeType,
+        academicYearId: "",
+        term:           d.feeHeadName ?? "Fee",
+        totalFee:       d.finalAmount,
+        originalAmount: d.originalAmount,
+        discountAmount: d.discountAmount,
+        paidAmount:     d.paidAmount,
+        amount:         d.dueAmount,
+        dueDate:        dueDate
+          ? dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+          : TODAY_STR(),
+        status:         (diffDays > 0 ? "overdue" : "pending") as LocalFee["status"],
+        daysOverdue:    diffDays > 0 ? diffDays : undefined,
+      };
+    });
+}
+
 const ACADEMIC_MONTHS = ["OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP"];
-const MONTH_INDEX: Record<string, string> = {
-  "0":"JAN","1":"FEB","2":"MAR","3":"APR","4":"MAY","5":"JUN",
-  "6":"JUL","7":"AUG","8":"SEP","9":"OCT","10":"NOV","11":"DEC",
-};
 
-// ── helpers ────────────────────────────────────────────────────────────────────
-
-function apiToLocalFee(f: ApiFee): LocalFee {
-  const today = new Date();
-  const due = new Date(f.due_date);
-  const diffDays = Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
-
-  let status: LocalFee["status"] = "upcoming";
-  if (f.status === "paid") status = "paid";
-  else if (f.status === "overdue" || (diffDays > 0 && f.status !== "paid")) status = "overdue";
-  else if (f.status === "pending") status = "pending";
-
-  return {
-    id: f.id,
-    term: f.fee_type,
-    dueDate: due.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
-    amount: f.amount - f.amount_paid,
-    status,
-    daysOverdue: status === "overdue" && diffDays > 0 ? diffDays : undefined,
-    reminder: undefined,
-  };
-}
-
-function apiToHistory(f: ApiFee): PaymentHistory {
-  const paidDate = f.payment_date
-    ? new Date(f.payment_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-    : new Date(f.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-
-  return {
-    id: f.id,
-    date: paidDate,
-    feeHead: f.fee_type,
-    amount: f.amount_paid,
-    mode: f.payment_method || "—",
-    receiptNo: f.transaction_id || `TXN-${f.id.slice(0, 8).toUpperCase()}`,
-  };
-}
-
-/** Build tuition month grid from API fees that look like tuition (fee_type contains "tuition") */
-function buildTuitionMonths(allFees: ApiFee[]): MonthStatus[] {
-  // Map month label → status from tuition fees
-  const tuitionFees = allFees.filter((f) =>
-    f.fee_type?.toLowerCase().includes("tuition")
+function buildTuitionMonths(details: StudentFeeSummaryDetail[]): MonthStatus[] {
+  const tuition = details.find((d) =>
+    (d.feeHeadName ?? "").toLowerCase().includes("tuition") ||
+    (d.feeHeadName ?? "").toLowerCase().includes("school")
   );
-
-  const monthStatusMap: Record<string, "paid" | "pending" | "overdue" | "upcoming"> = {};
-  for (const f of tuitionFees) {
-    const date = new Date(f.due_date);
-    const monthLabel = MONTH_INDEX[String(date.getMonth())];
-    if (monthLabel) monthStatusMap[monthLabel] = f.status as any;
-  }
-
-  return ACADEMIC_MONTHS.map((label) => {
-    const status = monthStatusMap[label];
-    return {
-      label,
-      paid: status === "paid",
-      pending: status === "pending" || status === "overdue",
-      upcoming: !status || status === "upcoming",
-    };
-  });
-}
-
-/** Build exam terms from API fees that look like exam fees */
-function buildExamTerms(allFees: ApiFee[]): ExamTerm[] {
-  const examFees = allFees.filter((f) =>
-    f.fee_type?.toLowerCase().includes("exam") ||
-    f.fee_type?.toLowerCase().includes("examination") ||
-    f.fee_type?.toLowerCase().includes("term")
-  );
-
-  if (examFees.length === 0) {
-    // Fallback: show all non-tuition fees as exam terms
-    return allFees
-      .filter((f) => !f.fee_type?.toLowerCase().includes("tuition"))
-      .slice(0, 4)
-      .map((f, i) => ({
-        label: f.fee_type || `Term ${i + 1}`,
-        amount: f.amount,
-        paid: f.status === "paid",
-        pending: f.status === "pending" || f.status === "overdue",
-        upcoming: f.status === "upcoming",
-      }));
-  }
-
-  return examFees.map((f) => ({
-    label: f.fee_type,
-    amount: f.amount,
-    paid: f.status === "paid",
-    pending: f.status === "pending" || f.status === "overdue",
-    upcoming: f.status === "upcoming",
+  return ACADEMIC_MONTHS.map((label) => ({
+    label,
+    paid:     tuition?.status === "PAID",
+    pending:  tuition?.status === "PENDING" || tuition?.status === "PARTIAL",
+    upcoming: !tuition,
   }));
 }
 
-/** Compute annual summary numbers */
-function buildAnnualSummary(allFees: ApiFee[]) {
-  const totalPaid = allFees.reduce((sum, f) => sum + (f.amount_paid ?? 0), 0);
-  const totalAmount = allFees.reduce((sum, f) => sum + (f.amount ?? 0), 0);
-  const totalPending = totalAmount - totalPaid;
-  const percentCollected = totalAmount > 0 ? Math.round((totalPaid / totalAmount) * 100) : 0;
-
-  return { totalPaid, totalPending, totalAmount, percentCollected };
+function buildExamTerms(details: StudentFeeSummaryDetail[]): ExamTerm[] {
+  return details.slice(0, 4).map((d) => ({
+    label:    d.feeHeadName ?? "Fee",
+    amount:   d.finalAmount,
+    paid:     d.status === "PAID",
+    pending:  d.status === "PENDING" || d.status === "PARTIAL",
+    upcoming: false,
+  }));
 }
 
-// ── store ──────────────────────────────────────────────────────────────────────
+// ── Store ──────────────────────────────────────────────────────────────────────
 
 export interface AnnualSummary {
   totalPaid: number;
@@ -137,6 +101,7 @@ interface FeeStore {
   loading: boolean;
   paying: boolean;
   error: string | null;
+  academicYearId: string;
 
   fetchFees: (studentId: string) => Promise<void>;
   fetchFeeById: (id: string) => Promise<void>;
@@ -145,70 +110,133 @@ interface FeeStore {
     id: string,
     payload: { amount_paid: number; payment_method: string; transaction_id: string },
     studentId: string
-  ) => Promise<void>;
+  ) => Promise<string>;
+  deletePayment: (paymentId: string, studentId: string) => Promise<void>;
   markPaid: (id: string, mode: string) => void;
 }
 
 export const useFeeStore = create<FeeStore>((set, get) => ({
-  fees: [],
-  history: [],
-  tuitionMonths: [],
-  examTerms: [],
-  annualSummary: { totalPaid: 0, totalPending: 0, totalAmount: 0, percentCollected: 0 },
-  selectedFee: null,
-  loading: false,
-  paying: false,
-  error: null,
+  fees:           [],
+  history:        [],
+  tuitionMonths:  [],
+  examTerms:      [],
+  annualSummary:  { totalPaid: 0, totalPending: 0, totalAmount: 0, percentCollected: 0 },
+  selectedFee:    null,
+  loading:        false,
+  paying:         false,
+  error:          null,
+  academicYearId: "",
 
   fetchFees: async (studentId: string) => {
+    if (!studentId) return;
     set({ loading: true, error: null });
     try {
-      const res = await getAllFees({ student_id: studentId });
-      if (!res.status) throw new Error(res.message ?? "Failed to load fees");
+      const [summaryRes, paymentsRes] = await Promise.all([
+        getPendingFeesByStudentId(studentId).catch(() => null),
+        getPaymentsByStudentId(studentId).catch(() => null),
+      ]);
 
-      const allFees: ApiFee[] = res.data ?? [];
+      const details = summaryRes?.data?.details ?? [];
+      const s       = summaryRes?.data?.summary;
 
-      const pendingFees = allFees.filter((f) => f.status !== "paid").map(apiToLocalFee);
-      const historyFees = allFees.filter((f) => f.status === "paid").map(apiToHistory);
-      const tuitionMonths = buildTuitionMonths(allFees);
-      const examTerms = buildExamTerms(allFees);
-      const annualSummary = buildAnnualSummary(allFees);
+      const fees          = buildFees(details);
+      const tuitionMonths = buildTuitionMonths(details);
+      const examTerms     = buildExamTerms(details);
 
-      set({ fees: pendingFees, history: historyFees, tuitionMonths, examTerms, annualSummary });
-    } catch (e: any) {
-      set({ error: e.message ?? "Unknown error" });
+      const annualSummary: AnnualSummary = s
+        ? {
+            totalAmount:        s.totalFinal,
+            totalPaid:          s.totalPaid,
+            totalPending:       s.totalDue,
+            percentCollected:   s.totalFinal > 0
+              ? Math.round((s.totalPaid / s.totalFinal) * 100)
+              : 0,
+          }
+        : { totalPaid: 0, totalPending: 0, totalAmount: 0, percentCollected: 0 };
+
+      const feeSummaries = paymentsRes?.data?.fee_summaries ?? [];
+      const payments     = paymentsRes?.data?.payments ?? [];
+      const history: PaymentHistory[] = payments.map((p) => ({
+        id:        p.id,
+        date:      new Date(p.payment_date).toLocaleDateString("en-IN", {
+          day: "numeric", month: "long", year: "numeric",
+        }),
+        feeHead:   feeSummaries.find((s) => s.id === p.fee_reference_id)?.feeName
+                   ?? p.feeName
+                   ?? "Fee",
+        amount:    p.amount_received,
+        mode:      p.payment_mode,
+        receiptNo: p.receipt_no,
+      }));
+
+      // Resolve academicYearId for createpayment — UIStore is not set in parent context.
+      // Prefer an ID from existing payment records; fall back to the active academic year.
+      let academicYearId = payments[0]?.academicYearId ?? "";
+      if (!academicYearId) {
+        try {
+          const yearsRes = await getAllAcademicYears();
+          const active   = yearsRes.data.find((y) => y.isActive || y.active);
+          academicYearId = active?.id ?? yearsRes.data[0]?.id ?? "";
+        } catch { /* leave empty */ }
+      }
+
+      set({ fees, history, tuitionMonths, examTerms, annualSummary, academicYearId });
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : "Unknown error" });
     } finally {
       set({ loading: false });
     }
   },
 
-  fetchFeeById: async (id: string) => {
-    set({ loading: true, error: null });
-    try {
-      const res = await getFeeById(id);
-      if (!res.status) throw new Error(res.message ?? "Fee not found");
-      set({ selectedFee: apiToLocalFee(res.data) });
-    } catch (e: any) {
-      set({ error: e.message ?? "Unknown error" });
-    } finally {
-      set({ loading: false });
-    }
-  },
+  fetchFeeById: async (_id: string) => { /* not used */ },
 
   setSelectedFee: (fee) => set({ selectedFee: fee }),
 
   recordPayment: async (id, payload, studentId) => {
     set({ paying: true, error: null });
     try {
-      const res = await payFee(id, payload);
+      const fee = get().fees.find((f) => f.id === id);
+      if (!fee) throw new Error("Fee not found");
+
+      const academicYearId = get().academicYearId;
+      const today = new Date().toISOString().slice(0, 10);
+      const modeMap: Record<string, string> = {
+        "UPI":         "UPI",
+        "Net Banking": "NET_BANKING",
+        "Card":        "CARD",
+        "Cash":        "CASH",
+      };
+
+      const feeRef =
+        fee.fee_type === "transport"   ? { transportfeeId:   fee.feeid } :
+        fee.fee_type === "concession"  ? { feeConcessionId:  fee.feeid } :
+                                         { feeHeadMappingId: fee.feeid };
+
+      const res = await createPayment({
+        student_id:      studentId,
+        academicYearId,
+        ...feeRef,
+        amount_received: payload.amount_paid,
+        payment_mode:    modeMap[payload.payment_method] ?? payload.payment_method.toUpperCase(),
+        reference_no:    payload.transaction_id,
+        payment_date:    today,
+        notes:           "",
+      });
       if (!res.status) throw new Error(res.message ?? "Payment failed");
       await get().fetchFees(studentId);
+      return res.data.receipt_no;
     } catch (e: any) {
       set({ error: e.message ?? "Payment error" });
       throw e;
     } finally {
       set({ paying: false });
     }
+  },
+
+  deletePayment: async (paymentId, studentId) => {
+    const res = await deletePaymentById(paymentId);
+    if (!res.status) throw new Error(res.message ?? "Delete failed");
+    await get().fetchFees(studentId);
   },
 
   markPaid: (id) =>

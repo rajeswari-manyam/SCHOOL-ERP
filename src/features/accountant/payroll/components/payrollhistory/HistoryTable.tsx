@@ -1,226 +1,186 @@
-import { useMemo, useState } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-} from "@tanstack/react-table";
-import { Eye, Download, ChevronDown, ChevronUp } from "lucide-react";
-import { formatCurrency } from "../../../../../utils/formatters";
+import { useState } from "react";
+import { Eye, Download, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { formatINR as formatCurrency } from "../../../../../utils/formatters";
 import type { PayrollHistory, HistoryTableProps } from "../../types/payroll.types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-const columnHelper = createColumnHelper<PayrollHistory>();
+const StatusBadge = ({ status }: { status: PayrollHistory["status"] }) => {
+  if (status === "Paid") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        Paid
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+      Pending
+    </span>
+  );
+};
+
+const ActionButtons = () => (
+  <div className="flex items-center gap-1">
+    <button
+      title="View Payslip"
+      className="p-1.5 rounded-lg hover:bg-[#3525CD]/10 text-slate-400 hover:text-[#3525CD] transition-colors"
+    >
+      <Eye className="w-3.5 h-3.5" />
+    </button>
+    <button
+      title="Download PDF"
+      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+    >
+      <Download className="w-3.5 h-3.5" />
+    </button>
+    <button
+      title="View Report"
+      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+    >
+      <FileText className="w-3.5 h-3.5" />
+    </button>
+  </div>
+);
 
 export const HistoryTable = ({ data }: HistoryTableProps) => {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const getKey = (item: PayrollHistory) => `${item.month}-${item.year}`;
 
-  const toggleCard = (key: string) => {
-    setExpandedCard((prev) => (prev === key ? null : key));
-  };
-
-  // Generate unique key from month+year since there's no id
-  const getItemKey = (item: PayrollHistory) => `${item.month}-${item.year}`;
-
-  const columns = useMemo(() => [
-    columnHelper.accessor((row) => `${row.month} ${row.year}`, {
-      id: "month",
-      header: "Month",
-      cell: (info) => (
-        <span className="font-medium text-gray-900">{info.getValue()}</span>
-      ),
-    }),
-    columnHelper.accessor("staffCount", {
-      header: "Staff",
-      cell: (info) => <span className="text-sm text-gray-700">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("totalGross", {
-      header: "Gross",
-      cell: (info) => (
-        <span className="text-sm text-gray-700">{formatCurrency(info.getValue())}</span>
-      ),
-    }),
-    columnHelper.accessor("totalDeductions", {
-      header: "Deductions",
-      cell: (info) => (
-        <span className="text-sm text-red-500">{formatCurrency(info.getValue())}</span>
-      ),
-    }),
-    columnHelper.accessor("netPaid", {
-      header: () => <span className="text-[#3525CD]">Net</span>,
-      cell: (info) => (
-        <span className="text-sm font-semibold text-[#3525CD]">
-          {formatCurrency(info.getValue())}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("paymentDate", {
-      header: "Date",
-      cell: (info) => <span className="text-sm text-gray-700">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("mode", {
-      header: "Mode",
-      cell: (info) => <span className="text-sm text-gray-700">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => <Badge variant="success">{info.getValue()}</Badge>,
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: () => (
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:bg-gray-100">
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:bg-gray-100">
-            <Download className="w-4 h-4" />
-          </Button>
-        </div>
-      ),
-    }),
-  ], []);
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const { rows } = table.getRowModel();
-  const headerGroups = table.getHeaderGroups();
+  if (data.length === 0) {
+    return (
+      <div className="text-center py-12 text-slate-400">
+        <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+        <p className="text-sm font-medium">No payroll history found</p>
+        <p className="text-xs mt-1">Try adjusting your filters</p>
+      </div>
+    );
+  }
 
   return (
     <div>
-      {/* DESKTOP: Table */}
-      <div className="hidden md:block w-full overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-[750px] w-full text-sm">
+      {/* Desktop Table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-[780px] w-full text-sm">
           <thead>
-            {headerGroups.map((headerGroup) => (
-              <tr key={headerGroup.id} className="bg-gray-50/50 border-b border-gray-100">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
+            <tr className="bg-slate-50 border-b border-slate-100">
+              {[
+                { label: "Month",       align: "left"  },
+                { label: "Staff",       align: "right" },
+                { label: "Gross",       align: "right" },
+                { label: "Deductions",  align: "right" },
+                { label: "Net Paid",    align: "right" },
+                { label: "Date",        align: "left"  },
+                { label: "Mode",        align: "left"  },
+                { label: "Status",      align: "left"  },
+                { label: "Actions",     align: "right" },
+              ].map(({ label, align }) => (
+                <th
+                  key={label}
+                  className={`px-4 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider ${
+                    align === "right" ? "text-right" : "text-left"
+                  } ${label === "Month" ? "pl-5" : ""} ${label === "Net Paid" ? "text-[#3525CD]" : ""}`}
+                >
+                  {label}
+                </th>
+              ))}
+            </tr>
           </thead>
-
           <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-10 text-center text-sm text-gray-400">
-                  No payroll history found.
+            {data.map((item, i) => (
+              <tr
+                key={getKey(item)}
+                className={`border-b border-slate-50 hover:bg-slate-50/60 transition-colors ${
+                  i === data.length - 1 ? "border-0" : ""
+                }`}
+              >
+                <td className="px-5 py-3.5">
+                  <span className="text-sm font-semibold text-slate-800">
+                    {item.month} {item.year}
+                  </span>
+                </td>
+                <td className="px-4 py-3.5 text-right text-xs text-slate-700">{item.staffCount}</td>
+                <td className="px-4 py-3.5 text-right text-xs text-slate-700">{formatCurrency(item.totalGross)}</td>
+                <td className="px-4 py-3.5 text-right text-xs text-rose-600">{formatCurrency(item.totalDeductions)}</td>
+                <td className="px-4 py-3.5 text-right text-xs font-bold text-[#3525CD]">{formatCurrency(item.netPaid)}</td>
+                <td className="px-4 py-3.5 text-xs text-slate-600">{item.paymentDate}</td>
+                <td className="px-4 py-3.5">
+                  <span className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">{item.mode}</span>
+                </td>
+                <td className="px-4 py-3.5">
+                  <StatusBadge status={item.status} />
+                </td>
+                <td className="px-4 py-3.5 text-right">
+                  <ActionButtons />
                 </td>
               </tr>
-            ) : (
-              rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* MOBILE: Cards */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile Cards */}
+      <div className="md:hidden divide-y divide-slate-100">
         {data.map((item) => {
-          const itemKey = getItemKey(item);
-          const isExpanded = expandedCard === itemKey;
-          
+          const key        = getKey(item);
+          const isExpanded = expandedCard === key;
+
           return (
-            <div
-              key={itemKey}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm"
-            >
-              {/* Card Header */}
+            <div key={key} className="px-4 py-3">
               <div
-                className="flex items-center justify-between p-3 cursor-pointer active:bg-gray-50"
-                onClick={() => toggleCard(itemKey)}
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setExpandedCard(isExpanded ? null : key)}
               >
                 <div>
-                  <div className="text-sm font-semibold text-gray-900">
-                    {item.month} {item.year}
-                  </div>
-                  <div className="text-[11px] text-gray-400 mt-0.5">
-                    {item.staffCount} staff · {item.paymentDate}
+                  <p className="text-sm font-semibold text-slate-800">{item.month} {item.year}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <StatusBadge status={item.status} />
+                    <span className="text-[10px] text-slate-400">{item.staffCount} staff · {item.paymentDate}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-[#3525CD]">
-                    {formatCurrency(item.netPaid)}
-                  </span>
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  )}
+                  <span className="text-sm font-bold text-[#3525CD]">{formatCurrency(item.netPaid)}</span>
+                  {isExpanded
+                    ? <ChevronUp className="w-4 h-4 text-slate-400" />
+                    : <ChevronDown className="w-4 h-4 text-slate-400" />}
                 </div>
               </div>
 
-              {/* Expanded Details */}
               {isExpanded && (
-                <div className="px-3 pb-3 border-t border-gray-100">
-                  <div className="pt-3 space-y-2.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Gross</span>
-                      <span className="font-medium text-gray-700">{formatCurrency(item.totalGross)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Deductions</span>
-                      <span className="font-medium text-red-600">{formatCurrency(item.totalDeductions)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Net Paid</span>
-                      <span className="font-medium text-[#3525CD]">{formatCurrency(item.netPaid)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Payment Mode</span>
-                      <span className="font-medium text-gray-700">{item.mode}</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400">Status</span>
-                      <Badge variant="success" className="text-[10px]">{item.status}</Badge>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2 border-t border-gray-50">
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-medium active:bg-gray-200">
-                        <Eye className="w-3.5 h-3.5" />
-                        View
+                <div className="mt-3 space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {[
+                      ["Gross",      formatCurrency(item.totalGross),      "text-slate-700"],
+                      ["Deductions", formatCurrency(item.totalDeductions),  "text-rose-600"],
+                      ["Net Paid",   formatCurrency(item.netPaid),          "text-[#3525CD]"],
+                      ["Mode",       item.mode,                             "text-slate-700"],
+                    ].map(([label, val, cls]) => (
+                      <div key={label} className="bg-slate-50 rounded-xl px-3 py-2">
+                        <p className="text-slate-400 text-[10px] mb-0.5">{label}</p>
+                        <p className={`font-semibold text-xs ${cls}`}>{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    {[
+                      { icon: <Eye className="w-3.5 h-3.5" />, label: "View Payslip" },
+                      { icon: <Download className="w-3.5 h-3.5" />, label: "Download PDF" },
+                      { icon: <FileText className="w-3.5 h-3.5" />, label: "Report" },
+                    ].map(({ icon, label }) => (
+                      <button
+                        key={label}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-medium hover:bg-slate-200 transition-colors"
+                      >
+                        {icon}
+                        {label}
                       </button>
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-medium active:bg-gray-200">
-                        <Download className="w-3.5 h-3.5" />
-                        Download
-                      </button>
-                    </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
           );
         })}
-
-        {data.length === 0 && (
-          <div className="text-center py-10 text-sm text-gray-400 bg-white rounded-xl border border-gray-200">
-            No payroll history found.
-          </div>
-        )}
       </div>
     </div>
   );

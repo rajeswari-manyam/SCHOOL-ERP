@@ -5,13 +5,13 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { Pencil, ChevronDown, ChevronUp } from "lucide-react";
-import { formatCurrency } from "../../../../../utils/formatters";
+import { Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { formatINR as formatCurrency } from "../../../../../utils/formatters";
 import type { SalaryConfig, SalaryTableProps } from "../../types/payroll.types";
 
 const columnHelper = createColumnHelper<SalaryConfig>();
 
-export const SalaryTable = ({ data, onEdit }: SalaryTableProps) => {
+export const SalaryTable = ({ data, onEdit, onDelete }: SalaryTableProps) => {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
   const toggleCard = (id: string) => {
@@ -76,15 +76,25 @@ export const SalaryTable = ({ data, onEdit }: SalaryTableProps) => {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <button
-          onClick={() => onEdit(row.original)}
-          className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <Pencil className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onEdit(row.original)}
+            className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
+            title="Edit"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(row.original.id)}
+            className="p-1.5 hover:bg-red-50 rounded text-gray-300 hover:text-red-500 transition-colors"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       ),
     }),
-  ], [onEdit]);
+  ], [onEdit, onDelete]);
 
   const table = useReactTable({
     data,
@@ -225,13 +235,21 @@ export const SalaryTable = ({ data, onEdit }: SalaryTableProps) => {
                         <div className="text-[10px] text-gray-500">Net Salary</div>
                         <div className="text-base font-bold text-[#3525CD]">{formatCurrency(staff.net)}</div>
                       </div>
-                      <button
-                        onClick={() => onEdit(staff)}
-                        className="px-4 py-2 rounded-lg bg-[#3525CD] text-white text-xs font-medium flex items-center gap-1.5 active:bg-[#2a1fb5]"
-                      >
-                        <Pencil className="w-3 h-3" />
-                        Edit
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => onEdit(staff)}
+                          className="px-3 py-2 rounded-lg bg-[#3525CD] text-white text-xs font-medium flex items-center gap-1.5 active:bg-[#2a1fb5]"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onDelete(staff.id)}
+                          className="p-2 rounded-lg bg-red-50 text-red-500 active:bg-red-100"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

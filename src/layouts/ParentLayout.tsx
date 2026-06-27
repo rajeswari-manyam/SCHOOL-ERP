@@ -44,7 +44,7 @@ const ParentLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA]">
+    <div className="min-h-screen bg-[#F4F6FA] overflow-x-hidden">
       <ParentTopNavBar
         activeChild={activeChild}
         onSwitchChild={() => setShowChildModal(true)}
@@ -55,7 +55,7 @@ const ParentLayout = () => {
           showChildModal ? "blur-sm pointer-events-none select-none" : ""
         }
       >
-        <Outlet context={{ activeChild }} key={location.pathname} />
+        <Outlet context={{ activeChild }}  />
       </main>
 
       {showChildModal && (

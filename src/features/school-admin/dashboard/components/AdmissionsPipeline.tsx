@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Search, MessageCircle, FileText, CheckCircle, XCircle,
   UserPlus, ClipboardCheck, Receipt, Megaphone, Table2, Calendar,
@@ -19,15 +20,17 @@ const stageConfig = [
 ];
 
 const quickActions = [
-  { id: 'add-student', label: 'Add Student',  icon: UserPlus       },
-  { id: 'attendance',  label: 'Attendance',   icon: ClipboardCheck },
-  { id: 'fee-payment', label: 'Fee Payment',  icon: Receipt        },
-  { id: 'broadcast',   label: 'Broadcast',    icon: Megaphone      },
-  { id: 'enquiry',     label: 'Add Enquiry',  icon: Search         },
-  { id: 'report',      label: 'Gen. Report',  icon: Table2         },
+  { id: 'add-student', label: 'Add Student',  icon: UserPlus,       path: '/schooladmin/students'   },
+  { id: 'attendance',  label: 'Attendance',   icon: ClipboardCheck, path: '/schooladmin/attendance' },
+  { id: 'fee-payment', label: 'Fee Payment',  icon: Receipt,        path: '/schooladmin/fees'       },
+  { id: 'broadcast',   label: 'Broadcast',    icon: Megaphone,      path: '/schooladmin/settings'   },
+  { id: 'enquiry',     label: 'Add Enquiry',  icon: Search,         path: '/schooladmin/admissions' },
+  { id: 'report',      label: 'Gen. Report',  icon: Table2,         path: '/schooladmin/reports'    },
 ];
 
 export function AdmissionsPipeline({ pipeline, academicYearName }: AdmissionsPipelineProps) {
+  const navigate = useNavigate();
+
   const stageCountMap = pipeline.reduce<Record<string, number>>((acc, s) => {
     acc[s.stage] = s.count;
     return acc;
@@ -89,6 +92,7 @@ export function AdmissionsPipeline({ pipeline, academicYearName }: AdmissionsPip
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.28 + i * 0.04, duration: 0.25 }}
+              onClick={() => navigate(action.path)}
               className="bg-gray-50 hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer"
               aria-label={action.label}
             >

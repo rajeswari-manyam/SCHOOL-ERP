@@ -7,9 +7,10 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import type { Transaction, AllTransactionsTableProps } from "../types/fees.types";
-import { formatCurrency } from "../../../../utils/formatters";
-import { Eye, Download, Send, CheckCircle } from "lucide-react";
+import { formatINR as formatCurrency } from "../../../../utils/formatters";
+import { Eye, Download, Send, CheckCircle, Trash2, Loader2 } from "lucide-react";
 import { getModeBadgeClass, calculatePaymentSummary } from "../../../../utils/payment";
+import { downloadRecordFeePaymentById } from "@/services/fee.api";
 
 // ── WA Badge ─────────────────────────────────────────────────
 const WASentBadge = ({ sent }: { sent?: boolean }) =>
@@ -32,10 +33,18 @@ const MobileCard = ({
   row,
   isSelected,
   onToggle,
+  onDelete,
+  isDeleting,
+  onDownload,
+  isDownloading,
 }: {
   row: Transaction;
   isSelected: boolean;
   onToggle: () => void;
+  onDelete?: (id: string) => void;
+  isDeleting?: boolean;
+  onDownload?: (id: string) => void;
+  isDownloading?: boolean;
 }) => (
   <div
     onClick={onToggle}
@@ -97,20 +106,44 @@ const MobileCard = ({
           View
         </button>
         <span className="text-slate-300">/</span>
-        <button className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-2 py-1 rounded transition-colors">
-          <Download className="w-3.5 h-3.5" />
+        <button
+          onClick={(e) => { e.stopPropagation(); onDownload?.(row.id); }}
+          disabled={isDownloading}
+          className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-2 py-1 rounded transition-colors disabled:opacity-50"
+        >
+          {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
           Download
         </button>
+        {onDelete && (
+          <>
+            <span className="text-slate-300">/</span>
+            <button
+              disabled={isDeleting}
+              onClick={(e) => { e.stopPropagation(); onDelete(row.id); }}
+              className="inline-flex items-center gap-1 text-red-500 hover:bg-red-50 text-[12px] font-medium px-2 py-1 rounded transition-colors disabled:opacity-50"
+            >
+              {isDeleting
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Trash2 className="w-3.5 h-3.5" />}
+              Delete
+            </button>
+          </>
+        )}
       </div>
     </div>
   </div>
 );
 
 // ── Main Component ────────────────────────────────────────────
-type Props = AllTransactionsTableProps & { isLoading?: boolean };
+type Props = AllTransactionsTableProps & {
+  isLoading?: boolean;
+  onDelete?: (id: string) => Promise<void>;
+};
 
-export const AllTransactionsTable = ({ data = [], isLoading }: Props) => {
-  const [selected, setSelected] = useState<string[]>([]);
+export const AllTransactionsTable = ({ data = [], isLoading, onDelete }: Props) => {
+  const [selected, setSelected]     = useState<string[]>([]);
+  const [deletingId, setDeletingId]   = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const toggleOne = (id: string) =>
     setSelected((prev) =>
@@ -129,6 +162,21 @@ export const AllTransactionsTable = ({ data = [], isLoading }: Props) => {
     () => calculatePaymentSummary(data),
     [data]
   );
+
+  const handleDelete = async (id: string) => {
+    if (!onDelete) return;
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDownload = async (id: string) => {
+    setDownloadingId(id);
+    try { await downloadRecordFeePaymentById(id); } finally { setDownloadingId(null); }
+  };
 
   const columns = useMemo(
     () => [
@@ -224,7 +272,7 @@ export const AllTransactionsTable = ({ data = [], isLoading }: Props) => {
       col.display({
         id: "actions",
         header: "Actions",
-        cell: () => (
+        cell: ({ row }) => (
           <div
             className="flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
@@ -234,15 +282,34 @@ export const AllTransactionsTable = ({ data = [], isLoading }: Props) => {
               View
             </button>
             <span className="text-slate-300">/</span>
-            <button className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-1.5 py-1 rounded transition-colors">
-              <Download className="w-3.5 h-3.5 flex-shrink-0" />
+            <button
+              onClick={() => handleDownload(row.original.id)}
+              disabled={downloadingId === row.original.id}
+              className="inline-flex items-center gap-1 text-[#3525CD] hover:bg-indigo-50 text-[12px] font-medium px-1.5 py-1 rounded transition-colors disabled:opacity-50"
+            >
+              {downloadingId === row.original.id ? <Loader2 className="w-3.5 h-3.5 flex-shrink-0 animate-spin" /> : <Download className="w-3.5 h-3.5 flex-shrink-0" />}
               Download
             </button>
+            {onDelete && (
+              <>
+                <span className="text-slate-300">/</span>
+                <button
+                  disabled={deletingId === row.original.id}
+                  onClick={() => handleDelete(row.original.id)}
+                  className="inline-flex items-center gap-1 text-red-500 hover:bg-red-50 text-[12px] font-medium px-1.5 py-1 rounded transition-colors disabled:opacity-50"
+                >
+                  {deletingId === row.original.id
+                    ? <Loader2 className="w-3.5 h-3.5 flex-shrink-0 animate-spin" />
+                    : <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />}
+                  Delete
+                </button>
+              </>
+            )}
           </div>
         ),
       }),
     ],
-    [selected, allSelected, someSelected]
+    [selected, allSelected, someSelected, deletingId, downloadingId, onDelete, handleDownload]
   );
 
   const table = useReactTable({
@@ -331,6 +398,10 @@ export const AllTransactionsTable = ({ data = [], isLoading }: Props) => {
                 row={row}
                 isSelected={selected.includes(row.id)}
                 onToggle={() => toggleOne(row.id)}
+                onDelete={onDelete ? handleDelete : undefined}
+                isDeleting={deletingId === row.id}
+                onDownload={handleDownload}
+                isDownloading={downloadingId === row.id}
               />
             );
           }}

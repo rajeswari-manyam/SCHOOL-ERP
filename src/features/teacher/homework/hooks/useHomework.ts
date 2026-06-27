@@ -9,8 +9,9 @@ import {
   deleteHomeworkById,
 } from "@/services/homework.api";
 import {
-  getAllStudyMaterials,
+  getStudyMaterialsByFilter,
   createStudyMaterial,
+  updateStudyMaterial,
   deleteStudyMaterial,
 } from "@/services/studymaterial.api";
 import type {
@@ -155,7 +156,7 @@ export const useHomework = (): HomeworkState => {
   } = useQuery({
     queryKey: HOMEWORK_KEYS.materials(),
     queryFn: async () => {
-      const res = await getAllStudyMaterials();
+      const res = await getStudyMaterialsByFilter({ teacher_id: teacherId });
       return (res.data ?? []).map((item: any): StudyMaterial => ({
         id: item.id,
         title: item.title ?? "",
@@ -242,6 +243,22 @@ export const useHomework = (): HomeworkState => {
     queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
   }, [queryClient]);
 
+  const updateMaterial = useCallback(async (id: string, payload: CreateStudyMaterialPayload) => {
+    const formData = new FormData();
+    formData.append("class_id", payload.class_id);
+    formData.append("section_id", payload.section_id);
+    formData.append("subject_id", payload.subject_id);
+    formData.append("teacher_id", payload.teacher_id);
+    formData.append("title", payload.title);
+    formData.append("upload_date", payload.upload_date);
+    formData.append("upload_type", payload.upload_type);
+    if (payload.description) formData.append("description", payload.description);
+    if (payload.open_link) formData.append("open_link", payload.open_link);
+    if (payload.pdf) formData.append("pdf", payload.pdf);
+    await updateStudyMaterial(id, formData);
+    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
+  }, [queryClient]);
+
   const deleteMaterial = useCallback(async (id: string) => {
     await deleteStudyMaterial(id);
     queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
@@ -267,6 +284,7 @@ export const useHomework = (): HomeworkState => {
     updateHomework: (id, payload) => doUpdate({ id, payload }).then(() => undefined),
     deleteHomework: (id) => doDelete(id).then(() => undefined),
     uploadMaterial,
+    updateMaterial,
     deleteMaterial,
     isCreating,
     isUpdating,

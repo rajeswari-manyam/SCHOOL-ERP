@@ -67,11 +67,11 @@ const LeavePage = () => {
       <LeaveBalanceCards balances={balances} loading={loading} error={error} onRetry={retry} />
 
       {/* Main grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className="xl:col-span-3">
           <LeaveHistoryTable applications={leaveHistory} loading={loading} onCancel={confirmCancel} />
         </div>
-        <div>
+        <div className="xl:col-span-1">
           <LeaveCalendar days={calendarDays} monthLabel={calMonthLabel} onPrev={prevMonth} onNext={nextMonth} />
         </div>
       </div>

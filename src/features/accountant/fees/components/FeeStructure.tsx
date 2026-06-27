@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus, Pencil, Trash2, X, Loader2, BookOpen,
   GraduationCap, Bus, Library, Activity,
@@ -10,29 +10,40 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AddFeeHeadModal } from "./AddFeeHeadModal";
+import { Concessions } from "./ConcessionTable";
 import { BILLING_CYCLES, FEE_HEAD_COLORS } from "../constants/fee.constants";
 import { formatINR } from "../../../../utils/formatters";
-import { getFeeHeads } from "@/services/fee.api";
+import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
+import type { ClassRecord, SectionRecord } from "@/services/class.api";
 import {
-  mockClassList,
-  mockSections,
-  mockStudentsList,
-  mockAssignments,
-  getNextAssignmentId,
-} from "../data/fee.data";
-import type { FeeHead, FeeStructureAssignment, FeeStructureFormValues, StudentWithFee } from "../types/fees.types";
+  getFeeHeads,
+  getStudentsByClassSection,
+  getFeeStructures,
+  addFee,
+  updateFeeHeadMapping,
+  deleteFeeHeadMapping,
+  deleteFeeHeadById,
+} from "@/services/fee.api";
+import type { FeeHeadDTO, FeeHeadMappingDTO, StudentByClassSectionRecord } from "@/services/fee.api";
+import { useUIStore } from "@/store/uiStore";
+import type { FeeStructureAssignment, FeeStructureFormValues, StudentWithFee} from "../types/fees.types";
 import type { FeeStructureProps } from "../types/fees.types";
 
+const ALLOWED_CONCESSION_TYPES = ["Scholarship", "Sibling Discount", "Staff Child", "Special Concession"];
+
 const feeStructureSchema = z.object({
-  feeHeadId: z.string().min(1, "Fee head is required"),
-  classId: z.string().min(1, "Class is required"),
-  sectionId: z.string(),
-  mandatory: z.boolean(),
-  billingCycle: z.enum(["Monthly", "Quarterly", "Annual", "One-Time"]),
-  dueDate: z.string().min(1, "Due date is required"),
-  amount: z.string().min(1, "Amount is required"),
-  annualTotal: z.string(),
-  studentIds: z.array(z.string()),
+  feeHeadId:              z.string().min(1, "Fee head is required"),
+  classId:                z.string().min(1, "Class is required"),
+  sectionId:              z.string(),
+  applicableTo:           z.enum(["all", "selected"]),
+  mandatory:              z.boolean(),
+  billingCycle:           z.enum(["Monthly", "Quarterly", "Annual", "One-Time"]),
+  dueDate:                z.string().min(1, "Due date is required"),
+  amount:                 z.string().min(1, "Amount is required"),
+  annualTotal:            z.string(),
+  studentIds:             z.array(z.string()),
+  allowConcession:        z.boolean(),
+  allowedConcessionTypes: z.array(z.string()),
 });
 
 const feeHeadIcons: Record<string, React.ReactNode> = {
@@ -47,13 +58,13 @@ const feeHeadIcons: Record<string, React.ReactNode> = {
 function computeAnnualTotal(amount: number | null, billingCycle: string): number | null {
   if (amount == null) return null;
   switch (billingCycle) {
-    case "Monthly": return amount * 12;
+    case "Monthly":   return amount * 12;
     case "Quarterly": return amount * 4;
-    case "Annual": return amount;
-    case "One-Time": return amount;
-    default: return null;
+    default:          return amount;
   }
 }
+
+// ── Add / Edit Fee Structure Modal ────────────────────────────────────────────
 
 function AddFeeStructureModal({
   onClose,
@@ -64,10 +75,14 @@ function AddFeeStructureModal({
   onClose: () => void;
   onSuccess: () => void;
   editData?: FeeStructureAssignment | null;
-  feeHeads: FeeHead[];
+  feeHeads: FeeHeadDTO[];
 }) {
-  const [submitting, setSubmitting] = useState(false);
+  const academicYearName = useUIStore((s) => s.academicYearName) ?? "Current Year";
+  const academicYearId = useUIStore((s) => s.academicYearId) ?? "";
+  const [submitting, setSubmitting]   = useState(false);
   const [allStudents, setAllStudents] = useState<StudentWithFee[]>([]);
+  const [classList, setClassList]     = useState<ClassRecord[]>([]);
+  const [sectionList, setSectionList] = useState<SectionRecord[]>([]);
 
   const {
     register,
@@ -78,42 +93,59 @@ function AddFeeStructureModal({
   } = useForm<FeeStructureFormValues>({
     resolver: zodResolver(feeStructureSchema),
     defaultValues: {
-      feeHeadId: editData?.feeHeadId ?? "",
-      classId: editData?.classId ?? "",
-      sectionId: editData?.sectionId ?? "",
-      mandatory: editData?.mandatory ?? true,
-      billingCycle: (editData?.billingCycle as any) ?? "Monthly",
-      dueDate: editData?.dueDate ?? "",
-      amount: editData?.amount?.toString() ?? "",
-      annualTotal: editData?.annualTotal?.toString() ?? "",
-      studentIds: editData?.studentIds ?? [],
+      feeHeadId:              editData?.feeHeadId ?? "",
+      classId:                editData?.classId ?? "",
+      sectionId:              editData?.sectionId ?? "",
+      applicableTo:           "all",
+      mandatory:              editData?.mandatory ?? true,
+      billingCycle:           (editData?.billingCycle as any) ?? "Monthly",
+      dueDate:                editData?.dueDate ?? "",
+      amount:                 editData?.amount?.toString() ?? "",
+      annualTotal:            editData?.annualTotal?.toString() ?? "",
+      studentIds:             editData?.studentIds ?? [],
+      allowConcession:        false,
+      allowedConcessionTypes: [],
     },
   });
 
-  const mandatory = watch("mandatory");
-  const billingCycle = watch("billingCycle");
-  const amount = watch("amount");
-  const watchClassId = watch("classId");
-  const watchSectionId = watch("sectionId");
+  const applicableTo           = watch("applicableTo");
+  const mandatory              = watch("mandatory");
+  const billingCycle           = watch("billingCycle");
+  const amount                 = watch("amount");
+  const watchClassId           = watch("classId");
+  const watchSectionId         = watch("sectionId");
+  const allowConcession        = watch("allowConcession");
+  const allowedConcessionTypes = watch("allowedConcessionTypes");
 
   useEffect(() => {
-    if (!mandatory && watchClassId) {
-      const cls = mockClassList.find((c) => c.id === watchClassId);
-      const section = mockSections.find((s) => s.id === watchSectionId);
-      const sectionName = section?.sectionName ?? "";
-      const className = cls?.name ?? "";
-      const filtered = mockStudentsList.filter((s) => {
-        const matchClass = s.className === className;
-        const matchSection = !watchSectionId || !sectionName || s.sectionName === sectionName;
-        return matchClass && matchSection;
-      });
-      const mapped = filtered.map((s) => ({
-        ...s,
-        selected: editData?.studentIds?.includes(s.studentId) ?? false,
-      }));
-      setAllStudents(mapped);
+    getAllClasses().then((res) => { if (res.status) setClassList(res.data); }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!watchClassId) { setSectionList([]); return; }
+    getSectionsByClassId(watchClassId).then((res) => {
+      if (res.status) setSectionList(res.data);
+    }).catch(() => {});
+  }, [watchClassId]);
+
+  useEffect(() => {
+    if (applicableTo === "selected" && watchClassId && watchSectionId) {
+      getStudentsByClassSection(watchClassId, watchSectionId).then((res) => {
+        if (res.status && Array.isArray(res.data)) {
+          setAllStudents(res.data.map((s: StudentByClassSectionRecord) => ({
+            studentId: s.id,
+            studentName: `${s.first_name} ${s.last_name}`,
+            admissionNo: s.admission_number,
+            className: s.class_name,
+            sectionName: s.section_name,
+            selected: false,
+          })));
+        }
+      }).catch(() => {});
+    } else {
+      setAllStudents([]);
     }
-  }, [mandatory, watchClassId, watchSectionId, editData]);
+  }, [applicableTo, watchClassId, watchSectionId, editData]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -129,56 +161,46 @@ function AddFeeStructureModal({
 
   const toggleStudent = (studentId: string) => {
     const current = watch("studentIds");
-    if (current.includes(studentId)) {
-      setValue("studentIds", current.filter((id) => id !== studentId));
-    } else {
-      setValue("studentIds", [...current, studentId]);
-    }
+    setValue(
+      "studentIds",
+      current.includes(studentId)
+        ? current.filter((id) => id !== studentId)
+        : [...current, studentId]
+    );
   };
 
-  const selectAllStudents = () => {
-    setValue("studentIds", allStudents.map((s) => s.studentId));
-  };
-
-  const deselectAllStudents = () => {
-    setValue("studentIds", []);
+  const toggleConcessionType = (type: string) => {
+    const current = allowedConcessionTypes;
+    setValue(
+      "allowedConcessionTypes",
+      current.includes(type) ? current.filter((t) => t !== type) : [...current, type]
+    );
   };
 
   const onSubmit = async (data: FeeStructureFormValues) => {
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 500));
     try {
-      const feeHead = feeHeadsProp.find((fh) => fh.id === data.feeHeadId);
-      const cls = mockClassList.find((c) => c.id === data.classId);
-      const section = mockSections.find((s) => s.id === data.sectionId);
-      const amountNum = data.amount ? Number(data.amount) : null;
-      const annualTotalNum = data.annualTotal ? Number(data.annualTotal) : null;
-
-      const assignment: FeeStructureAssignment = {
-        id: editData?.id ?? getNextAssignmentId(),
+      const payload = {
         feeHeadId: data.feeHeadId,
-        feeHeadName: feeHead?.name ?? "Unknown",
+        academicYearId,
         classId: data.classId,
-        className: cls?.name ?? "Unknown",
-        sectionId: data.sectionId || null,
-        sectionName: section?.sectionName ?? null,
-        mandatory: data.mandatory,
-        billingCycle: data.billingCycle,
+        sectionId: data.sectionId || "",
+        amount: Number(data.amount),
         dueDate: data.dueDate,
-        amount: amountNum,
-        annualTotal: annualTotalNum,
-        studentIds: data.mandatory ? [] : data.studentIds,
+        applicableTo: data.applicableTo === "selected" ? "SELECTED_STUDENTS" : "ALL_STUDENTS",
+        selectedStudentIds: data.applicableTo === "selected" ? data.studentIds : undefined,
+        billingCycle: data.billingCycle,
+        isMandatory: data.mandatory,
+        allowConcession: data.allowConcession,
+        concessionTypes: data.allowConcession ? data.allowedConcessionTypes : undefined,
       };
-
       if (editData) {
-        const idx = mockAssignments.findIndex((a) => a.id === editData.id);
-        if (idx !== -1) mockAssignments[idx] = assignment;
-        toast.success("Fee structure updated successfully");
+        await updateFeeHeadMapping(editData.id, payload);
       } else {
-        mockAssignments.push(assignment);
-        toast.success("Fee structure created successfully");
+        await addFee(payload);
       }
-      onSuccess();
+      toast.success(editData ? "Fee structure updated successfully" : "Fee structure added successfully");
+      onSuccess?.();
       onClose();
     } catch {
       toast.error("Failed to save fee structure");
@@ -192,12 +214,10 @@ function AddFeeStructureModal({
       hasError ? "border-red-400 focus:ring-2 focus:ring-red-200" : "border-transparent focus:ring-2 focus:ring-indigo-300"
     }`;
 
-  const currentSections = mockSections.filter((s) => s.classId === watchClassId);
-
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:w-[600px] rounded-t-2xl sm:rounded-2xl shadow-xl p-4 sm:p-6 overflow-y-auto pb-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white w-full h-[95vh] sm:h-auto sm:max-h-[92vh] sm:w-[620px] rounded-t-2xl sm:rounded-2xl shadow-xl overflow-y-auto">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <h3 className="text-base font-semibold text-gray-900">
             {editData ? "Edit Fee Structure" : "Add Fee Structure"}
           </h3>
@@ -206,16 +226,24 @@ function AddFeeStructureModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4 pb-6">
+
+          {/* Academic Year (display only) */}
+          <div className="flex items-center gap-3 bg-indigo-50 rounded-lg px-4 py-2.5 border border-indigo-100">
+            <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Academic Year</span>
+            <span className="ml-auto text-sm font-bold text-indigo-800">{academicYearName}</span>
+          </div>
+
+          {/* Fee Head + Class */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">
-                Fee Head
+                Fee Head <span className="text-red-500">*</span>
               </label>
               <select className={inputClass(!!errors.feeHeadId)} {...register("feeHeadId")}>
                 <option value="">Select fee head</option>
                 {feeHeadsProp.map((fh) => (
-                  <option key={fh.id} value={fh.id}>{fh.name}</option>
+                  <option key={fh.id} value={fh.id}>{fh.feeName}</option>
                 ))}
               </select>
               {errors.feeHeadId && (
@@ -226,12 +254,12 @@ function AddFeeStructureModal({
             </div>
             <div>
               <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">
-                Class
+                Class <span className="text-red-500">*</span>
               </label>
               <select className={inputClass(!!errors.classId)} {...register("classId")}>
                 <option value="">Select class</option>
-                {mockClassList.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                {classList.map((c) => (
+                  <option key={c.id} value={c.id}>{c.class_name}</option>
                 ))}
               </select>
               {errors.classId && (
@@ -242,42 +270,53 @@ function AddFeeStructureModal({
             </div>
           </div>
 
+          {/* Section */}
           <div>
-            <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">
-              Section
-            </label>
+            <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">Section</label>
             <select className={inputClass(false)} {...register("sectionId")}>
               <option value="">All Sections</option>
-              {currentSections.map((s) => (
+              {sectionList.map((s) => (
                 <option key={s.id} value={s.id}>{s.sectionName}</option>
               ))}
             </select>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-900">Mandatory for all students?</span>
-            <button
-              type="button"
-              onClick={() => setValue("mandatory", !mandatory)}
-              className={`relative w-11 h-6 rounded-full border-none cursor-pointer transition-colors duration-200 flex-shrink-0 ${mandatory ? "bg-[#3525CD]" : "bg-gray-300"}`}
-            >
-              <span className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-all duration-200 ${mandatory ? "left-[23px]" : "left-[3px]"}`} />
-            </button>
+          {/* Applicable To */}
+          <div>
+            <label className="text-[11px] font-semibold text-gray-900 mb-2 block tracking-wide uppercase">
+              Applicable To <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-6">
+              {(["all", "selected"] as const).map((opt) => (
+                <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={applicableTo === opt}
+                    onChange={() => setValue("applicableTo", opt)}
+                    className="accent-[#3525CD]"
+                  />
+                  <span className="text-sm text-gray-700">
+                    {opt === "all" ? "All Students" : "Selected Students"}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
-          {!mandatory && (
+          {/* Selected Students panel */}
+          {applicableTo === "selected" && (
             <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-slate-700">Select Students</span>
                 <div className="flex gap-2">
-                  <button type="button" onClick={selectAllStudents} className="text-[11px] text-[#3525CD] hover:underline">Select All</button>
-                  <button type="button" onClick={deselectAllStudents} className="text-[11px] text-slate-500 hover:underline">Clear</button>
+                  <button type="button" onClick={() => setValue("studentIds", allStudents.map((s) => s.studentId))} className="text-[11px] text-[#3525CD] hover:underline">Select All</button>
+                  <button type="button" onClick={() => setValue("studentIds", [])} className="text-[11px] text-slate-500 hover:underline">Clear</button>
                 </div>
               </div>
               {allStudents.length === 0 ? (
                 <div className="text-center py-4">
                   <Users className="w-6 h-6 mx-auto text-slate-300 mb-1" />
-                  <p className="text-xs text-slate-400">Select a class and section to see students</p>
+                  <p className="text-xs text-slate-400">Select a class to see students</p>
                 </div>
               ) : (
                 <div className="max-h-40 overflow-y-auto space-y-1">
@@ -285,12 +324,7 @@ function AddFeeStructureModal({
                     const isSelected = watch("studentIds").includes(s.studentId);
                     return (
                       <label key={s.studentId} className="flex items-center gap-2 p-1.5 rounded hover:bg-white cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleStudent(s.studentId)}
-                          className="w-3.5 h-3.5 accent-[#3525CD]"
-                        />
+                        <input type="checkbox" checked={isSelected} onChange={() => toggleStudent(s.studentId)} className="w-3.5 h-3.5 accent-[#3525CD]" />
                         <span className="text-xs text-slate-700">{s.studentName}</span>
                         <span className="text-[10px] text-slate-400 ml-auto">{s.admissionNo}</span>
                       </label>
@@ -301,10 +335,24 @@ function AddFeeStructureModal({
             </div>
           )}
 
+          {/* Mandatory Fee Toggle */}
+          <div className="flex items-center justify-between py-1">
+            <div>
+              <p className="text-sm font-medium text-gray-800">Mandatory Fee</p>
+              <p className="text-[11px] text-gray-400">Students cannot opt out of this fee</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setValue("mandatory", !mandatory)}
+              className={`relative w-11 h-6 rounded-full border-none cursor-pointer transition-colors duration-200 flex-shrink-0 ${mandatory ? "bg-[#3525CD]" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-all duration-200 ${mandatory ? "left-[23px]" : "left-[3px]"}`} />
+            </button>
+          </div>
+
+          {/* Billing Cycle */}
           <div>
-            <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">
-              Billing Cycle
-            </label>
+            <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">Billing Cycle</label>
             <div className="flex flex-wrap gap-2">
               {BILLING_CYCLES.map((cycle) => (
                 <button
@@ -313,10 +361,7 @@ function AddFeeStructureModal({
                   onClick={() => {
                     setValue("billingCycle", cycle);
                     const num = Number(amount);
-                    if (!isNaN(num)) {
-                      const annual = computeAnnualTotal(num, cycle);
-                      setValue("annualTotal", annual?.toString() ?? "");
-                    }
+                    if (!isNaN(num)) setValue("annualTotal", computeAnnualTotal(num, cycle)?.toString() ?? "");
                   }}
                   className={`px-4 py-1.5 text-xs rounded-full border transition-colors ${
                     billingCycle === cycle
@@ -330,10 +375,11 @@ function AddFeeStructureModal({
             </div>
           </div>
 
+          {/* Due Date + Amount */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">
-                Due Date
+                Due Date <span className="text-red-500">*</span>
               </label>
               <input type="date" className={inputClass(!!errors.dueDate)} {...register("dueDate")} />
               {errors.dueDate && (
@@ -344,15 +390,9 @@ function AddFeeStructureModal({
             </div>
             <div>
               <label className="text-[11px] font-semibold text-gray-900 mb-1.5 block tracking-wide uppercase">
-                Amount
+                Amount <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                placeholder="0"
-                className={inputClass(!!errors.amount)}
-                value={amount}
-                onChange={handleAmountChange}
-              />
+              <input type="number" placeholder="0" className={inputClass(!!errors.amount)} value={amount} onChange={handleAmountChange} />
               {errors.amount && (
                 <p className="text-red-500 text-[11px] mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {errors.amount.message}
@@ -361,6 +401,7 @@ function AddFeeStructureModal({
             </div>
           </div>
 
+          {/* Annual Total */}
           <div className="bg-indigo-50 rounded-lg px-4 py-2.5 flex items-center justify-between border border-indigo-100">
             <span className="text-xs font-semibold text-indigo-700">Annual Total</span>
             <span className="text-sm font-bold text-indigo-800">
@@ -368,10 +409,44 @@ function AddFeeStructureModal({
             </span>
           </div>
 
+          {/* Allow Concession Toggle */}
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-gray-800">Allow Concession</p>
+                <p className="text-[11px] text-gray-400">Enable discount/scholarship for this fee</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setValue("allowConcession", !allowConcession)}
+                className={`relative w-11 h-6 rounded-full border-none cursor-pointer transition-colors duration-200 flex-shrink-0 ${allowConcession ? "bg-emerald-500" : "bg-gray-300"}`}
+              >
+                <span className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-all duration-200 ${allowConcession ? "left-[23px]" : "left-[3px]"}`} />
+              </button>
+            </div>
+
+            {allowConcession && (
+              <div className="border-t border-slate-100 bg-slate-50 px-4 py-3 space-y-2">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Allowed Concession Types</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {ALLOWED_CONCESSION_TYPES.map((type) => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer bg-white rounded-lg px-3 py-2 border border-slate-100 hover:border-[#3525CD]/30 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={allowedConcessionTypes.includes(type)}
+                        onChange={() => toggleConcessionType(type)}
+                        className="w-3.5 h-3.5 accent-[#3525CD]"
+                      />
+                      <span className="text-xs text-slate-700">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="sticky bottom-0 bg-white pt-3 pb-2 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">
-            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>Cancel</Button>
             <Button type="submit" disabled={submitting} className="w-full sm:w-auto bg-[#3525CD] hover:bg-[#2a1fb5] text-white disabled:opacity-60">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : editData ? "Update" : "Add Fee Structure"}
             </Button>
@@ -382,76 +457,82 @@ function AddFeeStructureModal({
   );
 }
 
-function StudentSidePanel({
-  assignment,
-  onClose,
-}: {
-  assignment: FeeStructureAssignment | null;
-  onClose: () => void;
-}) {
-  const [students, setStudents] = useState<{ name: string; admissionNo: string; feeAmount: number; concession: string }[]>([]);
+// ── Student Side Panel ────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!assignment) return;
-    const filtered = mockStudentsList.filter((s) => s.className === assignment.className);
-    const mapped = filtered.map((s) => ({
-      name: s.studentName,
-      admissionNo: s.admissionNo,
-      feeAmount: assignment.amount ?? 0,
-      concession: "—",
-    }));
-    setStudents(mapped);
-  }, [assignment]);
+function StudentSidePanel({ assignment, onClose }: { assignment: FeeStructureAssignment | null; onClose: () => void }) {
+  const [allStudents] = useState<{ name: string; admissionNo: string }[]>([]);
+  const [loading] = useState(false);
+
+  const isSelectedStudents = assignment?.applicableTo === "SELECTED_STUDENTS";
+  const assignedList = assignment?.assignedStudents ?? [];
+
+  const displayStudents: { name: string; admissionNo: string }[] = isSelectedStudents
+    ? assignedList.map((s) => ({ name: `${s.first_name} ${s.last_name}`.trim(), admissionNo: s.admission_number }))
+    : allStudents;
 
   return (
     <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <div>
           <p className="text-sm font-semibold text-slate-800">{assignment?.feeHeadName ?? "Fee Structure"}</p>
-          <p className="text-[11px] text-slate-400">{assignment?.className}{assignment?.sectionName ? ` - ${assignment.sectionName}` : ""}</p>
+          <p className="text-[11px] text-slate-400">
+            {assignment?.className}{assignment?.sectionName ? ` · ${assignment.sectionName}` : ""} · {assignment?.academicYear ?? ""}
+          </p>
         </div>
-        <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
-          <X className="w-5 h-5" />
-        </button>
+        <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
+        {/* Detail grid */}
         <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
-          <div className="bg-slate-50 rounded p-2">
-            <span className="text-slate-400 block">Billing Cycle</span>
-            <span className="font-medium text-slate-700">{assignment?.billingCycle}</span>
-          </div>
-          <div className="bg-slate-50 rounded p-2">
-            <span className="text-slate-400 block">Amount</span>
-            <span className="font-medium text-slate-700">{assignment?.amount != null ? formatINR(assignment.amount) : "—"}</span>
-          </div>
-          <div className="bg-slate-50 rounded p-2">
-            <span className="text-slate-400 block">Due Date</span>
-            <span className="font-medium text-slate-700">{assignment?.dueDate}</span>
-          </div>
-          <div className="bg-slate-50 rounded p-2">
-            <span className="text-slate-400 block">Mandatory</span>
-            <span className="font-medium text-slate-700">{assignment?.mandatory ? "Yes" : "No"}</span>
-          </div>
+          {([
+            ["Billing Cycle", assignment?.billingCycle],
+            ["Amount",        assignment?.amount != null ? formatINR(assignment.amount) : "—"],
+            ["Due Date",      assignment?.dueDate],
+            ["Mandatory",     assignment?.mandatory ? "Yes" : "No"],
+            ["Allow Concession", assignment?.allowConcession ? "Yes" : "No"],
+            ["Status",        assignment?.status ?? "—"],
+          ] as [string, string | undefined][]).map(([label, val]) => (
+            <div key={label} className="bg-slate-50 rounded p-2">
+              <span className="text-slate-400 block mb-0.5">{label}</span>
+              <span className="font-medium text-slate-700">{val}</span>
+            </div>
+          ))}
         </div>
 
-        <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Students</h4>
-        {students.length === 0 ? (
+        {/* Applicable-to badge */}
+        <div className="mb-3 flex items-center gap-2">
+          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+            isSelectedStudents
+              ? "bg-amber-50 text-amber-700"
+              : "bg-emerald-50 text-emerald-700"
+          }`}>
+            {isSelectedStudents ? "Selected Students" : "All Students"}
+          </span>
+          <span className="text-[11px] text-slate-400">{displayStudents.length} student{displayStudents.length !== 1 ? "s" : ""}</span>
+        </div>
+
+        <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+          {isSelectedStudents ? "Assigned Students" : "Students in Class"}
+        </h4>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+          </div>
+        ) : displayStudents.length === 0 ? (
           <div className="text-center py-8 text-slate-400">
             <Users className="w-8 h-8 mx-auto mb-2" />
             <p className="text-xs">No students found</p>
           </div>
         ) : (
           <div className="space-y-1.5">
-            {students.map((s, i) => (
+            {displayStudents.map((s, i) => (
               <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-100">
                 <div>
                   <p className="text-xs font-medium text-slate-700">{s.name}</p>
                   <p className="text-[10px] text-slate-400">{s.admissionNo}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-slate-700">{formatINR(s.feeAmount)}</p>
-                  <p className="text-[10px] text-emerald-600">Concession: {s.concession}</p>
-                </div>
+                <p className="text-xs font-semibold text-slate-700">{formatINR(assignment?.amount ?? 0)}</p>
               </div>
             ))}
           </div>
@@ -461,55 +542,110 @@ function StudentSidePanel({
   );
 }
 
+// ── Main FeeStructure Component ───────────────────────────────────────────────
+
+const SUB_TABS = ["Fee Heads", "Fee Structures", "Concessions"] as const;
+type SubTab = typeof SUB_TABS[number];
+
 export const FeeStructure = ({ showModal, setShowModal }: FeeStructureProps) => {
-  const [assignments, setAssignments] = useState<FeeStructureAssignment[]>([]);
-  const [feeHeadsList, setFeeHeadsList] = useState<FeeHead[]>([]);
-  const [showFormModal, setShowFormModal] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<FeeStructureAssignment | null>(null);
-  const [viewingAssignment, setViewingAssignment] = useState<FeeStructureAssignment | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activeSubTab, setActiveSubTab]             = useState<SubTab>("Fee Heads");
+  const [assignments, setAssignments]               = useState<FeeStructureAssignment[]>([]);
+  const [feeHeadsList, setFeeHeadsList]             = useState<FeeHeadDTO[]>([]);
+  const [showFormModal, setShowFormModal]           = useState(false);
+  const [editingAssignment, setEditingAssignment]   = useState<FeeStructureAssignment | null>(null);
+  const [viewingAssignment, setViewingAssignment]   = useState<FeeStructureAssignment | null>(null);
+  const [deletingId, setDeletingId]                 = useState<string | null>(null);
+  const [editingFeeHead, setEditingFeeHead]         = useState<FeeHeadDTO | null>(null);
+  const [deletingFeeHeadId, setDeletingFeeHeadId]  = useState<string | null>(null);
+  const [triggerAddConcession, setTriggerAddConcession] = useState(false);
 
-  const refresh = () => setAssignments([...mockAssignments]);
-
-  useEffect(() => {
-    refresh();
+  const refreshFeeHeads = useCallback(() => {
     getFeeHeads().then((res) => {
-      if (res.status) setFeeHeadsList(res.data as unknown as FeeHead[]);
+      if (res.status) setFeeHeadsList(res.data);
     }).catch(() => {});
   }, []);
 
-  const handleDelete = async (id: string) => {
+  const refreshFeeStructures = useCallback(() => {
+    getFeeStructures({ class_id: "", section_id: "", fromDate: "2020-01-01", toDate: "2030-12-31" }).then((res) => {
+      if (res.status) {
+        setAssignments(res.data.map((m: FeeHeadMappingDTO) => ({
+          id: m.id,
+          feeHeadId: m.feeHeadId,
+          feeHeadName: m.feeHeadName,
+          classId: m.classId,
+          className: m.className,
+          sectionId: m.sectionId,
+          sectionName: m.sectionName,
+          mandatory: m.isMandatory,
+          billingCycle: m.billingCycle as FeeStructureAssignment["billingCycle"],
+          dueDate: m.dueDate,
+          amount: m.amount,
+          annualTotal: m.billingCycle === "Monthly" ? m.amount * 12 : m.billingCycle === "Quarterly" ? m.amount * 4 : m.amount,
+          applicableTo: m.applicableTo as "ALL_STUDENTS" | "SELECTED_STUDENTS",
+          allowConcession: m.allowConcession,
+          status: m.status,
+          academicYear: m.academicYear,
+          assignedStudents: m.assignedStudents.map((s) => ({
+            id: s.id,
+            first_name: s.first_name,
+            last_name: s.last_name,
+            admission_number: s.admission_number,
+          })),
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshFeeHeads();
+    refreshFeeStructures();
+  }, [refreshFeeHeads, refreshFeeStructures]);
+
+  useEffect(() => {
+    if (showModal) setActiveSubTab("Fee Heads");
+  }, [showModal]);
+
+  const handleDeleteFeeStructure = useCallback(async (id: string) => {
     setDeletingId(id);
-    await new Promise((r) => setTimeout(r, 300));
     try {
-      const idx = mockAssignments.findIndex((a) => a.id === id);
-      if (idx !== -1) mockAssignments.splice(idx, 1);
+      await deleteFeeHeadMapping(id);
       toast.success("Fee structure deleted");
-      refresh();
+      refreshFeeStructures();
     } catch {
-      toast.error("Failed to delete");
+      toast.error("Failed to delete fee structure");
     } finally {
       setDeletingId(null);
     }
-  };
+  }, [refreshFeeStructures]);
 
-  const handleAddNew = () => {
-    setEditingAssignment(null);
-    setShowFormModal(true);
-  };
-
-  const handleEdit = (assignment: FeeStructureAssignment) => {
-    setEditingAssignment(assignment);
-    setShowFormModal(true);
-  };
+  const handleDeleteFeeHead = useCallback(async (id: string) => {
+    setDeletingFeeHeadId(id);
+    try {
+      await deleteFeeHeadById(id);
+      toast.success("Fee head deleted");
+      refreshFeeHeads();
+    } catch {
+      toast.error("Failed to delete fee head");
+    } finally {
+      setDeletingFeeHeadId(null);
+    }
+  }, [refreshFeeHeads]);
 
   return (
-    <div className="px-3 md:px-5 pt-4 pb-10 space-y-5 font-sans">
-      {showModal && <AddFeeHeadModal onClose={() => setShowModal(false)} onSuccess={refresh} />}
+    <div className="px-3 md:px-5 pt-3 pb-10 font-sans">
+
+      {/* Modals */}
+      {(showModal || editingFeeHead !== null) && (
+        <AddFeeHeadModal
+          onClose={() => { setShowModal(false); setEditingFeeHead(null); }}
+          onSuccess={() => { refreshFeeHeads(); }}
+          editData={editingFeeHead ?? undefined}
+        />
+      )}
       {showFormModal && (
         <AddFeeStructureModal
           onClose={() => setShowFormModal(false)}
-          onSuccess={refresh}
+          onSuccess={() => { refreshFeeStructures(); refreshFeeHeads(); }}
           editData={editingAssignment}
           feeHeads={feeHeadsList}
         />
@@ -521,113 +657,191 @@ export const FeeStructure = ({ showModal, setShowModal }: FeeStructureProps) => 
         </>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-[13px] font-bold text-slate-700 uppercase tracking-wider">Fee Structure Assignments</h3>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-[#3525CD] text-[11px] font-semibold">
-            {assignments.length} configured
-          </span>
-        </div>
-        <Button
-          size="sm"
-          className="h-8 text-xs bg-[#3525CD] text-white"
-          onClick={handleAddNew}
-        >
-          <Plus className="w-3.5 h-3.5 mr-1" /> Add Fee Structure
-        </Button>
+      {/* ── Sub-tab bar ── */}
+      <div className="flex items-center gap-1 border-b border-slate-200 mb-5 overflow-x-auto scrollbar-hide">
+        {SUB_TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveSubTab(tab)}
+            className={`px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors ${
+              activeSubTab === tab
+                ? "border-[#3525CD] text-[#3525CD]"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+        {activeSubTab === "Concessions" && (
+          <Button
+            size="sm"
+            className="ml-auto mb-1 h-7 text-xs bg-[#3525CD] text-white whitespace-nowrap"
+            onClick={() => setTriggerAddConcession(true)}
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" /> Add Concession
+          </Button>
+        )}
       </div>
 
-      {assignments.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
-          <BookOpen className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm font-medium text-slate-600">No fee structures configured</p>
-          <p className="text-xs text-slate-400 mt-1">Click "Add Fee Structure" to create one</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fee Head</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Class</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Section</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Billing Cycle</th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Annual Total</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Due Date</th>
-                <th className="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                <th className="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((assignment) => {
-                const isDeleting = deletingId === assignment.id;
-                const bgColor = FEE_HEAD_COLORS[assignment.feeHeadName] ?? "bg-slate-400";
-                const icon = feeHeadIcons[assignment.feeHeadName] ?? <BookOpen className="w-3 h-3 text-white" />;
-                return (
-                  <tr key={assignment.id} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/60 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center ${bgColor}`}>
-                          {icon}
-                        </span>
-                        <span className="text-[13px] font-medium text-slate-800">{assignment.feeHeadName}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-[13px] text-slate-700">{assignment.className}</td>
-                    <td className="px-4 py-3 text-[13px] text-slate-500">{assignment.sectionName ?? "All"}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-[12px] text-slate-600">{assignment.billingCycle}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-[13px] font-medium text-slate-800">
-                      {assignment.amount != null ? formatINR(assignment.amount) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="text-[13px] font-semibold text-[#3525CD]">
-                        {assignment.annualTotal != null ? formatINR(assignment.annualTotal) : "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-[13px] text-slate-600">{assignment.dueDate || "—"}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        assignment.mandatory ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                      }`}>
-                        {assignment.mandatory ? "Mandatory" : "Optional"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => setViewingAssignment(assignment)}
-                          className="p-1.5 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="View Students"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(assignment)}
-                          className="p-1.5 rounded text-slate-400 hover:text-[#3525CD] hover:bg-indigo-50 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(assignment.id)}
-                          disabled={isDeleting}
-                          className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-                          title="Delete"
-                        >
-                          {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </td>
+      {/* ── Fee Heads Tab ── */}
+      {activeSubTab === "Fee Heads" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-bold text-slate-700 uppercase tracking-wider">Fee Heads</h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-[#3525CD] text-[11px] font-semibold">
+                {feeHeadsList.length}
+              </span>
+            </div>
+            <Button size="sm" className="h-8 text-xs bg-[#3525CD] text-white" onClick={() => setShowModal(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Add Fee Head
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+            {feeHeadsList.length === 0 ? (
+              <div className="p-10 text-center">
+                <BookOpen className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                <p className="text-sm text-slate-500">No fee heads yet. Click "+ Add Fee Head" to create one.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    {["Fee Name", "Description", "Order", "Status", "Actions"].map((h) => (
+                      <th key={h} className={`px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider ${["Order","Actions","Status"].includes(h) ? "text-center" : "text-left"}`}>{h}</th>
+                    ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {feeHeadsList.map((fh) => {
+                    const isDeleting = deletingFeeHeadId === fh.id;
+                    const isActive   = (fh.status ?? "Active").toLowerCase() === "active";
+                    return (
+                      <tr key={fh.id} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/60 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-md bg-indigo-50 flex items-center justify-center shrink-0">
+                              <BookOpen className="w-3.5 h-3.5 text-[#3525CD]" />
+                            </div>
+                            <span className="text-[13px] font-medium text-slate-800">{fh.feeName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-slate-500 max-w-[200px] truncate">{fh.description || "—"}</td>
+                        <td className="px-4 py-3 text-center text-[13px] text-slate-600">{fh.displayOrder}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                            {fh.status ?? "Active"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => setEditingFeeHead(fh)} className="p-1.5 rounded text-slate-400 hover:text-[#3525CD] hover:bg-indigo-50 transition-colors" title="Edit">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDeleteFeeHead(fh.id)} disabled={isDeleting} className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50" title="Delete">
+                              {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
+
+      {/* ── Fee Structures Tab ── */}
+      {activeSubTab === "Fee Structures" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-bold text-slate-700 uppercase tracking-wider">Fee Structures</h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-[#3525CD] text-[11px] font-semibold">
+                {assignments.length}
+              </span>
+            </div>
+            <Button size="sm" className="h-8 text-xs bg-[#3525CD] text-white" onClick={() => { setEditingAssignment(null); setShowFormModal(true); }}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Add Fee Structure
+            </Button>
+          </div>
+
+          {assignments.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
+              <BookOpen className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-600">No fee structures configured</p>
+              <p className="text-xs text-slate-400 mt-1">Click "Add Fee Structure" to create one</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50">
+                    {["Fee Head", "Class", "Section", "Billing Cycle", "Amount", "Annual Total", "Due Date", "Type", "Actions"].map((h) => (
+                      <th key={h} className={`px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${["Amount", "Annual Total"].includes(h) ? "text-right" : ["Type", "Actions"].includes(h) ? "text-center" : "text-left"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignments.map((a) => {
+                    const isDeleting = deletingId === a.id;
+                    const bgColor = FEE_HEAD_COLORS[a.feeHeadName] ?? "bg-slate-400";
+                    const icon = feeHeadIcons[a.feeHeadName] ?? <BookOpen className="w-3 h-3 text-white" />;
+                    return (
+                      <tr key={a.id} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/60 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`w-7 h-7 rounded-md flex items-center justify-center ${bgColor}`}>{icon}</span>
+                            <span className="text-[13px] font-medium text-slate-800 whitespace-nowrap">{a.feeHeadName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-slate-700">{a.className}</td>
+                        <td className="px-4 py-3 text-[13px] text-slate-500">{a.sectionName ?? "All"}</td>
+                        <td className="px-4 py-3 text-[12px] text-slate-600">{a.billingCycle}</td>
+                        <td className="px-4 py-3 text-right text-[13px] font-medium text-slate-800">{a.amount != null ? formatINR(a.amount) : "—"}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-[13px] font-semibold text-[#3525CD]">{a.annualTotal != null ? formatINR(a.annualTotal) : "—"}</span>
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-slate-600 whitespace-nowrap">{a.dueDate || "—"}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${a.mandatory ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                            {a.mandatory ? "Mandatory" : "Optional"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => setViewingAssignment(a)} className="p-1.5 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="View Students">
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => { setEditingAssignment(a); setShowFormModal(true); }} className="p-1.5 rounded text-slate-400 hover:text-[#3525CD] hover:bg-indigo-50 transition-colors" title="Edit">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDeleteFeeStructure(a.id)} disabled={isDeleting} className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50" title="Delete">
+                              {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Concessions Tab ── */}
+      {activeSubTab === "Concessions" && (
+        <Concessions
+          triggerAdd={triggerAddConcession}
+          onAddHandled={() => setTriggerAddConcession(false)}
+        />
+      )}
+
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { X, Calendar, Loader2, Download, Info } from "lucide-react";
+import { X, Loader2, Download, Info } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,8 @@ import { Select } from "@/components/ui/select";
 import { REPORT_CARDS, ReportIcons } from "../utils/report-config";
 import { useGenerateReport } from "../hooks/useReports";
 import { getAuthUser } from "../../../../store/authStore";
+import { useUIStore } from "../../../../store/uiStore";
+import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
 import type { ReportType } from "../types/reports.types";
 
 interface Props {
@@ -24,10 +27,6 @@ const PERIOD_PILLS: { value: PeriodKey; label: string }[] = [
   { value: "CUSTOM",     label: "Custom Range" },
 ];
 
-const CLASS_OPTIONS = [
-  { value: "", label: "All Classes" },
-  ...Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Class ${i + 1}` })),
-];
 
 const REPORT_TYPE_OPTIONS = REPORT_CARDS.map((c) => ({ value: c.type, label: c.title }));
 
@@ -54,18 +53,35 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: Props) => {
   const [myEmailChecked, setMyEmailChecked] = useState(true);
   const [additionalEmail, setAdditionalEmail] = useState("");
   const generateMutation = useGenerateReport();
+  const academicYearId = useUIStore(s => s.academicYearId) ?? "";
   const [generating, setGenerating] = useState(false);
+  const [sectionId, setSectionId] = useState("");
+
+  const { data: classesData } = useQuery({
+    queryKey: ["report-modal-classes"],
+    queryFn: () => getAllClasses(),
+    staleTime: 5 * 60_000,
+  });
+  const classOptions = [
+    { value: "", label: "All Classes" },
+    ...(classesData?.data ?? []).map(c => ({ value: c.id, label: c.class_name })),
+  ];
+
+  const { data: sectionsData } = useQuery({
+    queryKey: ["report-modal-sections", classId],
+    queryFn: () => getSectionsByClassId(classId),
+    enabled: !!classId,
+    staleTime: 5 * 60_000,
+  });
+  const sectionOptions = [
+    { value: "", label: "All Sections" },
+    ...(sectionsData?.data ?? []).map(s => ({ value: s.id, label: s.sectionName })),
+  ];
 
   const cardConfig = REPORT_CARDS.find((c) => c.type === reportType);
   const Icon = ReportIcons[reportType];
 
   const dateRange = useMemo(() => getDateRange(period), [period]);
-  const displayFrom = period === "CUSTOM" && customFrom
-    ? format(new Date(customFrom), "dd MMM yyyy")
-    : dateRange ? format(dateRange.from, "dd MMM yyyy") : "—";
-  const displayTo = period === "CUSTOM" && customTo
-    ? format(new Date(customTo), "dd MMM yyyy")
-    : dateRange ? format(dateRange.to, "dd MMM yyyy") : "—";
   const periodLabel = dateRange ? format(dateRange.from, "MMMM yyyy") : "selected period";
 
   const toggleSection = (key: string) => {
@@ -88,8 +104,8 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: Props) => {
         from: fromDate,
         to: toDate,
         class_id: classId,
-        section_id: "",
-        academic_year_id: "",
+        section_id: sectionId,
+        academic_year_id: academicYearId,
         format: fmt,
         emailreport: myEmailChecked || !!additionalEmail,
         school_code: user?.schoolcode ?? "",
@@ -177,35 +193,21 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: Props) => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-gray-700">From</label>
-                {period === "CUSTOM" ? (
-                  <input
-                    type="date"
-                    value={customFrom}
-                    onChange={(e) => setCustomFrom(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 h-10 px-3 rounded-xl border border-gray-200 bg-gray-50/60 text-sm text-gray-600">
-                    <span className="flex-1 truncate">{displayFrom}</span>
-                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                  </div>
-                )}
+                <input
+                  type="date"
+                  value={customFrom || (dateRange ? format(dateRange.from, "yyyy-MM-dd") : "")}
+                  onChange={(e) => { setCustomFrom(e.target.value); setPeriod("CUSTOM"); }}
+                  className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-gray-700">To</label>
-                {period === "CUSTOM" ? (
-                  <input
-                    type="date"
-                    value={customTo}
-                    onChange={(e) => setCustomTo(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 h-10 px-3 rounded-xl border border-gray-200 bg-gray-50/60 text-sm text-gray-600">
-                    <span className="flex-1 truncate">{displayTo}</span>
-                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                  </div>
-                )}
+                <input
+                  type="date"
+                  value={customTo || (dateRange ? format(dateRange.to, "yyyy-MM-dd") : "")}
+                  onChange={(e) => { setCustomTo(e.target.value); setPeriod("CUSTOM"); }}
+                  className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                />
               </div>
             </div>
 
@@ -214,11 +216,24 @@ const GenerateReportModal = ({ open, preselectedType, onClose }: Props) => {
               <label className="text-sm font-semibold text-gray-700">Class</label>
               <Select
                 value={classId}
-                onValueChange={setClassId}
-                options={CLASS_OPTIONS}
+                onValueChange={(v) => { setClassId(v); setSectionId(""); }}
+                options={classOptions}
                 placeholder="All Classes"
               />
             </div>
+
+            {/* Section filter */}
+            {classId && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-gray-700">Section</label>
+                <Select
+                  value={sectionId}
+                  onValueChange={setSectionId}
+                  options={sectionOptions}
+                  placeholder="All Sections"
+                />
+              </div>
+            )}
 
             {/* Format */}
             <div className="space-y-2">

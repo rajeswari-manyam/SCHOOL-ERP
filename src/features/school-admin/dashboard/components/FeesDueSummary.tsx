@@ -3,14 +3,21 @@ import type { FeeDefaulter } from '../types';
 
 interface FeesDueSummaryProps {
   totalOutstanding: number;
+  feeCollected?: number;
   paidPercent: number;
   defaulters: FeeDefaulter[];
+  onViewAll?: () => void;
 }
 
-export function FeesDueSummary({ totalOutstanding, paidPercent, defaulters }: FeesDueSummaryProps) {
+export function FeesDueSummary({ totalOutstanding, feeCollected = 0, paidPercent, defaulters, onViewAll }: FeesDueSummaryProps) {
   const hasData = totalOutstanding > 0 || defaulters.length > 0;
-  const pendingPercent = 100 - paidPercent;
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+
+  // If we have real API data, compute paid/pending from fee_collection + total_pending_fees
+  const totalFees     = feeCollected + totalOutstanding;
+  const computedPaid  = totalFees > 0 ? Math.round((feeCollected / totalFees) * 100) : paidPercent;
+  const resolvedPaid  = feeCollected > 0 ? computedPaid : paidPercent;
+  const pendingPercent = 100 - resolvedPaid;
 
   if (!hasData) {
     return (
@@ -36,7 +43,7 @@ export function FeesDueSummary({ totalOutstanding, paidPercent, defaulters }: Fe
       {/* ── Outstanding card ── */}
       <div className="rounded-xl bg-indigo-600 p-4 sm:p-5">
         <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-1.5">
-          Total Outstanding
+          Total Pending Fees
         </p>
         <p className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-white mb-4 tabular-nums">
           {fmt(totalOutstanding)}
@@ -45,20 +52,20 @@ export function FeesDueSummary({ totalOutstanding, paidPercent, defaulters }: Fe
         {/* Progress bar */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-[10px] font-semibold text-indigo-200">
-            <span>PAID ({paidPercent}%)</span>
+            <span>COLLECTED ({resolvedPaid}%)</span>
             <span>PENDING ({pendingPercent}%)</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-indigo-800/60">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${paidPercent}%` }}
+              animate={{ width: `${resolvedPaid}%` }}
               transition={{ duration: 1.2, ease: 'easeOut' }}
               className="h-full rounded-full bg-emerald-400"
             />
           </div>
           <div className="flex justify-between text-[10px] text-indigo-300">
-            <span>{fmt(Math.round(totalOutstanding * paidPercent / 100))} collected</span>
-            <span>{fmt(Math.round(totalOutstanding * pendingPercent / 100))} pending</span>
+            <span>{fmt(feeCollected > 0 ? feeCollected : Math.round(totalOutstanding * resolvedPaid / 100))} collected</span>
+            <span>{fmt(totalOutstanding)} pending</span>
           </div>
         </div>
       </div>
@@ -102,7 +109,10 @@ export function FeesDueSummary({ totalOutstanding, paidPercent, defaulters }: Fe
       </div>
 
       {/* ── CTA ── */}
-      <button className="w-full rounded-xl border border-indigo-200 py-2.5 text-xs sm:text-sm font-bold text-indigo-600 hover:bg-indigo-50 active:scale-[0.98] transition-all">
+      <button
+        onClick={onViewAll}
+        className="w-full rounded-xl border border-indigo-200 py-2.5 text-xs sm:text-sm font-bold text-indigo-600 hover:bg-indigo-50 active:scale-[0.98] transition-all"
+      >
         View All Defaulters
       </button>
     </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { getUserById } from "@/services/auth.api";
 import { getStudentById } from "../../services/student.api";
-import type { Student } from "../../services/student.api";
+import type { ParentDetail } from "../../services/student.api";
+
 
 export interface ChildInfo {
   id: string;
@@ -37,16 +38,29 @@ export interface ChildInfo {
     sectionName: string;
   } | null;
 
+  academicYear?: {
+    id: string;
+    yearName: string;
+  } | null;
+
+  parentName?: string;
+  parentDetail?: ParentDetail[];
+
   createdAt: string;
   updatedAt: string;
 }
-
 export function useParentChildren(parentId: string) {
   const [children, setChildren] = useState<ChildInfo[]>([]);
-  const [activeChild, setActiveChild] = useState<ChildInfo | null>(null);
+
+  const [activeChild, setActiveChild] = useState<ChildInfo | null>(() => {
+    const saved = localStorage.getItem("activeChild");
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ FETCH DATA
   useEffect(() => {
     if (!parentId) {
       setLoading(false);
@@ -61,9 +75,8 @@ export function useParentChildren(parentId: string) {
         const studentList = userRes.data.students ?? [];
 
         const students: ChildInfo[] = await Promise.all(
-          studentList.map(async (item: { id: string; name: string }) => {
-            const studentId = item.id;
-            const student: Student = await getStudentById(studentId);
+          studentList.map(async (item) => {
+            const student = await getStudentById(item.id);
 
             return {
               id: student.id,
@@ -78,8 +91,8 @@ export function useParentChildren(parentId: string) {
               photo: student.photo || "",
 
               classId: student.class_id ?? "",
-              sectionId: student.sectionId ?? "",         // ✅ fixed
-              academicYearId: student.academicYearId ?? "", // ✅ fixed
+              sectionId: student.sectionId ?? "",
+              academicYearId: student.academicYearId ?? "",
 
               rollNumber: student.roll_number,
               admissionNumber: student.admission_number,
@@ -103,6 +116,11 @@ export function useParentChildren(parentId: string) {
                   }
                 : null,
 
+              academicYear: student.academicYear ?? null,
+
+              parentName: student.parentDetail?.[0]?.parent_name ?? "",
+              parentDetail: student.parentDetail ?? [],
+
               createdAt: student.createdAt,
               updatedAt: student.updatedAt,
             };
@@ -110,7 +128,24 @@ export function useParentChildren(parentId: string) {
         );
 
         setChildren(students);
-        setActiveChild(students[0] || null);
+
+        // ✅ keep previous selection
+      if (students.length > 0) {
+  const saved = localStorage.getItem("activeChild");
+
+  if (saved) {
+    const savedChild = JSON.parse(saved);
+
+    const matchedChild =
+      students.find((c) => c.studentId === savedChild.studentId) ||
+      students[0];
+
+    setActiveChild(matchedChild);
+  } else {
+    setActiveChild(students[0]);
+  }
+}
+
       } catch (err) {
         console.error("Error fetching children:", err);
         setError("Failed to fetch children data");
@@ -121,6 +156,13 @@ export function useParentChildren(parentId: string) {
 
     fetchChildren();
   }, [parentId]);
+
+  // ✅ SAVE TO LOCALSTORAGE (SEPARATE HOOK)
+  useEffect(() => {
+    if (activeChild) {
+      localStorage.setItem("activeChild", JSON.stringify(activeChild));
+    }
+  }, [activeChild]);
 
   return { children, activeChild, setActiveChild, loading, error };
 }

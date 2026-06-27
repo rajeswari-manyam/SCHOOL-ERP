@@ -16,7 +16,7 @@ import {
   CheckCircle2, BellRing, Clock, AlertCircle,
 } from "lucide-react";
 import type { FeeRow, PendingFeesTableProps } from "../types/fees.types";
-import { formatCurrency } from "../../../../utils/formatters";
+import { formatINR as formatCurrency } from "../../../../utils/formatters";
 import { Button } from "@/components/ui/button";
 import { SendFeeReminderModal } from "./SendRemainderModal";
 import {
@@ -129,19 +129,45 @@ export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
 
  
       columnHelper.accessor("amount", {
-        header: ({ column }) => (
-          <button
-            className="flex items-center font-medium text-xs text-gray-600 hover:text-gray-900"
-            onClick={() => column.toggleSorting()}
-          >
-            Amount <SortIcon isSorted={column.getIsSorted()} />
-          </button>
+        header: () => (
+          <span className="font-medium text-xs text-gray-600">Amount</span>
         ),
-        cell: (info) => (
-          <span className="text-xs font-semibold text-gray-800">
-            {formatCurrency(info.getValue())}
-          </span>
-        ),
+        cell: (info) => {
+          const { originalAmount, discountAmount, amount, paidAmount, remainingAmount } = info.row.original;
+          const hasDiscount = discountAmount > 0;
+          return (
+            <div className="flex items-center gap-3 text-xs">
+              <div className="text-center min-w-[54px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Original</p>
+                <p className={`font-semibold ${hasDiscount ? "text-gray-400 line-through" : "text-gray-800"}`}>
+                  {formatCurrency(originalAmount)}
+                </p>
+              </div>
+              <div className="w-px h-7 bg-gray-200" />
+              <div className="text-center min-w-[54px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Discount</p>
+                <p className={`font-semibold ${hasDiscount ? "text-green-600" : "text-gray-300"}`}>
+                  {hasDiscount ? `−${formatCurrency(discountAmount)}` : "—"}
+                </p>
+              </div>
+              <div className="w-px h-7 bg-gray-200" />
+              <div className="text-center min-w-[54px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Total</p>
+                <p className="font-semibold text-gray-800">{formatCurrency(amount)}</p>
+              </div>
+              <div className="w-px h-7 bg-gray-200" />
+              <div className="text-center min-w-[54px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Paid</p>
+                <p className="font-semibold text-blue-600">{formatCurrency(paidAmount)}</p>
+              </div>
+              <div className="w-px h-7 bg-gray-200" />
+              <div className="text-center min-w-[54px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Balance</p>
+                <p className="font-semibold text-orange-500">{formatCurrency(remainingAmount)}</p>
+              </div>
+            </div>
+          );
+        },
       }),
 
    
@@ -287,9 +313,33 @@ export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
         <div>
           <span className="text-gray-400">Fee:</span> {row.original.feeHead}
         </div>
-        <div>
-          <span className="text-gray-400">Amount:</span>{" "}
-          {formatCurrency(row.original.amount)}
+        <div className="col-span-2">
+          <div className="flex flex-wrap gap-3 mt-1">
+            <div>
+              <p className="text-[10px] text-gray-400">Original</p>
+              <p className={`text-xs font-semibold ${row.original.discountAmount > 0 ? "text-gray-400 line-through" : "text-gray-800"}`}>
+                {formatCurrency(row.original.originalAmount)}
+              </p>
+            </div>
+            {row.original.discountAmount > 0 && (
+              <div>
+                <p className="text-[10px] text-gray-400">Discount</p>
+                <p className="text-xs font-semibold text-green-600">−{formatCurrency(row.original.discountAmount)}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-[10px] text-gray-400">Total</p>
+              <p className="text-xs font-semibold text-gray-800">{formatCurrency(row.original.amount)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400">Paid</p>
+              <p className="text-xs font-semibold text-blue-600">{formatCurrency(row.original.paidAmount)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400">Balance</p>
+              <p className="text-xs font-semibold text-orange-500">{formatCurrency(row.original.remainingAmount)}</p>
+            </div>
+          </div>
         </div>
         <div>
           <span className="text-gray-400">Late Fee:</span>{" "}

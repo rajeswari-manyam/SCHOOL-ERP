@@ -73,26 +73,30 @@ export interface ApplyLeaveResponse {
   };
 }
 
-// ─── GET /tenant/leavebalance?staff_id=... ──────────────────────────────────
+// ─── GET /tenant/leavebalance?staff_id=...&academic_year=... ──────────────
 export interface LeaveBalanceApiItem {
   leave_type?: string;
   type?: string;
   label?: string;
   total?: number;
   total_days?: number;
+  allocated?: number;
   used?: number;
   used_days?: number;
   remaining?: number;
   remaining_days?: number;
+  balance?: number;
   accentColor?: string;
 }
 
 export interface LeaveBalanceApiResponse {
   status?: boolean;
   message?: string;
-  data?: LeaveBalanceApiItem | LeaveBalanceApiItem[];
-  balances?: LeaveBalanceApiItem[];
-  leave_balances?: LeaveBalanceApiItem[];
-  leavebalance?: LeaveBalanceApiItem[];
+  academic_year?: string;
+  total_allocated?: number;
+  total_used?: number;
+  total_balance?: number;
+  balance_list?: LeaveBalanceApiItem[];
+  used_list?: { leave_type?: string; total_days?: number }[];
   [key: string]: unknown;
 }

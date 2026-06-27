@@ -64,18 +64,49 @@ export function FeeCard({ fee, onPay }: FeeCardProps) {
         </div>
 
         {/* RIGHT */}
-        <div className="text-right shrink-0 flex flex-col justify-center h-[56px]">
-          <p className="text-base font-bold text-[#0B1C30]">
-            Rs.{fee.amount.toLocaleString("en-IN")}
-          </p>
-
-          <p className={cn(
-            typography.body.xs,
-            "text-[12px] leading-[16px] font-semibold tracking-[1.2px] text-gray-400 uppercase text-right"
-          )}>
-            {isOverdue ? "PENDING AMOUNT" : "BALANCE DUE"}
-          </p>
-        </div>
+        {fee.totalFee != null ? (
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            {/* discount badge — shown only when a discount exists */}
+            {(fee.discountAmount ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400 line-through">
+                  ₹{(fee.originalAmount ?? fee.totalFee).toLocaleString("en-IN")}
+                </span>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">
+                  −₹{(fee.discountAmount ?? 0).toLocaleString("en-IN")} discount
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-3 bg-[#F5F4FF] rounded-xl px-4 py-2.5">
+              <div className="text-center min-w-[52px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Total Fee</p>
+                <p className="text-sm font-bold text-[#0B1C30]">₹{fee.totalFee.toLocaleString("en-IN")}</p>
+              </div>
+              <div className="w-px h-8 bg-[#E8EBF2]" />
+              <div className="text-center min-w-[44px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Paid</p>
+                <p className="text-sm font-bold text-green-600">₹{(fee.paidAmount ?? 0).toLocaleString("en-IN")}</p>
+              </div>
+              <div className="w-px h-8 bg-[#E8EBF2]" />
+              <div className="text-center min-w-[52px]">
+                <p className="text-[10px] text-gray-400 leading-none mb-0.5">Balance</p>
+                <p className="text-sm font-bold text-[#E07B2A]">₹{fee.amount.toLocaleString("en-IN")}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-right shrink-0 flex flex-col justify-center h-[56px]">
+            <p className="text-base font-bold text-[#0B1C30]">
+              Rs.{fee.amount.toLocaleString("en-IN")}
+            </p>
+            <p className={cn(
+              typography.body.xs,
+              "text-[12px] leading-[16px] font-semibold tracking-[1.2px] text-gray-400 uppercase text-right"
+            )}>
+              {isOverdue ? "PENDING AMOUNT" : "BALANCE DUE"}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* FOOTER */}
@@ -96,7 +127,7 @@ export function FeeCard({ fee, onPay }: FeeCardProps) {
             transition-all text-white text-[13px] font-semibold px-5 py-2 rounded-xl
           "
         >
-          Pay Rs.{fee.amount.toLocaleString("en-IN")} →
+          Pay ₹{fee.amount.toLocaleString("en-IN")} →
         </Button>
       </div>
 

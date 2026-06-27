@@ -182,6 +182,7 @@ export interface HomeworkState {
   updateHomework: (id: string, payload: UpdateHomeworkPayload) => Promise<void>;
   deleteHomework: (id: string) => Promise<void>;
   uploadMaterial: (data: CreateStudyMaterialPayload) => Promise<void>;
+  updateMaterial: (id: string, data: CreateStudyMaterialPayload) => Promise<void>;
   deleteMaterial: (id: string) => Promise<void>;
 
   isCreating: boolean;
@@ -198,4 +199,5 @@ export type ModalState =
   | { type: "confirmAssign"; data: Record<string, unknown> }
   | { type: "deleteHomework"; id: string }
   | { type: "uploadMaterial" }
+  | { type: "editMaterial"; id: string }
   | { type: "deleteMaterial"; id: string };

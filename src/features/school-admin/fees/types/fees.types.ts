@@ -52,6 +52,8 @@ export interface FeeTransaction {
   dateTime: string;
   studentName: string;
   class: string;
+  className?: string;
+  sectionName?: string;
   feeHead: string;
   amount: number;
   mode: PaymentMode;

@@ -77,8 +77,8 @@ export const leaveApi = {
   getLeaveBalances: async (staffId: string, academicYearId?: string | null): Promise<LeaveBalance[]> => {
     try {
       const params: Record<string, string> = { staff_id: staffId };
-      if (academicYearId) params.academicYearId = academicYearId;
-      const { data } = await api.get("/tenant/staffleavesummary", { params });
+      if (academicYearId) params.academic_year = academicYearId;
+      const { data } = await api.get("/tenant/leavebalance", { params });
       const items = extractArray(data);
       if (items.length > 0) return items.map(mapLeaveBalance);
       return [];

@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { reportsApi } from "@/services/school-reports.api";
 import type {
-  GeneratedReport,
   CreateReportPayload,
 } from "../types/reports.types";
+
 
 export const REPORTS_KEYS = {
   all: ["school-admin", "reports"] as const,
@@ -14,7 +14,7 @@ export const REPORTS_KEYS = {
 export const useReports = () =>
   useQuery({
     queryKey: REPORTS_KEYS.list(),
-    queryFn: () => reportsApi.getAll(),
+    queryFn: () => reportsApi.getAllRaw(),
     staleTime: 1000 * 60 * 2,
   });
 
@@ -40,6 +40,18 @@ export const useDeleteReport = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => reportsApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated() });
+    },
+  });
+};
+
+export const useUpdateReport = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateReportPayload> }) =>
+      reportsApi.update(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: REPORTS_KEYS.all });
       qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated() });

@@ -7,9 +7,9 @@ import type {
   PendingHomeworkApiItem,
   AllHomeworkApiItem,
   TimetableApiItem,
-} from "@/features/teacher/types/teacher-dashboard.types";
+} from "@/features/teacher/dashboard/types/teacher-dashboard.types";
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+
 
 const extractApiError = (raw: unknown): string | null => {
   if (!raw || typeof raw !== "object") return null;
@@ -72,7 +72,7 @@ const transformPendingHomeworkItem = (item: PendingHomeworkApiItem): HomeworkIte
   totalCount: item.totalCount ?? 0,
 });
 
-// ── All Homework helpers (uses /tenant/getallhomework endpoint) ──────────
+
 
 const extractAllHomeworkList = (raw: unknown, depth = 0): AllHomeworkApiItem[] => {
   if (depth > 3) return [];
@@ -126,7 +126,7 @@ const transformAllHomeworkItem = (item: AllHomeworkApiItem): HomeworkItem => ({
   totalCount: item.totalCount ?? 0,
 });
 
-// ── Timetable helpers (uses /teacher/timetable endpoint) ─────────────────────
+
 
 type TimetableGridCell = {
   subject: string;
@@ -149,7 +149,7 @@ const extractTodayPeriods = (raw: unknown): Period[] => {
 
   const obj = raw as Record<string, unknown>;
 
-  // Unwrap envelope: { data: { ... } } or { status, message, data: { ... } }
+
   let timetableData: Record<string, unknown> | null = null;
 
   if (obj?.data && typeof obj.data === "object" && !Array.isArray(obj.data)) {
@@ -271,20 +271,43 @@ const extractTodayTimetableItems = (raw: unknown, depth = 0): TimetableApiItem[]
 };
 
 const transformTimetableItemToPeriod = (item: TimetableApiItem, order: number): Period => {
+  // Handle both camelCase (expected) and snake_case/nested (actual API) field names
+  const raw = item as unknown as Record<string, any>;
+
   const timeStr = item.start_time && item.end_time
     ? `${item.start_time} – ${item.end_time}`
-    : "—";
+    : raw.time_sloat ?? "—";
 
   const [start, end] = timeStr.includes("–")
-    ? timeStr.split("–").map((t) => t.trim())
+    ? timeStr.split("–").map((t: string) => t.trim())
     : [item.start_time ?? "", item.end_time ?? ""];
+
+  const subjectName =
+    item.subjectName ??
+    raw.subject?.subject_name ??
+    raw.subjectname ??
+    "—";
+
+  const className =
+    item.className ??
+    raw.class?.class_name ??
+    raw.class_name ??
+    "";
+
+  const sectionName =
+    item.sectionName ??
+    raw.section?.sectionName ??
+    raw.section_name ??
+    "";
+
+  const room = item.room ?? raw.room_no ?? "—";
 
   return {
     id: item.id ?? `tt-${order}`,
     time: timeStr,
-    subject: item.subjectName,
-    class: `${item.className}${item.sectionName ? `-${item.sectionName}` : ""}`,
-    room: item.room ?? "—",
+    subject: subjectName,
+    class: `${className}${sectionName ? `-${sectionName}` : ""}`,
+    room,
     status: computePeriodStatus(start, end),
   };
 };
@@ -299,23 +322,6 @@ const MOCK_TODAY_TIMETABLE: Period[] = [
   { id: "tt5", time: "12:30 PM – 1:15 PM", subject: "Mathematics",   class: "8-B", room: "Room 11", status: "UPCOMING" },
 ];
 
-const MOCK_PENDING_HOMEWORK: HomeworkItem[] = [
-  {
-    id: "mph1", title: "Chapter 5 – Exercise 5.2", subject: "Mathematics",
-    class: "8-A", dueDate: new Date().toISOString().slice(0, 10),
-    submittedCount: 28, totalCount: 42,
-  },
-  {
-    id: "mph2", title: "Quadratic Equations Practice", subject: "Mathematics",
-    class: "9-B", dueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
-    submittedCount: 15, totalCount: 38,
-  },
-  {
-    id: "mph3", title: "Fractions Revision Sheet", subject: "Mathematics",
-    class: "7-C", dueDate: new Date(Date.now() + 172800000).toISOString().slice(0, 10),
-    submittedCount: 5, totalCount: 35,
-  },
-];
 
 export const teacherDashboardApi = {
   getDashboard: async (): Promise<TeacherDashboardData> => {
@@ -340,32 +346,26 @@ export const teacherDashboardApi = {
 
       const apiError = extractApiError(raw);
       if (apiError) {
-        console.warn("⚠️ getPendingHomeworkByTeacher: API returned error:", apiError);
         throw new Error(apiError);
       }
 
+      // API responded with status:true — trust the real data even if empty
+      const isSuccess = raw && typeof raw === "object" && (raw as Record<string, unknown>).status === true;
       const list = extractPendingHomeworkList(raw);
-      if (list.length > 0) {
-        console.log("✅ getPendingHomeworkByTeacher: received", list.length, "items");
+      if (isSuccess || list.length > 0) {
         return list.map(transformPendingHomeworkItem);
       }
 
-      console.warn("⚠️ getPendingHomeworkByTeacher: empty response, using mock", {
-        httpStatus,
-        raw: JSON.stringify(raw),
-      });
-      return MOCK_PENDING_HOMEWORK;
+      // No status field at all — treat as unknown/legacy, return empty
+      return [];
     } catch (err: unknown) {
       console.error("❌ getPendingHomeworkByTeacher failed", {
         url,
         teacherId,
         status: (err as { response?: { status?: number } })?.response?.status,
-        responseData: (err as { response?: { data?: unknown } })?.response?.data,
         message: (err as Error)?.message,
       });
-
-      console.warn("⚠️ getPendingHomeworkByTeacher: falling back to mock data");
-      return MOCK_PENDING_HOMEWORK;
+      return [];
     }
   },
 

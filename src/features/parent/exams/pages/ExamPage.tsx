@@ -93,11 +93,13 @@ function buildBannerProps(e: ExamTimetableListItem): ExamBannerProps {
   };
 }
 
-function mapApiMarks(
-  marks: Mark[],
-  examName: string,
-  studentName: string
-): ResultSummary {
+function mapApiMarks(marks: Mark[]): ResultSummary {
+  const first = marks[0];
+  const studentName = first?.student_name ?? "";
+  const className   = first?.class_name   ?? "";
+  const sectionName = first?.section_name ?? "";
+  const examName    = first?.exam_name    ?? "Exam";
+
   const examResults: ExamResult[] = marks.map((m) => {
     const percentage = Math.round((m.marks_obtained / m.max_marks) * 100);
     return {
@@ -109,29 +111,37 @@ function mapApiMarks(
       status: m.is_absent ? "Fail" : m.marks_obtained >= 35 ? "Pass" : "Fail",
     };
   });
+
   const totalObtained = examResults.reduce((sum, r) => sum + r.marksObtained, 0);
-  const totalMarks = examResults.reduce((sum, r) => sum + r.totalMarks, 0);
-  const percentage =
-    totalMarks > 0 ? Math.round((totalObtained / totalMarks) * 100 * 10) / 10 : 0;
-  const overallGrade = marks[0]?.grade ?? "N/A";
+  const totalMarks    = examResults.reduce((sum, r) => sum + r.totalMarks,    0);
+  const percentage    = totalMarks > 0 ? Math.round((totalObtained / totalMarks) * 100 * 10) / 10 : 0;
+  const overallGrade  = marks[0]?.grade ?? "N/A";
+  const overallStatus: "Pass" | "Fail" = examResults.every((r) => r.status === "Pass") ? "Pass" : "Fail";
+
   const strongest = [...examResults]
     .sort((a, b) => b.marksObtained - a.marksObtained)
     .slice(0, 3)
     .map((r) => r.subject);
+
   const analyticsNote =
     percentage >= 75
       ? `${studentName} has shown strong performance in ${examName}. Keep up the momentum!`
       : percentage >= 50
         ? `${studentName} performed well in ${examName}. Focus on weaker subjects to improve further.`
         : `${studentName} needs extra attention in some subjects. Consider additional practice sessions.`;
+
   return {
     id: examName,
     examName,
+    studentName,
+    className,
+    sectionName,
     totalObtained,
     totalMarks,
     percentage,
     grade: overallGrade,
     rank: "—",
+    overallStatus,
     strongestSubjects: strongest,
     analyticsNote,
     results: examResults,
@@ -259,11 +269,9 @@ export default function ExamsPage() {
     sortedRaw.length > 0
       ? `${sortedRaw[0].exam.exam_name} — ${dayjs(sortedRaw[0].exam_date).format("MMMM YYYY")}`
       : "Upcoming Exams";
-  const selectedExamName =
-    examList.find((e) => e.id === selectedExamId)?.exam_name ?? "";
   const resultSummary =
     results.length > 0
-      ? mapApiMarks(results as Mark[], selectedExamName || "Exam", activeChild.name)
+      ? mapApiMarks(results as Mark[])
       : null;
 
   return (

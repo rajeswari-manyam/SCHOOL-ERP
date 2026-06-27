@@ -21,7 +21,7 @@ export interface StudyMaterial {
   upload_type: string;
   pdf: string | null;
   open_link?: string;
-  download: number;
+  download?: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -112,6 +112,15 @@ export const updateStudyMaterial = async (
 export const deleteStudyMaterial = async (id: string): Promise<{ status: boolean; message: string }> => {
   const { data } = await api.delete(
     `/tenant/deletestudymaterialById/${id}`
+  );
+  return data;
+};
+
+// DOWNLOAD Study Material (returns file blob)
+export const downloadStudyMaterial = async (id: string): Promise<Blob> => {
+  const { data } = await api.get<Blob>(
+    `/tenant/downloadstudymaterial/${id}`,
+    { responseType: "blob" }
   );
   return data;
 };

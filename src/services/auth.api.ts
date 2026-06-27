@@ -29,13 +29,11 @@ export const logout = async (): Promise<LogoutResponse> => {
   return data;
 };
 
-// ── GET /tenant/getuserById/:userId ───────────────────────────────────────────
-// Called right after OTP verification for every user type (parent, teacher,
-// student, admin, accountant).  The Axios instance automatically attaches the
-// Bearer token via its request interceptor, so no extra header is needed here.
+
 export const getUserById = async (userId: string): Promise<GetUserByIdResponse> => {
   const { data } = await api.get<GetUserByIdResponse>(
-    `/tenant/getuserById/${userId}`
+    `/tenant/getuserById/${userId}`,
+    { _skipLogoutOn401: true } as object
   );
   return data;
 };

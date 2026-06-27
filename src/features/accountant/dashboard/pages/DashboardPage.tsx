@@ -1,49 +1,41 @@
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useDashboardData } from "../hooks/useDashboard";
 import { StatCardsSection, FinancialSummaryCards } from "../components/StatCard";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { PaymentModeTable } from "../components/PaymentModeTable";
-import { ReminderStatusCard } from "../components/ReminderStatusCard";
 import { MonthlyCollectionTrend } from "../components/MontyCollectionTrend";
-import { TopPayingClasses } from "../components/TopPayingClasses";
-import { PaymentModeBreakdown } from "../components/PaymentModeBreakdown";
+
+const formatHeaderDate = () => {
+  const now = new Date();
+  const day  = now.toLocaleDateString("en-IN", { weekday: "long" });
+  const date = now.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const session = now.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  return `${day}, ${date} · ${session} Session`;
+};
 
 export default function DashboardPage() {
-  const { stats, transactions, paymentModes, reminder, financialSummary } = useDashboardData();
+  const { summary, transactions, paymentModes, trend, accountantName } = useDashboardData();
 const [viewAllTransactions, setViewAllTransactions] = useState(false);
 
 
   return (
     <div className="min-h-screen bg-[#F8F9FC]">
    
-<div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-base sm:text-lg font-semibold text-slate-800">Finance Dashboard</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Monday, 7 April 2025 · April 2025 Session
-          </p>
-        </div>
-     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"> 
-        <Button
-  variant="outline"
-  className="text-sm h-8 px-4 whitespace-nowrap border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
->
-            Generate Report
-          </Button>
-          <Button className="text-sm h-8 px-4 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">
-            Record Payment
-          </Button>
-        </div>
+<div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3">
+        <h1 className="text-base sm:text-lg font-semibold text-slate-800">Finance Dashboard</h1>
+        <p className="text-xs text-slate-400 mt-0.5">
+          {accountantName && <span className="font-medium text-slate-500">{accountantName} · </span>}
+          {formatHeaderDate()}
+        </p>
       </div>
 
    <div className="p-2 sm:p-4 md:p-6 space-y-4">
     
-        <StatCardsSection data={stats} />
+        <StatCardsSection summary={summary} />
 
-        <FinancialSummaryCards summary={financialSummary} />
+        <FinancialSummaryCards summary={summary} />
 
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 items-start w-full">  
 
@@ -93,17 +85,12 @@ className="text-xs text-indigo-600 font-medium hover:underline whitespace-nowrap
               </CardContent>
             </Card>
 
-            <ReminderStatusCard data={reminder} />
           </div>
         </div>
 
-        <MonthlyCollectionTrend />
+        <MonthlyCollectionTrend data={trend} />
 
-    
-     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">   
-          <TopPayingClasses />
-          <PaymentModeBreakdown />
-        </div>
+
 
  
       </div>

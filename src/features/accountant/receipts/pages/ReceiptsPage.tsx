@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Eye, FileText } from "lucide-react";
+import { Download, Eye, FileText, Loader2, Trash2 } from "lucide-react";
 import { ReceiptFilters } from "../components/ReceiptFilters";
 import { ReceiptDetailModal } from "../components/ReceiptDetailModal";
 import { ExportModal } from "../components/ExportModal";
 import { GenerateReceiptModal } from "../components/GenerateReceiptModal";
+import { GenerateMonthlyReportModal } from "../components/GenerateMonthlyReportModal";
 import { useReceiptsManager } from "../hooks/useReceiptsManager";
+import { downloadRecordFeePayment } from "@/services/fee.api";
 
 import { formatCurrency } from "../../../../utils/formatters";
 import { getModeBadge } from "../../../../utils/receipt";
@@ -13,12 +15,19 @@ import type { Receipt, ReceiptDetail } from "../types/receipts.types";
 import Pagination from "../../../../components/ui/pagination";
 
 export default function ReceiptsPage() {
-  const { receipts } = useReceiptsManager();
+  const { receipts, isLoadingReceipts, refetchReceipts, handleDelete } = useReceiptsManager();
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptDetail | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownload = async (id: string) => {
+    setDownloadingId(id);
+    try { await downloadRecordFeePayment(id); } finally { setDownloadingId(null); }
+  };
 
   const handleViewReceipt = (receipt: Receipt) => {
     const extendedReceipt: ReceiptDetail = {
@@ -34,7 +43,7 @@ export default function ReceiptsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, (receipts || []).length);
+  }, [(receipts || []).length]);
 
   const total = (receipts || []).length;
 
@@ -79,7 +88,7 @@ export default function ReceiptsPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-white p-1 rounded-lg border border-gray-200 w-full sm:w-fit overflow-x-auto no-scrollbar">
-        {["All Receipts", "Generate Receipt", "Tax Invoices"].map((tab, idx) => (
+        {["All Receipts", "Generate Receipt"].map((tab, idx) => (
           <button
             key={tab}
             onClick={() => { if (idx === 1) setShowGenerateModal(true); }}
@@ -98,7 +107,11 @@ export default function ReceiptsPage() {
       <ReceiptFilters />
 
       {/* Empty State */}
-      {(receipts || []).length === 0 ? (
+      {isLoadingReceipts ? (
+        <div className="flex items-center justify-center py-16 bg-white rounded-xl border border-gray-200">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        </div>
+      ) : (receipts || []).length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-xl border border-gray-200">
           <span className="text-4xl mb-3">🧾</span>
           <p className="text-sm font-medium">No receipts found</p>
@@ -161,8 +174,18 @@ export default function ReceiptsPage() {
                 >
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600">
-                  <Download className="w-4 h-4" />
+                <button
+                  onClick={() => handleDownload(receipt.id)}
+                  disabled={downloadingId === receipt.id}
+                  className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 disabled:opacity-50"
+                >
+                  {downloadingId === receipt.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => handleDelete(receipt.id)}
+                  className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
               {receipt.waStatus === "Not Sent" && (
@@ -232,8 +255,18 @@ export default function ReceiptsPage() {
                     <button onClick={() => handleViewReceipt(receipt)} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600">
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="p-1.5 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600">
-                      <Download className="w-4 h-4" />
+                    <button
+                      onClick={() => handleDownload(receipt.id)}
+                      disabled={downloadingId === receipt.id}
+                      className="p-1.5 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600 disabled:opacity-50"
+                    >
+                      {downloadingId === receipt.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(receipt.id)}
+                      className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                     {receipt.waStatus === "Not Sent" && (
                       <button className="px-2 py-1 bg-blue-600 text-white text-[10px] font-medium rounded hover:bg-blue-700">
@@ -260,7 +293,11 @@ export default function ReceiptsPage() {
 
       {/* Generate Report */}
       <div className="flex justify-center">
-        <Button variant="outline" className="h-9 px-6 text-xs bg-white border-gray-200 text-[#3525CD] hover:bg-gray-50">
+        <Button
+          variant="outline"
+          onClick={() => setShowReportModal(true)}
+          className="h-9 px-6 text-xs bg-white border-gray-200 text-[#3525CD] hover:bg-gray-50"
+        >
           📊 Generate Report
         </Button>
       </div>
@@ -277,8 +314,11 @@ export default function ReceiptsPage() {
       {showGenerateModal && (
         <GenerateReceiptModal
           onClose={() => setShowGenerateModal(false)}
-          onSuccess={(receiptNo) => console.log("Created:", receiptNo)}
+          onSuccess={() => { setShowGenerateModal(false); refetchReceipts(); }}
         />
+      )}
+      {showReportModal && (
+        <GenerateMonthlyReportModal onClose={() => setShowReportModal(false)} />
       )}
     </div>
   );

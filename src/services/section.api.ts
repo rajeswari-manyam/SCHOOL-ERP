@@ -4,7 +4,9 @@ export interface Section {
   id: string;
   sectionName: string;
   classId: string;
+  className?: string;
   classTeacherId: string;
+  classTeacherName?: string;
   class_teacher_id?: string;
   academicYearId: string;
   totalStrength: number;
@@ -85,4 +87,13 @@ export const getAllSections = async (): Promise<Section[]> => {
     "/tenant/getallsections"
   );
   return data.data;
+};
+
+/** GET /tenant/getallsections?classTeacherId=... */
+export const getSectionsByTeacherId = async (classTeacherId: string): Promise<Section[]> => {
+  const { data } = await api.get<ApiResponse<Section[]>>(
+    "/tenant/getallsections",
+    { params: { classTeacherId } }
+  );
+  return data.data ?? [];
 };
