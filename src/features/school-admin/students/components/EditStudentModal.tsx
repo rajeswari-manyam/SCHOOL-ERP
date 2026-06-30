@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { studentsApi } from "@/services/school-students.api";
 import type { Student, UpdateStudentPayload } from "../types/student.types";
 
 interface Props {
@@ -90,7 +91,18 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
 
     setLoading(true);
     try {
-      await onSave(student.id, payload);
+      const calls: Promise<unknown>[] = [onSave(student.id, payload)];
+
+      if (student.parentId) {
+        const parentPayload: { parent_name?: string; phone?: string } = {};
+        if (form.fatherName.trim()) parentPayload.parent_name = form.fatherName.trim();
+        if (form.fatherPhone.trim()) parentPayload.phone = form.fatherPhone.trim();
+        if (Object.keys(parentPayload).length > 0) {
+          calls.push(studentsApi.updateParent(student.parentId, parentPayload));
+        }
+      }
+
+      await Promise.all(calls);
       toast.success("Student updated successfully");
       onClose();
     } catch (err) {

@@ -26,7 +26,7 @@ function StatCard({
         {isLoading ? (
           <div className="h-9 w-12 animate-pulse rounded-md bg-gray-100" />
         ) : (
-          <p className="text-4xl font-bold leading-none tabular-nums" style={{ color }}>
+          <p className="text-2xl font-bold leading-none tabular-nums" style={{ color }}>
             {(value ?? 0).toLocaleString()}
           </p>
         )}

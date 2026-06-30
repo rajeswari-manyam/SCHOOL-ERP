@@ -9,10 +9,11 @@ import StudentAttendanceTab from "./StudentAttendanceTab";
 import StudentFeeTab from "./StudentFeeTab";
 import StudentDocumentsTab from "./StudentDocumentTab";
 import { EditStudentModal } from "./EditStudentModal";
+import StudentExamMarksTab from "./StudentExamMarksTab";
 import { studentsApi } from "@/services/school-students.api";
 import { useUIStore } from "@/store/uiStore";
 
-type Tab = "overview" | "attendance" | "fee-history" | "documents";
+type Tab = "overview" | "attendance" | "fee-history" | "documents" | "exam-marks";
 
 const Avatar = ({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) => {
   const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -34,7 +35,7 @@ const InfoRow = ({ label, value }: { label: string; value?: string | number }) =
 const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, loading, error, feePayments, documents, retry } = useStudentProfile(id!);
+  const { student, loading, error, feeSummary, feePayments, documents, retry } = useStudentProfile(id!);
   const attendanceHook = useStudentAttendance(student ?? null);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showEdit, setShowEdit] = useState(false);
@@ -82,13 +83,15 @@ const StudentProfilePage = () => {
   }
 
   const fullName = `${student.firstName} ${student.lastName}`;
-  const outstanding = feePayments.filter(p => p.status === "PENDING").reduce((s, p) => s + p.amount, 0);
+  const outstanding = feeSummary?.summary.totalDue ?? 0;
+  const firstPendingFeeHead = feeSummary?.details.find(d => d.dueAmount > 0)?.feeHeadName ?? null;
   const presentThisMonth = attendanceHook.monthlyData?.summary?.present ?? 0;
   const totalDaysThisMonth = attendanceHook.monthlyData?.summary?.total ?? 0;
 
   const TABS: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "attendance", label: "Attendance" },
+    { key: "exam-marks", label: "Exam Marks" },
     { key: "fee-history", label: "Fee History" },
     { key: "documents", label: "Documents" },
   ];
@@ -161,7 +164,7 @@ const StudentProfilePage = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-gray-800">Personal Information</h3>
-                <Button variant="link" size="sm" className="text-xs text-indigo-600 font-bold hover:text-indigo-800 transition-colors flex items-center gap-1">
+                <Button variant="link" size="sm" onClick={() => setShowEdit(true)} className="text-xs text-indigo-600 font-bold hover:text-indigo-800 transition-colors flex items-center gap-1">
                   <Edit3 className="h-3 w-3" />
                   Edit
                 </Button>
@@ -216,9 +219,10 @@ const StudentProfilePage = () => {
                   {outstanding > 0 ? (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-3">
                       <p className="text-lg font-extrabold text-red-600">₹{outstanding.toLocaleString("en-IN")}</p>
-                      <p className="text-xs text-red-400 font-semibold">pending</p>
-                      <p className="text-xs text-red-400 mt-1">{feePayments.find(p => p.status === "PENDING")?.description}</p>
-                      <p className="text-[10px] text-red-300 mt-1">12 days overdue</p>
+                      <p className="text-xs text-red-400 font-semibold">{feeSummary?.summary.overallStatus ?? "pending"}</p>
+                      {firstPendingFeeHead && (
+                        <p className="text-xs text-red-400 mt-1">{firstPendingFeeHead}</p>
+                      )}
                       <Button variant="ghost" size="sm" className="mt-2 w-full py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
                         Send Reminder
                       </Button>
@@ -267,8 +271,12 @@ const StudentProfilePage = () => {
         />
       )}
 
+      {activeTab === "exam-marks" && (
+        <StudentExamMarksTab studentId={student.id} studentName={fullName} />
+      )}
+
       {activeTab === "fee-history" && (
-        <StudentFeeTab payments={feePayments} />
+        <StudentFeeTab feeSummary={feeSummary} feePayments={feePayments} />
       )}
 
       {activeTab === "documents" && (

@@ -7,7 +7,6 @@ import type { CreateExamTimetablePayload, ExamEntry } from "../types/timetable.t
 import { useExamNameOptions } from "../hooks/useTimetable";
 import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
 import { getSubjectsBySectionId } from "../../../../services/subject.api";
-import { getAllStaff } from "../../../../services/staff.api";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 import { fetchAllWorkingDays } from "@/services/working-days.api";
 import type { WorkingDayRecord } from "@/services/working-days.api";
@@ -22,7 +21,6 @@ interface BulkEntry {
   exam_date: string;
   start_time: string;
   end_time: string;
-  room_no: string;
 }
 
 let _counter = 0;
@@ -31,7 +29,6 @@ const createEntry = (): BulkEntry => ({
   exam_date: "",
   start_time: "09:00",
   end_time: "12:00",
-  room_no: "",
 });
 
 interface AddExamTimetableModalProps {
@@ -51,16 +48,14 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
   const [classId,           setClassId]           = useState("");
   const [sectionId,         setSectionId]         = useState("");
   const [subjectId,         setSubjectId]         = useState("");
-  const [teacherId,         setTeacherId]         = useState("");
   const [examNameId,        setExamNameId]        = useState("");
   const [academicYearId,    setAcademicYearId]    = useState("");
   const [schoolWorkingDayId, setSchoolWorkingDayId] = useState("");
 
   // ── Edit-mode single fields ───────────────────────────────
-  const [editDate,      setEditDate]      = useState("");
-  const [editStart,     setEditStart]     = useState("09:00");
-  const [editEnd,       setEditEnd]       = useState("12:00");
-  const [editRoom,      setEditRoom]      = useState("");
+  const [editDate,  setEditDate]  = useState("");
+  const [editStart, setEditStart] = useState("09:00");
+  const [editEnd,   setEditEnd]   = useState("12:00");
 
   // ── Bulk entries ──────────────────────────────────────────
   const [entries, setEntries] = useState<BulkEntry[]>([]);
@@ -69,14 +64,12 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
   const [classOptions,   setClassOptions]   = useState<DropdownOption[]>([]);
   const [sectionOptions, setSectionOptions] = useState<DropdownOption[]>([]);
   const [subjectOptions, setSubjectOptions] = useState<DropdownOption[]>([]);
-  const [teacherOptions, setTeacherOptions] = useState<DropdownOption[]>([]);
   const [workingDays,    setWorkingDays]    = useState<WorkingDayRecord[]>([]);
 
   // ── Loading ───────────────────────────────────────────────
   const [loadingClasses,  setLoadingClasses]  = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
-  const [loadingTeachers, setLoadingTeachers] = useState(false);
 
   // ── Validation errors ─────────────────────────────────────
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -108,16 +101,14 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
       setClassId(editData.class_id ?? "");
       setSectionId(editData.section_id ?? "");
       setSubjectId(editData.subject_id ?? "");
-      setTeacherId(editData.teacher_id ?? "");
       setExamNameId(editData.examnameid ?? "");
       setAcademicYearId(editData.academicYearId ?? defaultAcYear);
       setSchoolWorkingDayId("");
       setEditDate(editData.date ?? "");
       setEditStart(stripSec(editData.startTime));
       setEditEnd(stripSec(editData.endTime));
-      setEditRoom(editData.venue ?? "");
     } else {
-      setClassId(""); setSectionId(""); setSubjectId(""); setTeacherId("");
+      setClassId(""); setSectionId(""); setSubjectId("");
       setExamNameId(""); setAcademicYearId(defaultAcYear); setSchoolWorkingDayId("");
       setEntries([createEntry()]);
     }
@@ -130,15 +121,6 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
       .catch(console.error)
       .finally(() => setLoadingClasses(false));
 
-    setLoadingTeachers(true);
-    getAllStaff()
-      .then((res) => setTeacherOptions(
-        res.data
-          .filter((s) => (s.role ?? "").toLowerCase().includes("teacher"))
-          .map((s) => ({ value: s.id, label: s.name }))
-      ))
-      .catch(console.error)
-      .finally(() => setLoadingTeachers(false));
   }, [open]);
 
   // ── Cascade: class → sections ─────────────────────────────
@@ -184,16 +166,13 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
     if (!classId)       errs.class_id    = "Class is required";
     if (!sectionId)     errs.section_id  = "Section is required";
     if (!subjectId)     errs.subject_id  = "Subject is required";
-    if (!teacherId)     errs.teacher_id  = "Teacher is required";
     if (!examNameId)    errs.examNameId  = "Exam name is required";
     if (!academicYearId) errs.academicYearId = "Academic year is required";
     if (isEditMode) {
       if (!editDate)  errs.editDate = "Exam date is required";
-      if (!editRoom)  errs.editRoom = "Room number is required";
     } else {
       entries.forEach((e, i) => {
         if (!e.exam_date) errs[`date_${i}`] = "Date required";
-        if (!e.room_no)   errs[`room_${i}`] = "Room required";
       });
       if (entries.length === 0) errs.entries = "Add at least one entry";
     }
@@ -209,13 +188,14 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
 
     const base: Partial<CreateExamTimetablePayload> = {
       class_id: classId, section_id: sectionId, subject_id: subjectId,
-      teacher_id: teacherId, examnameid: examNameId, academicYearId,
+      examnameid: examNameId, academicYearId,
       schoolWorkingDayId: schoolWorkingDayId || undefined,
+      teacher_id: "", room_no: "",
     };
 
     const examsTimetables: CreateExamTimetablePayload[] = isEditMode
-      ? [{ ...(base as CreateExamTimetablePayload), exam_date: editDate, start_time: toSec(editStart), end_time: toSec(editEnd), room_no: editRoom }]
-      : entries.map((e) => ({ ...(base as CreateExamTimetablePayload), exam_date: e.exam_date, start_time: toSec(e.start_time), end_time: toSec(e.end_time), room_no: e.room_no }));
+      ? [{ ...(base as CreateExamTimetablePayload), exam_date: editDate, start_time: toSec(editStart), end_time: toSec(editEnd) }]
+      : entries.map((e) => ({ ...(base as CreateExamTimetablePayload), exam_date: e.exam_date, start_time: toSec(e.start_time), end_time: toSec(e.end_time) }));
 
     onSave({ examsTimetables });
   };
@@ -281,11 +261,8 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
                 disabled={!sectionId} onChange={setSubjectId} error={errors.subject_id} />
             </div>
 
-            {/* ── Common: Teacher / Academic Year / Exam Name ── */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <SF label="Teacher" required loading={loadingTeachers} value={teacherId}
-                options={teacherOptions} placeholder="Select teacher" onChange={setTeacherId}
-                error={errors.teacher_id} />
+            {/* ── Common: Academic Year / Exam Name ── */}
+            <div className="grid gap-4 md:grid-cols-2">
               <SF label="Academic Year" required loading={loadingAcYears} value={academicYearId}
                 options={academicYears.map((y) => ({ value: y.id, label: y.active ? `${y.yearName} (Active)` : y.yearName }))}
                 placeholder="Select academic year" onChange={setAcademicYearId}
@@ -295,9 +272,9 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
                 error={errors.examNameId} />
             </div>
 
-            {/* ── Edit mode: single date/time/room row ── */}
+            {/* ── Edit mode: single date/time row ── */}
             {isEditMode ? (
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <Label className="mb-2 block text-sm font-bold text-slate-700">Exam Date <span className="text-red-500">*</span></Label>
                   <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)}
@@ -317,12 +294,6 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
                 <div>
                   <Label className="mb-2 block text-sm font-bold text-slate-700">End Time <span className="text-red-500">*</span></Label>
                   <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className={inputCls()} />
-                </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Room No <span className="text-red-500">*</span></Label>
-                  <input type="text" value={editRoom} onChange={(e) => setEditRoom(e.target.value)}
-                    placeholder="e.g. 101" className={inputCls(!!errors.editRoom)} />
-                  {errors.editRoom && <p className="mt-1 text-xs text-red-600">{errors.editRoom}</p>}
                 </div>
               </div>
             ) : (
@@ -344,8 +315,8 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-slate-50 border-b border-gray-200">
-                        {["#", "Exam Date", "Start Time", "End Time", "Room No", "Action"].map((h, i) => (
-                          <th key={h} className={`px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wide ${i === 5 ? "text-right" : "text-left"}`}>{h}</th>
+                        {["#", "Exam Date", "Start Time", "End Time", "Action"].map((h, i) => (
+                          <th key={h} className={`px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wide ${i === 4 ? "text-right" : "text-left"}`}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -378,15 +349,6 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
                               <input type="time" value={entry.end_time}
                                 onChange={(e) => updateEntry(entry.id, "end_time", e.target.value)}
                                 className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500" />
-                            </td>
-                            <td className="px-3 py-2">
-                              <input type="text" value={entry.room_no}
-                                onChange={(e) => updateEntry(entry.id, "room_no", e.target.value)}
-                                placeholder="e.g. 101"
-                                className={`w-full rounded-lg border px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500 ${
-                                  errors[`room_${idx}`] ? "border-red-400 bg-red-50" : "border-gray-200 bg-white"
-                                }`} />
-                              {errors[`room_${idx}`] && <p className="mt-0.5 text-[10px] text-red-600">{errors[`room_${idx}`]}</p>}
                             </td>
                             <td className="px-3 py-2 text-right">
                               <button type="button" onClick={() => removeEntry(entry.id)} disabled={entries.length === 1}

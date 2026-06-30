@@ -103,55 +103,56 @@ const TimetablePage = () => {
   const ayDisplay = formatAcademicYear(academicYear);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "timetable", label: "Timetable",      icon: <Calendar size={14} /> },
-    { id: "exams",     label: "Exam Timetable", icon: <ExamIcon  size={14} /> },
+    { id: "timetable", label: "Timetable",      icon: <Calendar size={13} /> },
+    { id: "exams",     label: "Exam Timetable", icon: <ExamIcon  size={13} /> },
   ];
 
   return (
     <TimetableErrorBoundary>
-      <div className="flex flex-col gap-6 min-h-full p-6" data-testid="teacher-timetable-page">
+      <div className="flex flex-col gap-4 min-h-full px-5 pt-3 pb-5" data-testid="teacher-timetable-page">
 
         {/* Page header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-2xl font-semibold text-gray-900">
+            <div className="flex flex-wrap items-center gap-2 mb-0.5">
+              <h1 className="text-sm font-semibold text-[#111827]">
                 {classLabel ? `Class ${classLabel}${section ? `‑${section}` : ""}` : "My Timetable"}
               </h1>
               {teacherName && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-medium">
-                  <User size={10} strokeWidth={2.5} />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[#5B5CEB] text-[10px] font-medium">
+                  <User size={9} strokeWidth={2.5} />
                   {teacherName.split(" ")[0]}
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><School size={12} className="text-gray-400" /> Weekly schedule</span>
-              {ayDisplay && <><span className="text-gray-300">·</span><span className="flex items-center gap-1"><Calendar size={12} className="text-gray-400" /> AY {ayDisplay}</span></>}
-              {classTeacher && <><span className="text-gray-300">·</span><span className="flex items-center gap-1"><GraduationCap size={12} className="text-gray-400" /> {classTeacher}</span></>}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[#6B7280]">
+              <span className="flex items-center gap-1"><School size={10} className="text-gray-400" /> Weekly schedule</span>
+              {ayDisplay && <><span className="text-gray-300">·</span><span className="flex items-center gap-1"><Calendar size={10} className="text-gray-400" /> AY {ayDisplay}</span></>}
+              {classTeacher && <><span className="text-gray-300">·</span><span className="flex items-center gap-1"><GraduationCap size={10} className="text-gray-400" /> {classTeacher}</span></>}
             </div>
           </div>
           {activeTab === "timetable" && (
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium self-start"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium self-start transition-colors"
+              style={{ borderRadius: 10 }}
             >
-              <Printer size={14} className="text-gray-500" strokeWidth={2} />
+              <Printer size={12} className="text-gray-500" strokeWidth={2} />
               Print Timetable
             </button>
           )}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-0 border-b border-[#E5E7EB]">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium border-b-2 -mb-px transition-colors ${
                 activeTab === t.id
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  ? "border-[#5B5CEB] text-[#5B5CEB]"
+                  : "border-transparent text-[#6B7280] hover:text-[#374151]"
               }`}
             >
               {t.icon}

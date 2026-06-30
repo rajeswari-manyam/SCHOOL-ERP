@@ -260,6 +260,7 @@ const MarkStudentAttendanceModal = ({
             <input
               type="date"
               value={date}
+              max={new Date().toISOString().split("T")[0]}
               onChange={(e) => setDate(e.target.value)}
               className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             />

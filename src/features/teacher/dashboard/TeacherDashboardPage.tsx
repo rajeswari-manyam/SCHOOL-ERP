@@ -25,7 +25,7 @@ const TeacherDashboardPage = () => {
   const { data: allHomework = [] } = usePendingHomeworkByTeacher(teacherId);
 
   const academicYearId = sections[0]?.academicYearId ?? "";
-  const { data: leaveBalances = [] } = useTeacherLeaveBalance(staffId, academicYearId);
+  const { data: leaveResponse } = useTeacherLeaveBalance(staffId, academicYearId);
 
   const now = new Date();
   const { data: monthlyAttendance } = useTeacherMonthlyAttendance(staffId, now.getMonth() + 1, now.getFullYear());
@@ -42,8 +42,8 @@ const TeacherDashboardPage = () => {
   const [uploadModal,     setUploadModal]     = useState(false);
 
   const section        = sections[0];
-  const leaveUsed      = leaveBalances.reduce((sum, item) => sum + Number(item.used  ?? 0), 0);
-  const leaveAllocated = leaveBalances.reduce((sum, item) => sum + Number(item.total ?? 0), 0);
+  const leaveUsed      = leaveResponse?.total_used ?? 0;
+  const leaveAllocated = leaveResponse?.total_allocated ?? 0;
 
   const stats = {
     currentStrength:     section?.currentStrength ?? (todayAttendance?.totalStudents ?? 0),
@@ -61,21 +61,21 @@ const TeacherDashboardPage = () => {
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
 
   return (
-    <div className="flex flex-col gap-6 min-h-full p-6">
+    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
 
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-sm font-semibold text-gray-900">
             {greeting}{teacher ? `, ${teacher.name.split(" ")[0]}` : ""} 👋
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500">
             {format(new Date(), "EEEE, d MMMM yyyy")}
             {teacher?.classTeacherOf && ` · ${teacher.classTeacherOf}`}
           </p>
         </div>
         {teacher?.schoolName && (
-          <p className="text-sm text-gray-500">{teacher.schoolName}</p>
+          <p className="text-xs text-gray-500">{teacher.schoolName}</p>
         )}
       </div>
 

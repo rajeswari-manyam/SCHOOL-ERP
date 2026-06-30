@@ -36,7 +36,7 @@ export function FeesDueSummary({ totalOutstanding, feeCollected = 0, paidPercent
     <div className="flex h-full w-full flex-col gap-4 rounded-2xl bg-white border border-gray-100 shadow-sm p-4 sm:p-5">
 
       {/* ── Title ── */}
-      <h2 className="text-sm sm:text-base font-bold text-gray-900">
+      <h2 className="text-xs sm:text-sm font-bold text-gray-900">
         Fee Dues Summary
       </h2>
 
@@ -45,7 +45,7 @@ export function FeesDueSummary({ totalOutstanding, feeCollected = 0, paidPercent
         <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-1.5">
           Total Pending Fees
         </p>
-        <p className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-white mb-4 tabular-nums">
+        <p className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white mb-4 tabular-nums">
           {fmt(totalOutstanding)}
         </p>
 

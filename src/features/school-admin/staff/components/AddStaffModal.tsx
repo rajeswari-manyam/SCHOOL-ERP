@@ -7,6 +7,7 @@ import { createStaff } from "@/services/school-staff.api";
 import { fetchDepartments } from "@/services/department.api";
 import { useStaffStore } from "../store/usestore";
 import { useAuthStore } from "@/store/authStore";
+import type { StaffMember } from "../types/staff.types";
 import { useUIStore } from "@/store/uiStore";
 import type { CreateStaffPayload } from "../types/staff.types";
 import type { Department } from "@/features/school-admin/settings/types/settings.types";
@@ -71,11 +72,17 @@ const ROLE_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { label: "Active",   value: "ACTIVE" },
-  { label: "On Leave", value: "ON_LEAVE" },
   { label: "Inactive", value: "INACTIVE" },
 ];
 
-const genEmpId = () => `EMP-${String(Math.floor(Math.random() * 900) + 100).padStart(3, "0")}`;
+const genNextEmpId = (staffList: StaffMember[]): string => {
+  const nums = staffList
+    .map((s) => parseInt(s.employeeId?.replace(/\D/g, "") || "0", 10))
+    .filter((n) => !isNaN(n) && n > 0);
+  const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+  return `EMP-${String(next).padStart(3, "0")}`;
+};
+
 const getToday = () => new Date().toISOString().slice(0, 10);
 
 const INITIAL_FORM = {
@@ -95,6 +102,7 @@ const INITIAL_FORM = {
 export const AddStaffModal = ({ onClose }: Props) => {
   const schoolcode     = useAuthStore((s) => s.user?.schoolcode ?? "");
   const loadStaff      = useStaffStore((s) => s.loadStaff);
+  const staffData      = useStaffStore((s) => s.staffData);
   const academicYearId = useUIStore.getState().academicYearId ?? "";
 
   const [form, setForm]       = useState(INITIAL_FORM);
@@ -102,7 +110,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [autoGenEmp, setAutoGenEmp]   = useState(true);
-  const [generatedEmpId]      = useState(genEmpId);
+  const [generatedEmpId]      = useState(() => genNextEmpId(staffData));
 
   useEffect(() => {
     fetchDepartments().then(setDepartments).catch(() => {});
@@ -133,7 +141,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
       name:          form.fullName.trim(),
       email:         form.email.trim(),
       phone:         form.phone.trim().replace(/[^0-9]/g, ""),
-      emp_number:    autoGenEmp ? generatedEmpId : form.empNumber.trim() || genEmpId(),
+      emp_number:    autoGenEmp ? generatedEmpId : form.empNumber.trim() || generatedEmpId,
       qualification: form.qualification.trim(),
       salary:        form.salary ? Number(form.salary) : undefined,
       date_of_birth: form.dob || getToday(),
@@ -247,7 +255,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
                 value={autoGenEmp ? generatedEmpId : form.empNumber}
                 onChange={(e) => !autoGenEmp && setForm((p) => ({ ...p, empNumber: e.target.value }))}
                 readOnly={autoGenEmp}
-                placeholder="EMP-024"
+                placeholder="EMP-001"
               />
             </div>
 

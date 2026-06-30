@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import type { BulkCreateTimetablePayload } from "@/services/timetable.api";
+import { getRemainingPeriods, type BulkCreateTimetablePayload, type RemainingPeriodsResponse } from "@/services/timetable.api";
 
 // API imports
 import { getAllClasses, getSectionsByClassId, type GetAllClassesResponse, type GetSectionsByClassIdResponse } from "@/services/class.api";
@@ -77,6 +77,7 @@ interface TimetableEntry {
   id: string;
   day_of_week: string;
   period_no: string;
+  time_sloat: string;
   room_no: string;
 }
 
@@ -101,12 +102,16 @@ interface AddPeriodModalProps {
 }
 
 let _entryCounter = 0;
-const createEntry = (day_of_week: string, period_no = "1", room_no = ""): TimetableEntry => ({
-  id: `entry_${++_entryCounter}`,
-  day_of_week,
-  period_no,
-  room_no,
-});
+const createEntry = (day_of_week: string, period_no = "1", room_no = ""): TimetableEntry => {
+  const slot = TIME_SLOT_MAP[period_no] ?? TIME_SLOT_MAP["1"];
+  return {
+    id: `entry_${++_entryCounter}`,
+    day_of_week,
+    period_no,
+    time_sloat: slot.time_sloat,
+    room_no,
+  };
+};
 
 /* =========================================================
    COMPONENT
@@ -128,6 +133,10 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   const [teacherOptions, setTeacherOptions] = useState<DropdownOption[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [workingDays, setWorkingDays] = useState<WorkingDayRecord[]>([]);
+
+  // ── Remaining periods ────────────────────────────────────
+  const [remainingMap, setRemainingMap] = useState<Record<string, number[]>>({});
+  const [loadingRemaining, setLoadingRemaining] = useState(false);
 
   // ── Loading states ───────────────────────────────────────
   const [loadingClasses, setLoadingClasses] = useState(false);
@@ -342,6 +351,27 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       .finally(() => setLoadingTeachers(false));
   }, [selectedSubjectId, selectedSubjectName, departments, setValue]);
 
+  // ── Fetch remaining periods when class + section selected ──
+  useEffect(() => {
+    if (!selectedClassId || !selectedSectionId) {
+      setRemainingMap({});
+      return;
+    }
+    setLoadingRemaining(true);
+    getRemainingPeriods(selectedClassId, selectedSectionId)
+      .then((res: RemainingPeriodsResponse) => {
+        if (res.status && Array.isArray(res.week_summary)) {
+          const map: Record<string, number[]> = {};
+          for (const day of res.week_summary) {
+            map[day.day_of_week] = day.remaining_periods;
+          }
+          setRemainingMap(map);
+        }
+      })
+      .catch(() => setRemainingMap({}))
+      .finally(() => setLoadingRemaining(false));
+  }, [selectedClassId, selectedSectionId]);
+
   // ── Add / Remove entries ──────────────────────────────────
   const addEntry = useCallback(() => {
     const allDayValues = DAYS_ORDER;
@@ -349,8 +379,10 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     const lastDay = entries.length > 0 ? entries[entries.length - 1].day_of_week : allDayValues[0];
     const idx = allDayValues.indexOf(lastDay);
     const nextDay = idx < 0 || idx >= allDayValues.length - 1 ? allDayValues[0] : allDayValues[idx + 1];
-    setEntries((prev) => [...prev, createEntry(nextDay, "1", watch("room_no"))]);
-  }, [entries, watch, DAYS_ORDER]);
+    const dayRemaining = remainingMap[nextDay];
+    const defaultPeriod = dayRemaining && dayRemaining.length > 0 ? String(dayRemaining[0]) : "1";
+    setEntries((prev) => [...prev, createEntry(nextDay, defaultPeriod, watch("room_no"))]);
+  }, [entries, watch, DAYS_ORDER, remainingMap]);
 
   const removeEntry = useCallback((id: string) => {
     setEntries((prev) => prev.filter((e) => e.id !== id));
@@ -366,6 +398,25 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     if (timeValue.length === 5 && timeValue.includes(":")) return timeValue;
     if (timeValue.length >= 5 && timeValue.includes(":")) return timeValue.slice(0, 5);
     return timeValue;
+  };
+
+  const to24h = (t: string): string => {
+    const m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!m) return t.slice(0, 5);
+    let h = Number(m[1]);
+    if (m[3].toUpperCase() === "PM" && h !== 12) h += 12;
+    if (m[3].toUpperCase() === "AM" && h === 12) h = 0;
+    return `${String(h).padStart(2, "0")}:${m[2]}`;
+  };
+
+  const to12h = (t: string): string => {
+    const m = t.match(/(\d{1,2}):(\d{2})/);
+    if (!m) return t;
+    let h = Number(m[1]);
+    const ampm = h >= 12 ? "PM" : "AM";
+    if (h > 12) h -= 12;
+    if (h === 0) h = 12;
+    return `${String(h).padStart(2, "0")}:${m[2]} ${ampm}`;
   };
 
   // ── Submit ────────────────────────────────────────────────
@@ -387,7 +438,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
         subject_id:     data.subject_id,
         teacher_id:     data.teacher_id,
         period_no:      Number(entry.period_no),
-        time_sloat:     slot.time_sloat,
+        time_sloat:     entry.time_sloat || slot.time_sloat,
         day_of_week:    entry.day_of_week,
         room_no:        entry.room_no,
         academicYearId: data.academic_year,
@@ -634,7 +685,14 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                             <td className="px-3 py-2">
                               <select
                                 value={entry.day_of_week}
-                                onChange={(e) => updateEntry(entry.id, "day_of_week", e.target.value)}
+                                onChange={(e) => {
+                                  const newDay = e.target.value;
+                                  updateEntry(entry.id, "day_of_week", newDay);
+                                  const dayRemaining = remainingMap[newDay];
+                                  if (dayRemaining && !dayRemaining.includes(Number(entry.period_no))) {
+                                    updateEntry(entry.id, "period_no", String(dayRemaining[0] ?? entry.period_no));
+                                  }
+                                }}
                                 className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
                               >
                                 {DAYS.map((d) => {
@@ -656,17 +714,68 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                               )}
                             </td>
                             <td className="px-3 py-2">
-                              <select
-                                value={entry.period_no}
-                                onChange={(e) => updateEntry(entry.id, "period_no", e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
-                              >
-                                {PERIOD_OPTIONS.map((p) => (
-                                  <option key={p.value} value={p.value}>{p.label}</option>
-                                ))}
-                              </select>
+                              {(() => {
+                                const dayRemaining = remainingMap[entry.day_of_week];
+                                const availableOpts = dayRemaining
+                                  ? PERIOD_OPTIONS.filter((p) => dayRemaining.includes(Number(p.value)))
+                                  : PERIOD_OPTIONS;
+                                return (
+                                  <select
+                                    value={entry.period_no}
+                                    onChange={(e) => {
+                                      const newPeriod = e.target.value;
+                                      updateEntry(entry.id, "period_no", newPeriod);
+                                      const newSlot = TIME_SLOT_MAP[newPeriod];
+                                      if (newSlot) updateEntry(entry.id, "time_sloat", newSlot.time_sloat);
+                                    }}
+                                    className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
+                                  >
+                                    {availableOpts.length === 0 ? (
+                                      <option value="">No free periods</option>
+                                    ) : (
+                                      availableOpts.map((p) => (
+                                        <option key={p.value} value={p.value}>{p.label}</option>
+                                      ))
+                                    )}
+                                  </select>
+                                );
+                              })()}
+                              {loadingRemaining && (
+                                <Loader2 size={10} className="mt-0.5 animate-spin text-indigo-400" />
+                              )}
                             </td>
-                            <td className="px-3 py-2 text-xs text-slate-500">{slot.time_sloat}</td>
+                            <td className="px-3 py-2">
+                              {(() => {
+                                const parts = entry.time_sloat ? entry.time_sloat.split(" - ") : [];
+                                const start24 = parts[0] ? to24h(parts[0]) : "";
+                                const end24 = parts[1] ? to24h(parts[1]) : "";
+                                return (
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="time"
+                                      value={start24}
+                                      onChange={(ev) => {
+                                        const s = to12h(ev.target.value);
+                                        const end = parts[1] || "";
+                                        updateEntry(entry.id, "time_sloat", end ? `${s} - ${end}` : s);
+                                      }}
+                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500 [color-scheme:light]"
+                                    />
+                                    <span className="text-xs text-slate-300">-</span>
+                                    <input
+                                      type="time"
+                                      value={end24}
+                                      onChange={(ev) => {
+                                        const start = parts[0] || "";
+                                        const e = to12h(ev.target.value);
+                                        updateEntry(entry.id, "time_sloat", start ? `${start} - ${e}` : e);
+                                      }}
+                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500 [color-scheme:light]"
+                                    />
+                                  </div>
+                                );
+                              })()}
+                            </td>
                             <td className="px-3 py-2">
                               <input
                                 type="text"

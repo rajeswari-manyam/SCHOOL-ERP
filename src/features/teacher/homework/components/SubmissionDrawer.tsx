@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { X, CheckCircle2, Clock, User, Calendar, BookOpen, FileText, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getSubmissionsByHomeworkId } from "@/services/homework.api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSubmissionsByHomeworkId, createHomeworkSubmission } from "@/services/homework.api";
 import type { StudentSubmission } from "@/services/homework.api";
 import type { HomeworkItem } from "../types/homework.types";
+import toast from "react-hot-toast";
 
 // ── Status resolution ─────────────────────────────────────────────────────────
 
@@ -52,6 +53,8 @@ interface Props {
 
 const SubmissionDrawer = ({ open, onClose, hw }: Props) => {
   const [activeTab, setActiveTab] = useState<"all" | "submitted" | "pending">("all");
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // ── Fetch real submissions ────────────────────────────────────────────────
   const {
@@ -65,9 +68,26 @@ const SubmissionDrawer = ({ open, onClose, hw }: Props) => {
     staleTime: 1000 * 60 * 2,
   });
 
+  // ── Mark submitted mutation ───────────────────────────────────────────────
+  const { mutate: markSubmitted } = useMutation({
+    mutationFn: (studentId: string) =>
+      createHomeworkSubmission({
+        homework_id:     hw.id,
+        student_id:      studentId,
+        submission_date: new Date().toISOString().split("T")[0],
+        remarks:         "Marked as submitted by teacher",
+      }),
+    onMutate: (studentId) => setMarkingId(studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["submissions", hw.id] });
+      toast.success("Marked as submitted");
+    },
+    onError: () => toast.error("Failed to mark submission"),
+    onSettled: () => setMarkingId(null),
+  });
+
   const rawStudents = apiData?.data ?? [];
 
-  // Enrich each student with a resolved display status
   const students = rawStudents.map((s) => ({
     ...s,
     displayStatus: resolveStatus(s, hw.dueDate),
@@ -202,7 +222,7 @@ const SubmissionDrawer = ({ open, onClose, hw }: Props) => {
             filtered.map((s) => (
               <div
                 key={s.student_id}
-                className="flex items-start gap-3 py-3 px-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors"
+                className="flex items-start gap-3 py-2.5 px-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors"
               >
                 {/* Avatar */}
                 <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-[12px] font-bold text-indigo-600 flex-shrink-0 mt-0.5">
@@ -239,8 +259,24 @@ const SubmissionDrawer = ({ open, onClose, hw }: Props) => {
                   )}
                 </div>
 
-                {/* Status */}
-                <StatusBadge status={s.displayStatus} />
+                {/* Status + Mark button for pending */}
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <StatusBadge status={s.displayStatus} />
+                  {s.displayStatus === "pending" && (
+                    <button
+                      onClick={() => markSubmitted(s.student_id)}
+                      disabled={markingId === s.student_id}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                    >
+                      {markingId === s.student_id ? (
+                        <Loader2 size={9} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={9} />
+                      )}
+                      Mark Submitted
+                    </button>
+                  )}
+                </div>
               </div>
             ))
           )}

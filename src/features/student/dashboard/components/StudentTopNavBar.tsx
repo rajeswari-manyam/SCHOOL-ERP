@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { logout as logoutApi } from "@/services/auth.api";
 import {
   Bell,
   LogOut,
@@ -48,6 +49,7 @@ const StudentTopNavBar = () => {
       .slice(0, 2) || "ST";
 
   const handleLogout = () => {
+    logoutApi().catch(() => {});
     localStorage.clear();
     sessionStorage.clear();
     navigate("/login", { replace: true });

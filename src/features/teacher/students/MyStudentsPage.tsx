@@ -26,7 +26,7 @@ const MyStudentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 min-h-full p-6">
+      <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
         <div className="h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
         <div className="h-4 w-64 animate-pulse rounded bg-gray-100" />
         <div className="space-y-3 mt-4">
@@ -57,13 +57,13 @@ const MyStudentsPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-6 min-h-full p-6">
+    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">My Students</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-sm font-semibold text-gray-900">My Students</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">
             {headerClass} · {students.length} student{students.length === 1 ? "" : "s"} enrolled
           </p>
         </div>

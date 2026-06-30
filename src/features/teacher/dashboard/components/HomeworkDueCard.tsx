@@ -43,9 +43,9 @@ const HomeworkDueCard = ({ teacherId }: HomeworkDueCardProps) => {
   const errorMessage = isError ? "Failed to load homework" : null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-extrabold text-gray-900">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-bold text-gray-900">
           Homework Due
           {items.length > 0 && <span className="text-gray-400 font-normal ml-1">({items.length})</span>}
         </h3>
@@ -79,17 +79,17 @@ const HomeworkDueCard = ({ teacherId }: HomeworkDueCardProps) => {
           <p className="text-sm text-gray-400">No pending homework 🎉</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {items.map((hw) => {
             const due = dueLabel(hw.dueDate);
             return (
               <div key={hw.id} className="flex flex-col gap-0.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 leading-tight">{hw.title}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{hw.subject} · {hw.class}</p>
+                    <p className="text-xs font-semibold text-gray-900 leading-tight">{hw.title}</p>
+                    <p className="text-[10px] text-gray-400">{hw.subject} · {hw.class}</p>
                   </div>
-                  <span className={`text-[11px] font-bold flex-shrink-0 ${due.color}`}>{due.text}</span>
+                  <span className={`text-[10px] font-bold flex-shrink-0 ${due.color}`}>{due.text}</span>
                 </div>
                 <ProgressBar value={hw.submittedCount} max={hw.totalCount} />
               </div>

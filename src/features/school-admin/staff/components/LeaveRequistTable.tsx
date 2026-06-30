@@ -3,8 +3,8 @@ import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 import type { LeaveRecord } from "@/services/school-staff.api";
 import { useStaffStore } from "../store/usestore";
-import { getStaffLeaveSummary } from "@/services/leave-allocation.api";
-import type { StaffLeaveSummary } from "@/services/leave-allocation.api";
+import { getStaffLeaveSummary, fetchLeaves } from "@/services/school-staff.api";
+import type { LeaveSummaryEntry } from "@/services/school-staff.api";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { AlertDialog } from "@/components/ui/alert-dialog";
@@ -78,21 +78,34 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
   const school_code    = useAuthStore.getState().user?.schoolcode ?? localStorage.getItem("schoolcode") ?? "";
 
   const [selectedStaffId, setSelectedStaffId] = useState("");
-  const [summary, setSummary]         = useState<StaffLeaveSummary[]>([]);
-  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summary, setSummary]                 = useState<LeaveSummaryEntry[]>([]);
+  const [summaryLoading, setSummaryLoading]   = useState(false);
+  const [staffLeaves, setStaffLeaves]         = useState<LeaveRecord[]>([]);
+  const [leavesLoading, setLeavesLoading]     = useState(false);
 
   useEffect(() => {
-    if (!selectedStaffId || !academicYearId) { setSummary([]); return; }
+    if (!selectedStaffId) { setSummary([]); setStaffLeaves([]); return; }
+
+    // Fetch balance summary
     setSummaryLoading(true);
-    getStaffLeaveSummary({ staff_id: selectedStaffId, academicYearId, school_code })
+    getStaffLeaveSummary(selectedStaffId, academicYearId)
       .then(setSummary)
       .catch(() => setSummary([]))
       .finally(() => setSummaryLoading(false));
-  }, [selectedStaffId, academicYearId, school_code]);
 
-  const pending  = leaves.filter((l) => normalizeStatus(l.status) === "PENDING").length;
-  const approved = leaves.filter((l) => normalizeStatus(l.status) === "APPROVED").length;
-  const rejected = leaves.filter((l) => normalizeStatus(l.status) === "REJECTED").length;
+    // Fetch leave history for selected staff
+    setLeavesLoading(true);
+    fetchLeaves({ staff_id: selectedStaffId })
+      .then(setStaffLeaves)
+      .catch(() => setStaffLeaves([]))
+      .finally(() => setLeavesLoading(false));
+  }, [selectedStaffId, academicYearId]);
+
+  const displayLeaves = staffLeaves;
+
+  const pending  = displayLeaves.filter((l) => normalizeStatus(l.status) === "PENDING").length;
+  const approved = displayLeaves.filter((l) => normalizeStatus(l.status) === "APPROVED").length;
+  const rejected = displayLeaves.filter((l) => normalizeStatus(l.status) === "REJECTED").length;
 
   const handleApprove = async (id: string) => {
     try {
@@ -220,6 +233,18 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
         )}
       </div>
 
+      {!selectedStaffId ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-16 gap-3">
+          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
+            <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-gray-700">Select a staff member</p>
+          <p className="text-xs text-gray-400">Choose a staff member from the filter above to view their leave requests.</p>
+        </div>
+      ) : (
+        <>
       {/* ── Summary badges ── */}
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
@@ -253,14 +278,23 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {leaves.length === 0 ? (
+              {leavesLoading ? (
                 <tr>
                   <td colSpan={8} className="text-center text-sm text-gray-400 py-10">
-                    No leave requests found.
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                      Loading leaves…
+                    </div>
+                  </td>
+                </tr>
+              ) : displayLeaves.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="text-center text-sm text-gray-400 py-10">
+                    {selectedStaffId ? "No leave requests for this staff member." : "No leave requests found."}
                   </td>
                 </tr>
               ) : (
-                leaves.map((r) => {
+                displayLeaves.map((r) => {
                   const isPending  = normalizeStatus(r.status) === "PENDING";
                   const isProcessing = !!leaveProcessing[r.id];
                   return (
@@ -413,6 +447,8 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

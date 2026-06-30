@@ -26,6 +26,7 @@ interface StaffState {
   search: string;
   roleFilter: string;
   statusFilter: string;
+  selectedStaffId: string;
   showModal: boolean;
 
   // Edit
@@ -39,10 +40,12 @@ interface StaffState {
   setSearch: (search: string) => void;
   setRoleFilter: (filter: string) => void;
   setStatusFilter: (filter: string) => void;
+  setSelectedStaffId: (id: string) => void;
   setShowModal: (show: boolean) => void;
   setEditStaffMember: (member: StaffMember | null) => void;
   updateStaffInStore: (id: string, payload: UpdateStaffPayload) => Promise<void>;
   deleteStaff: (id: string) => Promise<void>;
+  loadLeaves: (staffId?: string) => Promise<void>;
   editLeave: (id: string, reason: string, status: string) => Promise<void>;
   deleteLeave: (id: string) => Promise<void>;
   approveLeave: (leaveId: string, remarks?: string) => Promise<void>;
@@ -66,7 +69,7 @@ const removeProcessing = (map: Record<string, 'approving' | 'rejecting'>, id: st
   return copy;
 };
 
-export const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: string, roleFilter: string, statusFilter: string): StaffMember[] => {
+export const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: string, roleFilter: string, statusFilter: string, selectedStaffId?: string): StaffMember[] => {
   let filtered = staff;
 
   // Filter by tab
@@ -97,6 +100,11 @@ export const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: str
     filtered = filtered.filter(s => s.status === statusFilter);
   }
 
+  // Filter by selected staff
+  if (selectedStaffId) {
+    filtered = filtered.filter(s => s.id === selectedStaffId);
+  }
+
   return filtered;
 };
 
@@ -114,6 +122,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   search: "",
   roleFilter: "",
   statusFilter: "",
+  selectedStaffId: "",
   showModal: false,
 
   // Edit
@@ -162,6 +171,8 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
   setStatusFilter: (filter) => set({ statusFilter: filter }),
 
+  setSelectedStaffId: (id) => set({ selectedStaffId: id }),
+
   setShowModal: (show) => set({ showModal: show }),
 
   setEditStaffMember: (member) => set({ editStaffMember: member }),
@@ -200,6 +211,15 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     } catch (err) {
       console.error("Failed to delete staff", err);
       throw err;
+    }
+  },
+
+  loadLeaves: async (staffId) => {
+    try {
+      const leaves = await fetchLeaves(staffId ? { staff_id: staffId } : undefined);
+      set({ leaveData: leaves });
+    } catch (err) {
+      console.error("Failed to load leaves", err);
     }
   },
 
@@ -317,6 +337,6 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   // Computed
   getFilteredStaff: () => {
     const state = get();
-    return filterStaff(state.staffData, state.activeTab, state.search, state.roleFilter, state.statusFilter);
+    return filterStaff(state.staffData, state.activeTab, state.search, state.roleFilter, state.statusFilter, state.selectedStaffId);
   },
 }));

@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi } from '@/services/school-dashboard.api';
 import { useUIStore } from '@/store/uiStore';
+import api from '@/config/axios';
 
 export const DASHBOARD_QUERY_KEY = ['dashboard'] as const;
 
@@ -213,6 +214,20 @@ export function useFeeSummary() {
     queryFn: () => dashboardApi.getFeeSummary(),
     staleTime: 60_000,
     refetchInterval: 5 * 60_000,
+    retry: 2,
+  });
+}
+
+/** GET /tenant/getpendingleaves — all staff pending leaves for admin */
+export function usePendingLeaves() {
+  return useQuery({
+    queryKey: [...DASHBOARD_QUERY_KEY, 'pending-leaves'],
+    queryFn: async () => {
+      const { data } = await api.get('/tenant/getpendingleaves');
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     retry: 2,
   });
 }

@@ -45,10 +45,11 @@ const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label:
 /* ── Subject chips for one section ── */
 const SectionSubjectChips = ({
   sectionId, sectionName, classId, className: clsName,
-  onAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects,
+  onAddSubject, onBulkAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects,
 }: {
   sectionId: string; sectionName: string; classId: string; className: string;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
+  onBulkAddSubject: () => void;
   onEditSubject: (p: { id: string; name: string }) => void;
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
@@ -87,6 +88,12 @@ const SectionSubjectChips = ({
         className="flex items-center gap-0.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
       >
         <Plus className="w-3 h-3" /> Add Subject
+      </button>
+      <button
+        onClick={onBulkAddSubject}
+        className="flex items-center gap-0.5 text-xs font-bold text-purple-600 hover:text-purple-800 transition-colors"
+      >
+        <Plus className="w-3 h-3" /> Bulk Subjects
       </button>
     </div>
   );
@@ -177,6 +184,7 @@ const SelectedClassSections = ({
                   classId={classId}
                   className={clsName}
                   onAddSubject={onAddSubject}
+                  onBulkAddSubject={onBulkAddSubject}
                   onEditSubject={onEditSubject}
                   onDeleteSubject={onDeleteSubject}
                   onUpdateSubjects={onUpdateSubjects}
@@ -199,12 +207,6 @@ const SelectedClassSections = ({
           className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl text-sm font-semibold text-gray-500 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 transition-colors"
         >
           <Plus className="w-4 h-4" /> Bulk Sections
-        </button>
-        <button
-          onClick={onBulkAddSubject}
-          className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-purple-200 rounded-2xl text-sm font-semibold text-purple-500 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-50 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Bulk Subjects
         </button>
       </div>
     </div>
@@ -289,7 +291,7 @@ const ClassesPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900">Classes</h1>
+          <h1 className="text-xl font-bold text-gray-900">Classes</h1>
           <p className="text-xs sm:text-sm text-emerald-600 font-semibold mt-0.5">
             {stats.totalClasses} classes active
           </p>
@@ -356,9 +358,9 @@ const ClassesPage = () => {
           <div className="overflow-x-auto">
           <table className="w-full min-w-[480px]">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
+              <tr className="bg-gray-50 border-b border-gray-200 hover:bg-indigo-100 transition-colors group">
                 {["Class", "Sections", "Students", "Status"].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">{h}</th>
+                  <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-indigo-600 transition-colors">{h}</th>
                 ))}
                 <th className="w-12" />
               </tr>
@@ -370,7 +372,7 @@ const ClassesPage = () => {
                 <tr
                   key={cls.id}
                   onClick={() => setSelectedClassId(cls.id)}
-                  className="hover:bg-indigo-50/40 cursor-pointer transition-colors"
+                  className="hover:bg-indigo-200 cursor-pointer transition-colors"
                 >
                   <td className="px-5 py-3.5">
                     <span className="text-sm font-bold text-gray-900">Class {cls.className}</span>
@@ -466,7 +468,7 @@ const ClassesPage = () => {
                     onClick={addDraftRow}
                     className="flex items-center gap-1.5 text-xs font-bold text-indigo-500 hover:text-indigo-700 transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Add Row
+                    <Plus className="w-3.5 h-3.5" /> Add Class
                   </button>
                 </td>
               </tr>
@@ -548,9 +550,10 @@ const ClassesPage = () => {
             </div>
             <button
               onClick={() => setSelectedClassId("")}
-              className="text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100"
+              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-indigo-50 border border-indigo-100"
             >
-              ← All Classes
+              <ChevronLeft className="w-3.5 h-3.5" />
+              All Classes
             </button>
           </div>
 
@@ -607,11 +610,13 @@ const ClassesPage = () => {
       )}
       {showBulkAddSection && (
         <BulkAddSectionModal
+          classId={selectedClassId}
           onClose={() => setShowBulkAddSection(false)}
           onSubmit={async (data) => {
-            await bulkAddSections(data);
+            const res = await bulkAddSections(data);
             setShowBulkAddSection(false);
             setSectionsRefreshKey((k) => k + 1);
+            return res;
           }}
         />
       )}

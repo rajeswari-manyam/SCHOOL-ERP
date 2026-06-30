@@ -22,7 +22,8 @@ const AddHolidayModal = () => {
   const { showAddHolidayModal, closeAddHoliday } = useAttendanceStore();
   const queryClient = useQueryClient();
   const [holidayName,     setHolidayName]     = useState("");
-  const [date,            setDate]            = useState("");
+  const [fromDate,        setFromDate]        = useState("");
+  const [toDate,          setToDate]          = useState("");
   const [holidayType,     setHolidayType]     = useState("National Holiday");
   const [repeatAnnually,  setRepeatAnnually]  = useState(true);
   const [notes,           setNotes]           = useState("");
@@ -38,7 +39,7 @@ const AddHolidayModal = () => {
     };
   }, []);
 
-  const isFormValid = holidayName.trim() && date.trim() && holidayType.trim();
+  const isFormValid = holidayName.trim() && fromDate.trim() && toDate.trim() && holidayType.trim();
 
   const holidayTypeToApi = (uiType: string): string => {
     const map: Record<string, string> = {
@@ -67,10 +68,12 @@ const AddHolidayModal = () => {
     try {
       const payload = {
         holidayname: holidayName.trim(),
-        date,
+        from_date:   fromDate,
+        to_date:     toDate,
         type:        holidayTypeToApi(holidayType),
         note:        notes.trim() || holidayType,
         school_code: schoolCode,
+        academicYearId: localStorage.getItem("academicYearId") ?? "",
       };
 
       // ✅ Use the imported createHoliday directly (was incorrectly calling attendanceApi.createHolidayProduction)
@@ -79,7 +82,8 @@ const AddHolidayModal = () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
       setSuccess(result.message || "Holiday created successfully.");
       setHolidayName("");
-      setDate("");
+      setFromDate("");
+      setToDate("");
       setHolidayType("National Holiday");
       setRepeatAnnually(true);
       setNotes("");
@@ -131,14 +135,26 @@ const AddHolidayModal = () => {
             />
           </div>
 
-          <div>
-            <Label required className="block mb-1">Date</Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              disabled={loading}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label required className="block mb-1">From Date</Label>
+              <Input
+                type="date"
+                value={fromDate}
+                onChange={(e) => { setFromDate(e.target.value); if (toDate && e.target.value > toDate) setToDate(e.target.value); }}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <Label required className="block mb-1">To Date</Label>
+              <Input
+                type="date"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={(e) => setToDate(e.target.value)}
+                disabled={loading}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

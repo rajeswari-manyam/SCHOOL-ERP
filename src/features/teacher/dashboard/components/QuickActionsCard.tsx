@@ -26,18 +26,18 @@ const QuickActionsCard = ({ onMarkAttendance, onAssignHomework, onUploadMaterial
   const handlers = [onMarkAttendance, onAssignHomework, onUploadMaterial, onApplyLeave, onViewStudents];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-      <h3 className="text-lg font-medium text-gray-700 mb-4">Quick Actions</h3>
-      <div className="flex flex-col gap-2">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+      <h3 className="text-xs font-bold text-gray-900 mb-3">Quick Actions</h3>
+      <div className="flex flex-col gap-1.5">
         {actions.map((a, i) => {
           const Icon = a.icon;
           return (
             <button
               key={a.label}
               onClick={handlers[i]}
-              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${variantCls[a.variant]}`}
+              className={`flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${variantCls[a.variant]}`}
             >
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon className="w-3.5 h-3.5 shrink-0" />
               {a.label}
             </button>
           );

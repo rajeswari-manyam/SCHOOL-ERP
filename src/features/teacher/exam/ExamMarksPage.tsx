@@ -40,13 +40,13 @@ const ExamMarksPage = () => {
   } = useExamMarks();
 
   return (
-    <div className="flex flex-col gap-6 min-h-full p-6">
+    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Exam & Marks</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Class 8-A · Mathematics · Academic Year 2024-25</p>
+          <h1 className="text-sm font-semibold text-gray-900">Exam & Marks</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">Class 8-A · Mathematics · Academic Year 2024-25</p>
         </div>
 
         {/* Toasts */}
@@ -79,7 +79,7 @@ const ExamMarksPage = () => {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex gap-0.5 border-b border-gray-200 mb-6 overflow-x-auto flex-nowrap">
+      <div className="flex gap-0.5 border-b border-gray-200 mb-3 overflow-x-auto flex-nowrap">
         {TABS.map((t) => (
           <Button
             key={t.key}
@@ -87,7 +87,7 @@ const ExamMarksPage = () => {
             onClick={() => setActiveTab(t.key)}
             variant={activeTab === t.key ? "default" : "outline"}
             size="sm"
-            className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold transition-all border-b-2 -mb-px ${
+            className={`px-3 py-1.5 text-[11px] font-semibold transition-all border-b-2 -mb-px ${
               activeTab === t.key
                 ? "text-gray-900 border-indigo-600"
                 : "text-gray-400 border-transparent hover:text-gray-700"
@@ -95,7 +95,7 @@ const ExamMarksPage = () => {
           >
             {t.label}
             {t.key === "submitted" && submittedExams.length > 0 && (
-              <span className="ml-1.5 bg-amber-100 text-amber-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="ml-1.5 bg-amber-100 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                 {submittedExams.length}
               </span>
             )}

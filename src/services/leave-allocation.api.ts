@@ -63,15 +63,13 @@ export const deleteLeaveAllocation = async (id: string): Promise<void> => {
   await api.delete(`/tenant/deleteleaveallocation/${id}`);
 };
 
-export const getStaffLeaveSummary = async (params: {
+export const getLeaveBalance = async (params: {
   staff_id: string;
-  academicYearId: string;
-  school_code: string;
+  academic_year: string;
 }): Promise<StaffLeaveSummary[]> => {
   try {
-    const { data } = await api.get("/tenant/staffleavesummary", { params });
-    if (data?.status && Array.isArray(data?.data)) return data.data;
-    if (Array.isArray(data)) return data as StaffLeaveSummary[];
+    const { data } = await api.get("/tenant/leavebalance", { params });
+    if (data?.status && Array.isArray(data?.balance_list)) return data.balance_list;
     return [];
   } catch {
     return [];

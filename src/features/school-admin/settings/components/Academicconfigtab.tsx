@@ -49,15 +49,6 @@ interface Props {
   onDeleteLeaveAllocation: (id: string) => Promise<void>;
 }
 
-const DEFAULT_NEW_CLASS: CreateClassPayload = {
-  class_name: "",
-  section: "A",
-  academic_year: String(new Date().getFullYear()) + "-" + String(new Date().getFullYear() + 1),
-  class_teacher: "",
-  capacity: 40,
-  description: "",
-  school_code: import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode"),
-};
 
 const EMPTY_WD_FORM = {
   selected_days: [] as string[],
@@ -89,19 +80,17 @@ const LEAVE_TYPES = [
 ];
 
 export const AcademicConfigTab: React.FC<Props> = ({
-  classes, academicYears,
+  academicYears,
   departments, departmentsSaving,
   workingDays, workingDaysSaving,
   holidays, holidaysSaving,
   leaveAllocations, leaveAllocationsSaving,
-  onAddClass, onCreateAcademicYear,
+  onCreateAcademicYear,
   onAddDepartment, onBulkAddDepartments, onEditDepartment, onDeleteDepartment,
   onCreateWorkingDay, onUpdateWorkingDay, onDeleteWorkingDay,
   onCreateHoliday, onBulkAddHolidays, onUpdateHoliday, onDeleteHoliday,
   onCreateLeaveAllocations, onUpdateLeaveAllocation, onDeleteLeaveAllocation,
 }) => {
-  const [showAdd, setShowAdd] = useState(false);
-  const [newClass, setNewClass] = useState<CreateClassPayload>(DEFAULT_NEW_CLASS);
   const [showCreateYear, setShowCreateYear] = useState(false);
   const [wdForm, setWdForm] = useState(EMPTY_WD_FORM);
   const [wdEditId, setWdEditId] = useState<string | null>(null);
@@ -109,9 +98,10 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [deptYearId, setDeptYearId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
-  const [holidayName, setHolidayName] = useState("");
-  const [holidayDate, setHolidayDate] = useState("");
-  const [holidayType, setHolidayType] = useState("public");
+  const [holidayName, setHolidayName]         = useState("");
+  const [holidayFromDate, setHolidayFromDate] = useState("");
+  const [holidayToDate, setHolidayToDate]     = useState("");
+  const [holidayType, setHolidayType]         = useState("public");
   const [holidayNote, setHolidayNote] = useState("");
   const [holidayYearId, setHolidayYearId] = useState("");
   const [holidayEditId, setHolidayEditId] = useState<string | null>(null);
@@ -130,12 +120,12 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
   // Bulk add holiday state
   const [showBulkHolidayModal, setShowBulkHolidayModal] = useState(false);
-  const [bulkHolidayRows, setBulkHolidayRows] = useState<{ id: number; holidayname: string; date: string; type: string; note: string }[]>([{ id: 1, holidayname: "", date: "", type: "public", note: "" }]);
+  const [bulkHolidayRows, setBulkHolidayRows] = useState<{ id: number; holidayname: string; from_date: string; to_date: string; type: string; note: string }[]>([{ id: 1, holidayname: "", from_date: "", to_date: "", type: "public", note: "" }]);
   const [bulkHolidaySaving, setBulkHolidaySaving] = useState(false);
   const [bulkHolidayError, setBulkHolidayError] = useState("");
   const [bulkHolidaySuccess, setBulkHolidaySuccess] = useState("");
   let _hRowId = 1;
-  const newHRow = () => ({ id: ++_hRowId, holidayname: "", date: "", type: "public", note: "" });
+  const newHRow = () => ({ id: ++_hRowId, holidayname: "", from_date: "", to_date: "", type: "public", note: "" });
 
   // Leave allocation state
   const [leaveYearId, setLeaveYearId] = useState("");
@@ -202,7 +192,8 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
   const resetHolidayForm = () => {
     setHolidayName("");
-    setHolidayDate("");
+    setHolidayFromDate("");
+    setHolidayToDate("");
     setHolidayType("public");
     setHolidayNote("");
     setHolidayYearId("");
@@ -210,7 +201,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
   };
 
   const handleSaveHoliday = async () => {
-    if (!holidayName.trim() || !holidayDate || !holidayYearId) return;
+    if (!holidayName.trim() || !holidayFromDate || !holidayToDate || !holidayYearId) return;
     setHolidayError("");
     const school_code =
       useAuthStore.getState().user?.schoolcode ??
@@ -220,14 +211,16 @@ export const AcademicConfigTab: React.FC<Props> = ({
       if (holidayEditId) {
         await onUpdateHoliday(holidayEditId, {
           holidayname: holidayName.trim(),
-          date: holidayDate,
+          from_date: holidayFromDate,
+          to_date: holidayToDate,
           type: holidayType,
           note: holidayNote.trim(),
         });
       } else {
         await onCreateHoliday({
           holidayname: holidayName.trim(),
-          date: holidayDate,
+          from_date: holidayFromDate,
+          to_date: holidayToDate,
           type: holidayType,
           note: holidayNote.trim(),
           school_code,
@@ -246,7 +239,8 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const handleEditHoliday = (h: HolidayFromApi) => {
     setHolidayEditId(h.id);
     setHolidayName(h.holidayname);
-    setHolidayDate(h.date);
+    setHolidayFromDate(h.from_date ?? "");
+    setHolidayToDate(h.to_date ?? "");
     setHolidayType(h.type);
     setHolidayNote(h.note ?? "");
     setHolidayYearId(h.academicYearId ?? "");
@@ -284,11 +278,6 @@ export const AcademicConfigTab: React.FC<Props> = ({
     });
   };
 
-  const handleAddClass = () => {
-    onAddClass(newClass);
-    setNewClass(DEFAULT_NEW_CLASS);
-    setShowAdd(false);
-  };
 
   const handleSaveLeaveAllocations = async () => {
     if (!leaveYearId) return;
@@ -698,11 +687,22 @@ export const AcademicConfigTab: React.FC<Props> = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Date</label>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">From Date</label>
             <Input
               type="date"
-              value={holidayDate}
-              onChange={(e) => setHolidayDate(e.target.value)}
+              value={holidayFromDate}
+              onChange={(e) => setHolidayFromDate(e.target.value)}
+              inputSize="md"
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">To Date</label>
+            <Input
+              type="date"
+              value={holidayToDate}
+              min={holidayFromDate}
+              onChange={(e) => setHolidayToDate(e.target.value)}
               inputSize="md"
               className="w-full"
             />
@@ -736,7 +736,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
         <div className="flex items-center gap-3 mb-5">
           <Button
             onClick={handleSaveHoliday}
-            disabled={!holidayName.trim() || !holidayDate || !holidayYearId || holidaysSaving}
+            disabled={!holidayName.trim() || !holidayFromDate || !holidayToDate || !holidayYearId || holidaysSaving}
             className="rounded-lg text-sm font-medium active:scale-95 transition-all disabled:opacity-60"
             size="sm"
           >
@@ -778,7 +778,10 @@ export const AcademicConfigTab: React.FC<Props> = ({
                   <TableRow key={h.id} className={holidayEditId === h.id ? "bg-indigo-50" : undefined}>
                     <TableCell className="font-medium text-gray-800">{h.holidayname}</TableCell>
                     <TableCell className="text-gray-600">
-                      {new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      {new Date(h.from_date ?? h.date ?? "").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      {h.to_date && h.to_date !== h.from_date && (
+                        <> – {new Date(h.to_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${HOLIDAY_TYPE_COLORS[h.type] ?? "bg-gray-100 text-gray-700"}`}>
@@ -852,19 +855,18 @@ export const AcademicConfigTab: React.FC<Props> = ({
             {ALL_WEEK_DAYS.map((day) => {
               const active = wdForm.selected_days.includes(day);
               return (
-                <Button
+                <button
                   key={day}
-                  variant={active ? "default" : "outline"}
-                  size="sm"
+                  type="button"
                   onClick={() => toggleDay(day)}
-                  className={`rounded-full text-xs sm:text-sm px-3 sm:px-4 active:scale-95 transition-all
+                  className={`rounded-full text-xs sm:text-sm px-4 sm:px-5 py-1.5 sm:py-2 font-semibold border active:scale-95 transition-all duration-150 select-none
                     ${active
-                      ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-300 scale-105"
+                      : "bg-white text-gray-400 border-gray-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300"
                     }`}
                 >
                   {day.slice(0, 3)}
-                </Button>
+                </button>
               );
             })}
           </div>
@@ -939,15 +941,15 @@ export const AcademicConfigTab: React.FC<Props> = ({
               </button>
             </div>
 
-            <div className="px-5 pt-4 grid grid-cols-[2fr_1fr_1fr_1fr_32px] gap-2 shrink-0">
-              {["Holiday Name", "Date", "Type", "Note", ""].map(h => (
+            <div className="px-5 pt-4 grid grid-cols-[2fr_1fr_1fr_1fr_1fr_32px] gap-2 shrink-0">
+              {["Holiday Name", "From Date", "To Date", "Type", "Note", ""].map(h => (
                 <span key={h} className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{h}</span>
               ))}
             </div>
 
             <div className="px-5 py-3 space-y-2.5 overflow-y-auto flex-1">
               {bulkHolidayRows.map((row, idx) => (
-                <div key={row.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_32px] gap-2 items-center">
+                <div key={row.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_32px] gap-2 items-center">
                   <Input
                     placeholder="e.g. Diwali"
                     value={row.holidayname}
@@ -956,8 +958,15 @@ export const AcademicConfigTab: React.FC<Props> = ({
                   />
                   <Input
                     type="date"
-                    value={row.date}
-                    onChange={e => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, date: e.target.value } : r))}
+                    value={row.from_date}
+                    onChange={e => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, from_date: e.target.value, to_date: r.to_date || e.target.value } : r))}
+                    inputSize="sm"
+                  />
+                  <Input
+                    type="date"
+                    value={row.to_date}
+                    min={row.from_date || undefined}
+                    onChange={e => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, to_date: e.target.value } : r))}
                     inputSize="sm"
                   />
                   <Select
@@ -1005,25 +1014,25 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 shrink-0">
               <p className="text-xs text-gray-400">
-                {bulkHolidayRows.filter(r => r.holidayname.trim() && r.date).length} of {bulkHolidayRows.length} rows valid
+                {bulkHolidayRows.filter(r => r.holidayname.trim() && r.from_date && r.to_date).length} of {bulkHolidayRows.length} rows valid
               </p>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowBulkHolidayModal(false)} disabled={bulkHolidaySaving}>Cancel</Button>
                 <Button
                   size="sm"
-                  disabled={bulkHolidaySaving || bulkHolidayRows.every(r => !r.holidayname.trim() || !r.date)}
+                  disabled={bulkHolidaySaving || bulkHolidayRows.every(r => !r.holidayname.trim() || !r.from_date || !r.to_date)}
                   className="bg-indigo-600 text-white min-w-[120px]"
                   onClick={async () => {
                     const schoolCode = import.meta.env.VITE_SCHOOL_CODE || localStorage.getItem("schoolcode") || "";
                     const activeYearId = academicYears.find(y => y.active)?.id ?? academicYears[0]?.id ?? "";
-                    const valid = bulkHolidayRows.filter(r => r.holidayname.trim() && r.date);
-                    if (!valid.length) { setBulkHolidayError("Fill at least one holiday name and date."); return; }
+                    const valid = bulkHolidayRows.filter(r => r.holidayname.trim() && r.from_date && r.to_date);
+                    if (!valid.length) { setBulkHolidayError("Fill at least one holiday name and both dates."); return; }
                     if (!activeYearId) { setBulkHolidayError("No active academic year found. Please create one first."); return; }
                     setBulkHolidayError("");
                     setBulkHolidaySaving(true);
                     try {
                       const result = await onBulkAddHolidays(
-                        valid.map(r => ({ holidayname: r.holidayname.trim(), date: r.date, type: r.type, note: r.note.trim() || r.type, school_code: schoolCode, academicYearId: activeYearId }))
+                        valid.map(r => ({ holidayname: r.holidayname.trim(), from_date: r.from_date, to_date: r.to_date, type: r.type, note: r.note.trim() || r.type, school_code: schoolCode, academicYearId: activeYearId }))
                       ) as { count?: number };
                       setBulkHolidaySuccess(`${result?.count ?? valid.length} holiday(s) added successfully.`);
                       setBulkHolidayRows([newHRow()]);
@@ -1077,10 +1086,16 @@ export const AcademicConfigTab: React.FC<Props> = ({
               <p className="text-xs font-bold uppercase tracking-wide mb-2">{lt.label}</p>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
-                  min={0}
-                  value={leaveDays[lt.value] ?? 0}
-                  onChange={e => setLeaveDays(prev => ({ ...prev, [lt.value]: Number(e.target.value) }))}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={leaveDays[lt.value] === 0 ? "" : String(leaveDays[lt.value] ?? "")}
+                  onChange={e => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    const val = digits === "" ? 0 : parseInt(digits, 10);
+                    setLeaveDays(prev => ({ ...prev, [lt.value]: val }));
+                  }}
+                  placeholder="0"
                   inputSize="md"
                   className="w-full bg-white"
                 />
@@ -1164,7 +1179,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
       {showCreateYear && (
         <CreateAcademicYearModal
           onClose={() => setShowCreateYear(false)}
-          onSubmit={onCreateAcademicYear}
+          onSubmit={async (data) => { await onCreateAcademicYear(data); }}
         />
       )}
     </div>

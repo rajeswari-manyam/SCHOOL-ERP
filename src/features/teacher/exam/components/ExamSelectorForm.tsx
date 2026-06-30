@@ -19,7 +19,7 @@ interface Props {
 }
 
 const selectCls =
-  "h-10 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition cursor-pointer w-full";
+  "h-8 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition cursor-pointer w-full";
 
 const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError, errorMessage }: Props) => {
   const set = (patch: Partial<ExamSelector>) => onChange({ ...selector, ...patch });
@@ -130,15 +130,15 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
         Exam Selector
       </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
         {/* Exam Type */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-gray-500">Exam Type</label>
+          <label className="text-[10px] font-bold text-gray-500">Exam Type</label>
           <select
             value={selector.examType}
             onChange={(e) => {
@@ -157,7 +157,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
 
         {/* Academic Year — moved next to Exam Type */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-gray-500">Academic Year</label>
+          <label className="text-[10px] font-bold text-gray-500">Academic Year</label>
           <select
             value={selector.academicYearId ?? ""}
             onChange={(e) => handleAcademicYearChange(e.target.value)}
@@ -172,7 +172,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
 
         {/* Class */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-gray-500">Class</label>
+          <label className="text-[10px] font-bold text-gray-500">Class</label>
           <select
             value={selector.classId ?? ""}
             onChange={(e) => handleClassChange(e.target.value)}
@@ -187,7 +187,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
 
         {/* Section */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-gray-500">Section</label>
+          <label className="text-[10px] font-bold text-gray-500">Section</label>
           <select
             value={selector.sectionId ?? ""}
             onChange={(e) => handleSectionChange(e.target.value)}
@@ -202,7 +202,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
 
         {/* Subject */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-gray-500">Subject</label>
+          <label className="text-[10px] font-bold text-gray-500">Subject</label>
           <select
             value={selector.subjectId ?? ""}
             onChange={(e) => handleSubjectChange(e.target.value)}
@@ -216,7 +216,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-500 mt-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-[10px] text-gray-500 mt-1">
         <div>
           <span className="font-semibold text-gray-400">Live exam catalog:</span> {examCatalog.length} exam definitions loaded from /tenant/getallexams
         </div>
@@ -231,21 +231,21 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mt-4">
+      <div className="flex flex-wrap items-center gap-2 mt-3">
         <Button
           onClick={onLoad}
           disabled={!allSelected}
           variant={allSelected ? "default" : "outline"}
-          size="md"
-          className={`flex items-center gap-2 ${!allSelected ? "text-gray-400" : ""}`}
+          size="sm"
+          className={`flex items-center gap-1.5 text-xs ${!allSelected ? "text-gray-400" : ""}`}
         >
-          <Users size={14} className="text-current" />
+          <Users size={12} className="text-current" />
           {studentsLoaded ? "Reload Students" : "Load Students"}
         </Button>
 
         {apiError && errorMessage && (
-          <span className="inline-flex items-center gap-1 text-xs text-red-500 font-semibold">
-            <AlertCircle size={12} />
+          <span className="inline-flex items-center gap-1 text-[10px] text-red-500 font-semibold">
+            <AlertCircle size={11} />
             {errorMessage}
           </span>
         )}

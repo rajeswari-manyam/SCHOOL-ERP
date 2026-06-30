@@ -121,6 +121,22 @@ export const getPendingFeesByStudentId = async (studentId: string) => {
   return res.data;
 };
 
+export const downloadPaymentReceipt = async (paymentId: string): Promise<void> => {
+  const res = await api.get(`/tenant/downloadpaymentreceipt/${paymentId}`, {
+    responseType: "blob",
+  });
+  const contentType = String(res.headers["content-type"] ?? "application/pdf");
+  const blob = new Blob([res.data], { type: contentType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `receipt-${paymentId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
 export const deletePaymentById = async (id: string) => {
   const res = await api.delete<{ status: boolean; message: string }>(
     `/tenant/deletepaymentById/${id}`

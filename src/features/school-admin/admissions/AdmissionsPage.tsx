@@ -37,7 +37,7 @@ export function AdmissionsPage() {
         >
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl sm:text-[2rem] font-black text-gray-900 tracking-tight leading-none">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">
                 Admissions
               </h1>
               {activeYear?.yearName && (

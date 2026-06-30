@@ -16,6 +16,7 @@ export interface CreateHomeworkPayload {
   attachments: string[];
   is_published: boolean;
   academicYearId: string;
+  submission_type?: "physical" | "online" | "both";
 }
 
 export type UpdateHomeworkPayload = Partial<{
@@ -27,6 +28,7 @@ export type UpdateHomeworkPayload = Partial<{
   submission_date: string;
   attachments: string[];
   is_published: boolean;
+  submission_type: "physical" | "online" | "both";
 }>;
 
 // ─── API response shapes ──────────────────────────────────────────────────────
@@ -85,6 +87,7 @@ export interface HomeworkItem {
   isPublished: boolean;
   academicYearId: string;
   teacher_id: string;
+  submission_type?: "physical" | "online" | "both";
 }
 
 // ─── Study Material types ─────────────────────────────────────────────────────
@@ -139,6 +142,7 @@ export interface AssignHomeworkFormValues {
   attachments: string[];
   is_published: boolean;
   attachmentFile?: FileList;
+  submission_type?: "physical" | "online" | "both";
 }
 
 export interface UploadMaterialFormValues {

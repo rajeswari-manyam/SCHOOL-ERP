@@ -4,6 +4,7 @@ import AttendanceToday from "./components/AttendanceToday";
 import AttendanceHistory from "./components/AttendanceHistory";
 import HolidayCalendar from "./components/HolidayCalendar";
 import StaffAttendance from "./components/StaffAttendance";
+import PendingLeavesTab from "./components/PendingLeavesTab";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import MarkStaffAttendanceModal from "./components/MarkStaffAttendanceModal";
 import AddHolidayModal from "./components/AddHolidayModal";
@@ -15,6 +16,7 @@ const TABS: { key: AttendanceTab; label: string }[] = [
   { key: "history", label: "History"          },
   { key: "holiday", label: "Holiday Calendar" },
   { key: "staff",   label: "Staff Attendance" },
+  { key: "leaves",  label: "Leave Requests"   },
 ];
 
 const AttendancePage = () => {
@@ -32,7 +34,7 @@ const AttendancePage = () => {
 
         {/* Page Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+          <h1 className="text-xl font-bold text-gray-900">Attendance</h1>
           <div className="flex items-center gap-2">
             {activeTab === "today" && (
               <Button
@@ -83,7 +85,8 @@ const AttendancePage = () => {
         )}
         {activeTab === "history" && <AttendanceHistory />}
         {activeTab === "holiday" && <HolidayCalendar />}
-        {activeTab === "staff" && <StaffAttendance />}
+        {activeTab === "staff"   && <StaffAttendance />}
+        {activeTab === "leaves"  && <PendingLeavesTab />}
       </div>
 
       <MarkAttendanceModal />

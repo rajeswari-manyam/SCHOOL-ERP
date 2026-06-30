@@ -14,7 +14,7 @@ interface CardConfig {
 const StatCard = ({ label, value, border }: CardConfig) => (
   <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-2 border-l-4 ${border}`}>
     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-    <p className="text-3xl font-extrabold text-gray-900 leading-none tabular-nums">{value}</p>
+    <p className="text-2xl font-bold text-gray-900 leading-none tabular-nums">{value}</p>
   </div>
 );
 

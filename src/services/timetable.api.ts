@@ -419,6 +419,13 @@ export interface UpcomingExam {
   hallTicketUrl?: string;
 }
 
+const fmtTime = (t: string) => {
+  if (!t) return "";
+  const [h, m] = t.split(":");
+  const hh = parseInt(h, 10);
+  return `${hh % 12 || 12}:${m} ${hh >= 12 ? "PM" : "AM"}`;
+};
+
 export const getExamsTimetable = async (params: { teacher_id: string; academic_year?: string }): Promise<UpcomingExam[]> => {
   try {
     const res = await getExamTimetableByTeacherId(params.teacher_id);
@@ -427,9 +434,9 @@ export const getExamsTimetable = async (params: { teacher_id: string; academic_y
         id: item.id,
         exam: item.exam?.name ?? item.examnameid ?? "",
         subject: item.subject?.name ?? item.subject_id ?? "",
-        class: item.class?.name ?? item.class_id ?? "",
+        class: [item.class?.name, item.section?.name].filter(Boolean).join(" "),
         date: item.exam_date ?? "",
-        time: `${item.start_time ?? ""}–${item.end_time ?? ""}`,
+        time: `${fmtTime(item.start_time ?? "")} – ${fmtTime(item.end_time ?? "")}`,
         venue: item.room_no ?? "",
       }));
     }
@@ -445,12 +452,52 @@ export const getExamsTimetable = async (params: { teacher_id: string; academic_y
       subject: item.subject?.subject_name ?? "",
       class: item.class?.class_name ?? "",
       date: item.exam_date ?? "",
-      time: `${item.start_time ?? ""}–${item.end_time ?? ""}`,
+      time: `${fmtTime(item.start_time ?? "")} – ${fmtTime(item.end_time ?? "")}`,
       venue: item.room_no ?? "",
     }));
   } catch {
     return [];
   }
+};
+
+/* =========================
+   REMAINING PERIODS ENDPOINT
+========================= */
+
+export interface RemainingPeriodAssigned {
+  period_no: number;
+  subject_name: string;
+  teacher_name: string;
+  time_sloat: string;
+}
+
+export interface RemainingPeriodDaySummary {
+  day_of_week: string;
+  total_periods: number;
+  assigned_periods: RemainingPeriodAssigned[];
+  remaining_periods: number[];
+  break: { start: string; end: string } | null;
+  lunch: { start: string; end: string } | null;
+}
+
+export interface RemainingPeriodsResponse {
+  status: boolean;
+  message: string;
+  class_id: string;
+  section_id: string;
+  week_summary: RemainingPeriodDaySummary[];
+}
+
+// GET /tenant/remaining-periods?class_id=<UUID>&section_id=<UUID>
+export const getRemainingPeriods = async (
+  class_id: string,
+  section_id: string,
+): Promise<RemainingPeriodsResponse> => {
+  const { data } = await api.get<RemainingPeriodsResponse>(
+    "/tenant/remaining-periods",
+    { params: { class_id, section_id } },
+  );
+  return data;
 };
 
 /* =========================

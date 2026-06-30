@@ -5,9 +5,12 @@ interface Props {
   search: string;
   roleFilter: string;
   statusFilter: string;
+  selectedStaffId: string;
+  staffList: { id: string; name: string }[];
   onSearch: (v: string) => void;
   onRoleChange: (v: string) => void;
   onStatusChange: (v: string) => void;
+  onStaffChange: (v: string) => void;
 }
 
 const ROLE_OPTIONS = [
@@ -25,7 +28,7 @@ const STATUS_OPTIONS = [
   { label: "Inactive",    value: "INACTIVE" },
 ];
 
-export const StaffFilters = ({ search, roleFilter, statusFilter, onSearch, onRoleChange, onStatusChange }: Props) => (
+export const StaffFilters = ({ search, roleFilter, statusFilter, selectedStaffId, staffList, onSearch, onRoleChange, onStatusChange, onStaffChange }: Props) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
     {/* Search */}
@@ -41,6 +44,16 @@ export const StaffFilters = ({ search, roleFilter, statusFilter, onSearch, onRol
 
     {/* Dropdowns + filter icon */}
     <div className="flex items-center gap-2">
+      <select
+        value={selectedStaffId}
+        onChange={(e) => onStaffChange(e.target.value)}
+        className="h-10 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[160px]"
+      >
+        <option value="">All Staff</option>
+        {staffList.map((s) => (
+          <option key={s.id} value={s.id}>{s.name}</option>
+        ))}
+      </select>
       <Select
         options={ROLE_OPTIONS}
         value={roleFilter}

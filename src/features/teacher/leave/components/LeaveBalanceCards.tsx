@@ -1,19 +1,5 @@
-import { Calendar, Activity, User, AlertTriangle, RefreshCw, Bug } from "lucide-react";
-import type { LeaveBalance, LeaveType } from "../types/leave.types";
-
-const ACCENT: Record<string, { icon: string; ring: string; bar: string; value: string; bg: string; iconBg: string }> = {
-  sky:    { icon: "text-sky-500",    ring: "border-sky-200",    bar: "bg-sky-500",    value: "text-sky-700",    bg: "bg-sky-50",    iconBg: "bg-sky-100"    },
-  rose:   { icon: "text-rose-500",   ring: "border-rose-200",   bar: "bg-rose-500",   value: "text-rose-700",   bg: "bg-rose-50",   iconBg: "bg-rose-100"   },
-  violet: { icon: "text-violet-500", ring: "border-violet-200", bar: "bg-violet-500", value: "text-violet-700", bg: "bg-violet-50", iconBg: "bg-violet-100" },
-  amber:  { icon: "text-amber-500",  ring: "border-amber-200",  bar: "bg-amber-400",  value: "text-amber-700",  bg: "bg-amber-50",  iconBg: "bg-amber-100"  },
-};
-
-const TYPE_ICONS: Record<LeaveType, React.ReactNode> = {
-  CASUAL:    <Calendar size={18} className="text-current" strokeWidth={2} />,
-  SICK:      <Activity size={18} className="text-current" strokeWidth={2} />,
-  PERSONAL:  <User size={18} className="text-current" strokeWidth={2} />,
-  EMERGENCY: <AlertTriangle size={18} className="text-current" strokeWidth={2} />,
-};
+import { Calendar, RefreshCw, Bug, ClipboardList, CheckCircle2, Clock } from "lucide-react";
+import type { LeaveBalance, LeaveApplication } from "../types/leave.types";
 
 const SkeletonCard = () => (
   <div className="animate-pulse bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
@@ -31,12 +17,14 @@ const SkeletonCard = () => (
 
 interface Props {
   balances: LeaveBalance[];
+  leaveTotals?: { totalAllocated: number; totalUsed: number; totalBalance: number };
+  leaveHistory?: LeaveApplication[];
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
 }
 
-const LeaveBalanceCards = ({ balances, loading, error, onRetry }: Props) => {
+const LeaveBalanceCards = ({ balances, leaveTotals, leaveHistory = [], loading, error, onRetry }: Props) => {
   if (loading) {
     return (
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4" role="status" aria-label="Loading leave balances">
@@ -69,47 +57,93 @@ const LeaveBalanceCards = ({ balances, loading, error, onRetry }: Props) => {
   }
 
   if (!balances.length) {
+    const totalDays    = leaveHistory.reduce((s, l) => s + (l.totalDays ?? 0), 0);
+    const approvedDays = leaveHistory.filter(l => l.status === "APPROVED").reduce((s, l) => s + (l.totalDays ?? 0), 0);
+    const pendingCount = leaveHistory.filter(l => l.status === "PENDING").length;
+
+    const summaryCards = [
+      {
+        label: "Allocated Leaves", value: "—", sub: "not configured",
+        icon: <Calendar size={18} className="text-current" strokeWidth={2} />,
+        iconBg: "bg-gray-100", iconColor: "text-gray-400", valueColor: "text-gray-400",
+      },
+      {
+        label: "Leave Balance", value: "—", sub: "not configured",
+        icon: <ClipboardList size={18} className="text-current" strokeWidth={2} />,
+        iconBg: "bg-indigo-100", iconColor: "text-indigo-500", valueColor: "text-indigo-400",
+      },
+      {
+        label: "Used Leaves", value: totalDays, sub: `${approvedDays}d approved · ${pendingCount} pending`,
+        icon: <Clock size={18} className="text-current" strokeWidth={2} />,
+        iconBg: "bg-amber-100", iconColor: "text-amber-500", valueColor: "text-amber-700",
+      },
+    ];
+
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center bg-white rounded-2xl border border-dashed border-gray-200">
-        <Calendar size={32} className="text-gray-300" strokeWidth={1.5} />
-        <p className="text-sm font-medium text-gray-500">No leave balances configured yet</p>
-        <p className="text-xs text-gray-400">Balances will appear here once configured by your school admin.</p>
+      <div className="grid grid-cols-3 gap-4">
+        {summaryCards.map(card => (
+          <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} ${card.iconColor}`}>
+              {card.icon}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">{card.label}</p>
+              <p className={`text-xl font-bold leading-none ${card.valueColor}`}>{card.value}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{card.sub}</p>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
+  const totalAllocated = leaveTotals?.totalAllocated ?? balances.reduce((s, b) => s + (b.total ?? 0), 0);
+  const approvedUsed   = leaveTotals?.totalUsed      ?? balances.reduce((s, b) => s + (b.used ?? 0), 0);
+  const apiBalance     = leaveTotals?.totalBalance   ?? balances.reduce((s, b) => s + (b.remaining ?? 0), 0);
+
+  // Add pending leave days on top of approved used days
+  const pendingDays  = leaveHistory.filter(l => l.status === "PENDING").reduce((s, l) => s + (l.totalDays ?? 0), 0);
+  const displayUsed  = approvedUsed + pendingDays;
+  const displayBalance = Math.max(0, apiBalance - pendingDays);
+
+  const cards = [
+    {
+      label: "Allocated Leaves",
+      value: totalAllocated,
+      sub:   "total leaves allocated",
+      icon:  <Calendar size={18} className="text-current" strokeWidth={2} />,
+      iconBg: "bg-indigo-100", iconColor: "text-indigo-500", valueColor: "text-indigo-700",
+    },
+    {
+      label: "Leave Balance",
+      value: displayBalance,
+      sub:   `${approvedUsed}d approved · ${pendingDays}d pending`,
+      icon:  <CheckCircle2 size={18} className="text-current" strokeWidth={2} />,
+      iconBg: "bg-emerald-100", iconColor: "text-emerald-500", valueColor: "text-emerald-700",
+    },
+    {
+      label: "Used Leaves",
+      value: displayUsed,
+      sub:   pendingDays > 0 ? `${approvedUsed} approved · ${pendingDays} pending` : `${displayBalance} remaining`,
+      icon:  <Clock size={18} className="text-current" strokeWidth={2} />,
+      iconBg: "bg-amber-100", iconColor: "text-amber-500", valueColor: "text-amber-700",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-      {balances.map(b => {
-        const a = ACCENT[b?.accentColor] ?? ACCENT.sky;
-        const total = b?.total ?? 0;
-        const remaining = b?.remaining ?? 0;
-        const used = b?.used ?? 0;
-        const pct = total > 0 ? Math.round((remaining / total) * 100) : 0;
-        return (
-          <div key={b.type} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.iconBg} ${a.icon}`}>
-              {TYPE_ICONS[b?.type]}
-            </div>
-
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1">{b?.label ?? "-"}</p>
-              <div className="flex items-baseline gap-1.5">
-                <span className={`text-3xl font-extrabold tracking-tight ${a.value}`}>{remaining}</span>
-                <span className="text-sm text-gray-400 font-medium">/ {total}</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-0.5">{used} used · {remaining} remaining</p>
-            </div>
-
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${a.bar}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+    <div className="grid grid-cols-3 gap-4">
+      {cards.map(card => (
+        <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} ${card.iconColor}`}>
+            {card.icon}
           </div>
-        );
-      })}
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">{card.label}</p>
+            <p className={`text-xl font-bold leading-none ${card.valueColor}`}>{card.value}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">{card.sub}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

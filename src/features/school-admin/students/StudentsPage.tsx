@@ -17,7 +17,7 @@ import { Upload, Plus } from "lucide-react";
 
 const StudentsPage = () => {
   const {
-    filtered, loading, error, stats,
+    students, filtered, loading, error, stats,
     search, setSearch,
     classFilter, setClassFilter,
     sectionFilter, setSectionFilter,
@@ -49,7 +49,7 @@ const StudentsPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 truncate">Students</h1>
+          <h1 className="text-xl font-bold text-gray-900 truncate">Students</h1>
           <p className="text-xs sm:text-sm text-emerald-600 font-semibold mt-1 sm:mt-0.5">● {stats.totalActive} active students</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
@@ -112,6 +112,7 @@ const StudentsPage = () => {
         <AddStudentModal
           onClose={() => setShowAddModal(false)}
           onSubmit={handleAddStudent}
+          students={students}
         />
       )}
 

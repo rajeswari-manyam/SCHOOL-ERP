@@ -53,7 +53,7 @@ export const TeacherLayout = () => {
       />
       <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-12 sm:mt-14">
+        <main className="flex-1 overflow-y-auto px-4 pt-2 pb-4 md:px-6 md:pt-2 md:pb-6 lg:px-8 lg:pt-2 lg:pb-8 mt-12 sm:mt-14">
           <Outlet />
         </main>
       </div>

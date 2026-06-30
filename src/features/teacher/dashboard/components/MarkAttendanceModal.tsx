@@ -141,7 +141,7 @@ const MarkAttendanceModal = ({ open, onClose, students, totalStudents }: MarkAtt
             </select>
           </label>
           <label className="text-xs font-semibold text-gray-600">Date
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            <input type="date" value={date} max={new Date().toISOString().split("T")[0]} onChange={(event) => setDate(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </label>
         </div>
         <p className="text-xs text-gray-400">Select a class and section to load the live student roster for the chosen date. Total students: {totalStudents ?? list.length}</p>

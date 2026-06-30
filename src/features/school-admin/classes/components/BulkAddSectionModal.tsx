@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 import { getAllClasses } from "@/services/class.api";
 import { getAllStaff } from "@/services/staff.api";
-import type { AddSectionPayload } from "../types/classes.types";
+import { getAllSections } from "@/services/section.api";
+import type { AddSectionPayload, BulkAddSectionsResponse } from "../types/classes.types";
 
 interface Props {
+  classId?: string;
   onClose: () => void;
-  onSubmit: (sections: AddSectionPayload[]) => Promise<void>;
+  onSubmit: (sections: AddSectionPayload[]) => Promise<BulkAddSectionsResponse | void>;
 }
 
 interface Option {
@@ -29,38 +32,64 @@ interface SectionRow {
 }
 
 let _rowId = 0;
-const makeRow = (academicYearId = ""): SectionRow => ({
+const makeRow = (academicYearId = "", classId = "", classTeacherId = ""): SectionRow => ({
   id: `row_${++_rowId}`,
   sectionName: "",
-  classId: "",
+  classId,
   academicYearId,
   totalStrength: "30",
-  classTeacherId: "",
+  classTeacherId,
 });
 
-export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
+export const BulkAddSectionModal = ({ classId: preselectedClassId = "", onClose, onSubmit }: Props) => {
   const { years, loading: yearsLoading } = useAcademicYears();
-  const [rows, setRows] = useState<SectionRow[]>([makeRow()]);
+  const [rows, setRows] = useState<SectionRow[]>([makeRow("", preselectedClassId)]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [classOptions, setClassOptions] = useState<Option[]>([]);
   const [teacherOptions, setTeacherOptions] = useState<Option[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
 
   useEffect(() => {
     getAllClasses().then((res) => {
       const opts = (res.data ?? []).map((c: any) => ({ value: c.id, label: c.class_name }));
       setClassOptions(opts);
     }).catch(() => {});
-    getAllStaff({ role: "teacher" }).then((res) => {
-      const list = Array.isArray(res.data) ? res.data : [];
-      const opts = list.map((s: any) => ({ value: s.id, label: s.name ?? s.id }));
+
+    setLoadingTeachers(true);
+    Promise.all([
+      getAllStaff(),
+      getAllSections().catch(() => []),
+    ]).then(([staffRes, sections]) => {
+      const list = Array.isArray(staffRes.data) ? staffRes.data : [];
+      const usedIds = new Set<string>();
+      for (const s of Array.isArray(sections) ? sections : []) {
+        const tid = s.classTeacherId || s.class_teacher_id;
+        if (tid) usedIds.add(tid);
+      }
+      for (const t of list) {
+        if (t.class_teacher_of) usedIds.add(t.id);
+      }
+      const opts = list
+        .filter((s: any) => !usedIds.has(s.id))
+        .map((s: any) => ({ value: s.id, label: s.name ?? s.id }));
       setTeacherOptions(opts);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setLoadingTeachers(false));
   }, []);
+
+  /* When academic years load, auto-select the active one for all rows */
+  useEffect(() => {
+    if (years.length === 0) return;
+    const active = years.find((y) => y.active) ?? years[0];
+    setRows((prev) => prev.map((r) => r.academicYearId ? r : { ...r, academicYearId: active.id }));
+  }, [years]);
 
   const addRow = () => {
     const last = rows[rows.length - 1];
-    setRows((prev) => [...prev, makeRow(last.academicYearId)]);
+    setRows((prev) => [
+      ...prev,
+      makeRow(last.academicYearId, last.classId, last.classTeacherId),
+    ]);
   };
 
   const removeRow = (id: string) => {
@@ -81,7 +110,7 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
     setError(null);
     setSaving(true);
     try {
-      await onSubmit(
+      const res = await onSubmit(
         valid.map((r) => ({
           sectionName: r.sectionName.trim(),
           classId: r.classId,
@@ -90,6 +119,19 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
           classTeacherId: r.classTeacherId,
         })),
       );
+      if (res && typeof res === "object") {
+        if (res.inserted > 0 && res.skipped === 0) {
+          toast.success(`${res.inserted} section${res.inserted !== 1 ? "s" : ""} created successfully`);
+        } else if (res.inserted > 0 && res.skipped > 0) {
+          toast.success(`${res.inserted} created, ${res.skipped} skipped`);
+          const reasons = res.skippedRecords?.map((r) => `${r.sectionName}: ${r.reason}`).join("\n");
+          if (reasons) toast.warning(reasons, { duration: 6000 });
+        } else if (res.skipped > 0) {
+          toast.warning(`All ${res.skipped} section${res.skipped !== 1 ? "s" : ""} skipped — ${res.skippedRecords?.[0]?.reason ?? "already exists"}`);
+        }
+      } else {
+        toast.success("Sections created successfully");
+      }
       onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create sections");
@@ -98,14 +140,28 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
     }
   };
 
+  const getAvailableTeacherOptions = (currentRowId: string) => {
+    const selectedInOtherRows = new Set(
+      rows
+        .filter((r) => r.id !== currentRowId && r.classTeacherId)
+        .map((r) => r.classTeacherId),
+    );
+    return teacherOptions.filter((opt) => !selectedInOtherRows.has(opt.value));
+  };
+
+  const validCount = rows.filter((r) => r.sectionName.trim() && r.classId && r.academicYearId).length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+      <div className="bg-white w-full sm:max-w-3xl rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+
         {/* Header */}
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 border-b border-gray-100 shrink-0">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-gray-900">Bulk Add Sections</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Add multiple sections at once</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Teacher and class carry forward automatically when you add a row
+            </p>
           </div>
           <Button onClick={onClose} variant="ghost" size="sm" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 shrink-0">
             <X className="h-4 w-4" />
@@ -128,30 +184,32 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
               onClick={addRow}
               className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 transition"
             >
-              <Plus size={12} /> Add Row
+              <Plus size={12} /> Add Section
             </button>
           </div>
 
-          {/* Header labels */}
-          <div className="hidden sm:grid sm:grid-cols-[1fr_1.2fr_1fr_1fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
+          {/* Column headers */}
+          <div className="hidden sm:grid sm:grid-cols-[1fr_1.2fr_1.4fr_0.7fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
             <span>Section Name</span>
             <span>Class</span>
-            <span>Teacher</span>
+            <span>Teacher {loadingTeachers && <Loader2 className="inline w-2.5 h-2.5 animate-spin ml-0.5" />}</span>
             <span>Strength</span>
             <span className="w-10" />
           </div>
 
           {/* Rows */}
-          {rows.map((row) => (
-            <div key={row.id} className="grid grid-cols-2 sm:grid-cols-[1fr_1.2fr_1fr_1fr_auto] gap-2 sm:gap-3 items-start p-3 rounded-xl border border-gray-100 bg-white">
+          {rows.map((row, idx) => (
+            <div key={row.id} className="grid grid-cols-2 sm:grid-cols-[1fr_1.2fr_1.4fr_0.7fr_auto] gap-2 sm:gap-3 items-start p-3 rounded-xl border border-gray-100 bg-white">
               <div className="space-y-1 col-span-2 sm:col-span-1">
                 <Label className="sm:hidden text-[10px] text-gray-400">Section Name</Label>
                 <Input
                   placeholder="e.g. A"
                   value={row.sectionName}
+                  autoFocus={idx === rows.length - 1 && idx > 0}
                   onChange={(e) => updateRow(row.id, "sectionName", e.target.value)}
                 />
               </div>
+
               <div className="space-y-1">
                 <Label className="sm:hidden text-[10px] text-gray-400">Class</Label>
                 <Select
@@ -161,15 +219,17 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
                   placeholder="Select class"
                 />
               </div>
+
               <div className="space-y-1">
                 <Label className="sm:hidden text-[10px] text-gray-400">Teacher</Label>
                 <Select
                   value={row.classTeacherId}
                   onValueChange={(value) => updateRow(row.id, "classTeacherId", value)}
-                  options={teacherOptions}
-                  placeholder="Select teacher"
+                  options={getAvailableTeacherOptions(row.id)}
+                  placeholder={loadingTeachers ? "Loading…" : "Select teacher"}
                 />
               </div>
+
               <div className="space-y-1">
                 <Label className="sm:hidden text-[10px] text-gray-400">Strength</Label>
                 <Input
@@ -180,6 +240,7 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
                   onChange={(e) => updateRow(row.id, "totalStrength", e.target.value)}
                 />
               </div>
+
               <div className="flex items-end sm:pb-0">
                 <button
                   type="button"
@@ -194,9 +255,9 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
             </div>
           ))}
 
-          {/* Academic year selector */}
+          {/* Academic year — applied to all rows */}
           <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year:</span>
+            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year (all rows):</span>
             {yearsLoading ? (
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Loader2 size={12} className="animate-spin" /> Loading...
@@ -223,14 +284,16 @@ export const BulkAddSectionModal = ({ onClose, onSubmit }: Props) => {
 
         {/* Footer */}
         <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-4 border-t border-gray-100 shrink-0">
-          <Button type="button" onClick={onClose} variant="outline" className="w-full sm:w-auto">Cancel</Button>
+          <Button type="button" onClick={onClose} variant="outline" className="w-full sm:w-auto" disabled={saving}>
+            Cancel
+          </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={saving || rows.every((r) => !r.sectionName.trim())}
+            disabled={saving || validCount === 0}
             className="w-full sm:w-auto bg-indigo-600 text-white"
           >
-            {saving ? "Creating..." : `Create ${rows.filter((r) => r.sectionName.trim()).length} Section(s)`}
+            {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Creating…</> : `Create ${validCount} Section${validCount !== 1 ? "s" : ""}`}
           </Button>
         </div>
       </div>

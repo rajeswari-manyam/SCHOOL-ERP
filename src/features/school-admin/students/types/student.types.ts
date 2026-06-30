@@ -25,6 +25,7 @@ export interface Student {
   academicYear?: string;
   admittedOn?: string;
   // Parent/Contact
+  parentId?: string;
   fatherName?: string;
   fatherPhone?: string;
   fatherOccupation?: string;

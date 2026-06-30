@@ -119,6 +119,7 @@ export const useLeave = () => {
 
   const [leaveHistory, setLeaveHistory] = useState<LeaveApplication[]>([]);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
+  const [leaveTotals, setLeaveTotals] = useState({ totalAllocated: 0, totalUsed: 0, totalBalance: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,11 +132,12 @@ export const useLeave = () => {
     setLoading(true);
     setError(null);
     try {
-      const [bal, history] = await Promise.all([
+      const [balResult, history] = await Promise.all([
         leaveApi.getLeaveBalances(staffId, academicYearId),
         leaveApi.getLeaveHistory(staffId),
       ]);
-      setBalances(bal);
+      setBalances(Array.isArray(balResult.balances) ? balResult.balances : []);
+      setLeaveTotals({ totalAllocated: balResult.totalAllocated, totalUsed: balResult.totalUsed, totalBalance: balResult.totalBalance });
       setLeaveHistory(history);
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to load leave data";
@@ -192,16 +194,18 @@ export const useLeave = () => {
     if (!formValid || !form.type) return;
     setSubmitting(true);
     try {
-      const newApp = await leaveApi.applyLeave(form, staffId, totalDays);
+      const newApp = await leaveApi.applyLeave(form, staffId, totalDays, academicYearId);
       newApp.totalDays = totalDays;
       setLeaveHistory(prev => [newApp, ...prev]);
       setSubmitSuccess(true);
+      // Refresh balances so stat cards reflect the new leave
+      loadData();
     } catch (err: any) {
       console.error("submitLeave failed", err);
     } finally {
       setSubmitting(false);
     }
-  }, [form, formValid, totalDays, staffId]);
+  }, [form, formValid, totalDays, staffId, academicYearId, loadData]);
 
   // ── Cancel ───────────────────────────────────────────────────────────────
 
@@ -215,11 +219,13 @@ export const useLeave = () => {
       setLeaveHistory(prev =>
         prev.map(l => l.id === cancelId ? { ...l, status: "CANCELLED" as const } : l)
       );
+      // Refresh balances so stat cards restore the cancelled days
+      loadData();
     } catch (err: any) {
       console.error("doCancel failed", err);
     }
     setCancelId(null);
-  }, [cancelId]);
+  }, [cancelId, loadData]);
 
   // ── Calendar ─────────────────────────────────────────────────────────────
 
@@ -250,7 +256,7 @@ export const useLeave = () => {
     const year  = from.getFullYear();
     const month = from.getMonth();
     return buildCalendarMonth(year, month, [
-      { id: "__preview__", type: form.type!, fromDate: form.fromDate, toDate: form.toDate,
+      { id: "__preview__", type: (form.type ?? "CASUAL") as LeaveType, fromDate: form.fromDate, toDate: form.toDate,
         totalDays, reason: "", status: "PENDING", appliedOn: "" }
     ]);
   }, [form.fromDate, form.toDate, form.type, totalDays]);
@@ -262,6 +268,7 @@ export const useLeave = () => {
   return {
     // data
     balances,
+    leaveTotals,
     leaveHistory,
     loading,
     error,

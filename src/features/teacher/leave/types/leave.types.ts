@@ -57,6 +57,7 @@ export interface ApplyLeavePayload {
   total_days: number;
   reason: string;
   school_code: string;
+  academicYearId?: string;
 }
 
 export interface ApplyLeaveResponse {

@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
-import { studentsApi, buildClassSectionMaps, resolveStudentNames, MOCK_ATTENDANCE, MOCK_FEE_PAYMENTS, MOCK_DOCUMENTS } from "@/services/school-students.api";
+import { studentsApi, buildClassSectionMaps, resolveStudentNames, MOCK_ATTENDANCE, MOCK_DOCUMENTS } from "@/services/school-students.api";
+import { getPendingFeesByStudentId, getPaymentsByStudentId } from "@/services/fee.api";
+import type { StudentFeeSummaryResponse, PaymentsByStudentData } from "@/services/fee.api";
 import type { Student, AddStudentFormData, CreateStudentPayload, UpdateStudentPayload, Gender } from "../types/student.types";
 
 const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
@@ -166,18 +168,22 @@ export const useStudentProfile = (id: string) => {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [feeSummary, setFeeSummary] = useState<StudentFeeSummaryResponse["data"] | null>(null);
+  const [feePayments, setFeePayments] = useState<PaymentsByStudentData | null>(null);
 
   const retry = useCallback(() => {
     const timer = window.setTimeout(async () => {
       setLoading(true);
       setError(null);
       try {
-        const s = await withTimeout(
-          studentsApi.getById(id),
-          LOAD_TIMEOUT_MS,
-          `getStudentById(${id})`
-        );
+        const [s, pendingRes, paymentsRes] = await Promise.all([
+          withTimeout(studentsApi.getById(id), LOAD_TIMEOUT_MS, `getStudentById(${id})`),
+          getPendingFeesByStudentId(id).catch(() => null),
+          getPaymentsByStudentId(id).catch(() => null),
+        ]);
         setStudent(s ?? null);
+        setFeeSummary(pendingRes?.data ?? null);
+        setFeePayments(paymentsRes?.data ?? null);
         setLoading(false);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to load student";
@@ -195,8 +201,9 @@ export const useStudentProfile = (id: string) => {
 
   return {
     student, loading, error, retry,
+    feeSummary,
+    feePayments,
     attendance: MOCK_ATTENDANCE,
-    feePayments: MOCK_FEE_PAYMENTS,
     documents: MOCK_DOCUMENTS,
   };
 };

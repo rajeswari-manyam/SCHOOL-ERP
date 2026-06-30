@@ -5,7 +5,9 @@ import api from "@/config/axios";
 export interface HolidayFromApi {
   id: string;
   holidayname: string;
-  date: string;
+  from_date?: string;
+  to_date?: string;
+  date?: string;
   type: string;
   note: string;
   school_code: string;
@@ -16,7 +18,8 @@ export interface HolidayFromApi {
 
 export interface CreateHolidayPayload {
   holidayname: string;
-  date: string;
+  from_date: string;
+  to_date: string;
   type: string;
   note: string;
   school_code: string;
@@ -25,7 +28,8 @@ export interface CreateHolidayPayload {
 
 export interface UpdateHolidayPayload {
   holidayname?: string;
-  date?: string;
+  from_date?: string;
+  to_date?: string;
   type?: string;
   note?: string;
 }

@@ -76,35 +76,35 @@ const SectionCard = ({ section, date }: { section: RawSection; date: string }) =
       {/* Section header row */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-gray-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-gray-800">
             {class_name}-{section_name}
           </span>
-          <span className="text-xs text-gray-400">{date} · {marked_time}</span>
+          <span className="text-[10px] text-gray-400">{date} · {marked_time}</span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* Mini stats */}
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-              <UserCheck size={12} />
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+              <UserCheck size={11} />
               {summary.present_count}P
             </span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-red-500">
-              <UserX size={12} />
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-red-500">
+              <UserX size={11} />
               {summary.absent_count}A
             </span>
-            <span className="flex items-center gap-1 text-xs text-gray-400">
-              <Users size={12} />
+            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+              <Users size={11} />
               {summary.total_strength} total
             </span>
           </div>
           {expanded ? (
-            <ChevronUp size={14} className="text-gray-400" />
+            <ChevronUp size={12} className="text-gray-400" />
           ) : (
-            <ChevronDown size={14} className="text-gray-400" />
+            <ChevronDown size={12} className="text-gray-400" />
           )}
         </div>
       </button>
@@ -180,29 +180,29 @@ const MyHistoryTab = ({
 
       {/* ── Summary stats row ──────────────────────────────────────────────── */}
       {!isLoading && days.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           {[
             { label: "Present", count: totals.present, cls: "bg-emerald-50 border-emerald-100 text-emerald-700" },
             { label: "Absent",  count: totals.absent,  cls: "bg-red-50 border-red-100 text-red-600" },
             { label: "Total",   count: totals.total,   cls: "bg-indigo-50 border-indigo-100 text-indigo-700" },
           ].map((s) => (
-            <div key={s.label} className={`rounded-2xl border px-4 py-3 text-center ${s.cls}`}>
-              <p className="text-2xl font-extrabold">{s.count}</p>
-              <p className="text-[11px] font-semibold opacity-80 mt-0.5">{s.label}</p>
+            <div key={s.label} className={`rounded-xl border px-3 py-2 text-center ${s.cls}`}>
+              <p className="text-lg font-extrabold">{s.count}</p>
+              <p className="text-[10px] font-semibold opacity-80 mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
       )}
 
       {/* ── Date range picker ──────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
-        <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-          <Calendar size={14} className="text-indigo-500" />
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
+        <p className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+          <Calendar size={12} className="text-indigo-500" />
           Select Date Range
         </p>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
               From
             </label>
             <input
@@ -210,11 +210,11 @@ const MyHistoryTab = ({
               value={fromDate}
               max={toDate}
               onChange={(e) => onFromDateChange(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-gray-200 text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-colors bg-gray-50"
+              className="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-colors bg-gray-50"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
               To
             </label>
             <input
@@ -223,7 +223,7 @@ const MyHistoryTab = ({
               min={fromDate}
               max={today}
               onChange={(e) => onToDateChange(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-gray-200 text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-colors bg-gray-50"
+              className="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-colors bg-gray-50"
             />
           </div>
         </div>
@@ -243,17 +243,17 @@ const MyHistoryTab = ({
           {days.map((day) => (
             <div key={day.attendance_date} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               {/* Day header */}
-              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                <p className="text-sm font-bold text-gray-800">
+              <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-800">
                   {format(new Date(day.attendance_date), "EEEE, d MMMM yyyy")}
                 </p>
-                <span className="text-xs text-gray-400 font-semibold">
+                <span className="text-[10px] text-gray-400 font-semibold">
                   {day.total_sections} section{day.total_sections !== 1 ? "s" : ""}
                 </span>
               </div>
 
               {/* Sections */}
-              <div className="px-5 py-4 flex flex-col gap-3">
+              <div className="px-4 py-3 flex flex-col gap-2">
                 {day.sections.map((sec) => (
                   <SectionCard
                     key={`${sec.class_id}-${sec.section_id}`}

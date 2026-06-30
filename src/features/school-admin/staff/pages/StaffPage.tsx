@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TabKey, StaffMember } from "../types/staff.types";
-import type { LeaveRecord } from "@/services/school-staff.api";
+import type { LeaveRecord, LeaveBalanceResponse } from "@/services/school-staff.api";
+import { getStaffLeaveBalance } from "@/services/school-staff.api";
 import { useStaffStore, filterStaff } from "../store/usestore";
 import { useUIStore } from "@/store/uiStore";
 import { StatsCards } from "../components/StatCards";
@@ -33,6 +34,7 @@ export default function StaffManagementPage() {
     search,
     roleFilter,
     statusFilter,
+    selectedStaffId,
     showModal,
     staffData,
     leaveData,
@@ -43,8 +45,10 @@ export default function StaffManagementPage() {
     setSearch,
     setRoleFilter,
     setStatusFilter,
+    setSelectedStaffId,
     setShowModal,
     loadStaff,
+    loadLeaves,
     editStaffMember,
     setEditStaffMember,
     deleteStaff,
@@ -54,14 +58,30 @@ export default function StaffManagementPage() {
 
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [viewStaffId, setViewStaffId] = useState<string | null>(null);
+  const [leaveBalance, setLeaveBalance] = useState<LeaveBalanceResponse | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
 
   useEffect(() => {
     loadStaff();
   }, [academicYearId]);
 
+  useEffect(() => {
+    if (!selectedStaffId || !academicYearId) {
+      setLeaveBalance(null);
+      setBalanceLoading(false);
+      loadLeaves();
+      return;
+    }
+    setBalanceLoading(true);
+    getStaffLeaveBalance(selectedStaffId, academicYearId)
+      .then(setLeaveBalance)
+      .finally(() => setBalanceLoading(false));
+    loadLeaves(selectedStaffId);
+  }, [selectedStaffId, academicYearId]);
+
   const filteredStaff = useMemo(
-    () => filterStaff(staffData, activeTab, search, roleFilter, statusFilter),
-    [staffData, activeTab, search, roleFilter, statusFilter]
+    () => filterStaff(staffData, activeTab, search, roleFilter, statusFilter, selectedStaffId),
+    [staffData, activeTab, search, roleFilter, statusFilter, selectedStaffId]
   );
 
   const tabs = useMemo(
@@ -90,7 +110,7 @@ export default function StaffManagementPage() {
             <span className="text-indigo-600">Staff</span>
           </div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-none">Staff</h1>
+            <h1 className="text-xl font-bold text-gray-900 leading-none">Staff</h1>
             <span className="text-sm font-semibold text-gray-400">{staffData.length} staff members</span>
           </div>
         </div>
@@ -120,7 +140,16 @@ export default function StaffManagementPage() {
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
         {/* Stats cards — scroll horizontally on mobile if needed */}
         <div className="w-full overflow-x-auto">
-          <StatsCards stats={stats} />
+          <StatsCards
+            stats={stats}
+            leaveBalance={leaveBalance ? {
+              totalAllocated: leaveBalance.total_allocated,
+              totalUsed: leaveBalance.total_used,
+              totalBalance: leaveBalance.total_balance,
+            } : null}
+            selectedStaffName={selectedStaffId ? staffData.find(s => s.id === selectedStaffId)?.name : undefined}
+            loading={balanceLoading}
+          />
         </div>
 
         {/* Tabs — scroll horizontally on mobile */}
@@ -148,7 +177,9 @@ export default function StaffManagementPage() {
 
         {!error && !loading && activeTab === "leave-requests" ? (
           <div className="w-full overflow-x-auto">
-            <LeaveRequestsTab leaves={leaveData} />
+            <LeaveRequestsTab
+              leaves={selectedStaffId ? leaveData.filter(l => l.staffId === selectedStaffId) : leaveData}
+            />
           </div>
         ) : !error && !loading ? (
           <>
@@ -157,9 +188,12 @@ export default function StaffManagementPage() {
               search={search}
               roleFilter={roleFilter}
               statusFilter={statusFilter}
+              selectedStaffId={selectedStaffId}
+              staffList={staffData.map(s => ({ id: s.id, name: s.name }))}
               onSearch={setSearch}
               onRoleChange={setRoleFilter}
               onStatusChange={setStatusFilter}
+              onStaffChange={setSelectedStaffId}
             />
             {/* Table scrolls horizontally on mobile */}
             <div className="w-full overflow-x-auto">

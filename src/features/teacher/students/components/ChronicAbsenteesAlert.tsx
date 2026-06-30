@@ -17,7 +17,7 @@ const ChronicAbsenteesAlert = ({ students, onView }: Props) => {
           <AlertTriangle size={12} className="text-white" strokeWidth={2.5} />
         </div>
         <div>
-          <p className="text-sm font-extrabold text-red-700">
+          <p className="text-xs font-extrabold text-red-700">
             {students.length} Chronic {students.length === 1 ? "Absentee" : "Absentees"} — Below 75% Attendance
           </p>
           <p className="text-xs text-red-400 mt-0.5">These students require immediate attention and parent communication.</p>

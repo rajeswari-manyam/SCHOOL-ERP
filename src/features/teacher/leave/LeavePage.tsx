@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { AlertCircle, RefreshCw, Plus } from "lucide-react";
 import { useLeave } from "./hooks/useLeave";
 import LeaveBalanceCards from "./components/LeaveBalanceCards";
@@ -9,7 +9,7 @@ import CancelLeaveModal from "./components/CancelLeaveModal";
 
 const LeavePage = () => {
   const {
-    balances, leaveHistory, loading, error, retry,
+    balances, leaveTotals, leaveHistory, loading, error, retry,
     applyModalOpen, openApplyModal, closeApplyModal,
     form, patchForm,
     totalDays, needsMedicalCert, formValid,
@@ -22,13 +22,13 @@ const LeavePage = () => {
   const pendingCount = leaveHistory.filter((l) => l.status === "PENDING").length;
 
   return (
-    <div className="flex flex-col gap-6 min-h-full p-6">
+    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
 
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Leave</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-sm font-semibold text-gray-900">Leave</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">
             AY 2025–26 ·{" "}
             {pendingCount > 0 ? (
               <span className="text-amber-600 font-medium">{pendingCount} pending approval</span>
@@ -39,9 +39,9 @@ const LeavePage = () => {
         </div>
         <button
           onClick={openApplyModal}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors self-start sm:self-auto"
         >
-          <Plus size={15} strokeWidth={2.5} />
+          <Plus size={13} strokeWidth={2.5} />
           Apply for Leave
         </button>
       </div>
@@ -64,17 +64,13 @@ const LeavePage = () => {
       )}
 
       {/* Balance cards */}
-      <LeaveBalanceCards balances={balances} loading={loading} error={error} onRetry={retry} />
+      <LeaveBalanceCards balances={balances} leaveTotals={leaveTotals} leaveHistory={leaveHistory} loading={loading} error={error} onRetry={retry} />
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-3">
-          <LeaveHistoryTable applications={leaveHistory} loading={loading} onCancel={confirmCancel} />
-        </div>
-        <div className="xl:col-span-1">
-          <LeaveCalendar days={calendarDays} monthLabel={calMonthLabel} onPrev={prevMonth} onNext={nextMonth} />
-        </div>
-      </div>
+      {/* Leave history table */}
+      <LeaveHistoryTable applications={leaveHistory} loading={loading} onCancel={confirmCancel} />
+
+      {/* Calendar below the table */}
+      <LeaveCalendar days={calendarDays} monthLabel={calMonthLabel} onPrev={prevMonth} onNext={nextMonth} />
 
       <ApplyLeaveModal
         open={applyModalOpen}

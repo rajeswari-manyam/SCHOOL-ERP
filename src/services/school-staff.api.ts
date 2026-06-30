@@ -83,9 +83,13 @@ export interface LeaveRecord extends LeaveRequest {
 }
 
 /** GET /tenant/getallleaves — returns parsed leave records */
-export const fetchLeaves = async (): Promise<LeaveRecord[]> => {
+export const fetchLeaves = async (params?: { staff_id?: string; leave_type?: string; status?: string }): Promise<LeaveRecord[]> => {
   try {
-    const { data } = await api.get("/tenant/getallleaves");
+    const query: Record<string, string> = {};
+    if (params?.staff_id) query.staff_id = params.staff_id;
+    if (params?.leave_type) query.leave_type = params.leave_type;
+    if (params?.status) query.status = params.status;
+    const { data } = await api.get("/tenant/getallleaves", { params: query });
     const raw = extractArray(data);
     const records: LeaveRecord[] = [];
     for (const item of raw) {
@@ -266,6 +270,50 @@ const normalizeStaffMember = (item: any): StaffMember => {
   };
 };
 
+export interface LeaveSummaryEntry {
+  id: string;
+  leave_type: string;
+  allocated: number;
+  used: number;
+  balance: number;
+}
+
+export interface LeaveBalanceResponse {
+  status: boolean;
+  academic_year: string;
+  total_allocated: number;
+  total_used: number;
+  total_balance: number;
+  balance_list: LeaveSummaryEntry[];
+  used_list: { leave_type: string; total_days: number }[];
+}
+
+export const getStaffLeaveBalance = async (
+  staffId: string,
+  academicYearId?: string | null,
+): Promise<LeaveBalanceResponse | null> => {
+  try {
+    const params: Record<string, string> = { staff_id: staffId };
+    if (academicYearId) params.academic_year = academicYearId;
+    const { data } = await api.get("/tenant/leavebalance", { params });
+    if (data?.status) return data as LeaveBalanceResponse;
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+export const getStaffLeaveSummary = async (
+  staffId: string,
+  academicYearId?: string | null,
+): Promise<LeaveSummaryEntry[]> => {
+  const params: Record<string, string> = { staff_id: staffId };
+  if (academicYearId) params.academic_year = academicYearId;
+  const { data } = await api.get("/tenant/leavebalance", { params });
+  const list: LeaveSummaryEntry[] = Array.isArray(data?.balance_list) ? data.balance_list : [];
+  return list;
+};
+
 export const fetchStaffStats = async (): Promise<StaffStatsSummary> => {
   const [staffStatsRes, leaves] = await Promise.all([
     api.get<StaffStatsResponse>("/tenant/staffstats").catch(() => null),
@@ -318,7 +366,7 @@ export const fetchStaff = async (academicYearId?: string | null): Promise<StaffM
     }
   }
 
-  return list.map((item) => {
+  const members = list.map((item) => {
     const member = normalizeStaffMember(item);
     const nameKey = member.name.trim().toLowerCase();
     const leaveRequest: LeaveRequest | undefined =
@@ -326,8 +374,22 @@ export const fetchStaff = async (academicYearId?: string | null): Promise<StaffM
       leaveMap.get(member.employeeId) ??
       leaveMapByName.get(nameKey) ??
       member.leaveRequest;
-
     return { ...member, leaveRequest };
+  });
+
+  // Enrich leave balances from staffleavesummary in parallel
+  const summaries = await Promise.allSettled(
+    members.map((m) => getStaffLeaveSummary(m.id, academicYearId))
+  );
+
+  return members.map((m, i) => {
+    const result = summaries[i];
+    if (result.status !== "fulfilled" || result.value.length === 0) return m;
+    const entries = result.value;
+    const leaveBalance = entries.reduce((sum, e) => sum + (e.balance ?? 0), 0);
+    const leavesTaken = entries.reduce((sum, e) => sum + (e.used ?? 0), 0);
+    const leavesAllocated = entries.reduce((sum, e) => sum + (e.allocated ?? 0), 0);
+    return { ...m, leaveBalance, leavesTaken, leavesAllocated };
   });
 };
 

@@ -74,22 +74,23 @@ const mapLeaveBalance = (item: any): LeaveBalance => {
 };
 
 export const leaveApi = {
-  getLeaveBalances: async (staffId: string): Promise<LeaveBalance[]> => {
+  getLeaveBalances: async (staffId: string, academicYearId?: string): Promise<{
+    balances: LeaveBalance[];
+    totalAllocated: number;
+    totalUsed: number;
+    totalBalance: number;
+  }> => {
     try {
-      const { data } = await api.get("/tenant/leavebalance", { params: { staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac" } });
-      const items = extractArray(data);
-      if (items.length > 0) return items.map(mapLeaveBalance);
-
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        const obj = data as Record<string, unknown>;
-        const source = obj.data && typeof obj.data === "object" ? obj.data as Record<string, unknown> : obj;
-        const entries = Object.entries(source).filter(([_, v]) => v && typeof v === "object" && !Array.isArray(v));
-        if (entries.length > 0) {
-          return entries.map(([key, val]) => mapLeaveBalance({ ...(val as object), leave_type: key }));
-        }
-      }
-
-      return [];
+      const params: Record<string, string> = { staff_id: staffId };
+      if (academicYearId) params.academic_year = academicYearId;
+      const { data } = await api.get("/tenant/leavebalance", { params });
+      const items: any[] = Array.isArray(data?.balance_list) ? data.balance_list : extractArray(data);
+      return {
+        balances: items.map(mapLeaveBalance),
+        totalAllocated: Number(data?.total_allocated ?? 0),
+        totalUsed:      Number(data?.total_used      ?? 0),
+        totalBalance:   Number(data?.total_balance   ?? 0),
+      };
     } catch (err: any) {
       const ctx = err?.response?.data ?? err?.message;
       console.error("getLeaveBalances failed", { staffId, response: ctx });
@@ -111,16 +112,16 @@ export const leaveApi = {
     }
   },
 
-  applyLeave: async (form: ApplyLeaveFormData, staffId: string, totalDays?: number): Promise<LeaveApplication> => {
-    void staffId;
+  applyLeave: async (form: ApplyLeaveFormData, staffId: string, totalDays?: number, academicYearId?: string): Promise<LeaveApplication> => {
     const payload: ApplyLeavePayload = {
-      staff_id: "5b165170-41f3-489f-b7fe-dea209b55bac",
+      staff_id: staffId,
       leave_type: (form.type?.toLowerCase() ?? "casual") as ApplyLeavePayload["leave_type"],
       start_date: form.fromDate,
       end_date: form.toDate,
       total_days: totalDays ?? 0,
       reason: form.reason,
       school_code: SCHOOL_CODE,
+      ...(academicYearId && { academicYearId }),
     };
     try {
       const { data: res } = await api.post<ApplyLeaveResponse>("/tenant/createleaves", payload);

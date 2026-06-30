@@ -31,9 +31,9 @@ const TodayScheduleCard = ({ teacherId }: TodayScheduleCardProps) => {
   const errorMessage = isError ? "Failed to load today's schedule" : null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-extrabold text-gray-900">Today's Schedule</h3>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-bold text-gray-900">Today's Schedule</h3>
         {errorMessage && (
           <button
             onClick={() => refetch()}
@@ -67,13 +67,13 @@ const TodayScheduleCard = ({ teacherId }: TodayScheduleCardProps) => {
         <div className="flex flex-col gap-2">
           {periods.map((p) => (
             <div key={p.id}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${statusStyles[p.status]}`}>
-              <div className="flex-shrink-0 min-w-[80px]">
-                <p className={`text-xs font-bold ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.time}</p>
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${statusStyles[p.status]}`}>
+              <div className="flex-shrink-0 min-w-[72px]">
+                <p className={`text-[10px] font-bold ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.time}</p>
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold truncate ${p.status === "CURRENT" ? "text-white" : p.status === "COMPLETED" ? "text-gray-400" : "text-gray-800"}`}>{p.subject}</p>
-                <p className={`text-xs truncate ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.class} · {p.room}</p>
+                <p className={`text-xs font-bold truncate ${p.status === "CURRENT" ? "text-white" : p.status === "COMPLETED" ? "text-gray-400" : "text-gray-800"}`}>{p.subject}</p>
+                <p className={`text-[10px] truncate ${p.status === "CURRENT" ? "text-indigo-200" : "text-gray-400"}`}>{p.class} · {p.room}</p>
               </div>
               {p.status === "CURRENT" && (
                 <span className="flex-shrink-0 px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">NOW</span>

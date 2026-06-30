@@ -44,7 +44,7 @@ const ReportsPage = () => {
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="font-bold uppercase tracking-wider text-indigo-600">Reports</span>
           </nav>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Reports</h1>
+          <h1 className="text-xl font-bold text-gray-900">Reports</h1>
           <p className="text-sm text-gray-400 mt-0.5">Generate and download school reports</p>
         </div>
 

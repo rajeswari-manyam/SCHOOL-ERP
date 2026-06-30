@@ -4,6 +4,13 @@ import type {
   ApplyLeaveFormData, ApplyLeavePayload, ApplyLeaveResponse,
 } from "@/features/teacher/leave/types/leave.types";
 
+interface LeaveBalanceResult {
+  balances: LeaveBalance[];
+  totalAllocated: number;
+  totalUsed: number;
+  totalBalance: number;
+}
+
 const SCHOOL_CODE = import.meta.env.VITE_SCHOOL_CODE ?? localStorage.getItem("schoolcode");
 
 const extractArray = (data: unknown, depth = 0): any[] => {
@@ -74,14 +81,18 @@ const mapLeaveBalance = (item: any): LeaveBalance => {
 };
 
 export const leaveApi = {
-  getLeaveBalances: async (staffId: string, academicYearId?: string | null): Promise<LeaveBalance[]> => {
+  getLeaveBalances: async (staffId: string, academicYearId?: string | null): Promise<LeaveBalanceResult> => {
     try {
       const params: Record<string, string> = { staff_id: staffId };
       if (academicYearId) params.academic_year = academicYearId;
       const { data } = await api.get("/tenant/leavebalance", { params });
-      const items = extractArray(data);
-      if (items.length > 0) return items.map(mapLeaveBalance);
-      return [];
+      const items: any[] = Array.isArray(data?.balance_list) ? data.balance_list : extractArray(data);
+      return {
+        balances: items.map(mapLeaveBalance),
+        totalAllocated: Number(data?.total_allocated ?? 0),
+        totalUsed:      Number(data?.total_used      ?? 0),
+        totalBalance:   Number(data?.total_balance   ?? 0),
+      };
     } catch (err: any) {
       const ctx = err?.response?.data ?? err?.message;
       console.error("getLeaveBalances failed", { staffId, response: ctx });
@@ -103,7 +114,7 @@ export const leaveApi = {
     }
   },
 
-  applyLeave: async (form: ApplyLeaveFormData, staffId: string, totalDays?: number): Promise<LeaveApplication> => {
+  applyLeave: async (form: ApplyLeaveFormData, staffId: string, totalDays?: number, academicYearId?: string): Promise<LeaveApplication> => {
     const payload: ApplyLeavePayload = {
       staff_id: staffId,
       leave_type: (form.type?.toLowerCase() ?? "casual") as ApplyLeavePayload["leave_type"],
@@ -112,6 +123,7 @@ export const leaveApi = {
       total_days: totalDays ?? 0,
       reason: form.reason,
       school_code: SCHOOL_CODE,
+      ...(academicYearId && { academicYearId }),
     };
     try {
       const { data: res } = await api.post<ApplyLeaveResponse>("/tenant/createleaves", payload);

@@ -34,6 +34,8 @@ export interface StaffMember {
   subjects: string[];
 
   leaveBalance: number;
+  leavesTaken?: number;
+  leavesAllocated?: number;
   isTeaching: boolean;
 
   leaveRequest?: LeaveRequest;

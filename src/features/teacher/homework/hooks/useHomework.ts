@@ -61,11 +61,12 @@ const transform = (h: Homework): HomeworkItem => ({
   submittedCount: 0,
   totalCount:     0,
   waNotifyStatus: "NOT_SENT" as WANotifyStatus,
-  status:         toStatus(h.submission_date, h.is_published),
-  createdAt:      h.createdAt,
-  isPublished:    h.is_published,
-  academicYearId: h.academicYearId,
-  teacher_id:     h.teacher_id,
+  status:          toStatus(h.submission_date, h.is_published),
+  createdAt:       h.createdAt,
+  isPublished:     h.is_published,
+  academicYearId:  h.academicYearId,
+  teacher_id:      h.teacher_id,
+  submission_type: h.submission_type,
 });
 
 // ── Teacher ID resolution (cached) ────────────────────────────────────────────

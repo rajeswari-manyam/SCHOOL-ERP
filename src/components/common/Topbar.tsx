@@ -24,7 +24,6 @@ const Topbar = ({
   const [yearOpen, setYearOpen] = useState(false);
   const yearRef = useRef<HTMLDivElement>(null);
 
-  // Responsive left offset mirrors the sidebar width
   let leftOffset = "left-0 md:left-[260px]";
   if (!sidebarOpen) leftOffset = "left-0 md:left-0";
   else if (collapsed) leftOffset = "left-0 md:left-16";
@@ -50,13 +49,13 @@ const Topbar = ({
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-40 h-12 sm:h-14",
+        "fixed top-0 right-0 z-40 h-10 sm:h-12",
         "bg-white border-b border-slate-200 shadow-sm",
         "transition-all duration-300 ease-in-out",
         leftOffset
       )}
     >
-      <div className="h-full flex items-center px-2 sm:px-3 md:px-4 lg:px-8 w-full gap-2 sm:gap-3 md:gap-4">
+      <div className="h-full flex items-center px-1 sm:px-2 md:px-3 lg:px-6 w-full gap-1 sm:gap-2 md:gap-3">
 
         {/* ── Sidebar toggle button ── */}
         <button
@@ -64,35 +63,35 @@ const Topbar = ({
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
             "flex shrink-0 items-center justify-center",
-            "h-8 w-8 rounded-xl",
+            "h-7 w-7 rounded-lg",
             "bg-[#f4f7fd] text-[#6c7380]",
             "hover:bg-[#e9eef8] hover:text-slate-800",
             "transition-colors duration-150",
             "outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           )}
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="h-3.5 w-3.5" />
         </button>
 
         {/* ── Left: breadcrumb + search ── */}
-        <div className="flex flex-1 min-w-0 items-center gap-2 sm:gap-3 md:gap-4">
+        <div className="flex flex-1 min-w-0 items-center gap-1 sm:gap-2 md:gap-3">
 
           {/* Breadcrumb */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 shrink-0">
             {breadcrumbs.map((crumb, i) => {
               const isLast = i === breadcrumbs.length - 1;
               return (
-                <div key={i} className="flex items-center gap-1 sm:gap-2 min-w-0">
-                  {i > 0 && <span className="text-slate-300 hidden sm:inline">/</span>}
+                <div key={i} className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                  {i > 0 && <span className="text-slate-300 hidden sm:inline text-xs">/</span>}
                   {crumb.href && !isLast ? (
                     <button
                       onClick={() => onBreadcrumb(crumb.href!)}
-                      className="text-xs sm:text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors truncate hover:underline"
+                      className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors truncate hover:underline"
                     >
                       {crumb.label}
                     </button>
                   ) : (
-                    <span className="text-xs sm:text-base md:text-lg font-semibold text-slate-700 truncate">
+                    <span className="text-xs sm:text-sm md:text-base font-semibold text-slate-700 truncate">
                       {crumb.label}
                     </span>
                   )}
@@ -102,58 +101,58 @@ const Topbar = ({
           </div>
 
           {/* Search */}
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 rounded-lg sm:rounded-2xl bg-[#f4f7fd] px-2 sm:px-3 md:px-4 py-1 sm:py-2 md:py-2.5">
-            <FaSearch className="text-[#b0b8c1] text-xs sm:text-sm flex-shrink-0" />
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg bg-[#f4f7fd] px-2 sm:px-2.5 py-1">
+            <FaSearch className="text-[#b0b8c1] text-[10px] sm:text-xs flex-shrink-0" />
             <input
               type="text"
               placeholder="Search..."
-              className="min-w-0 flex-1 bg-transparent outline-none text-xs sm:text-sm text-slate-700 placeholder-[#b0b8c1]"
+              className="min-w-0 flex-1 bg-transparent outline-none text-[11px] sm:text-xs text-slate-700 placeholder-[#b0b8c1]"
             />
           </div>
         </div>
 
         {/* ── Right: status + bell + year ── */}
-        <div className="flex flex-nowrap items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
-          <span className="hidden md:flex items-center gap-2 rounded-lg md:rounded-xl bg-[#f4f7fd] px-3 md:px-4 py-1.5 md:py-2 font-semibold text-xs md:text-sm text-[#6c7380] whitespace-nowrap">
-            <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-[#3fe0b0] inline-block" />
+        <div className="flex flex-nowrap items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
+          <span className="hidden md:flex items-center gap-1.5 rounded-lg bg-[#f4f7fd] px-2.5 py-1 font-semibold text-[11px] text-[#6c7380] whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#3fe0b0] inline-block" />
             <span className="hidden lg:inline">WhatsApp Connected</span>
             <span className="lg:hidden">Connected</span>
           </span>
 
-          <button className="relative rounded-lg sm:rounded-xl bg-[#f4f7fd] p-1.5 sm:p-2 text-[#6c7380] transition hover:bg-[#e9eef8] flex-shrink-0">
-            <FaBell className="text-sm sm:text-base md:text-lg" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+          <button className="relative rounded-lg bg-[#f4f7fd] p-1 text-[#6c7380] transition hover:bg-[#e9eef8] flex-shrink-0">
+            <FaBell className="text-xs sm:text-sm" />
+            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
           </button>
 
-          <div className="hidden md:block h-5 sm:h-6 border-l border-[#e5e7eb]" />
+          <div className="hidden md:block h-4 border-l border-[#e5e7eb]" />
 
           <div className="relative hidden md:block" ref={yearRef}>
             <button
               onClick={() => !loading && setYearOpen(!yearOpen)}
               disabled={loading && years.length === 0}
-              className="flex items-center gap-1.5 rounded-lg md:rounded-xl bg-[#f4f7fd] px-2 md:px-4 py-1.5 md:py-2 font-semibold text-xs md:text-sm text-[#2d3748] whitespace-nowrap hover:bg-[#e9eef8] transition-colors min-w-0"
+              className="flex items-center gap-1 rounded-lg bg-[#f4f7fd] px-2.5 py-1 font-semibold text-[11px] text-[#2d3748] whitespace-nowrap hover:bg-[#e9eef8] transition-colors min-w-0"
             >
               {loading ? (
-                <Loader2 size={14} className="animate-spin text-[#6c7380]" />
+                <Loader2 size={12} className="animate-spin text-[#6c7380]" />
               ) : error && years.length === 0 ? (
-                <span className="text-red-500 text-[10px]">Year unavailable</span>
+                <span className="text-red-500 text-[9px]">Year unavailable</span>
               ) : (
                 <>
-                  <span className="truncate max-w-[100px]">{activeYear?.yearName || "Select Year"}</span>
-                  <span className="text-[#6c7380] text-[10px]">▼</span>
+                  <span className="truncate max-w-[80px]">{activeYear?.yearName || "Select Year"}</span>
+                  <span className="text-[#6c7380] text-[9px]">▼</span>
                 </>
               )}
             </button>
 
             {yearOpen && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
                 {error && (
-                  <div className="px-3 py-2 text-[11px] text-red-500 border-b border-gray-100 flex items-center gap-2">
+                  <div className="px-3 py-1.5 text-[10px] text-red-500 border-b border-gray-100 flex items-center gap-2">
                     <span className="flex-1 truncate">{error}</span>
                     <button onClick={retry} className="text-indigo-600 hover:text-indigo-700 font-semibold shrink-0">Retry</button>
                   </div>
                 )}
-                <div className="max-h-48 overflow-y-auto">
+                <div className="max-h-40 overflow-y-auto">
                   {years.map((year) => {
                     const isActive = activeYear?.id === year.id;
                     return (
@@ -163,27 +162,27 @@ const Topbar = ({
                           switchYear(year);
                           setYearOpen(false);
                         }}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors text-left ${
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] transition-colors text-left ${
                           isActive
                             ? "bg-indigo-50 text-indigo-700 font-semibold"
                             : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           isActive ? "border-indigo-500" : "border-gray-300"
                         }`}>
-                          {isActive && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
+                          {isActive && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
                         </span>
                         <span className="flex-1 truncate">{year.yearName}</span>
                         {year.active && (
-                          <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Active</span>
+                          <span className="text-[9px] bg-green-100 text-green-700 px-1 py-0.5 rounded-full font-medium">Active</span>
                         )}
                       </button>
                     );
                   })}
                 </div>
                 {years.length === 0 && !loading && !error && (
-                  <div className="px-3 py-4 text-center text-[11px] text-gray-400">No academic years found</div>
+                  <div className="px-3 py-3 text-center text-[10px] text-gray-400">No academic years found</div>
                 )}
               </div>
             )}

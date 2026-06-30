@@ -4,7 +4,7 @@ import { Upload, Check, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApplyLeaveFormData, LeaveBalance } from "../types/leave.types";
+import type { ApplyLeaveFormData, LeaveBalance, LeaveType } from "../types/leave.types";
 import { LEAVE_TYPE_META } from "../hooks/useLeave";
 import LeaveCalendarPreview from "./LeaveCalendarPreview";
 import type { LeaveCalendarDay } from "../types/leave.types";
@@ -100,9 +100,13 @@ const ApplyLeaveModal = ({
                     Leave Type
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {balances.map((b) => {
-                      const type = b.type;
+                    {(
+                      Array.isArray(balances) && balances.length > 0
+                        ? balances.map(b => b.type)
+                        : (Object.keys(LEAVE_TYPE_META) as LeaveType[])
+                    ).map((type) => {
                       const m = LEAVE_TYPE_META[type];
+                      if (!m) return null;
                       const selected = form.type === type;
                       return (
                         <Button
@@ -113,7 +117,6 @@ const ApplyLeaveModal = ({
                           size="sm"
                           className={[
                             "flex items-center gap-2.5 px-4 rounded-xl text-sm font-semibold transition-all text-left",
-                            // Taller tap target on mobile
                             "h-11 sm:h-10",
                             selected
                               ? `${m.bg} ${m.border} ${m.color} shadow-sm`

@@ -126,7 +126,7 @@ export interface CreateStaffAttendancePayload {
   }[];
 }
 
-export type AttendanceTab = "today" | "history" | "holiday" | "staff";
+export type AttendanceTab = "today" | "history" | "holiday" | "staff" | "leaves";
 
 export interface CreateHolidayPayload {
   holidayname: string;

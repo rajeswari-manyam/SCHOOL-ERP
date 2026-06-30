@@ -8,7 +8,7 @@ declare module "axios" {
   }
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.6:4000";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.15:4000";
 
 export const api = axios.create({
   baseURL: BASE_URL,

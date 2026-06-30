@@ -65,6 +65,10 @@ export interface BulkAddSectionsResponse {
     totalStrength: number;
     classTeacherId: string;
   }>;
+  skippedRecords?: Array<{
+    sectionName: string;
+    reason: string;
+  }>;
 }
 
 export interface BulkAddSubjectsResponse {

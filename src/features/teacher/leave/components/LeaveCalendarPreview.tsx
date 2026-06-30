@@ -16,9 +16,11 @@ const LeaveCalendarPreview = ({ days, monthLabel }: Props) => {
 
   const getDayClass = (day: LeaveCalendarDay): string => {
     if (day.isToday) return "bg-indigo-600 text-white font-bold rounded-md";
-    if (day.isLeave && day.leaveType) {
-      const m = LEAVE_TYPE_META[day.leaveType];
-      return `${m.bg} ${m.color} font-bold rounded-md border ${m.border}`;
+    if (day.isLeave) {
+      const m = day.leaveType ? LEAVE_TYPE_META[day.leaveType] : null;
+      return m
+        ? `${m.bg} ${m.color} font-bold rounded-md border ${m.border}`
+        : "bg-sky-100 text-sky-700 font-bold rounded-md border border-sky-200";
     }
     if (day.isHoliday) return "bg-emerald-50 text-emerald-500 rounded-md";
     if (day.isWeekend) return "text-gray-300";

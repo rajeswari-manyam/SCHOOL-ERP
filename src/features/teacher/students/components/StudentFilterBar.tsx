@@ -12,7 +12,7 @@ interface Props {
 const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExport }: Props) => {
   const set = (patch: Partial<MyStudentsFilters>) => onChange({ ...filters, ...patch });
   const isFiltered = filters.search || filters.feeStatus !== "ALL" || filters.attendanceRange !== "ALL";
-  const inputCls = "h-10 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition";
+  const inputCls = "h-8 border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -54,14 +54,14 @@ const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExpo
       </select>
 
       {/* Count badge */}
-      <span className="text-sm text-gray-500 whitespace-nowrap shrink-0">
+      <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
         {isFiltered ? `${filteredCount} of ${totalCount}` : `${totalCount} students`}
       </span>
 
       {/* Export */}
       <button
         onClick={onExport}
-        className="flex items-center gap-2 h-10 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
+        className="flex items-center gap-2 h-8 px-3 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
       >
         <Download size={14} strokeWidth={2} />
         Export

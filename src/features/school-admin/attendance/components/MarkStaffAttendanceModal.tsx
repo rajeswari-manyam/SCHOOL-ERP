@@ -135,6 +135,7 @@ const MarkStaffAttendanceModal = () => {
                 id="staff-att-date"
                 type="date"
                 value={date}
+                max={new Date().toISOString().split("T")[0]}
                 onChange={(e) => setDate(e.target.value)}
                 className="mt-2 w-48"
               />

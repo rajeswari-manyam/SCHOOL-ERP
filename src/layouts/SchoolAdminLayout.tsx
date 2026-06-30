@@ -123,7 +123,7 @@ export const SchoolAdminLayout = () => {
       />
       <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-12 sm:mt-14">
+        <main ref={mainRef} className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 pt-3 md:pt-4 pb-8 mt-12 sm:mt-14">
           <Outlet />
         </main>
       </div>

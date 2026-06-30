@@ -95,8 +95,9 @@ export const getAllExamTimetables = async (params: {
   class_id?: string;
   subject_id?: string;
   exam_date?: string;
- academicYearId?: string;
+  academicYearId?: string;
   section_id?: string;
+  examnameid?: string;
 }) => {
   const res = await api.get("/tenant/getallexams-timetable", {
     params,
@@ -170,4 +171,43 @@ export const getExamTimetableByTeacherId = async (
     `/tenant/examtimetableByTeacherId/${teacherId}`,
   );
   return data;
+};
+
+/** ================= TODAY'S EXAM TIMETABLE (by date) ================= */
+
+export interface TodayExamItem {
+  id: string;
+  section_id: string;
+  section_name: string;
+  subject_id: string;
+  subject_name: string;
+  exam_id: string;
+  exam_name: string;
+  teacher_id: string;
+  teacher_name: string;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  room_no: string;
+}
+
+export interface TodayExamClass {
+  class_id: string;
+  class_name: string;
+  total_exams: number;
+  exams: TodayExamItem[];
+}
+
+export interface TodayExamTimetableResponse {
+  status: boolean;
+  message: string;
+  exam_date: string;
+  total_classes: number;
+  total_exams: number;
+  data: TodayExamClass[];
+}
+
+export const getTodayExamTimetable = async (date: string): Promise<TodayExamTimetableResponse> => {
+  const res = await api.get("/tenant/todayexamtimetable", { params: { date } });
+  return res.data;
 };

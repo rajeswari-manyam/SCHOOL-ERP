@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/config/axios";
-import { createTimetable as createServiceSlot, bulkCreateTimetable, getTimetableById, getAllTimetable } from "@/services/timetable.api";
-import type { TimetablePayload, BulkCreateTimetablePayload, TimetableSlot as ServiceTimetableSlot } from "@/services/timetable.api";
+import { createTimetable as createServiceSlot, bulkCreateTimetable, getTimetableById, getAllTimetable, getRemainingPeriods } from "@/services/timetable.api";
+import type { TimetablePayload, BulkCreateTimetablePayload, TimetableSlot as ServiceTimetableSlot, RemainingPeriodDaySummary } from "@/services/timetable.api";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import type { ClassRecord } from "@/services/class.api";
 import { getAllStaff } from "@/services/staff.api";
@@ -13,8 +13,9 @@ import {
   deleteExamTimetable,
   updateExamTimetable,
   bulkCreateExamTimetable,
+  getTodayExamTimetable,
 } from "@/services/examtimetable.api";
-import type { BulkExamTimetablePayload } from "@/services/examtimetable.api";
+import type { BulkExamTimetablePayload, TodayExamTimetableResponse } from "@/services/examtimetable.api";
 import { getAllSubjects } from "@/services/subject.api";
 import type {
   EditPeriodPayload,
@@ -37,6 +38,9 @@ export const TIMETABLE_KEYS = {
     [...TIMETABLE_KEYS.all, "page", className, sectionName, academicYear] as const,
   classTt:      (classId: string) => [...TIMETABLE_KEYS.all, "class", classId] as const,
   exam:         () => [...TIMETABLE_KEYS.all, "exam"] as const,
+  examFiltered: (classId: string, sectionId: string, examNameId: string) =>
+    [...TIMETABLE_KEYS.all, "exam-filtered", classId, sectionId, examNameId] as const,
+  todayExam:    (date: string) => [...TIMETABLE_KEYS.all, "today-exam", date] as const,
   subjects:     () => [...TIMETABLE_KEYS.all, "subjects"] as const,
   teachers:     () => [...TIMETABLE_KEYS.all, "teachers"] as const,
   classes:      () => [...TIMETABLE_KEYS.all, "classes"] as const,
@@ -60,21 +64,123 @@ const normDay = (raw: string | undefined): DayOfWeek | null => {
   return DAY_NAME_MAP[raw.toUpperCase().trim()] ?? DAY_NAME_MAP[raw.trim()] ?? null;
 };
 
+// ─── Shared period time map ──────────────────────────────────────────────────────
+const TIME_SLOT_MAP: Record<number, { start_time: string; end_time: string }> = {
+  1: { start_time: "09:00", end_time: "09:45" },
+  2: { start_time: "09:45", end_time: "10:30" },
+  3: { start_time: "10:30", end_time: "11:15" },
+  4: { start_time: "11:15", end_time: "12:00" },
+  5: { start_time: "12:00", end_time: "12:45" },
+  6: { start_time: "13:30", end_time: "14:15" },
+  7: { start_time: "14:15", end_time: "15:00" },
+  8: { start_time: "15:00", end_time: "15:45" },
+};
+
+const timeToMins = (t: string): number => {
+  const [h, m] = t.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+
+const parseTimeSloat = (ts: string): { start: string; end: string } => {
+  // "09:00 AM - 09:45 AM" -> { start: "09:00", end: "09:45" }
+  const parts = ts.split(/\s*-\s*/);
+  const toHHMM = (raw: string): string => {
+    const m = (raw ?? "").trim().match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+    if (!m) return "";
+    let h = parseInt(m[1], 10);
+    const min = m[2];
+    const ampm = m[3]?.toUpperCase();
+    if (ampm === "PM" && h !== 12) h += 12;
+    if (ampm === "AM" && h === 12) h = 0;
+    return `${String(h).padStart(2, "0")}:${min}`;
+  };
+  return { start: toHHMM(parts[0] ?? ""), end: toHHMM(parts[1] ?? "") };
+};
+
+// ─── Build full grid from remaining-periods API ───────────────────────────────────
+// Shows ALL periods (assigned + empty) plus break/lunch columns.
+const buildSlotsFromRemainingPeriods = (weekSummary: RemainingPeriodDaySummary[]): TimetableSlot[] => {
+  type SlotData = {
+    startTime: string;
+    endTime: string;
+    cells: Partial<Record<DayOfWeek, { subject: string; teacherName: string; room?: string }>>;
+  };
+
+  const slotMap = new Map<number, SlotData>();
+  let breakStart = "";
+  let breakEnd = "";
+  let lunchStart = "";
+  let lunchEnd = "";
+
+  for (const day of weekSummary) {
+    const gridDay = DAY_NAME_MAP[day.day_of_week.toUpperCase()] ?? DAY_NAME_MAP[day.day_of_week];
+    if (!gridDay) continue;
+
+    if (!breakStart && day.break) {
+      breakStart = day.break.start.slice(0, 5);
+      breakEnd   = day.break.end.slice(0, 5);
+    }
+    if (!lunchStart && day.lunch) {
+      lunchStart = day.lunch.start.slice(0, 5);
+      lunchEnd   = day.lunch.end.slice(0, 5);
+    }
+
+    // Register every period slot (total_periods tells us the full count)
+    for (let pno = 1; pno <= day.total_periods; pno++) {
+      if (!slotMap.has(pno)) {
+        slotMap.set(pno, {
+          startTime: TIME_SLOT_MAP[pno]?.start_time ?? "",
+          endTime:   TIME_SLOT_MAP[pno]?.end_time   ?? "",
+          cells: {},
+        });
+      }
+    }
+
+    // Fill assigned cells (and use the API's time as the authoritative source)
+    for (const ap of day.assigned_periods) {
+      const { start, end } = parseTimeSloat(ap.time_sloat);
+      const slot = slotMap.get(ap.period_no);
+      if (slot) {
+        if (start) slot.startTime = start;
+        if (end)   slot.endTime   = end;
+        slot.cells[gridDay] = { subject: ap.subject_name, teacherName: ap.teacher_name };
+      }
+    }
+  }
+
+  // Build sorted period slots
+  const slots: TimetableSlot[] = [...slotMap.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([pno, s]) => ({
+      kind:      "PERIOD" as const,
+      periodNo:  pno,
+      startTime: s.startTime,
+      endTime:   s.endTime,
+      cells:     s.cells,
+    }));
+
+  // Insert BREAK / LUNCH at the correct chronological position
+  const insertSeparator = (kind: "BREAK" | "LUNCH", start: string, end: string) => {
+    const mins = timeToMins(start);
+    const idx = slots.findIndex(s => s.kind === "PERIOD" && s.startTime && timeToMins(s.startTime) >= mins);
+    slots.splice(idx === -1 ? slots.length : idx, 0, {
+      kind,
+      startTime: start,
+      endTime:   end,
+      label:     `${kind === "BREAK" ? "Break" : "Lunch"} · ${start}–${end}`,
+    });
+  };
+
+  if (breakStart) insertSeparator("BREAK", breakStart, breakEnd);
+  if (lunchStart) insertSeparator("LUNCH", lunchStart, lunchEnd);
+
+  return slots;
+};
+
 // ─── Grid builder ────────────────────────────────────────────────────────────────
 // Groups flat API rows (one row per period+day) into TimetableSlot objects
 // where each slot has ALL day-cells populated.
 const buildSlotsFromRaw = (rawList: GetAllTimetableRawItem[]): TimetableSlot[] => {
-  // Time slot map for getting start/end times by period number
-  const TIME_SLOT_MAP: Record<number, { start_time: string; end_time: string }> = {
-    1: { start_time: "09:00", end_time: "09:45" },
-    2: { start_time: "09:45", end_time: "10:30" },
-    3: { start_time: "10:30", end_time: "11:15" },
-    4: { start_time: "11:15", end_time: "12:00" },
-    5: { start_time: "12:00", end_time: "12:45" },
-    6: { start_time: "13:30", end_time: "14:15" },
-    7: { start_time: "14:15", end_time: "15:00" },
-    8: { start_time: "15:00", end_time: "15:45" },
-  };
 
   // Map: periodNo → slot
   const slotMap = new Map<
@@ -207,21 +313,31 @@ export const useTimetablePage = (classId: string, classLabel: string, sectionId:
   useQuery({
     queryKey: TIMETABLE_KEYS.page(classId, sectionId, academicYear),
     queryFn: async (): Promise<TimetablePageResponse> => {
-      let rawList: GetAllTimetableRawItem[] = [];
+      let slots: TimetableSlot[] = [];
+      let classTeacher = "";
+
+      // Primary: use remaining-periods to get ALL periods (assigned + empty) + breaks
       try {
-        // API: GET /tenant/getalltimetable?class_id=<UUID>&section_id=<UUID>
-        const res = await getAllTimetable(classId, sectionId);
-        rawList = extractArray(res, "data", "timetables", "result", "entries");
+        const res = await getRemainingPeriods(classId, sectionId);
+        if (res.status && res.week_summary?.length) {
+          slots = buildSlotsFromRemainingPeriods(res.week_summary);
+        }
       } catch {
-        // fallback to empty grid on error
+        // ignore — fall through to backup
       }
 
-      const slots = buildSlotsFromRaw(rawList);
-
-      const classTeacher =
-        rawList.find((r) => r.teacher?.name)?.teacher?.name ??
-        rawList.find((r) => r.teachername)?.teachername ??
-        "";
+      // Secondary: getalltimetable — fetch class teacher name + fallback slots
+      try {
+        const res = await getAllTimetable(classId, sectionId);
+        const rawList: GetAllTimetableRawItem[] = extractArray(res, "data", "timetables", "result", "entries");
+        classTeacher =
+          rawList.find((r) => r.teacher?.name)?.teacher?.name ??
+          rawList.find((r) => r.teachername)?.teachername ??
+          "";
+        if (slots.length === 0) slots = buildSlotsFromRaw(rawList);
+      } catch {
+        // ignore
+      }
 
       return {
         classTabs: [{ id: classId, label: classLabel }],
@@ -273,6 +389,33 @@ export const useExamTimetable = () =>
       }
     },
     staleTime: 1000 * 60 * 5,
+  });
+
+// ─── Filtered exam timetable (by class + section + exam name) ──────────────────
+import type { ExamTimetableListItem } from "@/services/examtimetable.api";
+
+export const useFilteredExamTimetable = (
+  classId: string,
+  sectionId: string,
+  examNameId: string,
+) =>
+  useQuery({
+    queryKey: TIMETABLE_KEYS.examFiltered(classId, sectionId, examNameId),
+    queryFn: async (): Promise<ExamTimetableListItem[]> => {
+      const res = await getAllExamTimetable({ class_id: classId, section_id: sectionId, examnameid: examNameId });
+      return Array.isArray(res) ? res : [];
+    },
+    enabled: !!classId && !!sectionId && !!examNameId,
+    staleTime: 1000 * 60 * 2,
+  });
+
+// ─── Today's exam timetable (by date) ──────────────────────────────────────────
+export const useTodayExamTimetable = (date: string) =>
+  useQuery({
+    queryKey: TIMETABLE_KEYS.todayExam(date),
+    queryFn: (): Promise<TodayExamTimetableResponse> => getTodayExamTimetable(date),
+    enabled: !!date,
+    staleTime: 1000 * 60 * 2,
   });
 
 // ─── Subject options ────────────────────────────────────────────────────────────
@@ -497,7 +640,7 @@ export const useUpdateExamTimetable = () => {
     mutationFn: ({ id, data }: { id: string; data: CreateExamTimetablePayload }) =>
       updateExamTimetable(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
       toast.success("Exam timetable updated successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -524,7 +667,7 @@ export const useDeleteExam = () => {
   return useMutation({
     mutationFn: (examId: string) => deleteExamTimetable(examId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
       toast.success("Exam deleted successfully");
     },
     onError: (err: Error) => toast.error(err.message),

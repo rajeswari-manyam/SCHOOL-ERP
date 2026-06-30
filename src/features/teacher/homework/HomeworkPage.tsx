@@ -55,11 +55,12 @@ const transformByClass = (h: Homework): HomeworkItem => ({
   submittedCount: 0,
   totalCount:     0,
   waNotifyStatus: "NOT_SENT" as WANotifyStatus,
-  status:         toStatus(h.submission_date, h.is_published),
-  createdAt:      h.createdAt,
-  isPublished:    h.is_published,
-  academicYearId: h.academicYearId,
-  teacher_id:     h.teacher_id,
+  status:          toStatus(h.submission_date, h.is_published),
+  createdAt:       h.createdAt,
+  isPublished:     h.is_published,
+  academicYearId:  h.academicYearId,
+  teacher_id:      h.teacher_id,
+  submission_type: h.submission_type,
 });
 
 // ─── Skeletons / States ───────────────────────────────────────────────────────
@@ -237,16 +238,17 @@ const HomeworkPage = () => {
   // ── Payload builders ──────────────────────────────────────────────────────
   const toCreatePayload = useCallback(
     (values: AssignHomeworkFormValues): CreateHomeworkPayload => ({
-      class_id:       values.class_id,
-      section_id:     values.section_id,
-      subject_id:     values.subject_id,
-      academicYearId: values.academicYearId,
-      teacher_id:     teacherId,
-      title:          values.title,
-      description:    values.description,
+      class_id:        values.class_id,
+      section_id:      values.section_id,
+      subject_id:      values.subject_id,
+      academicYearId:  values.academicYearId,
+      teacher_id:      teacherId,
+      title:           values.title,
+      description:     values.description,
       submission_date: values.submission_date,
-      attachments:    values.attachments ?? [],
-      is_published:   values.is_published,
+      attachments:     values.attachments ?? [],
+      is_published:    values.is_published,
+      submission_type: values.submission_type,
     }),
     [teacherId],
   );
@@ -261,6 +263,7 @@ const HomeworkPage = () => {
       submission_date: values.submission_date,
       attachments:     values.attachments ?? [],
       is_published:    values.is_published,
+      submission_type: values.submission_type,
     }),
     [],
   );
@@ -354,15 +357,15 @@ const HomeworkPage = () => {
   const isSubmitting = isCreating || isUpdating;
 
   return (
-    <div className="flex flex-col gap-0 min-h-full">
+    <div className="flex flex-col gap-0 min-h-full pt-4">
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-5 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-sm font-semibold text-gray-900">
             Homework & Study Materials
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500 mt-0.5">
             Manage assignments, track submissions and share resources
           </p>
         </div>
@@ -370,16 +373,16 @@ const HomeworkPage = () => {
           <Button
             variant="outline"
             onClick={() => setModal({ type: "uploadMaterial" })}
-            className="flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <Upload size={15} className="text-current" />
+            <Upload size={13} className="text-current" />
             Upload Material
           </Button>
           <Button
             onClick={() => setModal({ type: "assign" })}
-            className="flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
           >
-            <Plus size={15} strokeWidth={2.5} className="text-current" />
+            <Plus size={13} strokeWidth={2.5} className="text-current" />
             Assign Homework
           </Button>
         </div>
@@ -639,6 +642,7 @@ const HomeworkPage = () => {
                 description:     editingHw.description,
                 is_published:    editingHw.isPublished,
                 attachments:     editingHw.attachments,
+                submission_type: editingHw.submission_type,
               }
             : undefined
         }

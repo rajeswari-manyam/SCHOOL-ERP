@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
 import { useUIStore } from "@/store/uiStore";
 import type { NavItem } from "@/types/NavItem.types";
+import { logout as logoutApi } from "@/services/auth.api";
 
 interface SidebarProps {
   items: NavItem[];
@@ -71,6 +72,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
   }, [sidebarOpen, setSidebarOpen]);
 
   const handleLogout = () => {
+    logoutApi().catch(() => {});
     localStorage.clear();
     navigate("/login", { replace: true });
   };

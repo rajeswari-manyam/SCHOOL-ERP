@@ -14,6 +14,7 @@ export interface Homework {
   attachments: string[];
   is_published: boolean;
   academicYearId: string;
+  submission_type?: "physical" | "online" | "both";
   createdAt: string;
   updatedAt: string;
   class?: { id: string; class_name?: string; name?: string };
@@ -79,6 +80,7 @@ export const createHomework = async (payload: {
   attachments: string[];
   is_published: boolean;
   academicYearId: string;
+  submission_type?: "physical" | "online" | "both";
 }) => {
   const res = await api.post<ApiResponse<Homework>>("/tenant/createhomework", payload);
   return res.data;

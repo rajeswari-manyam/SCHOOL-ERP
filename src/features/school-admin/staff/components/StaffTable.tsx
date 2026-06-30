@@ -74,10 +74,11 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px]">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100">
               <TH>Name &amp; Contact</TH>
+              <TH>Emp. No.</TH>
               <TH>Role</TH>
               <TH>Classes / Subjects</TH>
               <TH>Status</TH>
@@ -104,9 +105,17 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
                     </div>
                   </td>
 
+                  {/* Emp. No. */}
+                  <td className="px-4 py-3.5">
+                    <span className="text-sm font-mono text-gray-700">{s.employeeId || "—"}</span>
+                  </td>
+
                   {/* Role */}
                   <td className="px-4 py-3.5">
                     <span className="text-sm text-gray-700 whitespace-nowrap">{roleLabel || "—"}</span>
+                    {s.departmentName && (
+                      <p className="text-[10px] text-indigo-500 font-semibold mt-0.5 whitespace-nowrap">{s.departmentName}</p>
+                    )}
                   </td>
 
                   {/* Classes / Subjects */}
@@ -134,6 +143,9 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
                     <span className={`text-sm font-semibold ${s.leaveBalance != null && s.leaveBalance <= 3 ? "text-amber-600" : "text-gray-800"}`}>
                       {s.leaveBalance != null ? `${s.leaveBalance} days` : "—"}
                     </span>
+                    {s.leavesTaken != null && (
+                      <p className="text-[10px] text-gray-400 mt-0.5">{s.leavesTaken} used</p>
+                    )}
                   </td>
 
                   {/* Actions */}

@@ -102,10 +102,10 @@ const PayslipPage = () => {
     <div className="px-4 sm:px-6 pb-10 space-y-6">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 pt-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Payslip</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-sm font-semibold text-gray-900 tracking-tight">Payslip</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">
             {currentPayslip?.employeeName
               ? `${currentPayslip.employeeName}${currentPayslip.designation ? ` · ${currentPayslip.designation}` : ""}`
               : "Salary details"}

@@ -237,7 +237,7 @@ const AttendanceToday = ({
 
   const handleRowClick = (item: ClassTodayItem) => {
     setPanelItem(item);
-    onSelectClass?.(item.class.id, item.section.id);
+    onSelectClass?.(item.class?.id, item.section?.id);
   };
 
   return (
@@ -344,11 +344,11 @@ const AttendanceToday = ({
                       const initials    = teacherName !== "—"
                         ? teacherName.split(" ").slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? "").join("")
                         : "";
-                      const isActive = panelItem?.class.id === item.class.id && panelItem?.section.id === item.section.id;
+                      const isActive = panelItem?.class?.id === item.class?.id && panelItem?.section?.id === item.section?.id;
 
                       return (
                         <tr
-                          key={`${item.class.id}-${item.section.id}`}
+                          key={`${item.class?.id}-${item.section?.id}`}
                           className={`border-b border-gray-50 transition-colors cursor-pointer ${
                             isActive
                               ? "bg-indigo-50/60"
@@ -358,8 +358,8 @@ const AttendanceToday = ({
                         >
                           <td className="px-5 py-3.5">
                             <span className="font-bold text-gray-900 text-sm">
-                              {item.class.name}
-                              <span className="text-indigo-600">{item.section.name}</span>
+                              {item.class?.name}
+                              <span className="text-indigo-600">{item.section?.name}</span>
                             </span>
                           </td>
                           <td className="px-5 py-3.5">

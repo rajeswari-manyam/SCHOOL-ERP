@@ -29,36 +29,36 @@ const LeaveCalendar = ({ days, monthLabel, onPrev, onNext }: Props) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-        <h3 className="text-sm font-extrabold text-gray-900">Leave Calendar</h3>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-2">
+        <h3 className="text-xs font-extrabold text-gray-900">Leave Calendar</h3>
+        <div className="flex items-center gap-1.5">
           <button onClick={onPrev}
-            className="w-7 h-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
-          <ChevronLeftIcon size={14} className="text-current" strokeWidth={2.5} />
+            className="w-6 h-6 rounded-md border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
+          <ChevronLeftIcon size={12} className="text-current" strokeWidth={2.5} />
           </button>
-          <span className="text-xs font-bold text-gray-700 min-w-[100px] text-center">{monthLabel}</span>
+          <span className="text-[11px] font-bold text-gray-700 min-w-[84px] text-center">{monthLabel}</span>
           <button onClick={onNext}
-            className="w-7 h-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
-            <ChevronRightIcon size={14} className="text-current" strokeWidth={2.5} />
+            className="w-6 h-6 rounded-md border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
+            <ChevronRightIcon size={12} className="text-current" strokeWidth={2.5} />
           </button>
         </div>
       </div>
 
       {/* Day headers */}
-      <div className="grid grid-cols-7 mb-1">
+      <div className="grid grid-cols-7 mb-0.5">
         {DAY_HEADERS.map(d => (
-          <div key={d} className="text-center text-[10px] font-bold text-gray-300 py-1">{d}</div>
+          <div key={d} className="text-center text-[9px] font-bold text-gray-300 py-0.5">{d}</div>
         ))}
       </div>
 
       {/* Cells */}
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-px">
         {cells.map((cell, i) => (
           <div key={i}
             title={cell?.isHoliday ? cell.holidayLabel : cell?.isLeave ? LEAVE_TYPE_META[cell.leaveType!]?.label : undefined}
-            className={`aspect-square flex items-center justify-center text-[11px] transition-colors cursor-default ${cell ? getDayClass(cell) : ""}`}
+            className={`h-8 flex items-center justify-center text-[10px] transition-colors cursor-default ${cell ? getDayClass(cell) : ""}`}
           >
             {cell ? parseInt(cell.date.slice(-2)) : ""}
           </div>
@@ -66,15 +66,15 @@ const LeaveCalendar = ({ days, monthLabel, onPrev, onNext }: Props) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4 pt-4 border-t border-gray-100">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 pt-2 border-t border-gray-100">
         {[
           { label: "Approved Leave", color: "bg-sky-500" },
           { label: "Pending Leave",  color: "bg-sky-200" },
           { label: "Holiday",        color: "bg-emerald-400" },
           { label: "Today",          color: "bg-indigo-600" },
         ].map(({ label, color }) => (
-          <span key={label} className="flex items-center gap-1.5 text-[10px] text-gray-400">
-            <span className={`w-2.5 h-2.5 rounded-sm ${color}`} />
+          <span key={label} className="flex items-center gap-1 text-[9px] text-gray-400">
+            <span className={`w-2 h-2 rounded-sm ${color}`} />
             {label}
           </span>
         ))}

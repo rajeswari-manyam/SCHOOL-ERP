@@ -6,6 +6,7 @@ import {
   useDashboard, useAdmissionsThisWeek, useSchoolTodayAttendance,
   useAllClassesTodayAttendance, useClassAttendanceStatus,
   useEnquiriesPipeline, useSendReminders, useActiveAcademicYear, useFeeSummary,
+  usePendingLeaves,
 } from './hooks/index';
 import { useSetupStatus } from './hooks/useSetupStatus';
 import { AlertBanner }         from './components/AlertBanner';
@@ -16,6 +17,7 @@ import { FeesDueSummary }      from './components/FeesDueSummary';
 import { PendingFeesModal }    from './components/PendingFeesModal';
 import { WhatsAppActivityFeed } from './components/WhatsAppActivity';
 import { AdmissionsPipeline }  from './components/AdmissionsPipeline';
+import { PendingLeavesCard }   from './components/PendingLeavesCard';
 import { DashboardSkeleton }   from './components/DashboardSkeleton';
 import type { AttendanceClass, StatsCard } from './types/index';
 import { useAuthStore } from '@/store/authStore';
@@ -49,6 +51,7 @@ export function DashboardPage() {
   const { data: setupItems, isLoading: isSetupLoading }                  = useSetupStatus();
   const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
   const { data: feeSummary }                                            = useFeeSummary();
+  const { data: pendingLeaves = [], isLoading: isPendingLeavesLoading } = usePendingLeaves();
   const [setupDismissed, setSetupDismissed]                             = useState(false);
   const [showPendingModal, setShowPendingModal]                         = useState(false);
 
@@ -158,11 +161,11 @@ export function DashboardPage() {
         {/* ── Page header ── */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug truncate">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug truncate">
               {getGreeting()},{' '}
               <span className="text-indigo-600">{greetingName}</span>
             </h1>
-            <p className="mt-0.5 text-xs sm:text-sm text-gray-500 line-clamp-2">
+            <p className="mt-0.5 text-[11px] sm:text-xs text-gray-500 line-clamp-2">
               Here's what's happening at{' '}
               <span className="font-semibold text-indigo-600">{schoolName}</span>
               {' '}today — {formatDate()}
@@ -182,6 +185,11 @@ export function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* ── Pending Leave Requests — only shown when there are pending leaves ── */}
+        {(isPendingLeavesLoading || pendingLeaves.length > 0) && (
+          <PendingLeavesCard leaves={pendingLeaves} isLoading={isPendingLeavesLoading} />
+        )}
 
         {/* ── Stats ── */}
         <StatsGrid stats={stats ?? data.stats} loadingStatIds={loadingStatIds} />

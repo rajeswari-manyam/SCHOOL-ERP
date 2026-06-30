@@ -32,6 +32,7 @@ const schema = z.object({
   submission_date: z.string().min(1, "Due date required"),
   description:     z.string().min(10, "Please write a proper description"),
   is_published:    z.boolean(),
+  submission_type: z.enum(["physical", "online", "both"]).optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -115,6 +116,7 @@ const AssignHomeworkModal = ({
       submission_date: initialValues?.submission_date ?? "",
       description:     initialValues?.description     ?? "",
       is_published:    initialValues?.is_published    ?? true,
+      submission_type: initialValues?.submission_type,
     },
   });
 
@@ -136,6 +138,7 @@ const AssignHomeworkModal = ({
       submission_date: initialValues?.submission_date ?? "",
       description:     initialValues?.description     ?? "",
       is_published:    initialValues?.is_published    ?? true,
+      submission_type: initialValues?.submission_type,
     });
     getAllAcademicYears().then((res) => {
       setAcademicYears(res.data);
@@ -411,6 +414,7 @@ const AssignHomeworkModal = ({
             </FormField>
             <FormField label="Submission type">
               <Select
+                {...register("submission_type")}
                 options={[
                   { label: "Physical", value: "physical" },
                   { label: "Online upload", value: "online" },

@@ -17,7 +17,7 @@ export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProp
 
       {/* ── Header ── */}
       <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100">
-        <h2 className="text-sm sm:text-base font-bold text-gray-900">
+        <h2 className="text-xs sm:text-sm font-bold text-gray-900">
           Today&apos;s Attendance — Class-wise
         </h2>
         <div className="flex items-center gap-2">

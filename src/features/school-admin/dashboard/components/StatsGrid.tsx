@@ -57,7 +57,7 @@ export function StatsGrid({ stats = [], loadingStatIds }: StatsGridProps) {
               {isLoading ? (
                 <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-100" />
               ) : (
-                <span className="text-3xl sm:text-4xl font-black leading-none tracking-tight text-gray-900 tabular-nums">
+                <span className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
                   {stat.value}
                 </span>
               )}

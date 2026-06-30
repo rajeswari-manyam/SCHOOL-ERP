@@ -21,7 +21,16 @@ interface CreateStudentResponse {
 interface AddStudentModalProps {
   onClose: () => void;
   onSubmit: (data: AddStudentFormData) => Promise<CreateStudentResponse | undefined>;
+  students?: Student[];
 }
+
+const genNextAdmissionNo = (studentList: Student[]): string => {
+  const nums = studentList
+    .map((s) => parseInt(s.admissionNo?.replace(/\D/g, "") || "0", 10))
+    .filter((n) => !isNaN(n) && n > 0);
+  const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+  return `ADM-${String(next).padStart(3, "0")}`;
+};
 
 const EMPTY_FORM: AddStudentFormData = {
   firstName: "", lastName: "", dob: "", admissionNo: "", gender: "",
@@ -97,7 +106,7 @@ const PhoneInput = ({
   </div>
 );
 
-const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
+const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState<AddStudentFormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<Set<string>>(new Set());
@@ -109,21 +118,20 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
 
   const { user } = useAuthStore();
   const academicYearId = useUIStore((s) => s.academicYearId);
-  const academicYearName = useUIStore((s) => s.academicYearName);
-  const admissionYear = academicYearName ? academicYearName.split("-")[0] : String(new Date().getFullYear());
 
   const { classes, loading: classesLoading, error: classesError, retry: retryClasses } = useClassesList(academicYearId);
   const { sections, loading: sectionsLoading, error: sectionsError, retry: retrySections } = useSectionsList(selectedClassId);
   const { mutateAsync: createParents, isPending: parentLoading, error: parentApiError, reset: resetParentError } = useBulkCreateParentsMutation();
 
+  const [generatedAdmNo] = useState(() => genNextAdmissionNo(students));
+
   useEffect(() => {
     if (autoGenerate) {
-      const seq = String(Math.floor(Math.random() * 900) + 100);
-      setForm((prev) => ({ ...prev, admissionNo: `ADM-${admissionYear}-${seq}` }));
+      setForm((prev) => ({ ...prev, admissionNo: generatedAdmNo }));
     } else {
       setForm((prev) => ({ ...prev, admissionNo: "" }));
     }
-  }, [autoGenerate, admissionYear]);
+  }, [autoGenerate, generatedAdmNo]);
 
   useEffect(() => {
     if (form.sameAsFather) {
@@ -285,7 +293,7 @@ const AddStudentModal = ({ onClose, onSubmit }: AddStudentModalProps) => {
                 </div>
                 <input
                   className={`${inputCls} ${autoGenerate ? "bg-indigo-50 text-indigo-700 font-semibold border-indigo-200" : ""}`}
-                  placeholder={`ADM-${admissionYear}-343`}
+                  placeholder="ADM-001"
                   value={form.admissionNo}
                   readOnly={autoGenerate}
                   onChange={(ev) => !autoGenerate && set("admissionNo")(ev.target.value)}

@@ -234,6 +234,7 @@ export const studentsApi = {
       classId: (camel.classId ?? camel.class_id ?? classDetail?.id ?? "") as string,
       sectionId: (camel.sectionId ?? camel.section_id ?? sectionDetail?.id ?? "") as string,
       academicYearId: (camel.academicYearId ?? academicYear?.id ?? "") as string,
+      parentId: (camel.parentId ?? primaryParent?.id ?? "") as string,
     } as Student;
   },
   createStudent: async (payload: CreateStudentPayload): Promise<Student> => {
@@ -285,6 +286,13 @@ export const studentsApi = {
         status: "ACTIVE",
       } as Student;
     });
+  },
+
+  updateParent: async (parentId: string, payload: { parent_name?: string; phone?: string }): Promise<void> => {
+    const { data: raw } = await api.put(`/tenant/updateparentById/${parentId}`, payload);
+    if (raw && typeof raw === "object" && (raw as Record<string, unknown>).status === false) {
+      throw new Error(((raw as Record<string, unknown>).message as string) ?? "Parent update failed");
+    }
   },
 
   deleteStudent: async (id: string): Promise<void> => {
