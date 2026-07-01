@@ -45,7 +45,7 @@ export const TransactionsTable = ({
   viewAll: boolean;
 }) => {
   const visibleData = useMemo(() => {
-    return viewAll ? data : data.slice(0, 10);
+    return viewAll ? data : data.slice(0, 2);
   }, [data, viewAll]);
 
   const columns = useMemo(

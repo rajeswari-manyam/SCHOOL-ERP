@@ -45,6 +45,9 @@ export interface StaffMember {
 
   qualification?: string;
   salary?: number;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  ifscCode?: string;
   dateOfBirth?: string;
   dateOfJoin?: string;
 
@@ -62,6 +65,9 @@ export interface CreateStaffPayload {
   department_id?: string;
   academicYearId?: string;
   salary?: number;
+  bank_account_name?: string;
+  bank_account_number?: string;
+  ifsc_code?: string;
   date_of_birth: string;
   date_of_join: string;
   school_code: string;
@@ -77,6 +83,9 @@ export interface UpdateStaffPayload {
   department_id?: string;
   academicYearId?: string;
   salary?: number;
+  bank_account_name?: string;
+  bank_account_number?: string;
+  ifsc_code?: string;
   date_of_birth?: string;
   date_of_join?: string;
   role?: string;
@@ -101,6 +110,9 @@ export interface StaffDetails {
   qualification: string | null;
   emp_number: string;
   salary: number | null;
+  bank_account_name?: string;
+  bank_account_number?: string;
+  ifsc_code?: string;
   date_of_birth: string | null;
   date_of_join: string | null;
   status: string;

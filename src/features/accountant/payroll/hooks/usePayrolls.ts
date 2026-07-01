@@ -4,7 +4,7 @@ import { usePayrollStore } from "../store/usePayrollStore";
 import {
   getAllPayroll, updatePayrollById, deletePayrollById,
   getAllPayslips, createPayslip, deletePayslipById,
-  getPayrollHistory,
+  getPayrollHistory, getMonthlyPaidPayroll,
 } from "@/services/payroll.api";
 import { getAllStaff } from "@/services/staff.api";
 import { useUIStore } from "@/store/uiStore";
@@ -178,46 +178,75 @@ const MONTH_NAMES = [
 ];
 
 export const usePayrollHistory = () => {
-  const [history,     setHistory]     = useState<import("../types/payroll.types").PayrollHistory[]>([]);
-  const [summary,     setSummary]     = useState({ totalGross: 0, totalDeductions: 0, totalNetPaid: 0 });
-  const [isLoading,   setIsLoading]   = useState(true);
+  const academicYearId = useUIStore((s) => s.academicYearId) ?? "";
+
+  const [history,    setHistory]    = useState<import("../types/payroll.types").PayrollHistory[]>([]);
+  const [summary,    setSummary]    = useState({ totalGross: 0, totalDeductions: 0, totalNetPaid: 0 });
+  const [trendData,  setTrendData]  = useState<import("../types/payroll.types").TrendPoint[]>([]);
+  const [staffCount, setStaffCount] = useState(0);
+  const [isLoading,  setIsLoading]  = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    getPayrollHistory()
-      .then((res) => {
+
+    // Phase 1 — critical data (history + staff count)
+    Promise.all([getPayrollHistory(), getAllStaff()])
+      .then(([res, sRes]) => {
         if (res.status) {
-          const mapped = res.data.map((r) => ({
-            month:          `${MONTH_NAMES[r.month]} ${r.year}`,
-            year:           r.year,
-            staffCount:     r.staff_count,
-            totalGross:     r.gross_salary,
+          setHistory(res.data.map((r) => ({
+            month:           `${MONTH_NAMES[r.month]} ${r.year}`,
+            year:            r.year,
+            staffCount:      r.staff_count,
+            totalGross:      r.gross_salary,
             totalDeductions: r.total_deductions,
-            netPaid:        r.net_paid,
-            paymentDate:    r.payment_date ?? "—",
-            mode:           r.payment_mode,
-            status:         r.payment_status,
-          }));
-          setHistory(mapped);
+            netPaid:         r.net_paid,
+            paymentDate:     r.payment_date ?? "—",
+            mode:            r.payment_mode,
+            status:          r.payment_status,
+          })));
           setSummary({
-            totalGross:       res.summary.total_gross_salary,
-            totalDeductions:  res.summary.total_deductions,
-            totalNetPaid:     res.summary.total_net_paid,
+            totalGross:      res.summary.total_gross_salary,
+            totalDeductions: res.summary.total_deductions,
+            totalNetPaid:    res.summary.total_net_paid,
           });
         }
+        setStaffCount(sRes.count ?? (sRes.data ?? []).length);
       })
       .catch(() => toast.error("Failed to load payroll history"))
       .finally(() => setIsLoading(false));
-  }, []);
 
-  const avgMonthlyPayroll = history.length > 0 ? summary.totalNetPaid / history.length : 0;
+    // Phase 2 — trend chart in background (non-blocking)
+    // 10 consecutive months ending at the current month
+    const now = new Date();
+    const months = Array.from({ length: 10 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 9 + i, 1);
+      return { month: d.getMonth() + 1, label: MONTH_NAMES[d.getMonth() + 1].toUpperCase() };
+    });
+    if (academicYearId) {
+      Promise.all(
+        months.map((m) =>
+          getMonthlyPaidPayroll(m.month, academicYearId)
+            .then((r) => ({ label: m.label, amount: r.status ? r.data.total_paid : 0 }))
+            .catch(() => ({ label: m.label, amount: 0 }))
+        )
+      ).then(setTrendData);
+    } else {
+      setTrendData(months.map((m) => ({ label: m.label, amount: 0 })));
+    }
+  }, [academicYearId]);
+
+  const nonZeroMonths = trendData.filter((t) => t.amount > 0);
+  const avgMonthlyPayroll = nonZeroMonths.length > 0
+    ? nonZeroMonths.reduce((s, t) => s + t.amount, 0) / nonZeroMonths.length
+    : 0;
 
   return {
     history,
     isLoading,
+    trendData,
     totalPayrollFY:    summary.totalNetPaid,
     avgMonthlyPayroll,
-    staffCount:        history.reduce((s, h) => s + h.staffCount, 0),
+    staffCount,
   };
 };
 
@@ -353,6 +382,7 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
         staff_id:            staff.id,
         month,
         year,
+        payroll_id:          staff.payrollId,
         ...(academicYearId ? { academicYearId } : {}),
         bonus,
         overtime,

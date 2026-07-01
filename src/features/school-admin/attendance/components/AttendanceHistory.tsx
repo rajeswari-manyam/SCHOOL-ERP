@@ -67,13 +67,13 @@ const AttendanceHistory = () => {
     <div className="space-y-5">
 
       {/* ── Chronic Absentees card ─────────────────────────────────────── */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="rounded-xl overflow-hidden">
 
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Chronic Absentees</h2>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h2 className="text-xs font-semibold text-gray-900">Chronic Absentees</h2>
+            <p className="text-[10px] text-gray-400 mt-0.5">
               Students absent more than 5 days this month
             </p>
           </div>
@@ -125,7 +125,7 @@ const AttendanceHistory = () => {
           <>
             <div className="overflow-x-auto">
             <div className="min-w-[560px]">
-            <div className="grid grid-cols-[1fr_6rem_7rem_8rem_10rem_6rem] gap-3 px-5 py-2.5 bg-gray-50/60 border-b border-gray-100">
+            <div className="grid grid-cols-[1fr_6rem_7rem_8rem_10rem_6rem] gap-3 px-5 py-2.5 border-b border-gray-100" style={{ background: '#E5EEFF' }}>
               {["Student", "Class", "Absent Days", "Last Absent", "Parent Contact", "Actions"].map((h) => (
                 <span key={h} className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">
                   {h}

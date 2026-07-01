@@ -21,6 +21,10 @@ export interface StaffRecord {
   emp_number?: string;
   status?: string;
 
+  bank_account_name?: string;
+  bank_account_number?: string;
+  ifsc_code?: string;
+
   leavesBalance?: number;
   leavesTaken?: number;
   leavesPending?: number;

@@ -82,6 +82,26 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
   const [summaryLoading, setSummaryLoading]   = useState(false);
   const [staffLeaves, setStaffLeaves]         = useState<LeaveRecord[]>([]);
   const [leavesLoading, setLeavesLoading]     = useState(false);
+  const [todayLeaves, setTodayLeaves]         = useState<LeaveRecord[]>([]);
+  const [todayLoading, setTodayLoading]       = useState(false);
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Fetch all leaves on mount and filter for today
+  useEffect(() => {
+    setTodayLoading(true);
+    fetchLeaves()
+      .then((all) => {
+        const onLeaveToday = all.filter((l) => {
+          const from = l.from ? l.from.slice(0, 10) : "";
+          const to   = l.to   ? l.to.slice(0, 10)   : "";
+          return from <= today && today <= to;
+        });
+        setTodayLeaves(onLeaveToday);
+      })
+      .catch(() => setTodayLeaves([]))
+      .finally(() => setTodayLoading(false));
+  }, [today]);
 
   useEffect(() => {
     if (!selectedStaffId) { setSummary([]); setStaffLeaves([]); return; }
@@ -163,10 +183,10 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
   return (
     <div className="space-y-4">
 
-      {/* ── Leave Balance Summary ── */}
+      {/* ── Leave Balance Summary (always first) ── */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
         <div className="flex flex-wrap items-center gap-3 mb-3">
-          <h3 className="text-sm font-bold text-gray-900">Leave Balance Summary</h3>
+          <h3 className="text-sm font-semibold text-gray-800">Leave Balance Summary</h3>
           <select
             value={selectedStaffId}
             onChange={(e) => setSelectedStaffId(e.target.value)}
@@ -233,17 +253,52 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
         )}
       </div>
 
-      {!selectedStaffId ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-16 gap-3">
-          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
-            <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
+      {/* ── Today's Leaves — only when no staff selected ── */}
+      {!selectedStaffId && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-800">
+              Today's Leaves
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+              </span>
+            </h3>
+            {!todayLoading && (
+              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${todayLeaves.length > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                {todayLeaves.length} on leave
+              </span>
+            )}
           </div>
-          <p className="text-sm font-semibold text-gray-700">Select a staff member</p>
-          <p className="text-xs text-gray-400">Choose a staff member from the filter above to view their leave requests.</p>
+
+          {todayLoading ? (
+            <div className="flex items-center justify-center py-6 gap-2 text-gray-400 text-sm">
+              <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+              Loading…
+            </div>
+          ) : todayLeaves.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-4">No staff on leave today.</p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {todayLeaves.map((r) => (
+                <div key={r.id} className="flex items-center gap-3 py-2.5">
+                  <Avatar name={r.staffName ?? "?"} id={r.id} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{r.staffName ?? "—"}</p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {r.type} · {formatDate(r.from)} – {formatDate(r.to)}
+                      {r.days ? ` · ${r.days} day${r.days > 1 ? "s" : ""}` : ""}
+                    </p>
+                  </div>
+                  <StatusBadge status={r.status} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
+      )}
+
+      {/* ── Staff leave history — only when staff selected ── */}
+      {selectedStaffId && (
         <>
       {/* ── Summary badges ── */}
       <div className="flex flex-wrap items-center gap-2.5">
@@ -266,7 +321,7 @@ export const LeaveRequestsTab = ({ leaves }: Props) => {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px]">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
+              <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
                 <TH>Staff Name</TH>
                 <TH>Leave Type</TH>
                 <TH>From</TH>

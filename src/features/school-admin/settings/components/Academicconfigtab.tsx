@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Trash2, X, Loader2, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -31,6 +31,8 @@ interface Props {
   holidaysSaving: boolean;
   onAddClass: (data: CreateClassPayload) => void;
   onCreateAcademicYear: (data: CreateAcademicYearPayload) => Promise<AcademicYear>;
+  onUpdateAcademicYear: (id: string, payload: { startDate?: string; endDate?: string; yearName?: string }) => Promise<void>;
+  onDeleteAcademicYear: (id: string) => Promise<void>;
   onAddDepartment: (payload: { departmentName: string; academicYearId: string }) => Promise<void>;
   onBulkAddDepartments: (items: { departmentName: string; academicYearId: string }[]) => Promise<unknown>;
   onEditDepartment: (id: string, departmentName: string) => Promise<void>;
@@ -85,13 +87,20 @@ export const AcademicConfigTab: React.FC<Props> = ({
   workingDays, workingDaysSaving,
   holidays, holidaysSaving,
   leaveAllocations, leaveAllocationsSaving,
-  onCreateAcademicYear,
+  onCreateAcademicYear, onUpdateAcademicYear, onDeleteAcademicYear,
   onAddDepartment, onBulkAddDepartments, onEditDepartment, onDeleteDepartment,
   onCreateWorkingDay, onUpdateWorkingDay, onDeleteWorkingDay,
   onCreateHoliday, onBulkAddHolidays, onUpdateHoliday, onDeleteHoliday,
   onCreateLeaveAllocations, onUpdateLeaveAllocation, onDeleteLeaveAllocation,
 }) => {
   const [showCreateYear, setShowCreateYear] = useState(false);
+  const [editYearId, setEditYearId] = useState<string | null>(null);
+  const [editYearName, setEditYearName] = useState("");
+  const [editYearStart, setEditYearStart] = useState("");
+  const [editYearEnd, setEditYearEnd] = useState("");
+  const [editYearSaving, setEditYearSaving] = useState(false);
+  const [editYearError, setEditYearError] = useState("");
+  const [deletingYearId, setDeletingYearId] = useState<string | null>(null);
   const [wdForm, setWdForm] = useState(EMPTY_WD_FORM);
   const [wdEditId, setWdEditId] = useState<string | null>(null);
   const [deptName, setDeptName] = useState("");
@@ -135,6 +144,44 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [leaveSuccess, setLeaveSuccess] = useState("");
   const [leaveError, setLeaveError] = useState("");
 
+  const openEditYear = (year: AcademicYear) => {
+    setEditYearId(year.id);
+    setEditYearName(year.yearName ?? "");
+    setEditYearStart((year as any).startDate ?? "");
+    setEditYearEnd((year as any).endDate ?? "");
+    setEditYearError("");
+  };
+
+  const handleSaveYear = async () => {
+    if (!editYearId) return;
+    setEditYearSaving(true);
+    setEditYearError("");
+    try {
+      await onUpdateAcademicYear(editYearId, {
+        yearName:  editYearName.trim() || undefined,
+        startDate: editYearStart || undefined,
+        endDate:   editYearEnd   || undefined,
+      });
+      setEditYearId(null);
+    } catch (err: unknown) {
+      setEditYearError(err instanceof Error ? err.message : "Failed to update");
+    } finally {
+      setEditYearSaving(false);
+    }
+  };
+
+  const handleDeleteYear = async (id: string) => {
+    if (!window.confirm("Delete this academic year? This cannot be undone.")) return;
+    setDeletingYearId(id);
+    try {
+      await onDeleteAcademicYear(id);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete academic year");
+    } finally {
+      setDeletingYearId(null);
+    }
+  };
+
   const handleAddDept = async () => {
     if (!deptName.trim() || !deptYearId) return;
     await onAddDepartment({ departmentName: deptName.trim(), academicYearId: deptYearId });
@@ -152,6 +199,18 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const handleBulkSubmit = async () => {
     const valid = bulkRows.filter(r => r.departmentName.trim() && r.academicYearId);
     if (valid.length === 0) { setBulkError("Add at least one department name and select an academic year."); return; }
+
+    // Detect duplicate names within the submission
+    const names = valid.map(r => r.departmentName.trim().toLowerCase());
+    const duplicates = names.filter((n, i) => names.indexOf(n) !== i);
+    if (duplicates.length > 0) {
+      const dupeList = [...new Set(duplicates)].map(n =>
+        valid.find(r => r.departmentName.trim().toLowerCase() === n)!.departmentName.trim()
+      );
+      setBulkError(`Duplicate department name(s): ${dupeList.join(", ")}. Each department must be unique.`);
+      return;
+    }
+
     setBulkError("");
     setBulkSaving(true);
     try {
@@ -162,7 +221,10 @@ export const AcademicConfigTab: React.FC<Props> = ({
       setBulkRows([newRow()]);
       setTimeout(() => { setShowBulkModal(false); setBulkSuccess(""); }, 1500);
     } catch (err: unknown) {
-      setBulkError(err instanceof Error ? err.message : "Bulk add failed");
+      const msg = err instanceof Error ? err.message : "Bulk add failed";
+      setBulkError(msg.includes("500") || msg.toLowerCase().includes("internal")
+        ? "A department with this name may already exist. Check for duplicates and try again."
+        : msg);
     } finally {
       setBulkSaving(false);
     }
@@ -328,12 +390,12 @@ export const AcademicConfigTab: React.FC<Props> = ({
           </Button>
         </div>
 
-        {/* Year badge + status */}
-        <div className="flex items-center gap-3 mb-4 sm:mb-5 flex-wrap">
+        {/* Year list with Edit / Delete actions */}
+        <div className="flex flex-col gap-2 mb-4 sm:mb-5">
           {academicYears.length === 0 ? (
             <span className="text-sm text-gray-500">No academic year configured</span>
-          ) : (academicYears.map((year) => (
-            <div key={year.id} className="flex items-center gap-2">
+          ) : academicYears.map((year) => (
+            <div key={year.id} className="flex items-center gap-2 group">
               <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
                 year.active
                   ? "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
@@ -342,14 +404,83 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 {year.yearName}
               </span>
               {year.active && (
-                <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" /> ACTIVE
+                <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Active
                 </span>
               )}
+              {/* Actions */}
+              <button
+                onClick={() => openEditYear(year)}
+                title="Edit academic year"
+                className="ml-1 p-1 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleDeleteYear(year.id)}
+                disabled={deletingYearId === year.id}
+                title="Delete academic year"
+                className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+              >
+                {deletingYearId === year.id
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <Trash2 className="w-3.5 h-3.5" />}
+              </button>
             </div>
-          )))}
-         
+          ))}
         </div>
+
+        {/* Edit Academic Year Modal */}
+        {editYearId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900">Edit Academic Year</h3>
+                <button onClick={() => setEditYearId(null)} className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Year Name</label>
+                  <input
+                    value={editYearName}
+                    onChange={(e) => setEditYearName(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                    placeholder="e.g. 2026-2027"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={editYearStart}
+                    onChange={(e) => setEditYearStart(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={editYearEnd}
+                    onChange={(e) => setEditYearEnd(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                  />
+                </div>
+                {editYearError && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{editYearError}</p>
+                )}
+              </div>
+              <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+                <Button variant="outline" size="sm" onClick={() => setEditYearId(null)} disabled={editYearSaving}>Cancel</Button>
+                <Button size="sm" onClick={handleSaveYear} disabled={editYearSaving} className="bg-indigo-600 text-white min-w-[90px]">
+                  {editYearSaving ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />Saving…</> : <><Check className="w-3.5 h-3.5 mr-1" />Save</>}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         
 

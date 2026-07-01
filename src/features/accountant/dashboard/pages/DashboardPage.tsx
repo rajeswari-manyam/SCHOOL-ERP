@@ -17,57 +17,62 @@ const formatHeaderDate = () => {
 
 export default function DashboardPage() {
   const { summary, transactions, paymentModes, trend, accountantName } = useDashboardData();
-const [viewAllTransactions, setViewAllTransactions] = useState(false);
-
+  const [viewAllTransactions, setViewAllTransactions] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC]">
-   
-<div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3">
+    <div className="space-y-3 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 px-4 md:px-6 lg:px-8">
+
+      <div className="bg-white border border-slate-200 rounded-xl px-4 md:px-6 py-3 shadow-none">
         <h1 className="text-base sm:text-lg font-semibold text-slate-800">Finance Dashboard</h1>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-xs text-slate-400 mt-0">
           {accountantName && <span className="font-medium text-slate-500">{accountantName} · </span>}
           {formatHeaderDate()}
         </p>
       </div>
 
-   <div className="p-2 sm:p-4 md:p-6 space-y-4">
-    
+      <div className="space-y-3">
+
         <StatCardsSection summary={summary} />
 
         <FinancialSummaryCards summary={summary} />
 
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 items-start w-full">  
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 items-start w-full">
 
           <Card className="lg:col-span-2 border border-slate-200 shadow-none rounded-xl hover:border-indigo-300 transition-colors">
-            <CardHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+            <CardHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-100">
               <CardTitle className="text-sm font-semibold text-slate-800">
                 Recent Transactions — Today
               </CardTitle>
-            <button
-  onClick={() => setViewAllTransactions((prev) => !prev)}
-className="text-xs text-indigo-600 font-medium hover:underline whitespace-nowrap"
->
-  {viewAllTransactions ? "Show Less" : "View All Transactions"}
-</button>
             </CardHeader>
-   <CardContent className="p-0 overflow-x-auto w-full">
-  {transactions.length > 0 ? (
-    <TransactionsTable
-      data={transactions}
-      viewAll={viewAllTransactions}
-    />
-  ) : (
-    <p className="text-slate-400 text-center py-8 text-sm">
-      No transactions found
-    </p>
-  )}
-</CardContent>
+            <CardContent className="p-0 overflow-x-auto w-full">
+              {transactions.length > 0 ? (
+                <>
+                  <TransactionsTable
+                    data={transactions}
+                    viewAll={viewAllTransactions}
+                  />
+                  {transactions.length > 2 && (
+                    <div className="flex justify-center py-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setViewAllTransactions((prev) => !prev)}
+                        className="text-xs text-indigo-600 font-medium hover:underline"
+                      >
+                        {viewAllTransactions ? "Show Less" : "Show More"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-slate-400 text-center py-8 text-sm">
+                  No transactions found
+                </p>
+              )}
+            </CardContent>
           </Card>
 
-        
+
           <div className="flex flex-col gap-4">
-      
+
             <Card className="border border-slate-200 shadow-none rounded-xl hover:border-indigo-300 transition-colors">
               <CardHeader className="px-5 py-4 border-b border-slate-100">
                 <CardTitle className="text-sm font-semibold text-slate-800">
@@ -90,9 +95,6 @@ className="text-xs text-indigo-600 font-medium hover:underline whitespace-nowrap
 
         <MonthlyCollectionTrend data={trend} />
 
-
-
- 
       </div>
     </div>
   );

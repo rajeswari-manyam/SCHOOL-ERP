@@ -7,17 +7,17 @@ import { StatCard } from "../../../../../components/ui/statcard";
 
 export const PayrollStats = ({ summary }: PayrollStatsProps) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+
       {/* Total Staff */}
       <StatCard
         label={
-          <span className="text-[11px] sm:text-xs uppercase text-gray-500 font-medium">
+          <span className="text-[10px] uppercase text-gray-500 font-medium">
             Total Staff on Payroll
           </span>
         }
         value={
-          <span className="text-lg sm:text-xl font-semibold text-gray-900">
+          <span className="text-base font-semibold text-gray-900">
             {summary.totalStaff}
           </span>
         }
@@ -26,12 +26,12 @@ export const PayrollStats = ({ summary }: PayrollStatsProps) => {
       {/* Total Monthly Outflow */}
       <StatCard
         label={
-          <span className="text-[11px] sm:text-xs uppercase text-gray-500 font-medium">
+          <span className="text-[10px] uppercase text-gray-500 font-medium">
             Total Monthly Outflow
           </span>
         }
         value={
-          <span className="text-base sm:text-lg font-semibold text-gray-900">
+          <span className="text-base font-semibold text-gray-900">
             {formatCurrency(summary.totalNet)}
           </span>
         }
@@ -40,13 +40,13 @@ export const PayrollStats = ({ summary }: PayrollStatsProps) => {
       {/* Payroll Status */}
       <StatCard
         label={
-          <span className="text-[11px] sm:text-xs uppercase text-gray-500 font-medium">
+          <span className="text-[10px] uppercase text-gray-500 font-medium">
             March Payroll
           </span>
         }
         value={
-          <span className="flex items-center gap-1 text-sm sm:text-base font-semibold text-gray-900">
-            Paid <CheckCircle className="w-4 h-4 text-green-500" />
+          <span className="flex items-center gap-1 text-sm font-semibold text-gray-900">
+            Paid <CheckCircle className="w-3.5 h-3.5 text-green-500" />
           </span>
         }
       />
@@ -54,12 +54,12 @@ export const PayrollStats = ({ summary }: PayrollStatsProps) => {
       {/* Pending Approvals */}
       <StatCard
         label={
-          <span className="text-[11px] sm:text-xs uppercase text-gray-500 font-medium">
+          <span className="text-[10px] uppercase text-gray-500 font-medium">
             Pending Approvals
           </span>
         }
         value={
-          <span className="text-lg sm:text-xl font-semibold text-gray-900">
+          <span className="text-base font-semibold text-gray-900">
             0
           </span>
         }

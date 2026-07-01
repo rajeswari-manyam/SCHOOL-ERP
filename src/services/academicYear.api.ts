@@ -50,6 +50,11 @@ const normalise = (raw: any): AcademicYearRecord => ({
   updatedAt:  raw.updatedAt,
 });
 
+export const selectAcademicYear = async (academicYearId: string): Promise<{ status: boolean; message: string }> => {
+  const { data } = await api.patch("/academic-years/select", { academicYearId });
+  return data;
+};
+
 export const getAllAcademicYears = async (): Promise<GetAllAcademicYearsResponse> => {
   const { data } = await api.get("/tenant/getallacademicyears");
   if (!data?.status || !Array.isArray(data?.data)) {

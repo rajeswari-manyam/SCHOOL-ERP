@@ -1,26 +1,26 @@
 import { motion } from 'framer-motion';
 import { Download, Radio } from 'lucide-react';
 import { toast } from 'sonner';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   useDashboard, useAdmissionsThisWeek, useSchoolTodayAttendance,
   useAllClassesTodayAttendance, useClassAttendanceStatus,
   useEnquiriesPipeline, useSendReminders, useActiveAcademicYear, useFeeSummary,
   usePendingLeaves,
 } from './hooks/index';
-import { useSetupStatus } from './hooks/useSetupStatus';
-import { AlertBanner }         from './components/AlertBanner';
-import { SetupSuggestions }     from './components/SetupSuggestions';
+import { useSetupStatus, useWizardState } from './hooks/useSetupStatus';
+import { AlertBanner }   from './components/AlertBanner';
+import { SetupWizard }   from './components/SetupWizard';
 import { StatsGrid }           from './components/StatsGrid';
 import { AttendanceTable }     from './components/AttendanceTable';
 import { FeesDueSummary }      from './components/FeesDueSummary';
 import { PendingFeesModal }    from './components/PendingFeesModal';
-import { WhatsAppActivityFeed } from './components/WhatsAppActivity';
 import { AdmissionsPipeline }  from './components/AdmissionsPipeline';
 import { PendingLeavesCard }   from './components/PendingLeavesCard';
 import { DashboardSkeleton }   from './components/DashboardSkeleton';
 import type { AttendanceClass, StatsCard } from './types/index';
 import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -49,14 +49,27 @@ export function DashboardPage() {
   const { data: enquiriesPipeline = [] }                                = useEnquiriesPipeline();
   const { data: activeAcademicYear }                                    = useActiveAcademicYear();
   const { data: setupItems, isLoading: isSetupLoading }                  = useSetupStatus();
+  const wizardState                                                       = useWizardState(setupItems);
   const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
   const { data: feeSummary }                                            = useFeeSummary();
   const { data: pendingLeaves = [], isLoading: isPendingLeavesLoading } = usePendingLeaves();
-  const [setupDismissed, setSetupDismissed]                             = useState(false);
-  const [showPendingModal, setShowPendingModal]                         = useState(false);
+  const wizardDismissed    = useUIStore((s) => s.wizardDismissed);
+  const setWizardDismissed = useUIStore((s) => s.setWizardDismissed);
+  const [showPendingModal, setShowPendingModal] = useState(false);
 
-  const pendingSetupCount = setupItems ? setupItems.filter((i) => !i.done).length : 0;
-  const showSetup = !setupDismissed && !isSetupLoading && pendingSetupCount > 0;
+  const allSetupDone = setupItems ? setupItems.every((i) => i.done) : false;
+  const showSetup    = !wizardDismissed && !isSetupLoading && !allSetupDone;
+
+  // When all steps complete, clear dismissed flag so wizard shows the celebration screen once
+  useEffect(() => {
+    if (allSetupDone && wizardDismissed) {
+      setWizardDismissed(false);
+    }
+  }, [allSetupDone, wizardDismissed, setWizardDismissed]);
+
+  const handleDismiss = useCallback(() => {
+    setWizardDismissed(true);
+  }, [setWizardDismissed]);
 
   const stats = useMemo<StatsCard[] | undefined>(() => {
     if (!data?.stats) return undefined;
@@ -102,6 +115,17 @@ export function DashboardPage() {
     return ids.size > 0 ? ids : undefined;
   }, [isAdmissionsLoading, isAttendanceLoading, isClassAttendanceLoading, classAttendance.length]);
 
+  // Show wizard (full-page replacement) while setup is pending
+  if (showSetup) {
+    return (
+      <SetupWizard
+        items={wizardState.items}
+        isLoading={isSetupLoading}
+        onDismiss={handleDismiss}
+      />
+    );
+  }
+
   if (isLoading) return <DashboardSkeleton />;
 
   if (isError || !data) {
@@ -139,20 +163,7 @@ export function DashboardPage() {
       transition={{ duration: 0.35 }}
       className="space-y-5 pb-8"
     >
-      {/* ── Setup suggestions banner ── */}
-      {!setupDismissed && (
-        <SetupSuggestions
-          items={setupItems}
-          isLoading={isSetupLoading}
-          onDismiss={() => setSetupDismissed(true)}
-        />
-      )}
-
-      {/* ── Dashboard content — blurred while setup is pending ── */}
-      <div
-        className="space-y-5 transition-all duration-500"
-        style={showSetup ? { filter: 'blur(3px)', pointerEvents: 'none', userSelect: 'none' } : undefined}
-      >
+      <div className="space-y-5">
         {/* ── Alert ── */}
         {unmarkedClasses.length > 0 && (
           <AlertBanner classes={unmarkedClasses} onSendReminder={handleSendReminders} sending={isSending} />
@@ -161,25 +172,25 @@ export function DashboardPage() {
         {/* ── Page header ── */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug truncate">
+            <h1 className="text-base font-semibold text-gray-900 leading-snug truncate">
               {getGreeting()},{' '}
               <span className="text-indigo-600">{greetingName}</span>
             </h1>
-            <p className="mt-0.5 text-[11px] sm:text-xs text-gray-500 line-clamp-2">
+            <p className="mt-0.5 text-[10px] sm:text-[11px] text-gray-500 line-clamp-2">
               Here's what's happening at{' '}
-              <span className="font-semibold text-indigo-600">{schoolName}</span>
+              <span className="font-medium text-indigo-600">{schoolName}</span>
               {' '}today — {formatDate()}
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-gray-300 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm">
-              <Download size={14} className="shrink-0" />
+            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm">
+              <Download size={12} className="shrink-0" />
               <span className="hidden sm:inline">Download Report</span>
               <span className="sm:hidden">Download</span>
             </button>
-            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
-              <Radio size={14} className="shrink-0" />
+            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs hover:bg-indigo-700 transition-colors shadow-sm">
+              <Radio size={12} className="shrink-0" />
               <span className="hidden sm:inline">Send Broadcast</span>
               <span className="sm:hidden">Broadcast</span>
             </button>
@@ -194,15 +205,15 @@ export function DashboardPage() {
         {/* ── Stats ── */}
         <StatsGrid stats={stats ?? data.stats} loadingStatIds={loadingStatIds} />
 
-        {/* ── Attendance + Fees ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
+        {/* ── Row 1: Attendance + Fee ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div>
             {isClassAttendanceLoading && attendanceClasses.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-5 w-48 rounded-lg bg-gray-100" />
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-12 w-full rounded-lg bg-gray-100" />
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 w-40 rounded-lg bg-gray-100" />
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-8 w-full rounded-lg bg-gray-100" />
                   ))}
                 </div>
               </div>
@@ -210,7 +221,7 @@ export function DashboardPage() {
               <AttendanceTable classes={attendanceClasses} onSendReminder={handleSendReminders} />
             )}
           </div>
-          <div className="lg:col-span-2">
+          <div>
             <FeesDueSummary
               totalOutstanding={feeSummary?.total_pending_fees ?? data.feeTotalOutstanding}
               feeCollected={feeSummary?.fee_collection ?? 0}
@@ -221,11 +232,8 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* ── WhatsApp + Admissions ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <WhatsAppActivityFeed activities={data.whatsappActivity} />
-          <AdmissionsPipeline pipeline={enquiriesPipeline} academicYearName={activeAcademicYear?.yearName} />
-        </div>
+        {/* ── Row 2: Quick Actions + Admissions Pipeline ── */}
+        <AdmissionsPipeline pipeline={enquiriesPipeline} academicYearName={activeAcademicYear?.yearName} />
       </div>
     </motion.div>
 

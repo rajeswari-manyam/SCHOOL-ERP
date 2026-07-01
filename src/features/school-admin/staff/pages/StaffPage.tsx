@@ -101,7 +101,7 @@ export default function StaffManagementPage() {
       )}
 
       {/* ── Top bar ── */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-3">
+      <div className="px-3 sm:px-4 py-3 flex items-center justify-between gap-3">
         {/* Left: breadcrumb + title with count */}
         <div className="min-w-0">
           <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5 mb-1">
@@ -110,34 +110,36 @@ export default function StaffManagementPage() {
             <span className="text-indigo-600">Staff</span>
           </div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-gray-900 leading-none">Staff</h1>
+            <h1 className="text-base font-semibold text-gray-900 leading-none">Staff</h1>
             <span className="text-sm font-semibold text-gray-400">{staffData.length} staff members</span>
           </div>
         </div>
 
-        {/* Right: CTA */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            onClick={() => setShowBulkModal(true)}
-            variant="outline"
-            className="gap-1.5 text-sm px-3 sm:px-4 py-2 whitespace-nowrap rounded-xl"
-          >
-            <span className="text-base leading-none font-bold">⇅</span>
-            <span className="hidden sm:inline">Bulk Add</span>
-          </Button>
-          <Button
-            onClick={() => setShowModal(true)}
-            className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm gap-1.5 text-sm px-4 py-2 whitespace-nowrap rounded-xl"
-          >
-            <span className="text-base leading-none font-bold">+</span>
-            <span className="hidden sm:inline">Add Staff Member</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
-        </div>
+        {/* Right: CTA — hidden on Leave Requests tab */}
+        {activeTab !== "leave-requests" && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={() => setShowBulkModal(true)}
+              variant="outline"
+              className="gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
+            >
+              <span className="text-sm leading-none font-bold">⇅</span>
+              <span className="hidden sm:inline">Bulk Add</span>
+            </Button>
+            <Button
+              onClick={() => setShowModal(true)}
+              className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
+            >
+              <span className="text-sm leading-none font-bold">+</span>
+              <span className="hidden sm:inline">Add Staff Member</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── Main content ── */}
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
+      <div className="px-3 sm:px-4 py-3 space-y-4">
         {/* Stats cards — scroll horizontally on mobile if needed */}
         <div className="w-full overflow-x-auto">
           <StatsCards

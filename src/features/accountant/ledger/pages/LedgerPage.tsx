@@ -79,7 +79,7 @@ export default function LedgerPage() {
     setCurrentDate((prev) => { const d = new Date(prev); d.setMonth(prev.getMonth() + 1); return d; });
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 pt-2 pb-6 space-y-6 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
 
       {/* Header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -89,10 +89,10 @@ export default function LedgerPage() {
             <ChevronRight className="w-3 h-3" />
             <span className="text-gray-700 font-medium">Ledger</span>
           </div>
-          <h1 className="text-lg md:text-2xl font-bold text-gray-900">
+          <h1 className="text-sm md:text-base font-bold text-gray-900">
             Income & Expense Ledger
           </h1>
-          <p className="text-xs md:text-sm text-gray-500">
+          <p className="text-[11px] text-gray-500">
             Financial records — Hanamkonda Public School
           </p>
         </div>

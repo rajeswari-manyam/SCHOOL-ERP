@@ -16,6 +16,7 @@ import {
   useBulkCreateExamTimetable,
   useUpdateExamTimetable,
   useDeleteExam,
+  useDeleteTimetable,
 } from "./hooks/useTimetable";
 
 // ── Exam Manager hooks ───────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ import { useExams, useCreateExam, useUpdateExam, useDeleteExam as useDeleteExamR
 import type { BulkCreateTimetablePayload } from "@/services/timetable.api";
 import type {
   ExamEntry,
+  DayOfWeek,
 } from "./types/timetable.types";
 import type { ExamRecord } from "@/services/exam.api";
 
@@ -654,11 +656,15 @@ const TimetablePage: React.FC = () => {
   const { mutate: bulkCreateExamTimetable, isPending: isCreatingExamTimetable } = useBulkCreateExamTimetable();
   const { mutate: updateExamTimetable, isPending: isUpdatingExamTimetable } = useUpdateExamTimetable();
   const { mutate: deleteExam } = useDeleteExam();
+  const { mutate: deleteTimetable, isPending: isDeletingTimetable } = useDeleteTimetable();
 
   const [addPeriodOpen, setAddPeriodOpen] = useState(false);
   const [addExamTimetableOpen, setAddExamTimetableOpen] = useState(false);
   const [editExamEntry, setEditExamEntry] = useState<ExamEntry | null>(null);
   const [deleteExamTarget, setDeleteExamTarget] = useState<ExamEntry | null>(null);
+  const [deletePeriodTarget, setDeletePeriodTarget] = useState<{
+    id: string; day: DayOfWeek; periodNo: number; subject: string; teacherName: string;
+  } | null>(null);
 
   const { classTabs = [], classTimetable } = data ?? {};
   const headingClass   = classTimetable?.classLabel ?? activeClass.label;
@@ -676,22 +682,14 @@ const TimetablePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-
-        {/* Breadcrumb */}
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
-          Academic Curator <span className="mx-1 text-gray-300">/</span>
-          <span className="text-indigo-600 font-semibold">
-            {activeTab === "timetable" ? "Timetable" : examSubTabs.find(t => t.id === activeExamSubTab)?.label ?? "Exam Timetable"}
-          </span>
-        </p>
+    <div className="min-h-screen ">
+      <div className="px-3 sm:px-4 py-3">
 
         {/* Page header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">Timetable</h1>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <h1 className="text-base font-semibold text-gray-900 leading-tight">Timetable</h1>
+            <p className="text-xs text-gray-400 mt-0.5">
               {academicYearOptions.find(y => y.id === academicYearId)?.label ?? new Date().getFullYear()} Academic Year
             </p>
           </div>
@@ -711,8 +709,8 @@ const TimetablePage: React.FC = () => {
                     setActiveSection({ id: "", label: "" });
                     setSectionInitialised(false);
                   }}
-                  className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm outline-none focus:border-indigo-500"
-                >
+                  className="rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm outline-none focus:border-indigo-500"
+  >
                   {(classTabsData ?? classTabs).map((c) => (
                     <option key={c.id} value={c.id}>{c.label}</option>
                   ))}
@@ -720,35 +718,37 @@ const TimetablePage: React.FC = () => {
               )}
               <button
                 onClick={() => setAddPeriodOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
               >
-                <Plus size={14} /> Add Period
+                <Plus size={13} /> Add Period
               </button>
               <button
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
               >
-                <Printer size={14} /> Print Timetable
+                <Printer size={13} /> Print Timetable
               </button>
             </div>
           )}
         </div>
 
         {/* ── Main tabs ───────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 mb-6 bg-white border border-gray-100 rounded-xl p-1 shadow-sm w-fit">
-          {mainTabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold transition ${
-                activeTab === t.id
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="border-b border-gray-200 mb-4">
+          <div className="flex items-center">
+            {mainTabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`relative flex items-center gap-2 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors ${
+                  activeTab === t.id
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-gray-700 hover:text-gray-900"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ── Timetable tab ───────────────────────────────────────────────────── */}
@@ -768,10 +768,10 @@ const TimetablePage: React.FC = () => {
                     <button
                       key={sec.id}
                       onClick={() => setActiveSection({ id: sec.id, label: sec.label })}
-                      className={`px-5 py-3 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${
+                      className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                         activeSection.id === sec.id
                           ? "border-indigo-600 text-indigo-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          : "border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300"
                       }`}
                     >
                       Section {sec.label}
@@ -808,7 +808,17 @@ const TimetablePage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <WeeklyTimetableGrid timetable={classTimetable} onEditCell={() => setAddPeriodOpen(true)} workingDays={activeWDSelectedDays} />
+                <WeeklyTimetableGrid
+                  timetable={classTimetable}
+                  onEditCell={() => setAddPeriodOpen(true)}
+                  onEditPeriod={() => {
+                    setAddPeriodOpen(true);
+                  }}
+                  onDeletePeriod={(id, day, periodNo, subject, teacherName) =>
+                    setDeletePeriodTarget({ id, day, periodNo, subject, teacherName })
+                  }
+                  workingDays={activeWDSelectedDays}
+                />
               )}
             </div>
           </>
@@ -823,10 +833,10 @@ const TimetablePage: React.FC = () => {
                 <button
                   key={t.id}
                   onClick={() => setActiveExamSubTab(t.id)}
-                  className={`px-5 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                  className={`px-3 py-2.5 text-xs font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
                     activeExamSubTab === t.id
                       ? "border-indigo-600 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      : "border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300"
                   }`}
                 >
                   {t.label}
@@ -918,6 +928,38 @@ const TimetablePage: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* ── Delete Period Confirm Modal ─────────────────────────────── */}
+      {deletePeriodTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-400/40">
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6">
+            <h3 className="text-lg font-black text-slate-900 mb-2">Delete Period</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-slate-700">
+                {deletePeriodTarget.subject} ({deletePeriodTarget.teacherName})
+              </span>{" "}
+              on period {deletePeriodTarget.periodNo}? This cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeletePeriodTarget(null)}
+                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteTimetable(deletePeriodTarget.id, { onSuccess: () => setDeletePeriodTarget(null) })}
+                disabled={isDeletingTimetable}
+                className="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeletingTimetable && <Loader2 size={14} className="animate-spin" />}
+                {isDeletingTimetable ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

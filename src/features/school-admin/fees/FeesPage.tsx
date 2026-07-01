@@ -58,12 +58,12 @@ const FeeCollectionPage = () => {
   }
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="space-y-2 p-3 sm:p-4">
 
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white leading-tight">
+          <h1 className="text-base font-semibold text-gray-900 dark:text-white leading-tight">
             Fee Collection
           </h1>
           <p className="mt-0.5 text-xs text-gray-400 dark:text-slate-500">
@@ -110,15 +110,15 @@ const FeeCollectionPage = () => {
                 onClick={() => setActiveTab(tab.key as TabKey)}
                 className={[
                   // layout
-                  "relative shrink-0 flex items-center gap-1.5 px-4 py-2.5",
-                  "text-sm font-semibold whitespace-nowrap",
-                  "transition-colors duration-150 outline-none",
+                  "relative shrink-0 flex items-center gap-1.5 px-3 py-2.5",
+                  "text-xs font-medium whitespace-nowrap",
+                  "border-b-2 transition-colors duration-150 outline-none",
                   // focus ring
                   "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500",
                   // active state
                   active
-                    ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200",
+                    ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                    : "border-transparent text-gray-700 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:border-gray-300",
                 ].join(" ")}
               >
                 {/* Icon — hidden on very small screens to save space */}
@@ -126,14 +126,6 @@ const FeeCollectionPage = () => {
                   {tab.icon}
                 </span>
                 {tab.label}
-
-                {/* Active underline */}
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-0 left-0 h-0.5 w-full rounded-t-full bg-indigo-600 dark:bg-indigo-400"
-                  />
-                )}
               </button>
             );
           })}

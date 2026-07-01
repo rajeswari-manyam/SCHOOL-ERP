@@ -143,10 +143,14 @@ export function PaySalaryModal({ staff, onClose, onPay }: PaySalaryModalProps) {
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">₹</span>
                     <input
-                      type="number"
-                      min="0"
-                      value={form[key]}
-                      onChange={(e) => set(key, Math.max(0, Number(e.target.value)))}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={form[key] === 0 ? "" : form[key]}
+                      onChange={(e) => {
+                        const n = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                        set(key, isNaN(n) ? 0 : n);
+                      }}
                       disabled={!!result}
                       className={`${numCls} pl-7 ${result ? "bg-slate-50 text-slate-500" : ""}`}
                     />
@@ -180,10 +184,14 @@ export function PaySalaryModal({ staff, onClose, onPay }: PaySalaryModalProps) {
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">₹</span>
                   <input
-                    type="number"
-                    min="0"
-                    value={form.otherDeductions}
-                    onChange={(e) => set("otherDeductions", Math.max(0, Number(e.target.value)))}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={form.otherDeductions === 0 ? "" : form.otherDeductions}
+                    onChange={(e) => {
+                      const n = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                      set("otherDeductions", isNaN(n) ? 0 : n);
+                    }}
                     disabled={!!result}
                     className={`${numCls} pl-7 text-rose-600 ${result ? "bg-slate-50" : ""}`}
                   />

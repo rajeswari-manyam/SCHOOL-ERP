@@ -106,9 +106,9 @@ export default function ReportsPage() {
   const handleFilter = (_filters: ReportFilterValues) => {};
 
   return (
-    <div className="flex min-h-screen bg-gray-50/50">
+    <div className="flex min-h-screen bg-gray-50/50 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-4 space-y-4 sm:space-y-6">
 
           {/* Header */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

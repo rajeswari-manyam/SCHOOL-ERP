@@ -24,12 +24,11 @@ const ROLE_OPTIONS = [
 const STATUS_OPTIONS = [
   { label: "All Status",  value: "" },
   { label: "Active",      value: "ACTIVE" },
-  { label: "On Leave",    value: "ON_LEAVE" },
   { label: "Inactive",    value: "INACTIVE" },
 ];
 
 export const StaffFilters = ({ search, roleFilter, statusFilter, selectedStaffId, staffList, onSearch, onRoleChange, onStatusChange, onStaffChange }: Props) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+  <div className="rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3" style={{ background: '#EFF4FF' }}>
 
     {/* Search */}
     <div className="relative flex-1">
@@ -38,7 +37,7 @@ export const StaffFilters = ({ search, roleFilter, statusFilter, selectedStaffId
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         placeholder="Search name or phone"
-        className="w-full h-10 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
+        className="w-full h-9 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
       />
     </div>
 
@@ -47,7 +46,7 @@ export const StaffFilters = ({ search, roleFilter, statusFilter, selectedStaffId
       <select
         value={selectedStaffId}
         onChange={(e) => onStaffChange(e.target.value)}
-        className="h-10 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[160px]"
+        className="h-9 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-w-[140px]"
       >
         <option value="">All Staff</option>
         {staffList.map((s) => (
@@ -58,13 +57,13 @@ export const StaffFilters = ({ search, roleFilter, statusFilter, selectedStaffId
         options={ROLE_OPTIONS}
         value={roleFilter}
         onValueChange={onRoleChange}
-        className="h-10 rounded-xl bg-gray-50 border-gray-200 text-sm min-w-[120px]"
+        className="h-9 rounded-xl bg-gray-50 border-gray-200 text-xs min-w-[110px]"
       />
       <Select
         options={STATUS_OPTIONS}
         value={statusFilter}
         onValueChange={onStatusChange}
-        className="h-10 rounded-xl bg-gray-50 border-gray-200 text-sm min-w-[120px]"
+        className="h-9 rounded-xl bg-gray-50 border-gray-200 text-xs min-w-[110px]"
       />
       <button className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-gray-500">
         <SlidersHorizontal className="w-4 h-4" />

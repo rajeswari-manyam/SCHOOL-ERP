@@ -65,7 +65,7 @@ const StaffProfilePage = () => {
               <StaffAvatar initials={staff.initials} status={staff.status} />
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-xl font-extrabold text-gray-900">{staff.name}</h1>
+                  <h1 className="text-base font-semibold text-gray-900">{staff.name}</h1>
                   <StatusBadge status={staff.status} />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{staff.role} · {staff.employeeId}</p>

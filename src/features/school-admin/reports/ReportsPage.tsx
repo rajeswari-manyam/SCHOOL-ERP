@@ -39,13 +39,8 @@ const ReportsPage = () => {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <nav className="flex items-center gap-1 text-xs text-gray-400 mb-1.5">
-            <span className="font-bold uppercase tracking-wider">Admin</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="font-bold uppercase tracking-wider text-indigo-600">Reports</span>
-          </nav>
-          <h1 className="text-xl font-bold text-gray-900">Reports</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Generate and download school reports</p>
+          <h1 className="text-base font-semibold text-gray-900">Reports</h1>
+          <p className="text-xs text-gray-400 mt-0.5">Generate and download school reports</p>
         </div>
 
         {/* Academic Year picker */}

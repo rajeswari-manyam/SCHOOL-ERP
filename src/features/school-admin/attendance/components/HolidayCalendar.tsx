@@ -204,7 +204,7 @@ const HolidayCalendar = () => {
               aria-label="Previous month"
               className="flex h-8 w-8 items-center justify-center rounded-lg p-0 text-base border-gray-200 hover:bg-gray-50"
             >‹</Button>
-            <CardTitle className="min-w-[140px] text-center text-base font-bold text-gray-900">
+            <CardTitle className="min-w-[120px] text-center text-sm font-semibold text-gray-900">
               {MONTHS[calendarMonth]} {calendarYear}
             </CardTitle>
             <Button
@@ -288,7 +288,7 @@ const HolidayCalendar = () => {
                       <div className="flex items-start justify-between">
                         <span
                           className={[
-                            "flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold",
+                            "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
                             isToday
                               ? "bg-indigo-600 text-white"
                               : isWeekend
@@ -337,13 +337,13 @@ const HolidayCalendar = () => {
               return (
                 <div key={key} className="flex items-center gap-1.5">
                   <span className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />
-                  <span className="text-[11px] font-medium text-gray-500 sm:text-xs">{cfg.label}</span>
+                  <span className="text-[10px] font-medium text-gray-500">{cfg.label}</span>
                 </div>
               );
             })}
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
-              <span className="text-[11px] font-medium text-gray-500 sm:text-xs">Sunday/Weekend</span>
+              <span className="text-[10px] font-medium text-gray-500">Sunday/Weekend</span>
             </div>
           </div>
         </CardContent>
@@ -353,10 +353,10 @@ const HolidayCalendar = () => {
       <Card className="border border-gray-200">
         <CardHeader className="flex flex-col gap-3 border-b-0 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div className="min-w-0">
-            <CardTitle className="text-sm font-bold text-gray-900 sm:text-base">
+            <CardTitle className="text-xs font-semibold text-gray-900">
               Holidays This Academic Year
             </CardTitle>
-            <CardDescription className="mt-0.5 text-xs text-gray-500 sm:text-sm">
+            <CardDescription className="mt-0.5 text-[10px] text-gray-500">
               {cal.totalHolidaysThisYear} holidays scheduled
               {cal.academicYear ? ` for ${cal.academicYear}` : ""}
             </CardDescription>
@@ -385,7 +385,7 @@ const HolidayCalendar = () => {
                   >
                     <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                       <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${cfg.dot}`} />
-                      <span className="truncate text-sm font-medium text-gray-800">{h.name}</span>
+                      <span className="truncate text-xs font-medium text-gray-800">{h.name}</span>
                       <Badge
                         className={[
                           "shrink-0 rounded px-2 py-0.5 text-[10px] font-semibold border-0",
@@ -399,7 +399,7 @@ const HolidayCalendar = () => {
                       {h.note && (
                         <span className="text-xs text-gray-400 italic">{h.note}</span>
                       )}
-                      <span className="text-xs text-gray-500 shrink-0">
+                      <span className="text-[10px] text-gray-500 shrink-0">
                         {dateObj.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                       </span>
                     </div>

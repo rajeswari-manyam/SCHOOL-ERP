@@ -72,26 +72,26 @@ export default function FeeManagementPage() {
   const totalPending = (filteredFees || []).reduce((s, r) => s + r.amount, 0);
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#EFF4FF] overflow-hidden">
+    <div className="flex flex-col w-full min-w-0 space-y-4 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 px-4 md:px-6 lg:px-8">
       {showPaymentModal && (
         <RecordFeePaymentModal onClose={() => setShowPaymentModal(false)} />
       )}
 
       {/* ── Stats Cards ── */}
       {!hideStandardHeader && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 md:px-6 pt-5 pb-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {FEE_STATS.map((s) => (
             <StatCard
               key={s.label}
               label={s.label}
-              value={<span className={`${s.color} font-bold text-sm md:text-base`}>{s.value}</span>}
+              value={<span className={`${s.color} font-bold text-lg md:text-xl`}>{s.value}</span>}
             />
           ))}
         </div>
       )}
 
       {/* ── Main Card ── */}
-      <div className="mx-4 md:mx-6 my-4 bg-white rounded-xl border border-gray-200 flex flex-col min-w-0 max-w-full overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 flex flex-col min-w-0 max-w-full overflow-hidden">
 
         {/* Header */}
         <div className="px-4 md:px-5 pt-5 pb-3">

@@ -1,7 +1,7 @@
 ﻿// src/components/common/Sidebar.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { X, ChevronDown, LogOut, Settings } from "lucide-react";
+import { X, ChevronDown, LogOut, Settings, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
@@ -213,55 +213,92 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
           <ul className="m-0 list-none space-y-0.5 p-0">
             {navItems.map((item) => (
               <li key={item.to}>
-                <Link
-                  to={item.to}
-                  onClick={() => {
-                    if (window.innerWidth < 768) setSidebarOpen(false);
-                  }}
-                  title={collapsed ? String(item.label) : undefined}
-                  aria-current={item.isActive ? "page" : undefined}
-                  className={cn(
-                    "group relative flex min-h-[46px] items-center overflow-hidden rounded-xl",
-                    "text-sm font-medium transition-all duration-200",
-                    "outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]",
-                    collapsed ? "justify-center px-0 py-2" : "gap-3 px-4 py-2",
-                    item.isActive
-                      ? "bg-[#6C63FF] text-white shadow-[0_6px_20px_-6px_rgba(108,99,255,0.65)]"
-                      : "text-slate-300 hover:bg-white/[0.08] hover:text-white"
-                  )}
-                >
-                  {item.isActive && (
-                    <motion.span
-                      layoutId="active-pill"
-                      className="absolute left-0 top-[6px] bottom-[6px] w-[3px] rounded-r-full bg-white/80"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-
-                  <span
+                {item.locked ? (
+                  /* ── Locked item — not a link, grayed out with lock icon ── */
+                  <div
+                    title={collapsed ? `${String(item.label)} (locked)` : `${String(item.label)} — complete earlier setup steps to unlock`}
                     className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center text-[17px] transition-colors",
-                      item.isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+                      "group relative flex min-h-[46px] items-center overflow-hidden rounded-xl",
+                      "text-sm font-medium cursor-not-allowed select-none",
+                      collapsed ? "justify-center px-0 py-2" : "gap-3 px-4 py-2",
+                      "text-slate-600 opacity-50"
                     )}
                   >
-                    {item.icon}
-                  </span>
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center text-[17px] text-slate-600">
+                      {item.icon}
+                    </span>
 
-                  <AnimatePresence initial={false}>
+                    <AnimatePresence initial={false}>
+                      {!collapsed && (
+                        <motion.span
+                          key="nav-label-locked"
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: "auto" }}
+                          exit={{ opacity: 0, width: 0 }}
+                          transition={{ duration: 0.18, ease: "easeInOut" }}
+                          className="overflow-hidden whitespace-nowrap flex-1"
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+
                     {!collapsed && (
-                      <motion.span
-                        key="nav-label"
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "auto" }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={{ duration: 0.18, ease: "easeInOut" }}
-                        className="overflow-hidden whitespace-nowrap"
-                      >
-                        {item.label}
-                      </motion.span>
+                      <Lock className="w-3 h-3 shrink-0 text-slate-500 ml-auto" />
                     )}
-                  </AnimatePresence>
-                </Link>
+                  </div>
+                ) : (
+                  /* ── Normal navigable item ── */
+                  <Link
+                    to={item.to}
+                    onClick={() => {
+                      if (window.innerWidth < 768) setSidebarOpen(false);
+                    }}
+                    title={collapsed ? String(item.label) : undefined}
+                    aria-current={item.isActive ? "page" : undefined}
+                    className={cn(
+                      "group relative flex min-h-[46px] items-center overflow-hidden rounded-xl",
+                      "text-sm font-medium transition-all duration-200",
+                      "outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]",
+                      collapsed ? "justify-center px-0 py-2" : "gap-3 px-4 py-2",
+                      item.isActive
+                        ? "bg-[#6C63FF] text-white shadow-[0_6px_20px_-6px_rgba(108,99,255,0.65)]"
+                        : "text-slate-300 hover:bg-white/[0.08] hover:text-white"
+                    )}
+                  >
+                    {item.isActive && (
+                      <motion.span
+                        layoutId="active-pill"
+                        className="absolute left-0 top-[6px] bottom-[6px] w-[3px] rounded-r-full bg-white/80"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center text-[17px] transition-colors",
+                        item.isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+                      )}
+                    >
+                      {item.icon}
+                    </span>
+
+                    <AnimatePresence initial={false}>
+                      {!collapsed && (
+                        <motion.span
+                          key="nav-label"
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: "auto" }}
+                          exit={{ opacity: 0, width: 0 }}
+                          transition={{ duration: 0.18, ease: "easeInOut" }}
+                          className="overflow-hidden whitespace-nowrap"
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

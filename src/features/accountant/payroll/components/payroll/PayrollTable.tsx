@@ -98,7 +98,7 @@ export const PayrollTable = ({
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  {(staff.status === "Draft" || staff.status === "Pending") && (
+                  {staff.status === "Draft" && (
                     <button
                       onClick={() => onPaySalary(staff)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-[#3525CD] hover:bg-[#2a1fb5] text-white text-[11px] font-semibold rounded-lg transition-colors"
@@ -246,7 +246,7 @@ export const PayrollTable = ({
                 {/* Actions */}
                 <td className="px-4 py-3.5">
                   <div className="flex items-center justify-end gap-1">
-                    {(staff.status === "Draft" || staff.status === "Pending") && (
+                    {staff.status === "Draft" && (
                       <button
                         onClick={() => onPaySalary(staff)}
                         title="Pay Salary"

@@ -13,6 +13,11 @@ import {
   createHoliday,
   type CreateHolidayPayload,
 } from "../../../../services/holidays.api";
+import {
+  updateStaffAttendanceById,
+  deleteStaffAttendanceById,
+  type UpdateStaffAttendancePayload,
+} from "../../../../services/attendance.api";
 import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
 import {
   createStaffAttendance,
@@ -233,6 +238,48 @@ export const useAllStaffAttendance = () => {
     queryKey: [...attendanceKeys.all, "allStaffAttendance"] as const,
     queryFn: () => getAllStaffAttendance(),
     staleTime: 60_000,
+  });
+};
+
+// ─── Create Staff Attendance (single row, no modal close) ────────────────────
+export const useCreateSingleStaffAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateStaffAttendancePayload) => {
+      const user = getAuthUser();
+      const schoolCode = user?.schoolcode ?? "";
+      const apiPayload: ApiCreateStaffAttendancePayload = {
+        school_code: schoolCode,
+        attendance_records: payload.attendance_records,
+      };
+      return createStaffAttendance(apiPayload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+    },
+  });
+};
+
+// ─── Update Staff Attendance ─────────────────────────────────────────────────
+export const useUpdateStaffAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateStaffAttendancePayload }) =>
+      updateStaffAttendanceById(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+    },
+  });
+};
+
+// ─── Delete Staff Attendance ──────────────────────────────────────────────────
+export const useDeleteStaffAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteStaffAttendanceById(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+    },
   });
 };
 

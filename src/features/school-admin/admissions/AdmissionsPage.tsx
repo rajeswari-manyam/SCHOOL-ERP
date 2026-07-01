@@ -37,30 +37,30 @@ export function AdmissionsPage() {
         >
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">
+              <h1 className="text-base font-semibold text-gray-900 tracking-tight leading-none">
                 Admissions
               </h1>
               {activeYear?.yearName && (
-                <span className="text-[11px] font-semibold text-indigo-600 border border-indigo-200 bg-indigo-50 rounded-full px-3 py-1 leading-none">
+                <span className="text-[10px] text-indigo-600 border border-indigo-200 bg-indigo-50 rounded-full px-2.5 py-0.5 leading-none">
                   {activeYear.yearName} Academic Year
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               Manage student journey from initial enquiry to final confirmation.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-              <Download size={15} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+              <Download size={13} />
               Export Pipeline
             </button>
             <button
               onClick={openAddEnquiry}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs transition-colors shadow-sm"
             >
-              <UserPlus size={15} />
+              <UserPlus size={13} />
               + Add Enquiry
             </button>
           </div>

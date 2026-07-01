@@ -188,6 +188,11 @@ export interface HistoryStatsProps {
   avatars?: string[];
 }
 
+export interface TrendPoint {
+  label: string;
+  amount: number;
+}
+
 export interface PayrollHistoryTabProps {
   history: PayrollHistory[];
   totalPayrollFY: number;

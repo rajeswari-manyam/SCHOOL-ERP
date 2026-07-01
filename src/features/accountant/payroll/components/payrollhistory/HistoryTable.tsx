@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Download, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { formatINR as formatCurrency } from "../../../../../utils/formatters";
 import type { PayrollHistory, HistoryTableProps } from "../../types/payroll.types";
 
@@ -20,28 +20,6 @@ const StatusBadge = ({ status }: { status: PayrollHistory["status"] }) => {
   );
 };
 
-const ActionButtons = () => (
-  <div className="flex items-center gap-1">
-    <button
-      title="View Payslip"
-      className="p-1.5 rounded-lg hover:bg-[#3525CD]/10 text-slate-400 hover:text-[#3525CD] transition-colors"
-    >
-      <Eye className="w-3.5 h-3.5" />
-    </button>
-    <button
-      title="Download PDF"
-      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-    >
-      <Download className="w-3.5 h-3.5" />
-    </button>
-    <button
-      title="View Report"
-      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-    >
-      <FileText className="w-3.5 h-3.5" />
-    </button>
-  </div>
-);
 
 export const HistoryTable = ({ data }: HistoryTableProps) => {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
@@ -70,10 +48,8 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
                 { label: "Gross",       align: "right" },
                 { label: "Deductions",  align: "right" },
                 { label: "Net Paid",    align: "right" },
-                { label: "Date",        align: "left"  },
                 { label: "Mode",        align: "left"  },
                 { label: "Status",      align: "left"  },
-                { label: "Actions",     align: "right" },
               ].map(({ label, align }) => (
                 <th
                   key={label}
@@ -96,22 +72,18 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
               >
                 <td className="px-5 py-3.5">
                   <span className="text-sm font-semibold text-slate-800">
-                    {item.month} {item.year}
+                    {item.month}
                   </span>
                 </td>
                 <td className="px-4 py-3.5 text-right text-xs text-slate-700">{item.staffCount}</td>
                 <td className="px-4 py-3.5 text-right text-xs text-slate-700">{formatCurrency(item.totalGross)}</td>
                 <td className="px-4 py-3.5 text-right text-xs text-rose-600">{formatCurrency(item.totalDeductions)}</td>
                 <td className="px-4 py-3.5 text-right text-xs font-bold text-[#3525CD]">{formatCurrency(item.netPaid)}</td>
-                <td className="px-4 py-3.5 text-xs text-slate-600">{item.paymentDate}</td>
                 <td className="px-4 py-3.5">
                   <span className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">{item.mode}</span>
                 </td>
                 <td className="px-4 py-3.5">
                   <StatusBadge status={item.status} />
-                </td>
-                <td className="px-4 py-3.5 text-right">
-                  <ActionButtons />
                 </td>
               </tr>
             ))}
@@ -132,10 +104,10 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
                 onClick={() => setExpandedCard(isExpanded ? null : key)}
               >
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">{item.month} {item.year}</p>
+                  <p className="text-sm font-semibold text-slate-800">{item.month}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <StatusBadge status={item.status} />
-                    <span className="text-[10px] text-slate-400">{item.staffCount} staff · {item.paymentDate}</span>
+                    <span className="text-[10px] text-slate-400">{item.staffCount} staff</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -159,21 +131,6 @@ export const HistoryTable = ({ data }: HistoryTableProps) => {
                         <p className="text-slate-400 text-[10px] mb-0.5">{label}</p>
                         <p className={`font-semibold text-xs ${cls}`}>{val}</p>
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    {[
-                      { icon: <Eye className="w-3.5 h-3.5" />, label: "View Payslip" },
-                      { icon: <Download className="w-3.5 h-3.5" />, label: "Download PDF" },
-                      { icon: <FileText className="w-3.5 h-3.5" />, label: "Report" },
-                    ].map(({ icon, label }) => (
-                      <button
-                        key={label}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-medium hover:bg-slate-200 transition-colors"
-                      >
-                        {icon}
-                        {label}
-                      </button>
                     ))}
                   </div>
                 </div>

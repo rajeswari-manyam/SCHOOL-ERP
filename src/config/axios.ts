@@ -1,6 +1,7 @@
 
 import axios from "axios";
 import { getAuthToken, getTenantId, useAuthStore } from "@/store/authStore";
+import { useUIStore } from "@/store/uiStore";
 
 declare module "axios" {
   interface InternalAxiosRequestConfig {
@@ -22,8 +23,10 @@ api.interceptors.request.use(
     const token    = getAuthToken();
     const tenantId = getTenantId();
     config.headers = config.headers ?? {};
-    if (token)    (config.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-    if (tenantId) (config.headers as Record<string, string>)["X-Tenant-Id"] = tenantId;
+    const academicYearId = useUIStore.getState().academicYearId;
+    if (token)          (config.headers as Record<string, string>)["Authorization"]    = `Bearer ${token}`;
+    if (tenantId)       (config.headers as Record<string, string>)["X-Tenant-Id"]      = tenantId;
+    if (academicYearId) (config.headers as Record<string, string>)["X-Academic-Year"]  = academicYearId;
     return config;
   },
   (error) => Promise.reject(error)

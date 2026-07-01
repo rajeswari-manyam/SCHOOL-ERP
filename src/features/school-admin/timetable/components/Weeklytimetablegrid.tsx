@@ -7,16 +7,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pencil, Trash2 } from "lucide-react";
 import type { ClassTimetable, DayOfWeek } from "../types/timetable.types";
 import {
   DAY_ORDER,
-  getSubjectColor,
   SLOT_KIND_STYLES,
 } from "../utils/Timetable.utils";
 
 interface Props {
   timetable: ClassTimetable;
   onEditCell: (day: DayOfWeek, periodNo: number, subject: string, teacherName: string) => void;
+  onEditPeriod?: (id: string, day: DayOfWeek, periodNo: number) => void;
+  onDeletePeriod?: (id: string, day: DayOfWeek, periodNo: number, subject: string, teacherName: string) => void;
   workingDays?: string[];
 }
 
@@ -165,21 +167,45 @@ const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, workingDa
                     return (
                       <TableCell
                         key={idx}
-                        className="px-3 py-2.5 cursor-pointer sm:px-4 sm:py-3"
+                        className="px-3 py-2.5 sm:px-4 sm:py-3 group relative hover:bg-[#EFF4FF] transition-colors cursor-pointer"
                         onClick={() =>
                           slot.periodNo != null &&
                           onEditCell(day, slot.periodNo, cell.subject, cell.teacherName)
                         }
                       >
-                        <p className={`text-xs font-semibold leading-tight sm:text-sm ${getSubjectColor(cell.subject)}`}>
+                        <p className="text-xs font-semibold leading-tight sm:text-sm text-gray-800">
                           {cell.subject}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-gray-400 sm:text-xs">
+                        <p className="mt-0.5 text-[10px] sm:text-xs font-semibold" style={{ color: "#3525CD" }}>
                           {cell.teacherName}
                         </p>
                         <p className="mt-0.5 text-[8px] text-gray-300">
                           {slot.startTime}–{slot.endTime}
                         </p>
+                        <div className="hidden group-hover:flex items-center gap-0.5 mt-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditPeriod?.(cell.id ?? "", day, slot.periodNo!);
+                              }}
+                              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors shadow-sm hover:opacity-80"
+                              style={{ background: "#EFF4FF", color: "#3525CD" }}
+                              title="Edit period"
+                            >
+                              <Pencil size={11} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeletePeriod?.(cell.id ?? "", day, slot.periodNo!, cell.subject, cell.teacherName);
+                              }}
+                              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors shadow-sm hover:opacity-80"
+                              style={{ background: "#EFF4FF", color: "#3525CD" }}
+                              title="Delete period"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
                       </TableCell>
                     );
                   })}

@@ -32,7 +32,9 @@ interface FormState {
   employeeId: string;
   qualification: string;
   departmentId: string;
-  salary: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  ifscCode: string;
   dob: string;
   joiningDate: string;
 }
@@ -46,7 +48,9 @@ const toForm = (s: StaffMember): FormState => ({
   employeeId: s.employeeId ?? "",
   qualification: s.qualification ?? "",
   departmentId: s.departmentId ?? "",
-  salary: s.salary != null ? String(s.salary) : "",
+  bankAccountName: s.bankAccountName ?? "",
+  bankAccountNumber: s.bankAccountNumber ?? "",
+  ifscCode: s.ifscCode ?? "",
   dob: s.dateOfBirth ?? "",
   joiningDate: s.dateOfJoin ?? "",
 });
@@ -103,7 +107,9 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
       emp_number: form.employeeId.trim() || undefined,
       qualification: form.qualification.trim() || undefined,
       department_id: form.departmentId || undefined,
-      salary: form.salary ? Number(form.salary) : undefined,
+      bank_account_name: form.bankAccountName.trim() || undefined,
+      bank_account_number: form.bankAccountNumber.trim() || undefined,
+      ifsc_code: form.ifscCode.trim() || undefined,
       date_of_birth: form.dob || undefined,
       date_of_join: form.joiningDate || undefined,
     };
@@ -182,10 +188,22 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
               onChange={(e) => handleChange("joiningDate", e.target.value)} />
           </FormField>
 
-          <FormField label="Monthly Salary (₹)">
-            <Input name="salary" type="number" value={form.salary} placeholder="e.g. 45000" inputSize="sm"
+          <FormField label="Bank Account Name">
+            <Input name="bankAccountName" type="text" value={form.bankAccountName} placeholder="Account holder name" inputSize="sm"
               className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
-              onChange={(e) => handleChange("salary", e.target.value)} />
+              onChange={(e) => handleChange("bankAccountName", e.target.value)} />
+          </FormField>
+
+          <FormField label="Bank Account Number">
+            <Input name="bankAccountNumber" type="text" value={form.bankAccountNumber} placeholder="Enter account number" inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+              onChange={(e) => handleChange("bankAccountNumber", e.target.value)} />
+          </FormField>
+
+          <FormField label="IFSC Code">
+            <Input name="ifscCode" type="text" value={form.ifscCode} placeholder="SBIN0001234" inputSize="sm"
+              className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
+              onChange={(e) => handleChange("ifscCode", e.target.value)} />
           </FormField>
 
           <FormField label="Status">

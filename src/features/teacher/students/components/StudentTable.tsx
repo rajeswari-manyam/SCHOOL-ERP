@@ -115,7 +115,7 @@ const StudentTable = ({ students, onView }: Props) => {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-[#EFF4FF] border-b border-gray-200">
               <th className="text-left text-xs text-gray-500 px-3 py-1.5 w-14">Roll</th>
               <th className="text-left text-xs text-gray-500 px-3 py-1.5">Student</th>
               <th className="text-left text-xs text-gray-500 px-3 py-1.5 hidden sm:table-cell">Class</th>

@@ -15,6 +15,7 @@ import { formatINR } from "@/utils/formatters";
 
 const schema = z.object({
   staff_id:            z.string().min(1, "Select a staff member"),
+  salary:              z.number().min(1, "Salary is required"),
   pf_percentage:       z.number().min(0).max(100),
   hra:                 z.number().min(0),
   professional_tax:    z.number().min(0),
@@ -48,6 +49,7 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
       resolver: zodResolver(schema),
       defaultValues: {
         staff_id:            "",
+        salary:              0,
         pf_percentage:       12,
         hra:                 0,
         professional_tax:    200,
@@ -61,7 +63,7 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
   const values = watch();
 
   // live salary preview (client-side estimate while filling the form)
-  const basicSalary     = selectedStaff?.salary ?? 0;
+  const basicSalary     = values.salary ?? 0;
   const previewGross    = basicSalary + values.hra + values.transport_allowance + values.other_allowance;
   const previewPF       = (basicSalary * values.pf_percentage) / 100;
   const previewDeduct   = previewPF + values.professional_tax + values.tds_monthly;
@@ -98,7 +100,7 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
     }
     setSubmitting(true);
     try {
-      const res = await createPayroll({ ...data, academicYearId });
+      const res = await createPayroll({ ...data, salary: String(data.salary), academicYearId });
       if (res.status) {
         setSuccessData(res.data);
       } else {
@@ -238,19 +240,67 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
               </div>
             )}
             {selectedStaff && !staffFetching && (
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Name",         value: selectedStaff.name },
-                  { label: "Role",         value: selectedStaff.role },
-                  { label: "Basic Salary", value: formatINR(selectedStaff.salary ?? 0) },
-                ].map((f) => (
-                  <div key={f.label} className="bg-[#F8FAFF] rounded-lg px-3 py-2.5 border border-indigo-100">
-                    <p className="text-[10px] text-slate-400 mb-0.5">{f.label}</p>
-                    <p className="text-xs font-semibold text-slate-800 truncate">{f.value}</p>
+              <div className="space-y-3">
+                {/* Staff info */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Name", value: selectedStaff.name },
+                    { label: "Role", value: selectedStaff.role },
+                  ].map((f) => (
+                    <div key={f.label} className="bg-[#F8FAFF] rounded-lg px-3 py-2.5 border border-indigo-100">
+                      <p className="text-[10px] text-slate-400 mb-0.5">{f.label}</p>
+                      <p className="text-xs font-semibold text-slate-800 truncate">{f.value}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Bank details */}
+                {(selectedStaff.bank_account_name || selectedStaff.bank_account_number || selectedStaff.ifsc_code) && (
+                  <div className="bg-[#F0FDF4] rounded-lg px-3 py-2.5 border border-green-100">
+                    <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wide mb-1.5">Bank Details</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Name",    value: selectedStaff.bank_account_name ?? "—" },
+                        { label: "Account", value: selectedStaff.bank_account_number
+                            ? `${"x".repeat(Math.max(0, selectedStaff.bank_account_number.length - 3))}${selectedStaff.bank_account_number.slice(-3)}`
+                            : "—" },
+                        { label: "IFSC",    value: selectedStaff.ifsc_code ?? "—" },
+                      ].map((f) => (
+                        <div key={f.label}>
+                          <p className="text-[10px] text-slate-400">{f.label}</p>
+                          <p className="text-xs font-semibold text-slate-800 truncate">{f.value}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
+
+            {/* Salary */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                Salary (Basic) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="0"
+                  className="pl-7 text-sm h-9"
+                  {...register("salary", {
+                    setValueAs: (v) => {
+                      const n = parseInt(String(v).replace(/\D/g, ""), 10);
+                      return isNaN(n) ? 0 : n;
+                    },
+                  })}
+                />
+              </div>
+              {errors.salary && (
+                <p className="text-xs text-red-500 mt-1">{errors.salary.message}</p>
+              )}
+            </div>
 
             {/* Manual fields — 2 column grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -260,9 +310,11 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">PF Percentage *</label>
                 <div className="relative">
                   <Input
-                    type="number" min="0" max="100"
+                    type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0"
                     className="pr-9 text-sm h-9"
-                    {...register("pf_percentage", { valueAsNumber: true })}
+                    {...register("pf_percentage", {
+                      setValueAs: (v) => { const n = parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : Math.min(n, 100); },
+                    })}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
                 </div>
@@ -274,8 +326,8 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">HRA</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
-                  <Input type="number" min="0" className="pl-7 text-sm h-9"
-                    {...register("hra", { valueAsNumber: true })} />
+                  <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="pl-7 text-sm h-9"
+                    {...register("hra", { setValueAs: (v) => { const n = parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; } })} />
                 </div>
               </div>
 
@@ -284,8 +336,8 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Professional Tax</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
-                  <Input type="number" min="0" className="pl-7 text-sm h-9"
-                    {...register("professional_tax", { valueAsNumber: true })} />
+                  <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="pl-7 text-sm h-9"
+                    {...register("professional_tax", { setValueAs: (v) => { const n = parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; } })} />
                 </div>
               </div>
 
@@ -294,8 +346,8 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Transport Allowance</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
-                  <Input type="number" min="0" className="pl-7 text-sm h-9"
-                    {...register("transport_allowance", { valueAsNumber: true })} />
+                  <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="pl-7 text-sm h-9"
+                    {...register("transport_allowance", { setValueAs: (v) => { const n = parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; } })} />
                 </div>
               </div>
 
@@ -304,8 +356,8 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">TDS (Monthly)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
-                  <Input type="number" min="0" className="pl-7 text-sm h-9"
-                    {...register("tds_monthly", { valueAsNumber: true })} />
+                  <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="pl-7 text-sm h-9"
+                    {...register("tds_monthly", { setValueAs: (v) => { const n = parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; } })} />
                 </div>
               </div>
 
@@ -314,8 +366,8 @@ export function AddPayrollModal({ onClose, onSuccess }: Props) {
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Other Allowance</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
-                  <Input type="number" min="0" className="pl-7 text-sm h-9"
-                    {...register("other_allowance", { valueAsNumber: true })} />
+                  <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" className="pl-7 text-sm h-9"
+                    {...register("other_allowance", { setValueAs: (v) => { const n = parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; } })} />
                 </div>
               </div>
 

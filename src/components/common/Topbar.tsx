@@ -20,7 +20,7 @@ const Topbar = ({
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
   const collapsed      = useUIStore((s) => s.collapsed);
   const setCollapsed   = useUIStore((s) => s.setCollapsed);
-  const { years, activeYear, loading, error, switchYear, retry } = useAcademicYears();
+  const { years, activeYear, loading, switching, error, switchYear, retry } = useAcademicYears();
   const [yearOpen, setYearOpen] = useState(false);
   const yearRef = useRef<HTMLDivElement>(null);
 
@@ -128,11 +128,11 @@ const Topbar = ({
 
           <div className="relative hidden md:block" ref={yearRef}>
             <button
-              onClick={() => !loading && setYearOpen(!yearOpen)}
-              disabled={loading && years.length === 0}
-              className="flex items-center gap-1 rounded-lg bg-[#f4f7fd] px-2.5 py-1 font-semibold text-[11px] text-[#2d3748] whitespace-nowrap hover:bg-[#e9eef8] transition-colors min-w-0"
+              onClick={() => !loading && !switching && setYearOpen(!yearOpen)}
+              disabled={(loading && years.length === 0) || switching}
+              className="flex items-center gap-1 rounded-lg bg-[#f4f7fd] px-2.5 py-1 font-semibold text-[11px] text-[#2d3748] whitespace-nowrap hover:bg-[#e9eef8] transition-colors min-w-0 disabled:opacity-60"
             >
-              {loading ? (
+              {loading || switching ? (
                 <Loader2 size={12} className="animate-spin text-[#6c7380]" />
               ) : error && years.length === 0 ? (
                 <span className="text-red-500 text-[9px]">Year unavailable</span>
@@ -159,7 +159,7 @@ const Topbar = ({
                       <button
                         key={year.id}
                         onClick={() => {
-                          switchYear(year);
+                          void switchYear(year);
                           setYearOpen(false);
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] transition-colors text-left ${

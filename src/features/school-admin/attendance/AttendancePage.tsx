@@ -16,7 +16,6 @@ const TABS: { key: AttendanceTab; label: string }[] = [
   { key: "history", label: "History"          },
   { key: "holiday", label: "Holiday Calendar" },
   { key: "staff",   label: "Staff Attendance" },
-  { key: "leaves",  label: "Leave Requests"   },
 ];
 
 const AttendancePage = () => {
@@ -30,18 +29,29 @@ const AttendancePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-6">
+      <div className="mx-auto max-w-6xl space-y-3 px-3 py-3 sm:space-y-4 sm:px-4 sm:py-4 md:px-6">
 
         {/* Page Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <h1 className="text-xl font-bold text-gray-900">Attendance</h1>
+          <div>
+            <h1 className="text-base font-semibold text-gray-900">Attendance</h1>
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5">
+              <svg className="h-3 w-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-[10px] font-medium text-indigo-600">
+                {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              </span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             {activeTab === "today" && (
               <Button
                 onClick={openMarkAttendance}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                className="flex items-center gap-1.5 rounded-lg px-3 h-9 text-xs font-medium text-white"
+                style={{ background: 'linear-gradient(101.74deg, #3525CD 0%, #4F46E5 100%)' }}
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Mark Attendance
@@ -58,10 +68,10 @@ const AttendancePage = () => {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={[
-                  "relative flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-2 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors",
                   activeTab === tab.key
                     ? "border-indigo-600 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700",
+                    : "border-transparent text-gray-700 hover:text-gray-900",
                 ].join(" ")}
               >
                 {tab.label}

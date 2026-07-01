@@ -9,7 +9,7 @@ import { GenerateMonthlyReportModal } from "../components/GenerateMonthlyReportM
 import { useReceiptsManager } from "../hooks/useReceiptsManager";
 import { downloadRecordFeePayment } from "@/services/fee.api";
 
-import { formatCurrency } from "../../../../utils/formatters";
+import { formatINR } from "../../../../utils/formatters";
 import { getModeBadge } from "../../../../utils/receipt";
 import type { Receipt, ReceiptDetail } from "../types/receipts.types";
 import Pagination from "../../../../components/ui/pagination";
@@ -53,7 +53,7 @@ export default function ReceiptsPage() {
   );
 
   return (
-    <div className="space-y-4 p-4 sm:p-6 bg-[#EFF4FF] min-h-screen">
+    <div className="space-y-4 px-4 sm:px-6 pt-2 pb-6 bg-white/50 min-h-screen -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
@@ -135,7 +135,7 @@ export default function ReceiptsPage() {
                 </div>
               </div>
               <span className="text-sm font-bold text-gray-900">
-                {formatCurrency(receipt.amount)}
+                {formatINR(receipt.amount)}
               </span>
             </div>
 
@@ -230,7 +230,7 @@ export default function ReceiptsPage() {
                   <span className="text-xs text-gray-600">{receipt.feeHead}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs font-semibold text-gray-900">{formatCurrency(receipt.amount)}</span>
+                  <span className="text-xs font-semibold text-gray-900">{formatINR(receipt.amount)}</span>
                 </td>
                 <td className="px-4 py-3">
                   <span

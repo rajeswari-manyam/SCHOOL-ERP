@@ -4,16 +4,14 @@ import { useClassesList } from "../students/hooks/useClassesList";
 import { useSectionsList } from "../students/hooks/useSectionsList";
 import { useUIStore } from "@/store/uiStore";
 
-import StudentStatCards from "../students/components/StudentStatCards";
 import StudentFilterBar from "../students/components/StudentFilterBar";
 import StudentTable from "../students/components/StudentTable";
 import AddStudentModal from "../students/components/AddStudentModal";
 import BulkAddStudentModal from "../students/components/BulkAddStudentModal";
 import { EditStudentModal } from "../students/components/EditStudentModal";
 
+import StudentStatCards from "../students/components/StudentStatCards";
 import type { AddStudentFormData, Student } from "../students/types/student.types";
-
-import { Upload, Plus } from "lucide-react";
 
 const StudentsPage = () => {
   const {
@@ -49,24 +47,21 @@ const StudentsPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-gray-900 truncate">Students</h1>
+          <h1 className="text-base font-semibold text-gray-900 truncate">Students</h1>
           <p className="text-xs sm:text-sm text-emerald-600 font-semibold mt-1 sm:mt-0.5">● {stats.totalActive} active students</p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-         
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setShowBulkModal(true)}
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-bold border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-gray-700"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <Upload className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Bulk Add</span><span className="sm:hidden">Bulk</span>
+            Bulk Add
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-bold bg-indigo-600 text-white rounded-lg sm:rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 sm:gap-2 shadow-sm"
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 h-9 text-xs font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm"
           >
-            <Plus className="w-3.5 h-3.5" />
-            Add Student
+            + Add Student
           </button>
         </div>
       </div>

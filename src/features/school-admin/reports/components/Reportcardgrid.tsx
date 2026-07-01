@@ -6,21 +6,21 @@ interface Props {
 }
 
 const ReportCardGrid = ({ onGenerate }: Props) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {REPORT_CARDS.map((card) => {
       const Icon = ReportIcons[card.type];
       return (
         <div
           key={card.type}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all"
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-all"
         >
           {/* Icon + optional badge */}
           <div className="flex items-start justify-between gap-2">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${card.iconBg}`}>
-              <Icon size={20} />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${card.iconBg}`}>
+              <Icon size={16} />
             </div>
             {card.badge && (
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wide px-2 py-1 rounded-md border shrink-0 ${card.badge.color}`}>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-wide px-1.5 py-0.5 rounded-md border shrink-0 ${card.badge.color}`}>
                 {card.badge.dot && (
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                 )}
@@ -31,14 +31,14 @@ const ReportCardGrid = ({ onGenerate }: Props) => (
 
           {/* Title + description */}
           <div className="flex-1">
-            <h3 className="text-base font-bold text-gray-900 mb-1">{card.title}</h3>
-            <p className="text-sm text-gray-500 leading-relaxed">{card.description}</p>
+            <h3 className="text-sm font-bold text-gray-900 mb-0.5">{card.title}</h3>
+            <p className="text-xs text-gray-500 leading-relaxed">{card.description}</p>
           </div>
 
           {/* Period pills */}
           <div className="flex flex-wrap gap-1.5">
             {card.periods.map((p) => (
-              <span key={p} className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
+              <span key={p} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-medium">
                 {p}
               </span>
             ))}
@@ -56,7 +56,7 @@ const ReportCardGrid = ({ onGenerate }: Props) => (
                     readOnly
                     className="w-3.5 h-3.5 rounded accent-indigo-600 cursor-default"
                   />
-                  <span className={`text-xs font-semibold ${checked ? "text-gray-700" : "text-gray-400"}`}>
+                  <span className={`text-[10px] font-semibold ${checked ? "text-gray-700" : "text-gray-400"}`}>
                     {fmt}
                   </span>
                 </label>
@@ -67,7 +67,7 @@ const ReportCardGrid = ({ onGenerate }: Props) => (
           {/* Generate button */}
           <button
             onClick={() => onGenerate(card.type)}
-            className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
+            className="w-full py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
           >
             Generate Report
           </button>

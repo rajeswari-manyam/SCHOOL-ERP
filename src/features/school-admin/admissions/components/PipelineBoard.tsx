@@ -45,7 +45,7 @@ const ColSkeleton = () => (
 );
 
 const BoardSkeleton = () => (
-  <div className="grid grid-cols-5 gap-4">
+  <div className="grid grid-cols-5 gap-3 w-full min-w-[750px]">
     {COLUMNS.map((c) => <ColSkeleton key={c.id} />)}
   </div>
 );
@@ -70,18 +70,18 @@ export function PipelineBoard() {
   };
 
   return (
-    <div className="grid grid-cols-5 gap-4 min-w-[960px]">
+    <div className="grid grid-cols-5 gap-3 w-full min-w-[750px]">
       {COLUMNS.map((col) => {
         const items = itemsFor(col.id);
         return (
           <div key={col.id} className="flex flex-col gap-3">
             {/* Column header */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold tracking-wider text-gray-700">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs tracking-wider text-gray-700 font-medium">
                 {col.label}
               </span>
               <span
-                className="inline-flex items-center justify-center rounded-full min-w-[20px] h-5 px-1.5 text-[11px] font-bold"
+                className="inline-flex items-center justify-center rounded-full min-w-[18px] h-4 px-1 text-xs"
                 style={{ backgroundColor: col.lightBg, color: col.color }}
               >
                 {items.length}

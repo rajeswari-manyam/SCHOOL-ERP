@@ -35,6 +35,7 @@ const DashboardPage = () => {
   const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "")
   const className = activeChild?.class ?? ""
   const sectionName = activeChild?.section ?? "A"
+  const parentName = activeChild?.parentName ?? ""
 
   const { student } = useStudentById(studentId)
 
@@ -52,7 +53,6 @@ const DashboardPage = () => {
     fetchAll,
   } = useDashboard()
 
-  const parentName = activeChild?.parentName ?? ""
 
   // ── Fetch all dashboard data — classId is available immediately from context ──
   useEffect(() => {

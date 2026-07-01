@@ -27,8 +27,8 @@ const Avatar = ({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) => 
 
 const InfoRow = ({ label, value }: { label: string; value?: string | number }) => (
   <div>
-    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-    <p className="text-sm font-semibold text-gray-800 mt-0.5">{value || "—"}</p>
+    <p className="text-[10px] uppercase tracking-widest text-gray-400">{label}</p>
+    <p className="text-xs text-gray-700 mt-0.5">{value || "—"}</p>
   </div>
 );
 
@@ -100,9 +100,9 @@ const StudentProfilePage = () => {
     <div className="space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-gray-400">
-        <Link to="/schooladmin/students" className="hover:text-indigo-600 transition-colors font-medium">Students</Link>
+        <Link to="/schooladmin/students" className="hover:text-indigo-600 transition-colors">Students</Link>
         <span>›</span>
-        <span className="text-gray-700 font-semibold">{fullName}</span>
+        <span className="text-gray-600">{fullName}</span>
       </div>
 
       {/* Profile header */}
@@ -112,8 +112,8 @@ const StudentProfilePage = () => {
             <Avatar name={fullName} size="lg" />
             <div>
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-xl font-extrabold text-gray-900">{fullName}</h1>
-                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                <h1 className="text-base font-semibold text-gray-900">{fullName}</h1>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
                   CLASS {student.class}-{student.section}
                 </span>
                 <StatusBadge status={student.status} />
@@ -122,12 +122,12 @@ const StudentProfilePage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700"
+            <Button variant="outline" size="sm" className="px-3 py-2 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700"
               onClick={() => setShowEdit(true)}>
               <Edit3 className="h-3 w-3" />
               Edit Student
             </Button>
-            <Button variant="outline" size="sm" className="px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
+            <Button variant="outline" size="sm" className="px-3 py-2 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-gray-700">
               <FileText className="h-3 w-3" />
               Issue TC
             </Button>
@@ -144,7 +144,7 @@ const StudentProfilePage = () => {
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               variant="ghost"
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${
+              className={`px-4 py-2.5 text-xs uppercase tracking-wider border-b-2 transition-colors ${
                 activeTab === t.key
                   ? "border-indigo-600 text-indigo-600 hover:bg-transparent"
                   : "border-transparent text-gray-400 hover:text-gray-600 hover:bg-transparent"
@@ -163,8 +163,8 @@ const StudentProfilePage = () => {
           <div className="col-span-2 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-800">Personal Information</h3>
-                <Button variant="link" size="sm" onClick={() => setShowEdit(true)} className="text-xs text-indigo-600 font-bold hover:text-indigo-800 transition-colors flex items-center gap-1">
+                <h3 className="text-sm text-gray-700">Personal Information</h3>
+                <Button variant="link" size="sm" onClick={() => setShowEdit(true)} className="text-xs text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
                   <Edit3 className="h-3 w-3" />
                   Edit
                 </Button>
@@ -198,12 +198,12 @@ const StudentProfilePage = () => {
           {/* Right: Quick stats */}
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-bold text-gray-800 mb-4">Quick Stats</h3>
+              <h3 className="text-sm text-gray-700 mb-4">Quick Stats</h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Attendance This Month</p>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Attendance This Month</p>
                   <div className="flex items-end gap-2">
-                    <p className="text-xl font-extrabold text-gray-900">{presentThisMonth} / {totalDaysThisMonth} days present</p>
+                    <p className="text-sm text-gray-800">{presentThisMonth} / {totalDaysThisMonth} days present</p>
                   </div>
                   <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
                     <div
@@ -215,15 +215,15 @@ const StudentProfilePage = () => {
                 </div>
 
                 <div className="pt-3 border-t border-gray-50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Fee Status</p>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-2">Fee Status</p>
                   {outstanding > 0 ? (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-3">
-                      <p className="text-lg font-extrabold text-red-600">₹{outstanding.toLocaleString("en-IN")}</p>
-                      <p className="text-xs text-red-400 font-semibold">{feeSummary?.summary.overallStatus ?? "pending"}</p>
+                      <p className="text-sm text-red-600">₹{outstanding.toLocaleString("en-IN")}</p>
+                      <p className="text-xs text-red-400">{feeSummary?.summary.overallStatus ?? "pending"}</p>
                       {firstPendingFeeHead && (
                         <p className="text-xs text-red-400 mt-1">{firstPendingFeeHead}</p>
                       )}
-                      <Button variant="ghost" size="sm" className="mt-2 w-full py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
+                      <Button variant="ghost" size="sm" className="mt-2 w-full py-1.5 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600 transition-colors">
                         Send Reminder
                       </Button>
                     </div>
@@ -236,8 +236,8 @@ const StudentProfilePage = () => {
                 </div>
 
                 <div className="pt-3 border-t border-gray-50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Last Activity</p>
-                  <p className="text-xs text-gray-600 font-semibold">Today 8:47 AM</p>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Last Activity</p>
+                  <p className="text-xs text-gray-600">Today 8:47 AM</p>
                   <p className="text-xs text-gray-400">Attendance marked for 7 Apr 2025</p>
                 </div>
               </div>
@@ -248,7 +248,7 @@ const StudentProfilePage = () => {
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-5 h-5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-bold">Parent Concierge</p>
+                  <p className="text-xs">Parent Concierge</p>
                   <p className="text-[10px] opacity-80">Direct support via WhatsApp</p>
                 </div>
               </div>

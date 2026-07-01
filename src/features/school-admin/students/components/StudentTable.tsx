@@ -68,7 +68,7 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px]">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
+            <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
               <TH>Photo</TH>
               <TH>Admission No.</TH>
               <TH>Student Name</TH>
@@ -83,7 +83,7 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
             {pageRows.map((s) => (
               <tr
                 key={s.id}
-                className="hover:bg-indigo-50/20 transition-colors cursor-pointer"
+                className="hover:bg-[#EFF4FF] transition-colors cursor-pointer"
                 onClick={() => navigate(`/schooladmin/students/${s.id}`)}
               >
                 <td className="px-4 py-3"><Avatar s={s} /></td>

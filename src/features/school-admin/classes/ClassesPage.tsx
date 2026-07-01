@@ -33,11 +33,11 @@ const makeDraft = (defaultYear = ""): DraftRow => ({
 
 /* ── Stat card ── */
 const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
-  <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3 shadow-sm">
-    <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center shrink-0`}>{icon}</div>
+  <div className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-2.5 shadow-sm">
+    <div className={`w-8 h-8 rounded-lg ${color} flex items-center justify-center shrink-0`}>{icon}</div>
     <div>
-      <p className="text-xs text-gray-500 font-medium">{label}</p>
-      <p className="text-lg font-bold text-gray-900">{value}</p>
+      <p className="text-[10px] text-gray-500 font-medium">{label}</p>
+      <p className="text-sm font-semibold text-gray-900">{value}</p>
     </div>
   </div>
 );
@@ -60,12 +60,12 @@ const SectionSubjectChips = ({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-      {loading && <span className="flex items-center gap-1 text-[11px] text-gray-400"><Loader2 className="w-3 h-3 animate-spin" />Loading...</span>}
-      {error && <span className="text-[11px] text-red-400">Error - <button onClick={refresh} className="underline">retry</button></span>}
-      {!loading && !error && subjects.length === 0 && <span className="text-[11px] text-gray-400 italic">No subjects yet</span>}
+    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+      {loading && <span className="flex items-center gap-1 text-[10px] text-gray-400"><Loader2 className="w-3 h-3 animate-spin" />Loading...</span>}
+      {error && <span className="text-[10px] text-red-400">Error - <button onClick={refresh} className="underline">retry</button></span>}
+      {!loading && !error && subjects.length === 0 && <span className="text-[10px] text-gray-400 italic">No subjects yet</span>}
       {!loading && !error && subjects.map((sub) => (
-        <span key={sub.id} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md font-medium group">
+        <span key={sub.id} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-md font-medium group">
           {sub.name}
           <button
             onClick={() => onEditSubject({ id: sub.id, name: sub.name })}
@@ -85,13 +85,13 @@ const SectionSubjectChips = ({
       ))}
       <button
         onClick={() => onAddSubject({ classId, className: clsName, sectionId, sectionName })}
-        className="flex items-center gap-0.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+        className="flex items-center gap-0.5 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
       >
         <Plus className="w-3 h-3" /> Add Subject
       </button>
       <button
         onClick={onBulkAddSubject}
-        className="flex items-center gap-0.5 text-xs font-bold text-purple-600 hover:text-purple-800 transition-colors"
+        className="flex items-center gap-0.5 text-[10px] font-bold text-purple-600 hover:text-purple-800 transition-colors"
       >
         <Plus className="w-3 h-3" /> Bulk Subjects
       </button>
@@ -145,17 +145,17 @@ const SelectedClassSections = ({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sections.map((sec) => (
-            <div key={sec.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center text-sm font-extrabold shrink-0">
+            <div key={sec.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 transition-all" style={{}} onMouseEnter={e => (e.currentTarget.style.background = '#EFF4FF')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <div className="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center text-xs font-medium shrink-0">
                   {sec.name}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-gray-900">Section {sec.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{sec.classTeacher || "No teacher assigned"}</p>
+                  <p className="text-xs font-medium text-gray-900">Section {sec.name}</p>
+                  <p className="text-[10px] text-gray-500 truncate">{sec.classTeacher || "No teacher assigned"}</p>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
-                  <Users className="w-3.5 h-3.5 text-purple-400" />
+                <div className="flex items-center gap-1 text-[10px] text-gray-500 whitespace-nowrap">
+                  <Users className="w-3 h-3 text-purple-400" />
                   {sec.totalStudents}
                 </div>
                 <div className="flex items-center gap-1">
@@ -175,8 +175,8 @@ const SelectedClassSections = ({
                   </button>
                 </div>
               </div>
-              <div className="border-t border-gray-100 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Subjects</p>
+              <div className="border-t border-gray-100 pt-2">
+                <p className="text-[9px] font-medium uppercase tracking-widest text-gray-400 mb-1">Subjects</p>
                 <SectionSubjectChips
                   key={`${sec.id}-${refreshKey}`}
                   sectionId={sec.id}
@@ -291,8 +291,8 @@ const ClassesPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Classes</h1>
-          <p className="text-xs sm:text-sm text-emerald-600 font-semibold mt-0.5">
+          <h1 className="text-base font-semibold text-gray-900">Classes</h1>
+          <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
             {stats.totalClasses} classes active
           </p>
         </div>
@@ -302,7 +302,7 @@ const ClassesPage = () => {
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="appearance-none h-10 pl-4 pr-9 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 cursor-pointer transition min-w-[160px]"
+              className="appearance-none h-9 pl-3 pr-8 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 cursor-pointer transition min-w-[140px]"
             >
               <option value="">Select Class...</option>
               {sortedClasses.map((cls) => (
@@ -314,7 +314,7 @@ const ClassesPage = () => {
 
           <button
             onClick={() => navigate("/schooladmin/timetable")}
-            className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm shrink-0"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm shrink-0"
           >
             <Calendar className="w-4 h-4 text-indigo-500" />
             <span className="hidden sm:inline">Timetable</span>
@@ -322,7 +322,7 @@ const ClassesPage = () => {
 
           <button
             onClick={() => setShowAddClass(true)}
-            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm shrink-0"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Add Class</span>
@@ -333,10 +333,10 @@ const ClassesPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={<BookOpen className="w-5 h-5 text-white" />} label="Total Classes"  value={stats.totalClasses}  color="bg-indigo-500" />
-        <StatCard icon={<Layers   className="w-5 h-5 text-white" />} label="Total Sections" value={stats.totalSections} color="bg-purple-500" />
-        <StatCard icon={<BookText className="w-5 h-5 text-white" />} label="Total Subjects" value={stats.totalSubjects} color="bg-blue-500"   />
-        <StatCard icon={<Users    className="w-5 h-5 text-white" />} label="Total Students" value={stats.totalStudents} color="bg-emerald-500" />
+        <StatCard icon={<BookOpen className="w-4 h-4 text-white" />} label="Total Classes"  value={stats.totalClasses}  color="bg-indigo-500" />
+        <StatCard icon={<Layers   className="w-4 h-4 text-white" />} label="Total Sections" value={stats.totalSections} color="bg-purple-500" />
+        <StatCard icon={<BookText className="w-4 h-4 text-white" />} label="Total Subjects" value={stats.totalSubjects} color="bg-blue-500"   />
+        <StatCard icon={<Users    className="w-4 h-4 text-white" />} label="Total Students" value={stats.totalStudents} color="bg-emerald-500" />
       </div>
 
       {/* Error / Loading */}
@@ -358,7 +358,7 @@ const ClassesPage = () => {
           <div className="overflow-x-auto">
           <table className="w-full min-w-[480px]">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 hover:bg-indigo-100 transition-colors group">
+              <tr className="border-b border-gray-200 hover:bg-indigo-100 transition-colors group" style={{ background: '#EFF4FF' }}>
                 {["Class", "Sections", "Students", "Status"].map((h) => (
                   <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-indigo-600 transition-colors">{h}</th>
                 ))}
@@ -375,7 +375,7 @@ const ClassesPage = () => {
                   className="hover:bg-indigo-200 cursor-pointer transition-colors"
                 >
                   <td className="px-5 py-3.5">
-                    <span className="text-sm font-bold text-gray-900">Class {cls.className}</span>
+                    <span className="text-xs font-semibold text-gray-900">Class {cls.className}</span>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex flex-wrap gap-1.5">
@@ -541,8 +541,8 @@ const ClassesPage = () => {
                 {selectedClass.className.replace(/\D/g, "") || selectedClass.className.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <p className="text-base font-extrabold text-gray-900">Class {selectedClass.className}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-medium text-gray-900">Class {selectedClass.className}</p>
+                <p className="text-[10px] text-gray-500">
                   {selectedClass.sections.length} sections - {selectedClass.totalStudents} students
                   {selectedClass.classTeacher && ` - ${selectedClass.classTeacher}`}
                 </p>

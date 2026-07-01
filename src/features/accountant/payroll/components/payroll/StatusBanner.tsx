@@ -2,7 +2,7 @@ import { CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import typography, { combineTypography } from "@/styles/typography";
-import { formatCurrency } from "../../../../../utils/formatters";
+import { formatINR } from "../../../../../utils/formatters";
 import type { StatusBannerProps } from "../../types/payroll.types";
 
 export const StatusBanner = ({
@@ -25,11 +25,11 @@ export const StatusBanner = ({
         description={
           <span className={combineTypography(typography.body.xs, "text-green-700 block")}>
             <span className="hidden sm:inline">
-              {summary.totalStaff} payslips generated | {formatCurrency(summary.totalNet)} total | Processed on {processedDate} by {processedBy}
+              {summary.totalStaff} payslips generated | {formatINR(summary.totalNet)} total | Processed on {processedDate} by {processedBy}
             </span>
             <span className="sm:hidden space-y-1 block">
               <span className="block">{summary.totalStaff} payslips generated</span>
-              <span className="block">{formatCurrency(summary.totalNet)} total</span>
+              <span className="block">{formatINR(summary.totalNet)} total</span>
               <span className="block">By {processedBy}</span>
               <span className="block">{processedDate}</span>
             </span>
@@ -51,10 +51,10 @@ export const StatusBanner = ({
       description={
         <span className={combineTypography(typography.body.xs, "text-amber-700 block")}>
           <span className="hidden sm:inline">
-            Expected total: {formatCurrency(summary.totalNet)} | Processing due: {summary.processingDueDate}
+            Expected total: {formatINR(summary.totalNet)} | Processing due: {summary.processingDueDate}
           </span>
           <span className="sm:hidden space-y-1 block">
-            <span className="block">Expected: {formatCurrency(summary.totalNet)}</span>
+            <span className="block">Expected: {formatINR(summary.totalNet)}</span>
             <span className="block">Due: {summary.processingDueDate}</span>
           </span>
         </span>

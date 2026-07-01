@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { X, Loader2, BookOpen, GraduationCap, Calendar, Phone, Mail, Briefcase, DollarSign, Award } from "lucide-react";
+import { X, Loader2, BookOpen, GraduationCap, Calendar, Phone, Mail, Briefcase, Award, Building2, CreditCard } from "lucide-react";
 import type { StaffDetails, AssignedClassSubject } from "../types/staff.types";
 import { getStaffDetailsById } from "@/services/school-staff.api";
 
@@ -123,7 +123,9 @@ export const StaffDetailModal = ({ staffId, onClose }: Props) => {
                 <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={data.email} />
                 <InfoRow icon={<Phone className="w-4 h-4" />} label="Phone" value={data.phone} />
                 <InfoRow icon={<Award className="w-4 h-4" />} label="Qualification" value={data.qualification ?? undefined} />
-                <InfoRow icon={<DollarSign className="w-4 h-4" />} label="Salary" value={data.salary != null ? `₹${Number(data.salary).toLocaleString()}` : undefined} />
+                <InfoRow icon={<Building2 className="w-4 h-4" />} label="Bank Account Name" value={data.bank_account_name ?? undefined} />
+                <InfoRow icon={<CreditCard className="w-4 h-4" />} label="Account Number" value={data.bank_account_number ?? undefined} />
+                <InfoRow icon={<CreditCard className="w-4 h-4" />} label="IFSC Code" value={data.ifsc_code ?? undefined} />
                 <InfoRow icon={<Calendar className="w-4 h-4" />} label="Date of Birth" value={data.date_of_birth ?? undefined} />
                 <InfoRow icon={<GraduationCap className="w-4 h-4" />} label="Date of Joining" value={data.date_of_join ?? undefined} />
               </div>

@@ -31,11 +31,11 @@ export function EnquiryCard({ enquiry, index }: Props) {
     >
       <div
         onClick={() => setSelectedEnquiry(enquiry.id)}
-        className="bg-white rounded-xl border border-gray-100 p-4 cursor-pointer hover:border-indigo-200 hover:shadow-sm transition-all"
+        className="bg-white rounded-xl border border-gray-100 p-3 cursor-pointer hover:border-indigo-200 hover:shadow-sm transition-all"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-semibold text-gray-900 text-sm leading-snug truncate">
+          <h3 className="font-medium text-gray-900 text-xs leading-snug truncate">
             {enquiry.studentName || (
               <span className="text-gray-400 italic">Unknown #{enquiry.id.slice(0, 8)}</span>
             )}
@@ -74,16 +74,16 @@ export function EnquiryCard({ enquiry, index }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-gray-50 pt-2.5">
-          <span className="text-[11px] text-gray-400">{enquiry.enquiryDate || '—'}</span>
+          <span className="text-[10px] text-gray-400">{enquiry.enquiryDate || '—'}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
               moveToStage.mutate({ id: enquiry.id, stage: 'interview' });
             }}
             disabled={moveToStage.isPending}
-            className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors"
           >
-            Move to Interview <ArrowRight size={11} />
+            Move to Interview <ArrowRight size={10} />
           </button>
         </div>
       </div>

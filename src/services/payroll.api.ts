@@ -2,6 +2,7 @@ import api from "@/config/axios";
 
 export interface CreatePayrollPayload {
   staff_id: string;
+  salary: string;
   pf_percentage: number;
   hra: number;
   professional_tax: number;
@@ -294,5 +295,22 @@ export interface GetPayrollHistoryResponse {
 
 export const getPayrollHistory = async (): Promise<GetPayrollHistoryResponse> => {
   const { data } = await api.get<GetPayrollHistoryResponse>("/tenant/getpayrollhistory");
+  return data;
+};
+
+export interface MonthlyPaidPayrollResponse {
+  status: boolean;
+  message: string;
+  data: { month: number; academicYearId: string; total_paid: number };
+}
+
+export const getMonthlyPaidPayroll = async (
+  month: number,
+  academicYearId: string
+): Promise<MonthlyPaidPayrollResponse> => {
+  const { data } = await api.get<MonthlyPaidPayrollResponse>(
+    "/tenant/getmonthlypaidpayroll",
+    { params: { month, academicYearId } }
+  );
   return data;
 };

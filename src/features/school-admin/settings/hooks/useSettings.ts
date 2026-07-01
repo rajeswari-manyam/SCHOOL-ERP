@@ -91,7 +91,22 @@ export function useAcademicConfig() {
     return newYear;
   }, []);
 
-  return { classes, workingDays, academicYears, loading, saving, saveWorkingDays, addNewClass, createAcademicYear };
+  const updateAcademicYear = useCallback(async (
+    id: string,
+    payload: { startDate?: string; endDate?: string; yearName?: string }
+  ) => {
+    await api.updateAcademicYear(id, payload);
+    setAcademicYears(prev =>
+      prev.map(y => y.id === id ? { ...y, ...payload } : y)
+    );
+  }, []);
+
+  const deleteAcademicYear = useCallback(async (id: string) => {
+    await api.deleteAcademicYear(id);
+    setAcademicYears(prev => prev.filter(y => y.id !== id));
+  }, []);
+
+  return { classes, workingDays, academicYears, loading, saving, saveWorkingDays, addNewClass, createAcademicYear, updateAcademicYear, deleteAcademicYear };
 }
 
 // ─── Fee Configuration ────────────────────────────────────────────────────────

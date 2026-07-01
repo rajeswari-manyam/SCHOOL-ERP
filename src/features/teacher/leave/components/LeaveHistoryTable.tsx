@@ -36,7 +36,7 @@ const LeaveHistoryTable = ({ applications, loading, onCancel }: Props) => {
       <div className="overflow-x-auto">
         <table className="w-full" style={{ minWidth: 680 }}>
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
+            <tr className="border-b border-gray-100 bg-[#EFF4FF]">
               {["Leave Type", "From", "To", "Days", "Reason", "Status", "Applied On", "Action"].map(h => (
                 <th key={h}
                   className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-gray-400 whitespace-nowrap">

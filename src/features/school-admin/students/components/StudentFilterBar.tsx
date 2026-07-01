@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Filter, X, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import type { ClassOption } from "@/services/school-students.api";
 
 interface StudentFilterBarProps {
@@ -69,7 +68,7 @@ const StudentFilterBar = ({
             placeholder="Search by name or admission no."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-full text-sm sm:h-10"
+            className="h-9 w-full text-xs sm:h-10"
           />
           {/* Clear search */}
           {search && (
@@ -92,7 +91,7 @@ const StudentFilterBar = ({
               value={classFilter}
               onValueChange={setClassFilter}
               options={classSelectOptions}
-              className="h-9 w-[120px] rounded-lg border-gray-200 text-sm sm:h-10"
+               className="h-9 w-[120px] rounded-lg border-gray-200 text-xs sm:h-10"
             />
           </div>
 
@@ -103,7 +102,7 @@ const StudentFilterBar = ({
               value={sectionFilter}
               onValueChange={setSectionFilter}
               options={sectionSelectOptions}
-              className="h-9 w-[120px] rounded-lg border-gray-200 text-sm sm:h-10"
+              className="h-9 w-[120px] rounded-lg border-gray-200 text-xs sm:h-10"
             />
           </div>
 
@@ -112,18 +111,9 @@ const StudentFilterBar = ({
             value={statusFilter}
             onValueChange={setStatusFilter}
             options={STATUSES}
-            className="h-9 w-[130px] rounded-lg border-gray-200 text-sm sm:h-10"
+            className="h-9 w-[130px] rounded-lg border-gray-200 text-xs sm:h-10"
           />
 
-          {/* Advanced filters */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex h-9 items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-indigo-600 hover:bg-indigo-50 sm:h-10"
-          >
-            <Filter className="h-3 w-3" />
-            Advanced Filters
-          </Button>
         </div>
 
         {/* Mobile: filter toggle button */}
@@ -158,7 +148,7 @@ const StudentFilterBar = ({
               value={classFilter}
               onValueChange={setClassFilter}
               options={classSelectOptions}
-              className="h-9 w-full rounded-lg border-gray-200 text-sm"
+               className="h-9 w-full rounded-lg border-gray-200 text-xs"
             />
           </div>
 
@@ -171,7 +161,7 @@ const StudentFilterBar = ({
               value={sectionFilter}
               onValueChange={setSectionFilter}
               options={sectionSelectOptions}
-              className="h-9 w-full rounded-lg border-gray-200 text-sm"
+              className="h-9 w-full rounded-lg border-gray-200 text-xs"
             />
           </div>
 
@@ -184,29 +174,21 @@ const StudentFilterBar = ({
               value={statusFilter}
               onValueChange={setStatusFilter}
               options={STATUSES}
-              className="h-9 w-full rounded-lg border-gray-200 text-sm"
+              className="h-9 w-full rounded-lg border-gray-200 text-xs"
             />
           </div>
 
-          {/* Footer: Advanced + Clear */}
-          <div className="flex items-center gap-2 pt-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex flex-1 items-center justify-center gap-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
-            >
-              <Filter className="h-3 w-3" />
-              Advanced Filters
-            </Button>
-            {hasActiveFilters && (
+          {/* Footer: clear filters */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 pt-1">
               <button
                 onClick={clearAll}
-                className="flex-1 rounded-lg border border-gray-200 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-[10px] font-semibold text-gray-500 hover:bg-gray-50"
               >
                 Clear Filters
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

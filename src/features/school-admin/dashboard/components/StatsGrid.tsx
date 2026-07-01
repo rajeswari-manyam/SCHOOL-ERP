@@ -39,16 +39,16 @@ export function StatsGrid({ stats = [], loadingStatIds }: StatsGridProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06, duration: 0.28, ease: 'easeOut' }}
             className={cn(
-              'relative overflow-hidden rounded-2xl bg-white',
-              'border border-gray-100 border-l-4',
-              'p-4 sm:p-5 flex flex-col gap-2',
+              'relative overflow-hidden rounded-xl bg-white border-l-4',
+              'border border-gray-100',
+              'p-3 sm:p-4 flex flex-col gap-1.5',
               'shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default',
               stat.alert ? 'bg-amber-50/40' : '',
               accent.border,
             )}
           >
             {/* Label */}
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-none">
+            <p className="text-[9px] uppercase tracking-widest text-gray-400 leading-none">
               {stat.label}
             </p>
 
@@ -57,7 +57,7 @@ export function StatsGrid({ stats = [], loadingStatIds }: StatsGridProps) {
               {isLoading ? (
                 <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-100" />
               ) : (
-                <span className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+                <span className="text-base font-semibold leading-none tracking-tight text-gray-900 tabular-nums">
                   {stat.value}
                 </span>
               )}

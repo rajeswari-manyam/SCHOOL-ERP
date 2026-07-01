@@ -465,6 +465,7 @@ export const getExamsTimetable = async (params: { teacher_id: string; academic_y
 ========================= */
 
 export interface RemainingPeriodAssigned {
+  id?: string;
   period_no: number;
   subject_name: string;
   teacher_name: string;

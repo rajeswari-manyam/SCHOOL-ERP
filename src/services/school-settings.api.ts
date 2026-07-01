@@ -215,6 +215,19 @@ export const createAcademicYear = async (payload: CreateAcademicYearPayload): Pr
   };
 };
 
+export const updateAcademicYear = async (
+  id: string,
+  payload: { startDate?: string; endDate?: string; yearName?: string }
+): Promise<void> => {
+  const { data } = await api.put(`/tenant/updateAcademicYear/${id}`, payload);
+  if (!data?.status) throw new Error(data?.message ?? "Failed to update academic year");
+};
+
+export const deleteAcademicYear = async (id: string): Promise<void> => {
+  const { data } = await api.delete(`/tenant/deleteacademicyear/${id}`);
+  if (!data?.status) throw new Error(data?.message ?? "Failed to delete academic year");
+};
+
 // ─── Classes ─────────────────────────────────────────────────────────────────
 
 export const fetchClasses = async (): Promise<ClassSection[]> => {

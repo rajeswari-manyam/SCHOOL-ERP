@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MonthlyPayrollTab } from "../components/payroll/MonthlyPayRollTab";
@@ -33,13 +33,18 @@ export default function PayrollPage() {
 
   const {
     staffData, summary, isProcessed, isLoading: monthlyLoading,
-    processedDate, processedBy, generatePayslip, deletePayslip,
+    processedDate, processedBy, generatePayslip, deletePayslip, refresh: refreshMonthly,
   } = useMonthlyPayrollData(currentMonth.getMonth() + 1, currentMonth.getFullYear());
   const {
     salaryData, isLoading: salaryLoading, selectedStaff, isEditing,
     openEditModal, closeEditModal, updateSalary, deletePayroll, refresh: refreshSalary,
   } = useSalaryConfig();
   const { history, totalPayrollFY, avgMonthlyPayroll, staffCount } = usePayrollHistory();
+
+  // Auto-refresh monthly data when tab becomes active or month changes
+  useEffect(() => {
+    if (activeTab === "monthly") refreshMonthly();
+  }, [activeTab, currentMonth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = (dir: -1 | 1) => {
     setCurrentMonth((prev) => {
@@ -80,13 +85,13 @@ export default function PayrollPage() {
   }, [selectedPayslipStaff, salaryData]);
 
   return (
-    <div className="min-h-screen bg-[#EFF4FF]">
+    <div className="min-h-screen bg-[#EFF4FF] -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
       {/* ── Page Header ── */}
-      <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4">
+  <div className="bg-white border-b border-slate-200 mx-4 sm:mx-6 mt-4 sm:mt-6 rounded-2xl px-4 sm:px-6 py-3"> 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-lg font-bold text-slate-900">Payroll Management</h1>
+              <h1 className="text-base font-semibold text-slate-900">Payroll Management</h1>
               {academicYearName && (
                 <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EEF2FF] border border-indigo-100 text-[11px] font-semibold text-[#3525CD] whitespace-nowrap">
                   <BookOpen className="w-3 h-3" />

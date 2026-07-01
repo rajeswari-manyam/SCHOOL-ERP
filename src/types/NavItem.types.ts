@@ -4,4 +4,5 @@ export interface NavItem {
   label: string;
   to: string;
   icon?: ReactNode;
+  locked?: boolean;
 }

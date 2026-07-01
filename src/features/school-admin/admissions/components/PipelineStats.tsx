@@ -19,14 +19,14 @@ function StatCard({
       transition={{ delay: index * 0.06, duration: 0.25, ease: 'easeOut' }}
     >
       <div
-        className="bg-white rounded-xl border border-gray-100 p-4 h-full flex flex-col gap-2 shadow-sm"
+        className="bg-white rounded-xl border border-gray-100 p-3 h-full flex flex-col gap-1.5 shadow-sm"
         style={{ borderLeftWidth: 3, borderLeftColor: border }}
       >
-        <p className="text-[10px] font-bold tracking-widest text-gray-400">{label}</p>
+        <p className="text-[9px] tracking-widest text-gray-400">{label}</p>
         {isLoading ? (
-          <div className="h-9 w-12 animate-pulse rounded-md bg-gray-100" />
+          <div className="h-6 w-10 animate-pulse rounded-md bg-gray-100" />
         ) : (
-          <p className="text-2xl font-bold leading-none tabular-nums" style={{ color }}>
+          <p className="text-lg font-semibold leading-none tabular-nums" style={{ color }}>
             {(value ?? 0).toLocaleString()}
           </p>
         )}
@@ -63,7 +63,7 @@ export function PipelineStats() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-center text-sm text-gray-500"
+          className="text-center text-xs text-gray-500"
         >
           Conversion rate:{' '}
           <span className="font-semibold text-indigo-600">

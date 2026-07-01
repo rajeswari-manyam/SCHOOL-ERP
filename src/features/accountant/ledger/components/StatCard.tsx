@@ -1,8 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "../../../../utils/formatters";
+import { formatINR as formatCurrency } from "../../../../utils/formatters";
 import { TrendingUp, Wallet, CreditCard, PiggyBank } from "lucide-react";
-import typography, { combineTypography } from "@/styles/typography";
 import type { StatCardProps } from "../types/Ledger.types";
 
 const iconMap = {
@@ -59,11 +58,11 @@ export const StatCard = ({
         {/* Top section */}
        <div className="flex flex-col xs:flex-row items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className={combineTypography(typography.form.label, "text-gray-500 uppercase tracking-wide mb-1")}>
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
               {title}
             </p>
 
-           <h3 className={`text-base sm:text-2xl font-bold ${textStyles[variant]} break-words`}>
+           <h3 className={`text-sm sm:text-lg font-bold ${textStyles[variant]} break-words`}>
               {formatCurrency(amount)}
             </h3>
 

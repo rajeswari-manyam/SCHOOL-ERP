@@ -102,6 +102,19 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
       setError("Please fill in at least one subject with name, class, section, teacher, and academic year.");
       return;
     }
+
+    // Detect duplicate subject+class+section combinations
+    const keys = valid.map((r) => `${r.subjectName.trim().toLowerCase()}|${r.classId}|${r.sectionId}`);
+    const dupeKeys = keys.filter((k, i) => keys.indexOf(k) !== i);
+    if (dupeKeys.length > 0) {
+      const dupeNames = [...new Set(dupeKeys)].map((k) => {
+        const r = valid.find((row) => `${row.subjectName.trim().toLowerCase()}|${row.classId}|${row.sectionId}` === k)!;
+        return r.subjectName.trim();
+      });
+      setError(`Duplicate subject(s) in the same class/section: ${dupeNames.join(", ")}. Each subject must be unique per class and section.`);
+      return;
+    }
+
     setError(null);
     setSaving(true);
     try {
@@ -116,7 +129,10 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
       );
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create subjects");
+      const msg = err instanceof Error ? err.message : "Failed to create subjects";
+      setError(msg.includes("500") || msg.toLowerCase().includes("internal")
+        ? "A subject with this name may already exist in the selected class/section. Check for duplicates and try again."
+        : msg);
     } finally {
       setSaving(false);
     }

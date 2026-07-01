@@ -190,7 +190,7 @@ const SidePanel = ({ item, onClose }: SidePanelProps) => {
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const CLASSES_PAGE_SIZE = 10;
+const CLASSES_PAGE_SIZE = 5;
 
 const AttendanceToday = ({
   allClassesData,
@@ -271,44 +271,44 @@ const AttendanceToday = ({
 
         {/* Compact Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-white rounded-lg px-4 py-3 border-l-4 border-l-green-500 shadow-sm flex items-center justify-between">
-            <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Total Present</p>
-            <p className="text-xl font-bold text-green-600">{totalPresent}</p>
+          <div className="rounded-lg px-3 py-2.5 border-l-4 border-l-green-500 flex items-center justify-between">
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Total Present</p>
+            <p className="text-base font-bold text-green-600">{totalPresent}</p>
           </div>
-          <div className="bg-white rounded-lg px-4 py-3 border-l-4 border-l-red-500 shadow-sm flex items-center justify-between">
-            <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Total Absent</p>
-            <p className="text-xl font-bold text-red-500">{totalAbsent}</p>
+          <div className="rounded-lg px-3 py-2.5 border-l-4 border-l-red-500 flex items-center justify-between">
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Total Absent</p>
+            <p className="text-base font-bold text-red-500">{totalAbsent}</p>
           </div>
-          <div className="bg-white rounded-lg px-4 py-3 border-l-4 border-l-indigo-500 shadow-sm">
+          <div className="rounded-lg px-3 py-2.5 border-l-4 border-l-indigo-500">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Classes Marked</p>
+              <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Classes Marked</p>
               <div className="flex items-baseline gap-0.5">
-                <span className="text-xl font-bold text-indigo-600">{classesMarked}</span>
-                <span className="text-sm text-gray-400">/{classesTotal}</span>
+                <span className="text-base font-bold text-indigo-600">{classesMarked}</span>
+                <span className="text-xs text-gray-400">/{classesTotal}</span>
               </div>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-1 mt-2">
+            <div className="w-full bg-gray-100 rounded-full h-1 mt-1.5">
               <div
                 className="bg-indigo-600 h-1 rounded-full transition-all"
                 style={{ width: classesTotal > 0 ? `${(classesMarked / classesTotal) * 100}%` : "0%" }}
               />
             </div>
           </div>
-          <div className="bg-white rounded-lg px-4 py-3 border-l-4 border-l-gray-300 shadow-sm flex items-center justify-between">
-            <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Alerts Sent</p>
+          <div className="rounded-lg px-3 py-2.5 border-l-4 border-l-gray-300 flex items-center justify-between">
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Alerts Sent</p>
             <div className="flex items-baseline gap-0.5">
-              <span className="text-xl font-bold text-gray-900">0</span>
-              <span className="text-sm text-gray-400">/{totalAbsent}</span>
+              <span className="text-base font-bold text-gray-900">0</span>
+              <span className="text-xs text-gray-400">/{totalAbsent}</span>
             </div>
           </div>
         </div>
 
         {/* Class-wise Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-gray-900">Class-wise Attendance — Today</h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <h2 className="text-xs font-semibold text-gray-900">Class-wise Attendance — Today</h2>
+              <p className="text-[10px] text-gray-400 mt-0.5">
                 {allClassesData?.date
                   ? new Date(allClassesData.date).toLocaleDateString("en-IN", {
                       day: "numeric", month: "long", year: "numeric",
@@ -317,7 +317,7 @@ const AttendanceToday = ({
                 · ↻ Auto-refreshing every 60s
               </p>
             </div>
-            <span className="text-xs text-gray-400">Click a row to view students</span>
+            <span className="text-[10px] text-gray-400">Click a row to view students</span>
           </div>
 
           {classes.length === 0 ? (
@@ -329,9 +329,9 @@ const AttendanceToday = ({
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px]">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
                       {["Class / Sec", "Teacher", "Total", "Present", "Absent", "Status"].map((h) => (
-                        <th key={h} className="text-left px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                        <th key={h} className="text-left px-4 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                           {h}
                         </th>
                       ))}
@@ -349,47 +349,46 @@ const AttendanceToday = ({
                       return (
                         <tr
                           key={`${item.class?.id}-${item.section?.id}`}
-                          className={`border-b border-gray-50 transition-colors cursor-pointer ${
-                            isActive
-                              ? "bg-indigo-50/60"
-                              : "hover:bg-indigo-50/30"
-                          }`}
+                          className={`border-b border-gray-50 transition-colors cursor-pointer ${isActive ? "bg-indigo-50/60" : ""}`}
+                          style={!isActive ? undefined : undefined}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#EFF4FF'; }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = ''; }}
                           onClick={() => handleRowClick(item)}
                         >
-                          <td className="px-5 py-3.5">
-                            <span className="font-bold text-gray-900 text-sm">
+                          <td className="px-4 py-2.5">
+                            <span className="font-semibold text-gray-900 text-xs">
                               {item.class?.name}
                               <span className="text-indigo-600">{item.section?.name}</span>
                             </span>
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-4 py-2.5">
                             {teacherName !== "—" ? (
                               <div className="flex items-center gap-2">
                                 <div
-                                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+                                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
                                   style={{ backgroundColor: avatarColor(teacherName) }}
                                 >
                                   {initials}
                                 </div>
-                                <span className="text-gray-700 text-sm">{teacherName}</span>
+                                <span className="text-gray-700 text-xs">{teacherName}</span>
                               </div>
                             ) : (
-                              <span className="text-gray-400 text-sm">—</span>
+                              <span className="text-gray-400 text-xs">—</span>
                             )}
                           </td>
-                          <td className="px-5 py-3.5 text-sm text-gray-600">{item.total_students}</td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-4 py-2.5 text-xs text-gray-600">{item.total_students}</td>
+                          <td className="px-4 py-2.5">
                             {isMarked
-                              ? <span className="text-green-600 font-semibold text-sm">{item.present_students}</span>
-                              : <span className="text-gray-300 text-sm">—</span>}
+                              ? <span className="text-green-600 font-semibold text-xs">{item.present_students}</span>
+                              : <span className="text-gray-300 text-xs">—</span>}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-4 py-2.5">
                             {isMarked
-                              ? <span className="text-red-500 font-medium text-sm">{item.absent_students}</span>
-                              : <span className="text-gray-300 text-sm">—</span>}
+                              ? <span className="text-red-500 font-medium text-xs">{item.absent_students}</span>
+                              : <span className="text-gray-300 text-xs">—</span>}
                           </td>
-                          <td className="px-5 py-3.5">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          <td className="px-4 py-2.5">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                               isMarked ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
                             }`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${isMarked ? "bg-green-500" : "bg-red-400"}`} />
@@ -403,41 +402,39 @@ const AttendanceToday = ({
                 </table>
               </div>
 
-              {/* Pagination */}
-              {totalClassPages > 1 && (
-                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    Showing {(classPage - 1) * CLASSES_PAGE_SIZE + 1}–{Math.min(classPage * CLASSES_PAGE_SIZE, classes.length)} of {classes.length} classes
-                  </p>
-                  <div className="flex items-center gap-1">
+              {/* Pagination — always visible */}
+              <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between">
+                <p className="text-[10px] text-gray-500">
+                  Showing {(classPage - 1) * CLASSES_PAGE_SIZE + 1}–{Math.min(classPage * CLASSES_PAGE_SIZE, classes.length)} of {classes.length} classes
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setClassPage((p) => Math.max(1, p - 1))}
+                    disabled={classPage === 1}
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  {Array.from({ length: totalClassPages }, (_, i) => i + 1).map((p) => (
                     <button
-                      onClick={() => setClassPage((p) => Math.max(1, p - 1))}
-                      disabled={classPage === 1}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                      key={p}
+                      onClick={() => setClassPage(p)}
+                      className={`w-6 h-6 rounded-md text-[10px] font-medium transition-colors ${
+                        p === classPage ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                      }`}
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      {p}
                     </button>
-                    {Array.from({ length: totalClassPages }, (_, i) => i + 1).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setClassPage(p)}
-                        className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
-                          p === classPage ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setClassPage((p) => Math.min(totalClassPages, p + 1))}
-                      disabled={classPage === totalClassPages}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+                  ))}
+                  <button
+                    onClick={() => setClassPage((p) => Math.min(totalClassPages, p + 1))}
+                    disabled={classPage === totalClassPages}
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              )}
+              </div>
             </>
           )}
 

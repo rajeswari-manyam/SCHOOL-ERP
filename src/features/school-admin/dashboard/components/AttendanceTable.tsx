@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Bell } from 'lucide-react';
 import type { AttendanceClass } from '../types';
+
+const PAGE_SIZE = 3;
+const CARD_BG = '#EEF2FF';
 
 interface AttendanceTableProps {
   classes: AttendanceClass[];
@@ -8,24 +12,29 @@ interface AttendanceTableProps {
 }
 
 export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProps) {
-  const marked  = classes.filter((c) => c.status === 'marked').length;
-  const pending = classes.filter((c) => c.status === 'not_marked').length;
-  const unmarked = classes.filter((c) => c.status === 'not_marked').map((c) => c.className);
+  const [showAll, setShowAll] = useState(false);
+
+  const marked   = classes.filter((c) => c.status === 'marked').length;
+  const pending  = classes.filter((c) => c.status === 'not_marked').length;
+  const unmarked = classes.filter((c) => c.status === 'not_marked').map((c) =>
+    c.section ? `${c.className}${c.section}` : c.className
+  );
+  const visible = showAll ? classes : classes.slice(0, PAGE_SIZE);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col">
+    <div className="rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col bg-white">
 
       {/* ── Header ── */}
-      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100">
-        <h2 className="text-xs sm:text-sm font-bold text-gray-900">
-          Today&apos;s Attendance — Class-wise
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
+        <h2 className="text-xs font-medium text-gray-700">
+          Today's Attendance — Class-wise
         </h2>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
+          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px]">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             {marked} Marked
           </span>
-          <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold">
+          <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-[10px]">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
             {pending} Pending
           </span>
@@ -34,28 +43,23 @@ export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProp
 
       {/* ── Table ── */}
       <div className="overflow-x-auto flex-1">
-        {classes.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-            <p className="text-sm font-semibold text-gray-400">No attendance data for today</p>
-            <p className="text-xs text-gray-300">Data will appear once classes mark attendance</p>
+        {classes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+            <p className="text-xs text-gray-400">No attendance data for today</p>
           </div>
-        )}
-        {classes.length > 0 && (
-          <table className="w-full min-w-[480px]">
+        ) : (
+          <table className="w-full min-w-[380px]">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                {['CLASS', 'SECTION', 'TEACHER', 'PRESENT', 'ABSENT', 'STATUS'].map((col) => (
-                  <th
-                    key={col}
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400"
-                  >
+              <tr className="border-b border-gray-100" style={{ background: '#EEF2FF' }}>
+                {['CLASS', 'TEACHER', 'PRESENT', 'ABSENT', 'STATUS'].map((col) => (
+                  <th key={col} className="px-3 py-2 text-left text-[9px] uppercase tracking-widest text-gray-400">
                     {col}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {classes.map((cls, i) => (
+              {visible.map((cls, i) => (
                 <motion.tr
                   key={cls.id}
                   initial={{ opacity: 0, y: 4 }}
@@ -63,29 +67,28 @@ export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProp
                   transition={{ delay: i * 0.05 }}
                   className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors"
                 >
-                  <td className="px-4 py-3.5">
-                    <span className="text-sm font-bold text-gray-900">{cls.className}</span>
+                  <td className="px-3 py-2">
+                    <span className="text-xs font-semibold text-indigo-700">
+                      {cls.className}{cls.section ? cls.section : ''}
+                    </span>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <span className="text-sm text-gray-500 font-medium">{cls.section || '—'}</span>
+                  <td className="px-3 py-2">
+                    <span className="text-xs text-gray-600">{cls.teacher}</span>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <span className="text-sm text-gray-700">{cls.teacher}</span>
+                  <td className="px-3 py-2">
+                    <span className="text-xs text-gray-700 tabular-nums">{cls.present ?? '--'}</span>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <span className="text-sm font-semibold text-gray-800 tabular-nums">{cls.present ?? '—'}</span>
+                  <td className="px-3 py-2">
+                    <span className="text-xs text-gray-700 tabular-nums">{cls.absent ?? '--'}</span>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <span className="text-sm font-semibold text-gray-800 tabular-nums">{cls.absent ?? '—'}</span>
-                  </td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-3 py-2">
                     {cls.status === 'marked' ? (
-                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg text-[11px] font-bold">
-                        <Check size={11} strokeWidth={2.5} /> MARKED
+                      <span className="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-medium">
+                        <Check size={10} strokeWidth={2.5} /> MARKED
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 px-2.5 py-1 rounded-lg text-[11px] font-bold">
-                        <X size={11} strokeWidth={2.5} /> NOT MARKED
+                      <span className="inline-flex items-center gap-1 text-red-500 text-[10px] font-medium">
+                        <X size={10} strokeWidth={2.5} /> NOT MARKED
                       </span>
                     )}
                   </td>
@@ -96,14 +99,26 @@ export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProp
         )}
       </div>
 
-      {/* ── Footer reminder ── */}
+      {/* ── Show more / less ── */}
+      {classes.length > PAGE_SIZE && (
+        <div className="border-t border-gray-100 px-4 py-1.5 text-center">
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="text-[10px] text-indigo-500 hover:text-indigo-700 transition-colors"
+          >
+            {showAll ? 'Show Less ▲' : `Show More (${classes.length - PAGE_SIZE} more) ▼`}
+          </button>
+        </div>
+      )}
+
+      {/* ── Footer: Send Reminder ── */}
       {unmarked.length > 0 && (
-        <div className="border-t border-amber-100 bg-amber-50 px-5 py-3">
+        <div className="border-t border-gray-100 px-4 py-2">
           <button
             onClick={onSendReminder}
-            className="inline-flex items-center gap-2 text-amber-700 font-semibold text-xs sm:text-sm hover:text-amber-800 transition-colors"
+            className="inline-flex items-center gap-1.5 text-[10px] font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
           >
-            <Bell size={14} />
+            <Bell size={11} />
             Send Reminder to Unmarked Classes ({unmarked.join(', ')})
           </button>
         </div>

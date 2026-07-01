@@ -76,7 +76,7 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
+            <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
               <TH>Name &amp; Contact</TH>
               <TH>Emp. No.</TH>
               <TH>Role</TH>
@@ -90,7 +90,7 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
             {pageRows.map((s) => {
               const roleLabel = [s.role, s.classes?.[0]].filter(Boolean).join(" — ");
               return (
-                <tr key={s.id} className="bg-slate-50/50 hover:bg-indigo-50/40 transition-colors">
+                <tr key={s.id} className="bg-slate-50/50 hover:bg-[#EFF4FF] transition-colors">
 
                   {/* Name & Contact */}
                   <td className="px-4 py-3.5">

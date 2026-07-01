@@ -183,11 +183,11 @@ export default function StudentLedgerPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               label="Total Fees"
-              value={formatINR(totalFees)}
+              value={totalFees.toLocaleString("en-IN")}
             />
             <StatCard
               label="Paid Amount"
-              value={formatINR(totalPaid)}
+              value={totalPaid.toLocaleString("en-IN")}
             />
             <div
               className={cn(
@@ -206,7 +206,7 @@ export default function StudentLedgerPage() {
                   pendingAmount > 0 ? "text-red-600" : "text-[#0B1C30]"
                 )}
               >
-                {formatINR(pendingAmount)}
+                {pendingAmount.toLocaleString("en-IN")}
               </p>
             </div>
           </div>

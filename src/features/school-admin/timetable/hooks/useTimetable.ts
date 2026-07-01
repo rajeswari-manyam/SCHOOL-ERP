@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/config/axios";
-import { createTimetable as createServiceSlot, bulkCreateTimetable, getTimetableById, getAllTimetable, getRemainingPeriods } from "@/services/timetable.api";
+import { createTimetable as createServiceSlot, bulkCreateTimetable, getTimetableById, getAllTimetable, getRemainingPeriods, updateTimetableById, deleteTimetableById } from "@/services/timetable.api";
 import type { TimetablePayload, BulkCreateTimetablePayload, TimetableSlot as ServiceTimetableSlot, RemainingPeriodDaySummary } from "@/services/timetable.api";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import type { ClassRecord } from "@/services/class.api";
@@ -143,7 +143,7 @@ const buildSlotsFromRemainingPeriods = (weekSummary: RemainingPeriodDaySummary[]
       if (slot) {
         if (start) slot.startTime = start;
         if (end)   slot.endTime   = end;
-        slot.cells[gridDay] = { subject: ap.subject_name, teacherName: ap.teacher_name };
+        slot.cells[gridDay] = { id: ap.id, subject: ap.subject_name, teacherName: ap.teacher_name };
       }
     }
   }
@@ -488,6 +488,33 @@ export const useSavePeriod = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
       toast.success("Period updated successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+};
+
+// ─── Update timetable period by ID ───────────────────────────────────────────
+export const useUpdateTimetable = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: TimetablePayload }) =>
+      updateTimetableById(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      toast.success("Period updated successfully");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+};
+
+// ─── Delete timetable period by ID ──────────────────────────────────────────
+export const useDeleteTimetable = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteTimetableById(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      toast.success("Period deleted successfully");
     },
     onError: (err: Error) => toast.error(err.message),
   });

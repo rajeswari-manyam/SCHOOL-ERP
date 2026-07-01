@@ -9,6 +9,7 @@ export type ExamNotifyStatus = "SENT" | "PENDING" | "FAILED";
 
 // ─── Core Period ────────────────────────────────────────────────────────────────
 export interface PeriodCell {
+  id?: string;
   subject: string;
   teacherName: string;
   room?: string;

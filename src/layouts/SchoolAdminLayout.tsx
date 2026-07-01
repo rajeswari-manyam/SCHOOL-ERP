@@ -18,6 +18,7 @@ import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
 import { fetchSchoolProfile } from "@/services/school-settings.api";
+import { useSetupStatus } from "@/features/school-admin/dashboard/hooks/useSetupStatus";
 
 // ✅ Breadcrumb labels
 const BreadcrumbLabels: Record<string, string> = {
@@ -53,13 +54,38 @@ export const SchoolAdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const mainRef = useRef<HTMLElement | null>(null);
-  const sidebarOpen = useUIStore((s) => s.sidebarOpen);
-  const collapsed   = useUIStore((s) => s.collapsed);
-  const pageTitle   = useUIStore((s) => s.pageTitle);
+  const sidebarOpen      = useUIStore((s) => s.sidebarOpen);
+  const collapsed        = useUIStore((s) => s.collapsed);
+  const pageTitle        = useUIStore((s) => s.pageTitle);
+  const wizardDismissed  = useUIStore((s) => s.wizardDismissed);
 
   const user              = useAuthStore((s) => s.user);
   const setUserProfile    = useAuthStore((s) => s.setUserProfile);
   const setPrincipalName  = useAuthStore((s) => s.setPrincipalName);
+
+  const { data: setupItems } = useSetupStatus();
+
+  // Compute which sidebar routes are unlocked based on setup progress.
+  // If wizard is dismissed or all steps complete → no locking.
+  const navItemsWithLock = useMemo(() => {
+    const allDone = setupItems ? setupItems.every(s => s.done) : true;
+    if (allDone || wizardDismissed || !setupItems) {
+      return NavItem; // nothing locked
+    }
+
+    // Always unlocked
+    const unlocked = new Set(['/schooladmin/dashboard', '/schooladmin/settings']);
+
+    const done = (id: string) => setupItems.find(s => s.id === id)?.done ?? false;
+
+    if (done('settings'))  unlocked.add('/schooladmin/staff');
+    if (done('staff'))     unlocked.add('/schooladmin/classes');
+    if (done('classes'))   { unlocked.add('/schooladmin/students'); unlocked.add('/schooladmin/attendance'); }
+    if (done('students'))  unlocked.add('/schooladmin/fees');
+    if (done('fees'))      { unlocked.add('/schooladmin/timetable'); unlocked.add('/schooladmin/admissions'); unlocked.add('/schooladmin/reports'); }
+
+    return NavItem.map(item => ({ ...item, locked: !unlocked.has(item.to) }));
+  }, [setupItems, wizardDismissed]);
 
   // Fetch full profile on first load if name was never populated
   useEffect(() => {
@@ -105,9 +131,9 @@ export const SchoolAdminLayout = () => {
   else if (collapsed) mainPadding = "md:pl-16";
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[#F4F6FA]">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[#EFF4FF]">
       <Sidebar
-        items={NavItem}
+        items={navItemsWithLock}
         user={{
           name: user?.principalName?.trim() || (user?.name && user.name !== "User" ? user.name : ""),
           role: (() => {
@@ -121,9 +147,9 @@ export const SchoolAdminLayout = () => {
           })(),
         }}
       />
-      <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
+      <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
-        <main ref={mainRef} className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 pt-3 md:pt-4 pb-8 mt-12 sm:mt-14">
+        <main ref={mainRef} className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-4 md:px-6 lg:px-8 pt-3 md:pt-4 pb-8 mt-12 sm:mt-14">
           <Outlet />
         </main>
       </div>

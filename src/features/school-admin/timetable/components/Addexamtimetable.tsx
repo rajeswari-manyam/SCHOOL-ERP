@@ -302,7 +302,7 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
     getSectionsByClassId(selectedClassId)
       .then((res) => {
         setSectionOptions(
-          res.data.map((s) => ({ value: s.id, label: s.sectionName ?? s.section_name ?? "" }))
+          res.data.map((s) => ({ value: s.id, label: s.sectionName ?? "" }))
         );
       })
       .catch(console.error)

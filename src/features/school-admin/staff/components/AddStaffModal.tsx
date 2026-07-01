@@ -93,10 +93,12 @@ const INITIAL_FORM = {
   email:       "",
   qualification: "",
   dob:         "",
-  salary:      "",
   joiningDate: getToday(),
   departmentId: "",
   status:      "ACTIVE",
+  bankAccountName: "",
+  bankAccountNumber: "",
+  ifscCode: "",
 };
 
 export const AddStaffModal = ({ onClose }: Props) => {
@@ -107,6 +109,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
   const [form, setForm]       = useState(INITIAL_FORM);
   const [errors, setErrors]   = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [autoGenEmp, setAutoGenEmp]   = useState(true);
@@ -133,9 +136,10 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFormError(null);
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    if (!schoolcode) { toast.error("Unable to determine school code."); return; }
+    if (!schoolcode) { setFormError("Unable to determine school code. Please refresh and try again."); return; }
 
     const payload: CreateStaffPayload = {
       name:          form.fullName.trim(),
@@ -143,13 +147,15 @@ export const AddStaffModal = ({ onClose }: Props) => {
       phone:         form.phone.trim().replace(/[^0-9]/g, ""),
       emp_number:    autoGenEmp ? generatedEmpId : form.empNumber.trim() || generatedEmpId,
       qualification: form.qualification.trim(),
-      salary:        form.salary ? Number(form.salary) : undefined,
       date_of_birth: form.dob || getToday(),
       date_of_join:  form.joiningDate,
       school_code:   schoolcode,
       role:          form.role,
       ...(form.departmentId && { department_id: form.departmentId }),
       ...(academicYearId    && { academicYearId }),
+      ...(form.bankAccountName.trim()   && { bank_account_name: form.bankAccountName.trim() }),
+      ...(form.bankAccountNumber.trim() && { bank_account_number: form.bankAccountNumber.trim() }),
+      ...(form.ifscCode.trim()          && { ifsc_code: form.ifscCode.trim() }),
     };
 
     try {
@@ -161,14 +167,19 @@ export const AddStaffModal = ({ onClose }: Props) => {
     } catch (error: unknown) {
       let message = "Failed to create staff member. Please try again.";
       if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || JSON.stringify(error.response?.data) || error.message;
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        message = (data?.message as string)
+          || (data?.error as string)
+          || (Array.isArray(data?.errors) ? (data.errors as { message: string }[]).map(e => e.message).join(", ") : "")
+          || error.message
+          || message;
       } else if (error instanceof Error) {
         message = error.message;
       }
       const lowered = (message || "").toLowerCase();
-      if (lowered.includes("email"))       setErrors((p) => ({ ...p, email: message }));
-      else if (lowered.includes("phone"))  setErrors((p) => ({ ...p, phone: message }));
-      else toast.error(message);
+      if (lowered.includes("email"))      setErrors((p) => ({ ...p, email: message }));
+      else if (lowered.includes("phone")) setErrors((p) => ({ ...p, phone: message }));
+      else setFormError(message);
     } finally {
       setLoading(false);
     }
@@ -274,19 +285,19 @@ export const AddStaffModal = ({ onClose }: Props) => {
               <input className={inputCls} type="date" value={form.joiningDate} onChange={set("joiningDate")} />
             </Field>
 
-            {/* MONTHLY SALARY */}
-            <Field label="Monthly Salary (₹)">
-              <div className="flex h-11 rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-300 focus-within:border-indigo-400 transition bg-white">
-                <span className="flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-sm font-semibold text-gray-600 shrink-0">₹</span>
-                <input
-                  type="number"
-                  value={form.salary}
-                  onChange={set("salary")}
-                  placeholder="25,000"
-                  min="0"
-                  className="flex-1 h-full px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
-                />
-              </div>
+            {/* BANK ACCOUNT NAME */}
+            <Field label="Bank Account Name">
+              <input className={inputCls} placeholder="Account holder name" value={form.bankAccountName} onChange={set("bankAccountName")} />
+            </Field>
+
+            {/* BANK ACCOUNT NUMBER */}
+            <Field label="Bank Account Number">
+              <input className={inputCls} placeholder="Enter account number" value={form.bankAccountNumber} onChange={set("bankAccountNumber")} />
+            </Field>
+
+            {/* IFSC CODE */}
+            <Field label="IFSC Code">
+              <input className={inputCls} placeholder="SBIN0001234" value={form.ifscCode} onChange={set("ifscCode")} />
             </Field>
 
             {/* STATUS */}
@@ -315,21 +326,29 @@ export const AddStaffModal = ({ onClose }: Props) => {
           </div>
 
           {/* ── Footer ── */}
-          <div className="px-5 sm:px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm shadow-indigo-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? "Creating…" : "Add Staff Member"}
-            </button>
+          <div className="px-5 sm:px-6 py-4 border-t border-slate-100 flex flex-col gap-3 shrink-0">
+            {formError && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+                <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">!</span>
+                <p className="text-xs font-medium text-red-700 leading-relaxed">{formError}</p>
+              </div>
+            )}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm shadow-indigo-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? "Creating…" : "Add Staff Member"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
