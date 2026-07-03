@@ -678,7 +678,6 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {entries.map((entry, idx) => {
-                        const slot = TIME_SLOT_MAP[entry.period_no] ?? TIME_SLOT_MAP["1"];
                         return (
                           <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-3 py-2 text-xs font-mono text-slate-400">{idx + 1}</td>

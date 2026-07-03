@@ -106,8 +106,6 @@ function StepListItem({
   isPast: boolean;
   isLocked: boolean;
 }) {
-  const meta = STEP_META[item.id] ?? FALLBACK_META;
-
   return (
     <div
       className={[
@@ -228,7 +226,7 @@ export function SetupWizard({ items, isLoading, onDismiss }: Props) {
   const { Icon } = meta;
 
   const nextStep = sorted[currentIndex + 1] ?? null;
-  const allSubDone = currentStep.subItems.every(s => s.done);
+  const allSubDone = currentStep.subItems.length > 0 && currentStep.subItems.every(s => s.done);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -360,14 +358,16 @@ export function SetupWizard({ items, isLoading, onDismiss }: Props) {
                 </div>
 
                 {/* Sub-items checklist */}
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Required items
-                  </p>
-                  {currentStep.subItems.map(sub => (
-                    <SubItemRow key={sub.id} label={sub.label} done={sub.done} />
-                  ))}
-                </div>
+                {currentStep.subItems.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      Required items
+                    </p>
+                    {currentStep.subItems.map(sub => (
+                      <SubItemRow key={sub.id} label={sub.label} done={sub.done} />
+                    ))}
+                  </div>
+                )}
 
                 {/* Status message */}
                 <div className={[

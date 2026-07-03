@@ -65,7 +65,7 @@ const extractPendingHomeworkList = (raw: unknown, depth = 0): PendingHomeworkApi
 const transformPendingHomeworkItem = (item: PendingHomeworkApiItem): HomeworkItem => ({
   id: item.id,
   title: item.title,
-  subject: item.subjectName,
+  subject: item.subjectName ?? "",
   class: `${item.className}${item.sectionName ? `-${item.sectionName}` : ""}`,
   dueDate: item.submission_date,
   submittedCount: item.submittedCount ?? 0,
@@ -127,20 +127,6 @@ const transformAllHomeworkItem = (item: AllHomeworkApiItem): HomeworkItem => ({
 });
 
 // ── Timetable helpers (uses /teacher/timetable endpoint) ─────────────────────
-
-type TimetableGridCell = {
-  subject: string;
-  class: string;
-  room?: string;
-  isFree?: boolean;
-};
-
-type TimetablePeriodSlot = {
-  id: string;
-  label: string;
-  time: string;
-  kind: "PERIOD" | "BREAK" | "LUNCH" | "FREE";
-};
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 

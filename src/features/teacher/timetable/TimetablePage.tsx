@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Printer, RefreshCw, AlertCircle, Calendar, GraduationCap, User, School, BookOpen, GraduationCap as ExamIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useTimetable, type DayName } from "./hooks/useTimetable";
 import { TimetableErrorBoundary } from "./components/ErrorBoundary";

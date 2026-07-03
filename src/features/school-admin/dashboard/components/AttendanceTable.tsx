@@ -4,7 +4,6 @@ import { Check, X, Bell } from 'lucide-react';
 import type { AttendanceClass } from '../types';
 
 const PAGE_SIZE = 3;
-const CARD_BG = '#EEF2FF';
 
 interface AttendanceTableProps {
   classes: AttendanceClass[];

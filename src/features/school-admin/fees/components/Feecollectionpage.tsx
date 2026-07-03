@@ -115,12 +115,8 @@ export function FeeCollectionPage() {
             onClassChange={fee.setClassFilter}
             sectionFilter={fee.sectionFilter}
             onSectionChange={fee.setSectionFilter}
-            statusFilter={fee.statusFilter}
-            onStatusChange={fee.setStatusFilter}
-            feeHeadFilter={fee.feeHeadFilter}
-            onFeeHeadChange={fee.setFeeHeadFilter}
-            sortOption={fee.sortOption}
-            onSortChange={fee.setSortOption}
+            classOptions={fee.classOptions}
+            sectionOptions={fee.sectionOptions}
           />
 
           <PendingFeesTable
@@ -153,8 +149,10 @@ export function FeeCollectionPage() {
           onTxSearchChange={fee.setTxSearch}
           txClassFilter={fee.txClassFilter}
           onTxClassChange={fee.setTxClassFilter}
-          txModeFilter={fee.txModeFilter}
-          onTxModeChange={fee.setTxModeFilter}
+          txSectionFilter={fee.txSectionFilter}
+          onTxSectionChange={fee.setTxSectionFilter}
+          classOptions={fee.classOptions}
+          txSectionOptions={fee.txSectionOptions}
           txDateRange={fee.txDateRange}
         />
       )}

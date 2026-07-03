@@ -76,7 +76,7 @@ export interface BulkAddSubjectsResponse {
   message: string;
   inserted: number;
   skipped: number;
-  data: SubjectRecord[];
+  data: Array<{ id: string; subject_name: string; [key: string]: unknown }>;
 }
 
 export interface AddSectionPayload {

@@ -69,7 +69,7 @@ export function SlabModal({ onClose, onSuccess, editData }: Props) {
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(isEdit ? editSchema : addSchema) as Parameters<typeof useForm>[0]["resolver"],
+    resolver: zodResolver(isEdit ? editSchema : addSchema) as any,
     defaultValues: {
       classId:    "",
       sectionId:  "",

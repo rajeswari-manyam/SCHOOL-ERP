@@ -21,6 +21,8 @@ import type {
   CreateDepartmentPayload,
 } from "../types/settings.types";
 import * as api from "@/services/school-settings.api";
+import * as settingsApi from "@/features/school-admin/settings/api/settings.api";
+import type { CreateFeeHeadPayload } from "@/features/school-admin/settings/api/settings.api";
 import * as deptApi from "@/services/department.api";
 import * as wdApi from "@/services/working-days.api";
 import type { WorkingDayRecord, WorkingDayPayload } from "@/services/working-days.api";
@@ -147,6 +149,38 @@ export function useFeeConfig() {
     selectedGrade, setSelectedGrade,
     loading, saving, saveStructure,
   };
+}
+
+// ─── Fee Heads (standalone — used inside AcademicConfigTab) ──────────────────
+
+export function useFeeHeads() {
+  const [feeHeads, setFeeHeads] = useState<FeeHead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    settingsApi.fetchFeeHeads().then(data => {
+      setFeeHeads(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const addFeeHead = useCallback(async (payload: CreateFeeHeadPayload) => {
+    setSaving(true);
+    try {
+      const created = await settingsApi.createFeeHead(payload);
+      setFeeHeads(prev => [...prev, created]);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const removeFeeHead = useCallback(async (id: string) => {
+    await settingsApi.deleteFeeHead(id);
+    setFeeHeads(prev => prev.filter(f => f.id !== id));
+  }, []);
+
+  return { feeHeads, loading, saving, addFeeHead, removeFeeHead };
 }
 
 // ─── User Accounts ────────────────────────────────────────────────────────────

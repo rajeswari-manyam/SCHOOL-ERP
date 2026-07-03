@@ -170,8 +170,8 @@ export const UploadMaterialModal = ({ open, onClose, onUpload, editMaterial, onU
       reset({
         materialType: editMaterial.type,
         classId: editMaterial.class?.id ?? "",
-        sectionId: editMaterial.section?.id ?? "",
-        subjectId: editMaterial.subject?.id ?? "",
+        sectionId: editMaterial.section ?? "",
+        subjectId: editMaterial.subject ?? "",
         title: editMaterial.title,
         url: editMaterial.openLink ?? "",
         description: editMaterial.description ?? "",

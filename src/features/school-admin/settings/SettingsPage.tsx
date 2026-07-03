@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSetupStatus } from "@/features/school-admin/dashboard/hooks/useSetupStatus";
+import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
 import { Building2, MessageSquare, Calendar, Banknote, Users, Shield, ChevronRight, X, CheckCircle2, ArrowRight } from "lucide-react";
 import { type SettingsTab } from "./components/Settingssidebar";
 import { SchoolProfileTab } from "./components/Schoolprofiletab";
@@ -160,18 +161,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ activeCard, onClose, onNe
 export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<SettingsTab | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const locationState = location.state as Record<string, unknown> | null;
   const fromWizard = locationState?.fromWizard === true;
 
-  const { data: setupItems } = useSetupStatus();
-  const setupStatusList = setupItems ?? [];
+  const { data: setupData } = useSetupStatus();
+  const setupStatusList = setupData?.items ?? [];
+
+  // 'settings' is the id used by useSetupStatus for the Academic Configuration step
+  const academicConfigDone = setupStatusList.find(s => s.id === 'settings')?.done ?? false;
 
   const isWizardLocked = useMemo(() => {
     if (!fromWizard) return false;
     const sorted = [...setupStatusList].sort((a, b) => (a as { order: number }).order - (b as { order: number }).order);
     const firstIncomplete = sorted.find((i) => !i.done);
-    return firstIncomplete?.id === 'academic-config';
+    return firstIncomplete?.id === 'settings';
   }, [fromWizard, setupStatusList]);
 
   useEffect(() => {
@@ -306,6 +311,8 @@ export const SettingsPage: React.FC = () => {
           </p>
         </div>
 
+        <SetupProgressBanner />
+
         {/* ── Settings cards grid ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
           {SETTINGS_CARDS.filter((card) => !isWizardLocked || card.id === 'academicConfig').map((card) => {
@@ -340,12 +347,12 @@ export const SettingsPage: React.FC = () => {
           activeTab={activeTab}
           activeCard={activeCard}
           onClose={() => setActiveTab(null)}
-          showNext={isWizardLocked}
-          isComplete={activeTab === 'academicConfig' && (setupStatusList.find(s => s.id === 'academic-config')?.done ?? false)}
+          showNext={activeTab === 'academicConfig'}
+          isComplete={activeTab === 'academicConfig' && academicConfigDone}
           nextLabel="Next: Add Staff"
           onNext={() => {
             setActiveTab(null);
-            window.location.href = '/schooladmin/staff';
+            navigate('/schooladmin/staff', { state: { fromWizard: true, stepId: 'staff' } });
           }}
         >
           {renderTab()}

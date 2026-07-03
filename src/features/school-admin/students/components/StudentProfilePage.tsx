@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Edit3, FileText, MoreVertical, MessageCircle } from "lucide-react";
+import { Edit3, FileText, MoreVertical, MessageCircle, ArrowLeft } from "lucide-react";
 import { useStudentProfile } from "../hooks/useStudents";
 import { useStudentAttendance } from "../hooks/useStudentAttendance";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
@@ -100,6 +100,13 @@ const StudentProfilePage = () => {
     <div className="space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-gray-400">
+        <button
+          onClick={() => navigate("/schooladmin/students")}
+          className="flex items-center justify-center w-7 h-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-500 hover:text-gray-700 transition-colors shadow-sm"
+          aria-label="Back to Students"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+        </button>
         <Link to="/schooladmin/students" className="hover:text-indigo-600 transition-colors">Students</Link>
         <span>›</span>
         <span className="text-gray-600">{fullName}</span>

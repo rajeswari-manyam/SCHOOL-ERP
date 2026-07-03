@@ -14,6 +14,7 @@ import { EditStaffModal } from "../components/EditStaffModal";
 import BulkAddStaffModal from "../components/BulkAddStaffModal";
 import { Button } from "../../../../components/ui/button";
 import { StaffDetailModal } from "../components/StaffDetailModal";
+import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
 
 const buildTabs = (staffData: StaffMember[], leaveData: LeaveRecord[]) => {
   const teachers = staffData.filter(s => s.isTeaching).length;
@@ -153,6 +154,8 @@ export default function StaffManagementPage() {
             loading={balanceLoading}
           />
         </div>
+
+        <SetupProgressBanner />
 
         {/* Tabs — scroll horizontally on mobile */}
         <div className="w-full overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">

@@ -18,10 +18,6 @@ export {
   useRetryWaAlert,
   useSubmitCorrectionRequest,
   ATTENDANCE_KEYS,
-  MOCK_TODAY,
-  MOCK_TODAY_MARKED,
-  MOCK_STUDENTS,
-  MOCK_HISTORY,
 } from "./hooks/useAttendance";
 
 export { attendanceApi }  from "@/services/teacher-attendance.api";

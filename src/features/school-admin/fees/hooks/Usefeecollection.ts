@@ -12,7 +12,6 @@ import {
 } from "@/services/fee.api";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import type { AllPendingFeesEntry, RecordFeePaymentRecord, ConcessionRecord } from "@/services/fee.api";
-import type { ClassRecord } from "@/services/class.api";
 import { sortPendingFees } from "../utils/Fee.utils";
 import type {
   PendingFee,
@@ -22,11 +21,10 @@ import type {
   ClassFeeStructure,
   FeeStats,
   PeriodSummary,
-  SortOption,
   RecordPaymentForm,
 } from "../types/fees.types";
 
-export type FeeTab = "pending" | "transactions" | "structure";
+export type FeeTab = "pending" | "transactions" | "structure" | "staffsalary";
 
 function computeDueInfo(dueDate: string | null | undefined) {
   if (!dueDate) return { daysOverdue: null, daysRemaining: null, isDueToday: false };

@@ -67,11 +67,6 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   </button>
 );
 
-const ROLE_OPTIONS = [
-  "Class Teacher", "Subject Teacher", "Principal", "Vice Principal",
-  "Admin", "Librarian", "Lab Assistant", "Accountant", "Support Staff",
-];
-
 const STATUS_OPTIONS = [
   { label: "Active",   value: "ACTIVE" },
   { label: "Inactive", value: "INACTIVE" },
@@ -242,13 +237,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* ROLE */}
             <Field label="Role" required error={errors.role}>
-              <div className="relative">
-                <select value={form.role} onChange={set("role")} className={selectCls}>
-                  <option value="">Select role…</option>
-                  {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+              <input className={ic(errors.role)} placeholder="e.g. Class Teacher" value={form.role} onChange={set("role")} />
             </Field>
 
             {/* PHONE NUMBER */}

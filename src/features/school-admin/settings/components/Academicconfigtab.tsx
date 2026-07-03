@@ -153,7 +153,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
   // Leave allocation state
   const [leaveYearId, setLeaveYearId] = useState("");
-  const [leaveDays, setLeaveDays] = useState<Record<string, number>>({ casual: 12, sick: 10, emergency: 15 });
+  const [leaveDays, setLeaveDays] = useState<Record<string, number>>({ casual: 0, sick: 0, emergency: 0 });
   const [leaveEditId, setLeaveEditId] = useState<string | null>(null);
   const [leaveEditDays, setLeaveEditDays] = useState<number>(0);
   const [leaveSuccess, setLeaveSuccess] = useState("");

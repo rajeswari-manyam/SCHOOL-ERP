@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
 import { Plus, BookOpen, Users, Layers, BookText, Loader2, Calendar, ChevronDown, ChevronLeft, ChevronRight, Trash2, Pencil, X, GraduationCap, User, School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUIStore } from "@/store/uiStore";
@@ -13,6 +14,7 @@ import { BulkAddSectionModal } from "./components/BulkAddSectionModal";
 import { AddSectionModal } from "./components/AddSectionModal";
 import { AddSubjectModal } from "./components/AddSubjectModal";
 import { BulkAddSubjectModal } from "./components/BulkAddSubjectModal";
+import { EditClassModal } from "./components/EditClassModal";
 import { EditSectionModal } from "./components/EditSectionModal";
 import { EditSubjectModal } from "./components/EditSubjectModal";
 import type { SectionItem, SubjectItem } from "./types/classes.types";
@@ -266,7 +268,7 @@ const SectionCard = ({
 }: {
   sec: SectionItem; classId: string; clsName: string; refreshKey: number;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
-  onBulkAddSubject: () => void;
+  onBulkAddSubject: (p: { classId: string; sectionId: string }) => void;
   onEditSubject: (p: { id: string; name: string }) => void;
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
@@ -350,7 +352,7 @@ const SectionSubjectChips = ({
 }: {
   sectionId: string; sectionName: string; classId: string; className: string;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
-  onBulkAddSubject: () => void;
+  onBulkAddSubject: (p: { classId: string; sectionId: string }) => void;
   onEditSubject: (p: { id: string; name: string }) => void;
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
@@ -398,7 +400,7 @@ const SectionSubjectChips = ({
         <Plus className="w-3 h-3" /> Add Subject
       </button>
       <button
-        onClick={onBulkAddSubject}
+        onClick={() => onBulkAddSubject({ classId, sectionId })}
         className="flex items-center gap-0.5 text-[10px] font-bold text-purple-600 hover:text-purple-800 transition-colors"
       >
         <Plus className="w-3 h-3" /> Bulk Subjects
@@ -417,7 +419,7 @@ const SelectedClassSections = ({
   classId: string; className: string; refreshKey: number;
   onAddSection: (p: { classId: string; className: string }) => void;
   onBulkAddSection: () => void;
-  onBulkAddSubject: () => void;
+  onBulkAddSubject: (p: { classId: string; sectionId: string }) => void;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
   onEditSection: (p: { id: string; name: string }) => void;
   onDeleteSection: (p: { id: string; name: string }) => void;
@@ -501,7 +503,7 @@ const ClassesPage = () => {
     classes, loading, error, stats,
     loadClasses, addClass, bulkAddClasses, addSection, addSubject, bulkAddSections, bulkAddSubjects,
     updateClassSections, updateSectionSubjects,
-    deleteClass, updateSection, deleteSection, updateSubject, deleteSubject,
+    deleteClass, updateClass, updateSection, deleteSection, updateSubject, deleteSubject,
   } = useClasses();
 
   const academicYearId = useUIStore((state) => state.academicYearId);
@@ -510,7 +512,7 @@ const ClassesPage = () => {
 
   const [showAddClass, setShowAddClass] = useState(false);
   const [showBulkAddSection, setShowBulkAddSection] = useState(false);
-  const [showBulkAddSubject, setShowBulkAddSubject] = useState(false);
+  const [bulkSubjectFor, setBulkSubjectFor] = useState<{ classId: string; sectionId: string } | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [addSectionFor, setAddSectionFor] = useState<{ classId: string; className: string } | null>(null);
   const [addSubjectFor, setAddSubjectFor] = useState<{
@@ -519,6 +521,7 @@ const ClassesPage = () => {
   const [sectionsRefreshKey, setSectionsRefreshKey] = useState(0);
   const [classPage, setClassPage] = useState(1);
   const CLASS_PAGE_SIZE = 5;
+  const [editClassFor, setEditClassFor] = useState<{ id: string; name: string } | null>(null);
   const [editSectionFor, setEditSectionFor] = useState<{ id: string; name: string } | null>(null);
   const [editSubjectFor, setEditSubjectFor] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: "class" | "section" | "subject"; name: string } | null>(null);
@@ -529,9 +532,16 @@ const ClassesPage = () => {
   const [draftRows, setDraftRows] = useState<DraftRow[]>([]);
   const [savingDrafts, setSavingDrafts] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
+  const [expandedDrafts, setExpandedDrafts] = useState<Set<string>>(new Set());
 
-  const addDraftRow = () =>
-    setDraftRows((prev) => [...prev, makeDraft(academicYearId ?? "")]);
+  const toggleDraft = (id: string) =>
+    setExpandedDrafts((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const addDraftRow = () => {
+    const draft = makeDraft(academicYearId ?? "");
+    setDraftRows((prev) => [...prev, draft]);
+    setExpandedDrafts((prev) => new Set([...prev, draft.id]));
+  };
 
   const removeDraftRow = (id: string) =>
     setDraftRows((prev) => prev.filter((r) => r.id !== id));
@@ -621,6 +631,8 @@ const ClassesPage = () => {
         <StatCard icon={<Users    className="w-4 h-4 text-white" />} label="Total Students" value={stats.totalStudents} color="bg-emerald-500" />
       </div>
 
+      <SetupProgressBanner />
+
       {/* Error / Loading */}
       {error && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
@@ -660,12 +672,18 @@ const ClassesPage = () => {
                     <span className="text-xs font-semibold text-gray-900">Class {cls.className}</span>
                   </td>
                   <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {cls.sections.length > 0
                         ? cls.sections.map((s) => (
                           <span key={s.id} className="bg-indigo-100 text-indigo-600 text-xs px-2 py-0.5 rounded-md font-bold">{s.name}</span>
                         ))
-                        : <span className="text-xs text-gray-400">-</span>}
+                        : null}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setAddSectionFor({ classId: cls.id, className: cls.className }); }}
+                        className="flex items-center gap-0.5 text-[10px] font-bold text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 px-1.5 py-0.5 rounded-md transition-colors"
+                      >
+                        <Plus className="w-3 h-3" /> Add Section
+                      </button>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
@@ -679,13 +697,22 @@ const ClassesPage = () => {
                     </span>
                   </td>
                   <td className="px-3 py-3.5 text-right">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: cls.id, type: "class", name: cls.className }); }}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      title="Delete class"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditClassFor({ id: cls.id, name: cls.className }); }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors"
+                        title="Edit class"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: cls.id, type: "class", name: cls.className }); }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Delete class"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -702,46 +729,76 @@ const ClassesPage = () => {
               )}
 
               {/* Draft / new rows */}
-              {draftRows.map((row, idx) => (
-                <tr key={row.id} className="bg-indigo-50/40 border-t border-indigo-100">
-                  <td className="px-4 py-2.5">
-                    <input
-                      autoFocus={idx === draftRows.length - 1}
-                      className="w-full h-9 px-3 rounded-lg border border-indigo-200 bg-white text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
-                      placeholder="e.g. Class 11"
-                      value={row.class_name}
-                      onChange={(e) => updateDraft(row.id, "class_name", e.target.value)}
-                    />
-                  </td>
-                  <td className="px-4 py-2.5" colSpan={2}>
-                    {yearsLoading ? (
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading years...
-                      </div>
-                    ) : (
-                      <Select
-                        value={row.academicYearId}
-                        onValueChange={(v) => updateDraft(row.id, "academicYearId", v)}
-                        options={yearOptions}
-                        placeholder="Select academic year"
-                        className="h-9 text-sm"
-                      />
-                    )}
-                  </td>
-                  <td className="px-5 py-2.5">
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-600">PENDING</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right">
-                    <button
-                      onClick={() => removeDraftRow(row.id)}
-                      className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Remove row"
+              {draftRows.map((row, idx) => {
+                const isExpanded = expandedDrafts.has(row.id);
+                return (
+                  <React.Fragment key={row.id}>
+                    {/* Collapsed header row — click anywhere to expand */}
+                    <tr
+                      className="bg-indigo-50/60 border-t border-indigo-100 cursor-pointer hover:bg-indigo-100/60 transition-colors"
+                      onClick={() => toggleDraft(row.id)}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className={`w-4 h-4 text-indigo-400 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                          <span className="text-xs font-bold text-indigo-600 shrink-0">#{idx + 1}</span>
+                          <span className="text-xs font-semibold text-gray-700 truncate">
+                            {row.class_name || "New Class"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-2.5" colSpan={2}>
+                        <span className="text-xs text-gray-400 italic">
+                          {yearOptions.find(y => y.value === row.academicYearId)?.label || "Select year"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-600">PENDING</span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeDraftRow(row.id); }}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Remove row"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                    {/* Expanded form row */}
+                    {isExpanded && (
+                      <tr key={`${row.id}-form`} className="bg-indigo-50/30 border-b border-indigo-100">
+                        <td className="px-4 pb-3 pt-1">
+                          <input
+                            autoFocus={idx === draftRows.length - 1}
+                            className="w-full h-9 px-3 rounded-lg border border-indigo-200 bg-white text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
+                            placeholder="e.g. Class 11"
+                            value={row.class_name}
+                            onChange={(e) => updateDraft(row.id, "class_name", e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </td>
+                        <td className="px-4 pb-3 pt-1" colSpan={3}>
+                          {yearsLoading ? (
+                            <div className="flex items-center gap-2 text-xs text-gray-400">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading years...
+                            </div>
+                          ) : (
+                            <Select
+                              value={row.academicYearId}
+                              onValueChange={(v) => updateDraft(row.id, "academicYearId", v)}
+                              options={yearOptions}
+                              placeholder="Select academic year"
+                              className="h-9 text-sm"
+                            />
+                          )}
+                        </td>
+                        <td />
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
 
               {/* Add Row link */}
               <tr>
@@ -846,7 +903,7 @@ const ClassesPage = () => {
             refreshKey={sectionsRefreshKey}
             onAddSection={setAddSectionFor}
             onBulkAddSection={() => setShowBulkAddSection(true)}
-            onBulkAddSubject={() => setShowBulkAddSubject(true)}
+            onBulkAddSubject={setBulkSubjectFor}
             onAddSubject={setAddSubjectFor}
             onEditSection={setEditSectionFor}
             onDeleteSection={(p) => setDeleteTarget({ ...p, type: "section" })}
@@ -904,13 +961,27 @@ const ClassesPage = () => {
           }}
         />
       )}
-      {showBulkAddSubject && (
+      {bulkSubjectFor && (
         <BulkAddSubjectModal
-          onClose={() => setShowBulkAddSubject(false)}
+          presetClassId={bulkSubjectFor.classId}
+          presetSectionId={bulkSubjectFor.sectionId}
+          onClose={() => setBulkSubjectFor(null)}
           onSubmit={async (data) => {
             await bulkAddSubjects(data);
-            setShowBulkAddSubject(false);
+            setBulkSubjectFor(null);
             setSectionsRefreshKey((k) => k + 1);
+          }}
+        />
+      )}
+      {editClassFor && (
+        <EditClassModal
+          classId={editClassFor.id}
+          className={editClassFor.name}
+          onClose={() => setEditClassFor(null)}
+          onSubmit={async (id, payload) => {
+            await updateClass(id, payload);
+            setEditClassFor(null);
+            loadClasses();
           }}
         />
       )}

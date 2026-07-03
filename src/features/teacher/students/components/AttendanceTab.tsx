@@ -61,18 +61,19 @@ const cellColor = (status: string) => {
 };
 
 const AttendanceTab = ({ student }: { student: Student }) => {
-  const { data: apiRecords = [], isLoading, isError } = useQuery({
+  const { data: apiResponse, isLoading, isError } = useQuery({
     queryKey: ["teacher", "attendance", student.id, CUR_YEAR, CUR_MONTH],
     queryFn: () => getMonthlyAttendance({ studentId: student.id, month: CUR_MONTH, year: CUR_YEAR }),
     staleTime: 30_000,
     retry: 1,
   });
+  const apiRecords = (apiResponse?.records ?? []) as { date: string; status: string }[];
 
   const days = normalizeToAttendanceDay(apiRecords, CUR_YEAR, CUR_MONTH);
   const present = days.filter((d) => d.status === "PRESENT").length;
   const absent  = days.filter((d) => d.status === "ABSENT").length;
 
-  // Build calendar grid offset by first day of month
+  
   const startDow = new Date(CUR_YEAR, CUR_MONTH - 1, 1).getDay();
   const cells: ({ date: string; status: string } | null)[] = [
     ...Array(startDow).fill(null),

@@ -7,7 +7,7 @@ import type {
   MarkAttendancePayload,
   CorrectionRequestPayload,
   CorrectionRequest,
-} from "@/features/teacher/types/attendance.types";
+} from "@/features/teacher/attendance/types/attendance.types";
 
 // ── Types matching /tenant/getteachertodayattendancesummary response ──────────
 

@@ -57,7 +57,8 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
     try {
       const payload = validRows.map(r => ({
         holidayname: r.holidayname.trim(),
-        date: r.date,
+        from_date: r.date,
+        to_date: r.date,
         type: r.type,
         note: r.note.trim() || r.type,
         school_code: schoolCode,

@@ -337,6 +337,17 @@ export const bulkAddSubjects = async (payload: AddSubjectPayload[]): Promise<Bul
   }
 };
 
+/* ── Update Class ────────────────────────────────────────────────── */
+export interface UpdateClassPayload {
+  class_name?: string;
+}
+
+export const updateClass = async (id: string, payload: UpdateClassPayload): Promise<any> => {
+  const { data } = await api.put(`/tenant/updateclassById/${id}`, payload);
+  if (!data?.status) throw new Error(data?.message ?? "Failed to update class");
+  return data.data;
+};
+
 /* ── Delete Class ─────────────────────────────────────────────────── */
 export const deleteClass = async (id: string): Promise<void> => {
   const { data } = await api.delete(`/tenant/deleteclassById/${id}`);

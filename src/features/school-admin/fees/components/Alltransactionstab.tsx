@@ -67,7 +67,6 @@ export function AllTransactionsTab({
   onTxSectionChange,
   classOptions,
   txSectionOptions,
-  txDateRange,
 }: AllTransactionsTabProps) {
   return (
     <div>

@@ -21,6 +21,10 @@ export const resultSummaries: ResultSummary[] = [
   {
     id: "ut1-jan-2025",
     examName: "Unit Test 1 — January 2025",
+    studentName: "",
+    className: "",
+    sectionName: "",
+    overallStatus: "Pass",
     totalObtained: 387,
     totalMarks: 500,
     percentage: 77.4,

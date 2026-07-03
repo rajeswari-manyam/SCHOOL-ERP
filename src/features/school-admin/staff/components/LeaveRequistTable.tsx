@@ -6,7 +6,6 @@ import { useStaffStore } from "../store/usestore";
 import { getStaffLeaveSummary, fetchLeaves } from "@/services/school-staff.api";
 import type { LeaveSummaryEntry } from "@/services/school-staff.api";
 import { useUIStore } from "@/store/uiStore";
-import { useAuthStore } from "@/store/authStore";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 
 interface Props {
@@ -68,14 +67,13 @@ const TH = ({ children, className = "" }: { children: React.ReactNode; className
   </th>
 );
 
-export const LeaveRequestsTab = ({ leaves }: Props) => {
+export const LeaveRequestsTab = ({ leaves: _leaves }: Props) => {
   const approveLeave    = useStaffStore((s) => s.approveLeave);
   const rejectLeave     = useStaffStore((s) => s.rejectLeave);
   const leaveProcessing = useStaffStore((s) => s.leaveProcessing);
   const staffList       = useStaffStore((s) => s.staffData);
 
   const academicYearId = useUIStore.getState().academicYearId ?? "";
-  const school_code    = useAuthStore.getState().user?.schoolcode ?? localStorage.getItem("schoolcode") ?? "";
 
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [summary, setSummary]                 = useState<LeaveSummaryEntry[]>([]);

@@ -1,6 +1,6 @@
 import api from "@/config/axios";
 import { useAuthStore } from "@/store/authStore";
-import type { Student } from "@/features/teacher/types/my-students.types";
+import type { Student } from "@/features/teacher/students/types/my-students.types";
 
 /** Extract a student array from any common API response envelope */
 const extractStudents = (raw: unknown): unknown[] => {

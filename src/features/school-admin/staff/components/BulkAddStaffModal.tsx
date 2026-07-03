@@ -12,10 +12,6 @@ import { useStaffStore } from "../store/usestore";
 import type { Department } from "@/features/school-admin/settings/types/settings.types";
 import type { AcademicYearRecord } from "@/services/academicYear.api";
 
-const ROLE_OPTIONS = [
-  "Class Teacher", "Subject Teacher", "Principal", "Vice Principal",
-  "Admin", "Librarian", "Lab Assistant", "Accountant", "Support Staff",
-];
 
 interface StaffRow {
   name: string;
@@ -242,10 +238,13 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                     const expanded = expandedRows.has(i);
                     return (
                       <div key={i}>
-                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 hover:bg-gray-50/50">
-                          <button type="button" onClick={() => toggleRow(i)} className="p-1 text-gray-400 hover:text-gray-600 shrink-0">
+                        <div
+                          className="flex items-center gap-2 px-3 sm:px-4 py-2.5 hover:bg-gray-50/50 cursor-pointer"
+                          onClick={() => toggleRow(i)}
+                        >
+                          <span className="p-1 text-gray-400 shrink-0">
                             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                          </button>
+                          </span>
                           <span className="text-xs font-bold text-indigo-600 shrink-0 w-6">#{i + 1}</span>
                           <span className="text-sm text-gray-700 min-w-[120px] truncate">
                             {row.name || "New Staff"}
@@ -255,7 +254,7 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                           </span>
                           <button
                             type="button"
-                            onClick={() => removeRow(i)}
+                            onClick={(e) => { e.stopPropagation(); removeRow(i); }}
                             disabled={rows.length <= 1}
                             className="ml-auto p-1.5 text-gray-400 hover:text-red-500 disabled:opacity-30"
                           >
@@ -268,14 +267,7 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                               <Input placeholder="Priya Reddy" value={row.name} onChange={(e) => updateRow(i, "name", e.target.value)} />
                             </Field>
                             <Field label="Role *">
-                              <Select
-                                value={row.role}
-                                onValueChange={(v) => updateRow(i, "role", v)}
-                                options={[
-                                  { label: "Select role…", value: "" },
-                                  ...ROLE_OPTIONS.map((r) => ({ label: r, value: r })),
-                                ]}
-                              />
+                              <Input placeholder="e.g. Class Teacher" value={row.role} onChange={(e) => updateRow(i, "role", e.target.value)} />
                             </Field>
                             <Field label="Email *">
                               <Input type="email" placeholder="priya@school.edu" value={row.email} onChange={(e) => updateRow(i, "email", e.target.value)} />

@@ -48,7 +48,8 @@ export function DashboardPage() {
   const { data: classStatus }      = useClassAttendanceStatus();
   const { data: enquiriesPipeline = [] }                                = useEnquiriesPipeline();
   const { data: activeAcademicYear }                                    = useActiveAcademicYear();
-  const { data: setupItems, isLoading: isSetupLoading }                  = useSetupStatus();
+  const { data: setupData, isLoading: isSetupLoading }                   = useSetupStatus();
+  const setupItems                                                        = setupData?.items;
   const wizardState                                                       = useWizardState(setupItems);
   const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
   const { data: feeSummary }                                            = useFeeSummary();

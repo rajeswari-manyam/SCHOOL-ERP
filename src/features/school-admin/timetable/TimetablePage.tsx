@@ -732,6 +732,8 @@ const TimetablePage: React.FC = () => {
           )}
         </div>
 
+
+
         {/* ── Main tabs ───────────────────────────────────────────────────────── */}
         <div className="border-b border-gray-200 mb-4">
           <div className="flex items-center">

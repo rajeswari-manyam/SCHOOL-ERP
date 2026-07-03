@@ -135,6 +135,18 @@ export const useClasses = () => {
     return res;
   };
 
+  const handleUpdateClass = async (id: string, payload: classesApi.UpdateClassPayload) => {
+    const updated = await classesApi.updateClass(id, payload);
+    if (mountedRef.current) {
+      setClasses((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, className: updated.class_name ?? c.className } : c
+        )
+      );
+    }
+    return updated;
+  };
+
   const handleDeleteClass = async (id: string) => {
     await classesApi.deleteClass(id);
     if (mountedRef.current) {
@@ -238,6 +250,7 @@ export const useClasses = () => {
     addSubject: handleAddSubject,
     bulkAddSubjects: handleBulkAddSubjects,
     deleteClass: handleDeleteClass,
+    updateClass: handleUpdateClass,
     updateSection: handleUpdateSection,
     deleteSection: handleDeleteSection,
     updateSubject: handleUpdateSubject,

@@ -194,7 +194,7 @@ export const useLeave = () => {
     if (!formValid || !form.type) return;
     setSubmitting(true);
     try {
-      const newApp = await leaveApi.applyLeave(form, staffId, totalDays, academicYearId);
+      const newApp = await leaveApi.applyLeave(form, staffId, totalDays, academicYearId ?? undefined);
       newApp.totalDays = totalDays;
       setLeaveHistory(prev => [newApp, ...prev]);
       setSubmitSuccess(true);

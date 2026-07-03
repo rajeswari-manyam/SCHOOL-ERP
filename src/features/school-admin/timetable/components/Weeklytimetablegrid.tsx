@@ -36,7 +36,7 @@ const API_TO_GRID: Record<string, DayOfWeek> = {
   thursday: "THU", friday: "FRI", saturday: "SAT",
 };
 
-const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, workingDays }) => {
+const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPeriod, onDeletePeriod, workingDays }) => {
   const { slots, currentPeriodLabel } = timetable;
 
   const hasConstraint = Array.isArray(workingDays) && workingDays.length > 0;

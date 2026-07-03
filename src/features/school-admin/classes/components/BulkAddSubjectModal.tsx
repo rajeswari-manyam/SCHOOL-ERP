@@ -13,6 +13,8 @@ import type { AddSubjectPayload } from "../types/classes.types";
 interface Props {
   onClose: () => void;
   onSubmit: (subjects: AddSubjectPayload[]) => Promise<void>;
+  presetClassId?: string;
+  presetSectionId?: string;
 }
 
 interface Option {
@@ -30,18 +32,19 @@ interface SubjectRow {
 }
 
 let _rowId = 0;
-const makeRow = (academicYearId = ""): SubjectRow => ({
+const makeRow = (academicYearId = "", classId = "", sectionId = ""): SubjectRow => ({
   id: `row_${++_rowId}`,
   subjectName: "",
-  classId: "",
-  sectionId: "",
+  classId,
+  sectionId,
   teacherId: "",
   academicYearId,
 });
 
-export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
+export const BulkAddSubjectModal = ({ onClose, onSubmit, presetClassId = "", presetSectionId = "" }: Props) => {
+  const hasPreset = Boolean(presetClassId && presetSectionId);
   const { years, loading: yearsLoading } = useAcademicYears();
-  const [rows, setRows] = useState<SubjectRow[]>([makeRow()]);
+  const [rows, setRows] = useState<SubjectRow[]>([makeRow("", presetClassId, presetSectionId)]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [classOptions, setClassOptions] = useState<Option[]>([]);
@@ -75,7 +78,7 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
 
   const addRow = () => {
     const last = rows[rows.length - 1];
-    setRows((prev) => [...prev, makeRow(last.academicYearId)]);
+    setRows((prev) => [...prev, makeRow(last.academicYearId, presetClassId, presetSectionId)]);
   };
 
   const removeRow = (id: string) => {
@@ -159,32 +162,74 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide shrink-0">
               Subjects ({rows.length})
             </p>
-            <button
-              type="button"
-              onClick={addRow}
-              className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 transition"
-            >
-              <Plus size={12} /> Add Row
-            </button>
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
+              {/* Academic Year — moved here from bottom */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap">Year <span className="text-red-500">*</span></span>
+                {yearsLoading ? (
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <Loader2 size={12} className="animate-spin" />
+                  </div>
+                ) : (
+                  <select
+                    value={rows[0]?.academicYearId ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setRows((prev) => prev.map((r) => ({ ...r, academicYearId: v })));
+                    }}
+                    className="h-8 rounded-lg border border-gray-200 bg-white px-2 py-0 text-xs text-slate-700 outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select year</option>
+                    {years.map((y) => (
+                      <option key={y.id} value={y.id}>
+                        {y.active ? `${y.yearName} (Active)` : y.yearName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={addRow}
+                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 transition shrink-0"
+              >
+                <Plus size={12} /> Add Subject
+              </button>
+            </div>
           </div>
 
           {/* Header labels */}
-          <div className="hidden sm:grid sm:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
-            <span>Subject Name <span className="text-red-500">*</span></span>
-            <span>Class <span className="text-red-500">*</span></span>
-            <span>Section <span className="text-red-500">*</span></span>
-            <span>Teacher <span className="text-red-500">*</span></span>
-            <span className="w-10" />
-          </div>
+          {hasPreset ? (
+            <div className="hidden sm:grid sm:grid-cols-[1fr_1.2fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
+              <span>Subject Name <span className="text-red-500">*</span></span>
+              <span>Teacher <span className="text-red-500">*</span></span>
+              <span className="w-10" />
+            </div>
+          ) : (
+            <div className="hidden sm:grid sm:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
+              <span>Subject Name <span className="text-red-500">*</span></span>
+              <span>Class <span className="text-red-500">*</span></span>
+              <span>Section <span className="text-red-500">*</span></span>
+              <span>Teacher <span className="text-red-500">*</span></span>
+              <span className="w-10" />
+            </div>
+          )}
 
           {/* Rows */}
           {rows.map((row) => (
-            <div key={row.id} className="grid grid-cols-2 sm:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr_auto] gap-2 sm:gap-3 items-start p-3 rounded-xl border border-gray-100 bg-white">
-              <div className="space-y-1 col-span-2 sm:col-span-1">
+            <div
+              key={row.id}
+              className={`grid gap-2 sm:gap-3 items-start p-3 rounded-xl border border-gray-100 bg-white ${
+                hasPreset
+                  ? "grid-cols-1 sm:grid-cols-[1fr_1.2fr_auto]"
+                  : "grid-cols-2 sm:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr_auto]"
+              }`}
+            >
+              <div className={`space-y-1 ${hasPreset ? "" : "col-span-2 sm:col-span-1"}`}>
                 <Label className="sm:hidden text-[10px] text-gray-400">Subject Name <span className="text-red-500">*</span></Label>
                 <Input
                   placeholder="e.g. Mathematics"
@@ -192,25 +237,29 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
                   onChange={(e) => updateRow(row.id, "subjectName", e.target.value)}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Class <span className="text-red-500">*</span></Label>
-                <Select
-                  value={row.classId}
-                  onValueChange={(value) => updateRow(row.id, "classId", value)}
-                  options={classOptions}
-                  placeholder="Select class"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Section <span className="text-red-500">*</span></Label>
-                <Select
-                  value={row.sectionId}
-                  onValueChange={(value) => updateRow(row.id, "sectionId", value)}
-                  options={sectionMap[row.classId] ?? []}
-                  placeholder="Select section"
-                  disabled={!row.classId}
-                />
-              </div>
+              {!hasPreset && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="sm:hidden text-[10px] text-gray-400">Class <span className="text-red-500">*</span></Label>
+                    <Select
+                      value={row.classId}
+                      onValueChange={(value) => updateRow(row.id, "classId", value)}
+                      options={classOptions}
+                      placeholder="Select class"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="sm:hidden text-[10px] text-gray-400">Section <span className="text-red-500">*</span></Label>
+                    <Select
+                      value={row.sectionId}
+                      onValueChange={(value) => updateRow(row.id, "sectionId", value)}
+                      options={sectionMap[row.classId] ?? []}
+                      placeholder="Select section"
+                      disabled={!row.classId}
+                    />
+                  </div>
+                </>
+              )}
               <div className="space-y-1">
                 <Label className="sm:hidden text-[10px] text-gray-400">Teacher <span className="text-red-500">*</span></Label>
                 <Select
@@ -234,31 +283,6 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
             </div>
           ))}
 
-          {/* Academic year selector */}
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year: <span className="text-red-500">*</span></span>
-            {yearsLoading ? (
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <Loader2 size={12} className="animate-spin" /> Loading...
-              </div>
-            ) : (
-              <select
-                value={rows[0]?.academicYearId ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setRows((prev) => prev.map((r) => ({ ...r, academicYearId: v })));
-                }}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
-              >
-                <option value="">Select year</option>
-                {years.map((y) => (
-                  <option key={y.id} value={y.id}>
-                    {y.active ? `${y.yearName} (Active)` : y.yearName}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
         </div>
 
         {/* Footer */}

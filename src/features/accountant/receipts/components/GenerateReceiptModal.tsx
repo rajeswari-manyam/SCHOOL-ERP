@@ -178,7 +178,7 @@ export const GenerateReceiptModal = ({
                     {PAYMENT_OPTIONS.map((m) => (
                       <button
                         key={m.value}
-                        onClick={() => setPaymentMode(m.value)}
+                        onClick={() => setPaymentMode(m.value as any)}
                         className={`flex-1 min-w-[60px] py-1.5 rounded-lg text-[10px] font-semibold border transition-all ${
                           paymentMode === m.value
                             ? "bg-indigo-600 text-white border-indigo-600"

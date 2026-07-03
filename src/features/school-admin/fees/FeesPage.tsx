@@ -9,8 +9,6 @@ import { CommunicationCenter } from "./components/Communicationcenter";
 import { StaffSalaryTab } from "./components/StaffSalaryTab";
 
 import { useFeeCollection } from "./hooks/Usefeecollection";
-import { Button } from "@/components/ui/button";
-
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
   { key: "pending",      label: "Pending Fees",  icon: "⏳" },

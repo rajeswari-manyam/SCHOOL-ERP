@@ -20,7 +20,7 @@ import {
   type SectionStudent,
 } from "@/services/section.api";
 
-type PromotionAction = "promote" | "repeat" | "dropout";
+type PromotionAction = "PROMOTE" | "REPEAT" | "DROPOUT";
 
 interface StudentRow {
   student: SectionStudent;
@@ -33,9 +33,9 @@ interface Option {
 }
 
 const ACTION_OPTIONS: { value: PromotionAction; label: string; color: string }[] = [
-  { value: "promote", label: "Promote Up",  color: "text-green-700 bg-green-50 border-green-200" },
-  { value: "repeat",  label: "Repeat Year", color: "text-amber-700 bg-amber-50 border-amber-200" },
-  { value: "dropout", label: "Dropout",     color: "text-red-700 bg-red-50 border-red-200" },
+  { value: "PROMOTE", label: "Promote Up",  color: "text-green-700 bg-green-50 border-green-200" },
+  { value: "REPEAT",  label: "Repeat Year", color: "text-amber-700 bg-amber-50 border-amber-200" },
+  { value: "DROPOUT", label: "Dropout",     color: "text-red-700 bg-red-50 border-red-200" },
 ];
 
 function actionStyle(action: PromotionAction): string {
@@ -104,7 +104,7 @@ export default function StudentPromotionPage() {
     setError(null);
     try {
       const list = await getStudentsByClassSection(classId, sectionId);
-      setRows(list.map((s) => ({ student: s, action: "promote" })));
+      setRows(list.map((s) => ({ student: s, action: "PROMOTE" as PromotionAction })));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load students.");
     } finally {
@@ -129,10 +129,12 @@ export default function StudentPromotionPage() {
     setError(null);
     try {
       const res = await promoteStudents({
-        sourceYearId,
-        targetYearId,
-        promotions: rows.map((r) => ({
+        sourceAcademicYearId: sourceYearId,
+        targetAcademicYearId: targetYearId,
+        students: rows.map((r) => ({
           studentId: r.student.id,
+          classId: classId,
+          sectionId: sectionId,
           action: r.action,
         })),
       });
@@ -149,9 +151,9 @@ export default function StudentPromotionPage() {
     }
   };
 
-  const promoted  = rows.filter((r) => r.action === "promote").length;
-  const repeated  = rows.filter((r) => r.action === "repeat").length;
-  const droppedOut = rows.filter((r) => r.action === "dropout").length;
+  const promoted  = rows.filter((r) => r.action === "PROMOTE").length;
+  const repeated  = rows.filter((r) => r.action === "REPEAT").length;
+  const droppedOut = rows.filter((r) => r.action === "DROPOUT").length;
   const canSave = !!sourceYearId && !!targetYearId && sourceYearId !== targetYearId && rows.length > 0;
 
   // ── Done state ──────────────────────────────────────────────────────────────

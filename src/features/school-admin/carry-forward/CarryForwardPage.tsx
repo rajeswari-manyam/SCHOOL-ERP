@@ -66,8 +66,8 @@ export default function CarryForwardPage() {
     sourceYearId !== targetYearId &&
     activeModuleKeys.length > 0;
 
-  const modulesPayload = () =>
-    Object.fromEntries(activeModuleKeys.map((k) => [k, true])) as Record<string, boolean>;
+  const modulesPayload = (): import("@/services/academicYear.api").CarryForwardModule[] =>
+    activeModuleKeys as import("@/services/academicYear.api").CarryForwardModule[];
 
   const handlePreview = async () => {
     if (!canPreview) return;
@@ -76,8 +76,7 @@ export default function CarryForwardPage() {
     setError(null);
     try {
       const res = await previewCarryForward({
-        sourceYearId,
-        targetYearId,
+        sourceAcademicYearId: sourceYearId,
         modules: modulesPayload(),
       });
       setPreview(res.data ?? []);
@@ -94,8 +93,8 @@ export default function CarryForwardPage() {
     setError(null);
     try {
       const res = await carryForward({
-        sourceYearId,
-        targetYearId,
+        sourceAcademicYearId: sourceYearId,
+        targetAcademicYearId: targetYearId,
         modules: modulesPayload(),
       });
       setDone({
@@ -323,9 +322,6 @@ export default function CarryForwardPage() {
                       <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         Records
                       </th>
-                      <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                        Note
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -334,11 +330,10 @@ export default function CarryForwardPage() {
                         key={i}
                         className="border-t border-gray-50 hover:bg-gray-50/60 transition"
                       >
-                        <td className="px-4 py-3 font-medium text-gray-800">{row.module}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800">{row.name}</td>
                         <td className="px-4 py-3 text-right font-bold text-indigo-600">
                           {row.count}
                         </td>
-                        <td className="px-4 py-3 text-xs text-gray-500">{row.description}</td>
                       </tr>
                     ))}
                   </tbody>

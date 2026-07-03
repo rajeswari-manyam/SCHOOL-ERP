@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { leaveApi } from "@/services/teacher-leave.api";
-import type { LeaveBalanceApiResponse } from "@/features/teacher/leave/types/leave.types";
 import { teacherDashboardApi } from "@/services/teacher-dashboard.api";
 import { getMonthlyStaffAttendance } from "@/services/attendance.api";
 import { getSectionsByTeacherId } from "@/services/section.api";
@@ -73,7 +72,7 @@ export const useTeacherSections = (teacherId: string) =>
   });
 
 export const useTeacherLeaveBalance = (staffId?: string, academicYearId?: string) =>
-  useQuery<LeaveBalanceApiResponse>({
+  useQuery({
     queryKey: ["teacher", "leave-balance", staffId, academicYearId],
     queryFn: () => leaveApi.getLeaveBalances(staffId ?? "", academicYearId),
     enabled: Boolean(staffId) && Boolean(academicYearId),

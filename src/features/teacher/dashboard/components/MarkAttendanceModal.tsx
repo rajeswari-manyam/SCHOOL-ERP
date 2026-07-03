@@ -34,7 +34,7 @@ const MarkAttendanceModal = ({ open, onClose, students, totalStudents }: MarkAtt
 
   const { data: classData } = useQuery({
     queryKey: ["teacher-dashboard", "classes"],
-    queryFn: getAllClasses,
+    queryFn: () => getAllClasses(),
     enabled: open,
     staleTime: 5 * 60_000,
   });
@@ -65,10 +65,6 @@ const MarkAttendanceModal = ({ open, onClose, students, totalStudents }: MarkAtt
   const selectedClass = useMemo(
     () => (classData?.data ?? []).find((item) => item.id === classId),
     [classData, classId]
-  );
-  const selectedSection = useMemo(
-    () => (sectionData?.data ?? []).find((item) => item.id === sectionId),
-    [sectionData, sectionId]
   );
 
   const [records, setRecords] = useState<Record<string, AttStatus>>({});
@@ -137,7 +133,7 @@ const MarkAttendanceModal = ({ open, onClose, students, totalStudents }: MarkAtt
           <label className="text-xs font-semibold text-gray-600">Section
             <select value={sectionId} onChange={(event) => setSectionId(event.target.value)} disabled={!classId} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-100">
               <option value="">Select section</option>
-              {(sectionData?.data ?? []).map((item) => <option key={item.id} value={item.id}>{item.sectionName || item.section_name}</option>)}
+              {(sectionData?.data ?? []).map((item) => <option key={item.id} value={item.id}>{item.sectionName}</option>)}
             </select>
           </label>
           <label className="text-xs font-semibold text-gray-600">Date

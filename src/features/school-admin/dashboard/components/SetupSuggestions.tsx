@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Calendar, BookOpen, Users, UserPlus, Palmtree,
+  CalendarClock, FileText,
   CheckCircle2, X, Sparkles, Loader2,
 } from 'lucide-react';
 import type { SetupItem } from '../hooks/useSetupStatus';
@@ -10,11 +12,13 @@ const STEP_CFG: Record<string, {
   bg: string;
   text: string;
 }> = {
-  'academic-year': { Icon: Calendar,  bg: 'bg-indigo-100', text: 'text-indigo-600' },
-  'classes':       { Icon: BookOpen,  bg: 'bg-blue-100',   text: 'text-blue-600'  },
-  'staff':         { Icon: Users,     bg: 'bg-purple-100', text: 'text-purple-600'},
-  'admissions':    { Icon: UserPlus,  bg: 'bg-emerald-100',text: 'text-emerald-600'},
-  'holidays':      { Icon: Palmtree,  bg: 'bg-orange-100', text: 'text-orange-600'},
+  'academic-year': { Icon: Calendar,     bg: 'bg-indigo-100',  text: 'text-indigo-600'  },
+  'classes':       { Icon: BookOpen,     bg: 'bg-blue-100',    text: 'text-blue-600'    },
+  'staff':         { Icon: Users,        bg: 'bg-purple-100',  text: 'text-purple-600'  },
+  'admissions':    { Icon: UserPlus,     bg: 'bg-emerald-100', text: 'text-emerald-600' },
+  'holidays':      { Icon: Palmtree,     bg: 'bg-orange-100',  text: 'text-orange-600'  },
+  'timetable':     { Icon: CalendarClock,bg: 'bg-cyan-100',    text: 'text-cyan-600'    },
+  'reports':       { Icon: FileText,     bg: 'bg-rose-100',    text: 'text-rose-600'    },
 };
 
 const FALLBACK_CFG = STEP_CFG['academic-year'];
@@ -26,6 +30,8 @@ interface Props {
 }
 
 export function SetupSuggestions({ items, isLoading, onDismiss }: Props) {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return (
       <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100 p-4 flex items-center gap-3">
@@ -90,20 +96,28 @@ export function SetupSuggestions({ items, isLoading, onDismiss }: Props) {
         <span className="text-[10px] font-bold text-indigo-500 shrink-0">{progressPct}%</span>
       </div>
 
-      {/* ── Step cards (static, non-interactive) ── */}
+      {/* ── Step cards ── */}
       <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
         {items.map((item, idx) => {
           const cfg = STEP_CFG[item.id] ?? FALLBACK_CFG;
           const Icon = cfg.Icon;
+          const isSecondary = item.order > 5;
 
           return (
             <div
               key={item.id}
+              role={!item.done ? 'button' : undefined}
+              tabIndex={!item.done ? 0 : undefined}
+              onClick={!item.done ? () => navigate(item.route) : undefined}
+              onKeyDown={!item.done ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(item.route); } } : undefined}
               className={[
-                'relative flex flex-col gap-2 p-3.5 rounded-xl border select-none',
+                'relative flex flex-col gap-2 p-3.5 rounded-xl border',
+                !item.done ? 'cursor-pointer select-none' : 'select-none',
                 item.done
                   ? 'bg-white/40 border-gray-100 opacity-55'
-                  : 'bg-white/70 border-gray-100',
+                  : isSecondary
+                    ? 'bg-white/70 border-dashed border-indigo-200 hover:border-indigo-300 hover:shadow-md transition-all'
+                    : 'bg-white/70 border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all',
               ].join(' ')}
             >
               {/* Step number badge */}
@@ -113,6 +127,13 @@ export function SetupSuggestions({ items, isLoading, onDismiss }: Props) {
               ].join(' ')}>
                 {idx + 1}
               </span>
+
+              {/* Secondary badge */}
+              {isSecondary && !item.done && (
+                <span className="absolute top-2 left-2 text-[8px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded">
+                  Bonus
+                </span>
+              )}
 
               {/* Icon */}
               <div className={[

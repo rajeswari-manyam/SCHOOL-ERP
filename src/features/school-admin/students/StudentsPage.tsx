@@ -12,6 +12,7 @@ import { EditStudentModal } from "../students/components/EditStudentModal";
 import PromoteStudentsModal from "../students/components/PromoteStudentsModal";
 
 import StudentStatCards from "../students/components/StudentStatCards";
+import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
 import type { AddStudentFormData, Student } from "../students/types/student.types";
 
 const StudentsPage = () => {
@@ -77,6 +78,8 @@ const StudentsPage = () => {
       {/* Stat cards */}
       <StudentStatCards stats={stats} />
 
+      <SetupProgressBanner />
+
       {/* Filter bar */}
       <StudentFilterBar
         search={search} setSearch={setSearch}
@@ -91,7 +94,7 @@ const StudentsPage = () => {
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
           <p className="text-sm text-red-700">{error}</p>
           <button
-            onClick={loadStudents}
+            onClick={() => loadStudents()}
             className="rounded-lg bg-red-100 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-200 transition-colors"
           >
             Retry

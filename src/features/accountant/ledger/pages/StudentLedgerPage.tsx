@@ -27,14 +27,13 @@ export default function StudentLedgerPage() {
   const [studentFees, setStudentFees] = useState<{ amount: number }[]>([]);
 
   useEffect(() => {
-    studentsApi.getAll({}).then((res) => {
-      const list = Array.isArray(res?.data) ? res.data : [];
-      setAllStudents(list.map((s: any) => ({
-        id: s.id ?? s._id ?? "",
-        name: s.student_name ?? s.name ?? "",
-        admissionNo: s.admission_number ?? s.admissionNo ?? "",
-        className: s.class_name ?? s.className ?? "",
-        parentName: s.parent_name ?? s.parentName ?? "",
+    studentsApi.getAll().then((students) => {
+      setAllStudents(students.map((s: any) => ({
+        id: s.id ?? "",
+        name: `${s.firstName ?? ""} ${s.lastName ?? ""}`.trim() || s.student_name || s.name || "",
+        admissionNo: s.admissionNo ?? s.admission_number ?? "",
+        className: s.class ?? s.class_name ?? s.className ?? "",
+        parentName: s.parentName ?? s.parent_name ?? "",
         pendingAmount: 0,
       })));
     }).catch(() => {});

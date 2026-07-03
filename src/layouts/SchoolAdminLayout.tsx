@@ -63,32 +63,37 @@ export const SchoolAdminLayout = () => {
   const setUserProfile    = useAuthStore((s) => s.setUserProfile);
   const setPrincipalName  = useAuthStore((s) => s.setPrincipalName);
 
-  const { data: setupItems } = useSetupStatus();
+  const { data: setupData } = useSetupStatus();
 
-  // Compute which sidebar routes are unlocked based on setup progress.
+  // Use the sidebar access map from the API to lock/unlock nav items.
   // If wizard is dismissed or all steps complete → no locking.
   const navItemsWithLock = useMemo(() => {
-    const allDone = setupItems ? setupItems.every(s => s.done) : true;
-    if (allDone || wizardDismissed || !setupItems) {
-      return NavItem; // nothing locked
+    const sidebar = setupData?.sidebar;
+    const allDone = setupData?.items ? setupData.items.every(s => s.done) : true;
+
+    if (allDone || wizardDismissed || !sidebar) {
+      return NavItem;
     }
 
-    // Always unlocked
-    const unlocked = new Set([
-      '/schooladmin/dashboard',
-      '/schooladmin/settings',
-    ]);
+    const SIDEBAR_MAP: Record<string, keyof typeof sidebar> = {
+      '/schooladmin/dashboard':  'dashboard',
+      '/schooladmin/settings':   'settings',
+      '/schooladmin/staff':      'staff',
+      '/schooladmin/classes':    'classes',
+      '/schooladmin/admissions': 'admissions',
+      '/schooladmin/students':   'students',
+      '/schooladmin/attendance': 'attendance',
+      '/schooladmin/fees':       'feeCollection',
+      '/schooladmin/timetable':  'timetable',
+      '/schooladmin/reports':    'reports',
+    };
 
-    const done = (id: string) => setupItems.find(s => s.id === id)?.done ?? false;
-
-    if (done('settings'))  unlocked.add('/schooladmin/staff');
-    if (done('staff'))     unlocked.add('/schooladmin/classes');
-    if (done('classes'))   { unlocked.add('/schooladmin/students'); unlocked.add('/schooladmin/attendance'); }
-    if (done('students'))  unlocked.add('/schooladmin/fees');
-    if (done('fees'))      { unlocked.add('/schooladmin/timetable'); unlocked.add('/schooladmin/admissions'); unlocked.add('/schooladmin/reports'); }
-
-    return NavItem.map(item => ({ ...item, locked: !unlocked.has(item.to) }));
-  }, [setupItems, wizardDismissed]);
+    return NavItem.map(item => {
+      const key = SIDEBAR_MAP[item.to];
+      const allowed = key ? (sidebar[key] ?? true) : true;
+      return { ...item, locked: !allowed };
+    });
+  }, [setupData, wizardDismissed]);
 
   // Fetch full profile on first load if name was never populated
   useEffect(() => {

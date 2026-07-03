@@ -42,8 +42,8 @@ const TeacherDashboardPage = () => {
   const [uploadModal,     setUploadModal]     = useState(false);
 
   const section        = sections[0];
-  const leaveUsed      = leaveResponse?.total_used ?? 0;
-  const leaveAllocated = leaveResponse?.total_allocated ?? 0;
+  const leaveUsed      = leaveResponse?.totalUsed ?? 0;
+  const leaveAllocated = leaveResponse?.totalAllocated ?? 0;
 
   const stats = {
     currentStrength:     section?.currentStrength ?? (todayAttendance?.totalStudents ?? 0),

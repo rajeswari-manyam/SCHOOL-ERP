@@ -128,19 +128,6 @@ const transformAllHomeworkItem = (item: AllHomeworkApiItem): HomeworkItem => ({
 
 
 
-type TimetableGridCell = {
-  subject: string;
-  class: string;
-  room?: string;
-  isFree?: boolean;
-};
-
-type TimetablePeriodSlot = {
-  id: string;
-  label: string;
-  time: string;
-  kind: "PERIOD" | "BREAK" | "LUNCH" | "FREE";
-};
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 

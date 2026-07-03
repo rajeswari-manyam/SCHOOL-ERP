@@ -224,10 +224,41 @@ export const updateWorkingDays = async (data: Partial<WorkingDaysConfig>): Promi
 
 export const fetchFeeHeads = async (): Promise<FeeHead[]> => {
   try {
-    const { data } = await api.get<FeeHead[]>("/tenant/fee-heads");
-    return data;
+    const res = await api.get("/tenant/fee-heads");
+    const raw = res.data;
+    if (raw?.status && Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw)) return raw;
+    return MOCK_FEE_HEADS;
   } catch {
     return MOCK_FEE_HEADS;
+  }
+};
+
+export interface CreateFeeHeadPayload {
+  feeName: string;
+  code: string;
+  mandatory: boolean;
+  taxable: boolean;
+}
+
+export const createFeeHead = async (payload: CreateFeeHeadPayload): Promise<FeeHead> => {
+  try {
+    const res = await api.post("/tenant/fee-heads", payload);
+    const raw = res.data;
+    if (raw?.data) return raw.data as FeeHead;
+    return raw as FeeHead;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.message ?? "Failed to create fee head";
+    throw new Error(message);
+  }
+};
+
+export const deleteFeeHead = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/tenant/fee-heads/${id}`);
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.message ?? "Failed to delete fee head";
+    throw new Error(message);
   }
 };
 

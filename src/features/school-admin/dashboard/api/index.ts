@@ -314,7 +314,7 @@ const STAGE_VALUE_MAP: Record<string, string> = {
   enquire: 'ENQUIRY', enq: 'ENQUIRY', new: 'ENQUIRY',
   interview_scheduled: 'INTERVIEW', 'interview-scheduled': 'INTERVIEW', scheduled: 'INTERVIEW',
   docs_uploaded: 'DOCS', docs_pending: 'DOCS', 'docs-pending': 'DOCS',
-  confirmed_admission: 'CONFIRMED', 'confirmed-admission': 'CONFIRMED', enrolled_confirmed: 'CONFIRMED',
+  confirmed_admission: 'CONFIRMED', 'confirmed-admission': 'CONFIRMED',
 };
 
 /** Normalize a raw stage value — exact alias matching only, no substring fuzz */

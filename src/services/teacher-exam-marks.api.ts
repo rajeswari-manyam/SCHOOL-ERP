@@ -13,7 +13,7 @@ import type {
   BulkMarksResponse,
   GetAllMarksQuery,
   MarksRecordItem,
-} from "@/features/teacher/types/exam-marks.types";
+} from "@/features/teacher/exam/types/exam-marks.types";
 
 const isDev = import.meta.env.DEV;
 

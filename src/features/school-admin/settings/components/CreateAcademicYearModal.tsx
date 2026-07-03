@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, ChevronDown, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { CreateAcademicYearPayload } from "../types/settings.types";
@@ -20,8 +20,6 @@ const getDefaultYearName = () => {
   const y = new Date().getFullYear();
   return `${y}-${y + 1}`;
 };
-
-const toDateInput = (date: Date) => date.toISOString().split("T")[0];
 
 export const CreateAcademicYearModal = ({ onClose, onSubmit }: Props) => {
   const [yearName, setYearName] = useState(getDefaultYearName());

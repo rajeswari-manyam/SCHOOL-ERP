@@ -103,7 +103,7 @@ const buildSlotsFromRemainingPeriods = (weekSummary: RemainingPeriodDaySummary[]
   type SlotData = {
     startTime: string;
     endTime: string;
-    cells: Partial<Record<DayOfWeek, { subject: string; teacherName: string; room?: string }>>;
+    cells: Partial<Record<DayOfWeek, { id?: string; subject: string; teacherName: string; room?: string }>>;
   };
 
   const slotMap = new Map<number, SlotData>();
@@ -148,7 +148,7 @@ const buildSlotsFromRemainingPeriods = (weekSummary: RemainingPeriodDaySummary[]
     }
   }
 
-  // Build sorted period slots
+ 
   const slots: TimetableSlot[] = [...slotMap.entries()]
     .sort(([a], [b]) => a - b)
     .map(([pno, s]) => ({

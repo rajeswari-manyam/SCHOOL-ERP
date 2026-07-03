@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNavBar";
 import WhatsAppFAB from "../components/ui/whatsappfab";
 import { X } from "lucide-react";
@@ -15,7 +15,6 @@ const ParentLayout = () => {
   const { children, activeChild, setActiveChild, loading } =
     useParentChildren(parentId);
 
-  const location = useLocation();
   const [showChildModal, setShowChildModal] = useState(false);
 
   // Guards AFTER all hooks

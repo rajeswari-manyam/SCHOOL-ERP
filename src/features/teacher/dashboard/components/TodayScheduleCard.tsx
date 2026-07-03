@@ -1,6 +1,6 @@
 import { Check, RefreshCw, AlertCircle, Calendar } from "lucide-react";
 import { useTeacherTodayTimetableV2 } from "../hooks/useTeacherDashboard";
-import type { Period, PeriodStatus } from "../types/teacher-dashboard.types";
+import type { PeriodStatus } from "../types/teacher-dashboard.types";
 
 const statusStyles: Record<PeriodStatus, string> = {
   CURRENT:   "bg-indigo-600 text-white shadow-md shadow-indigo-200",
@@ -27,7 +27,7 @@ interface TodayScheduleCardProps {
 }
 
 const TodayScheduleCard = ({ teacherId }: TodayScheduleCardProps) => {
-  const { data: periods = [], isLoading, isError, error, refetch } = useTeacherTodayTimetableV2(teacherId);
+  const { data: periods = [], isLoading, isError, refetch } = useTeacherTodayTimetableV2(teacherId);
   const errorMessage = isError ? "Failed to load today's schedule" : null;
 
   return (

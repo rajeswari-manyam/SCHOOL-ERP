@@ -92,7 +92,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
 
   const sectionOptions = (sectionsRes?.data ?? []).map((item) => ({
     id: item.id,
-    label: item.sectionName || item.section_name || "Section",
+    label: item.sectionName || "Section",
   }));
 
   const subjectOptions = (subjectsRes?.data ?? []).map((item) => ({

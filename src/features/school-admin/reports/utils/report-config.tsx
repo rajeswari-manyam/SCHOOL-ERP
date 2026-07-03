@@ -3,11 +3,13 @@ import type { ReportType, ReportCardConfig } from "../types/reports.types";
 import type { JSX } from "react";
 
 export const ReportIcons: Record<ReportType, (props: { size?: number }) => JSX.Element> = {
-  ATTENDANCE:     ({ size = 20 }) => <Calendar     size={size} />,
-  FEE_COLLECTION: ({ size = 20 }) => <CreditCard   size={size} />,
-  STUDENT:        ({ size = 20 }) => <Users         size={size} />,
-  WHATSAPP:       ({ size = 20 }) => <MessageSquare size={size} />,
-  STAFF:          ({ size = 20 }) => <Briefcase     size={size} />,
+  ATTENDANCE:        ({ size = 20 }) => <Calendar     size={size} />,
+  FEE_COLLECTION:    ({ size = 20 }) => <CreditCard   size={size} />,
+  STUDENT:           ({ size = 20 }) => <Users         size={size} />,
+  WHATSAPP:          ({ size = 20 }) => <MessageSquare size={size} />,
+  WHATSAPP_ACTIVITY: ({ size = 20 }) => <MessageSquare size={size} />,
+  ADMISSIONS:        ({ size = 20 }) => <Users         size={size} />,
+  STAFF:             ({ size = 20 }) => <Briefcase     size={size} />,
 };
 
 export const REPORT_CARDS: ReportCardConfig[] = [
