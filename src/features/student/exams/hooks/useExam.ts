@@ -11,12 +11,6 @@ import {
 } from "../../../../services/marks.api";
 import { getAllExams, type ExamRecord } from "../../../../services/exam.api";
 import type { Exam, ExamResult, Result } from "../types/exams.types";
-import {
-  reportMock,
-  syllabusMock,
-  unitTestSyllabusMock,
-  deadlinesMock,
-} from "../data/exam.mock";
 
 /* ─────────────────────────────────────────────
    Helper: map API ExamTimetable → local Exam
@@ -263,9 +257,9 @@ refetchResults,
     resultsError,
     
 
-    report: reportMock,
-    syllabus: syllabusMock,
-    unitTestSyllabus: unitTestSyllabusMock,
-    deadlines: deadlinesMock,
+    report: null,
+    syllabus: [],
+    unitTestSyllabus: [],
+    deadlines: [],
   };
 };

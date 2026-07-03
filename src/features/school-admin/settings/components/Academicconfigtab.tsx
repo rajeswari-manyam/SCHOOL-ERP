@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Trash2, X, Loader2, Pencil, Check } from "lucide-react";
+import { getCarryForwardStatus } from "@/services/academicYear.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -93,6 +94,16 @@ export const AcademicConfigTab: React.FC<Props> = ({
   onCreateHoliday, onBulkAddHolidays, onUpdateHoliday, onDeleteHoliday,
   onCreateLeaveAllocations, onUpdateLeaveAllocation, onDeleteLeaveAllocation,
 }) => {
+  const [cfStatuses, setCfStatuses] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    getCarryForwardStatus()
+      .then((res) => {
+        if (res.yearStatuses) setCfStatuses(res.yearStatuses);
+      })
+      .catch(() => {});
+  }, []);
+
   const [showCreateYear, setShowCreateYear] = useState(false);
   const [editYearId, setEditYearId] = useState<string | null>(null);
   const [editYearName, setEditYearName] = useState("");
@@ -105,6 +116,8 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [wdEditId, setWdEditId] = useState<string | null>(null);
   const [deptName, setDeptName] = useState("");
   const [deptYearId, setDeptYearId] = useState("");
+  const [deptPage, setDeptPage] = useState(1);
+  const DEPTS_PER_PAGE = 5;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [holidayName, setHolidayName]         = useState("");
@@ -116,6 +129,8 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [holidayEditId, setHolidayEditId] = useState<string | null>(null);
   const [holidaySuccess, setHolidaySuccess] = useState("");
   const [holidayError, setHolidayError] = useState("");
+  const [holidayPage, setHolidayPage] = useState(1);
+  const HOLIDAYS_PER_PAGE = 5;
   const [viewingDeptId, setViewingDeptId] = useState<string | null>(null);
   const [viewingDeptDetail, setViewingDeptDetail] = useState<DepartmentDetail | null>(null);
   const [viewingDeptLoading, setViewingDeptLoading] = useState(false);
@@ -376,7 +391,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
       {/* ── Academic Year Configuration ── */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         {/* Header */}
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 className="text-base sm:text-lg font-semibold text-gray-900">
               Academic Year Configuration
@@ -385,8 +400,13 @@ export const AcademicConfigTab: React.FC<Props> = ({
               Manage the operational dates for the current academic session.
             </p>
           </div>
-          <Button className="flex-shrink-0 rounded-lg text-sm font-medium active:scale-95 transition-all" size="sm">
-            Save Changes
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCreateYear(true)}
+            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 rounded-lg"
+          >
+            <span className="text-base leading-none">+</span> New Academic Year
           </Button>
         </div>
 
@@ -396,11 +416,12 @@ export const AcademicConfigTab: React.FC<Props> = ({
             <span className="text-sm text-gray-500">No academic year configured</span>
           ) : academicYears.map((year) => (
             <div key={year.id} className="flex items-center gap-2 group">
-              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                year.active
-                  ? "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
-                  : "bg-gray-100 text-gray-600"
-              }`}>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  year.active ? "bg-indigo-50 ring-1 ring-indigo-300" : "bg-gray-100"
+                }`}
+                style={{ color: '#3525CD' }}
+              >
                 {year.yearName}
               </span>
               {year.active && (
@@ -408,6 +429,18 @@ export const AcademicConfigTab: React.FC<Props> = ({
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Active
                 </span>
               )}
+              {/* Carry-forward status badge */}
+              {year.id in cfStatuses ? (
+                cfStatuses[year.id] ? (
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <Check className="w-3 h-3" /> Carry Forward Done
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                    Carry Forward Pending
+                  </span>
+                )
+              ) : null}
               {/* Actions */}
               <button
                 onClick={() => openEditYear(year)}
@@ -484,13 +517,6 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
         
 
-        <Button
-          variant="ghost"
-          onClick={() => setShowCreateYear(true)}
-          className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1 px-0"
-        >
-          <span className="text-lg leading-none">⊕</span> Create New Academic Year
-        </Button>
       </div>
 
       {/* ── Department Configuration ── */}
@@ -518,7 +544,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 ...academicYears.map((y) => ({ label: y.yearName, value: y.id })),
               ]}
               value={deptYearId}
-              onValueChange={setDeptYearId}
+              onValueChange={(v) => { setDeptYearId(v); setDeptPage(1); }}
               className="w-full"
             />
           </div>
@@ -555,65 +581,122 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {departments.map((d) => {
-                  const yearName = academicYears.find(y => y.id === d.academicYearId)?.yearName ?? d.academicYearId;
-                  const isEditing = editingId === d.id;
+                {(() => {
+                  const filteredDepts = deptYearId
+                    ? departments.filter((d) => d.academicYearId === deptYearId)
+                    : departments;
+                  const totalPages = Math.ceil(filteredDepts.length / DEPTS_PER_PAGE);
+                  const safePage = Math.min(deptPage, totalPages || 1);
+                  const pagedDepts = filteredDepts.slice((safePage - 1) * DEPTS_PER_PAGE, safePage * DEPTS_PER_PAGE);
                   return (
-                    <TableRow key={d.id}>
-                      <TableCell className="font-medium text-gray-800">
-                        {isEditing ? (
-                          <Input
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            inputSize="sm"
-                            className="w-full"
-                            autoFocus
-                          />
-                        ) : d.departmentName}
-                      </TableCell>
-                      <TableCell className="text-gray-500">{yearName}</TableCell>
-                      <TableCell className="text-right space-x-3">
-                        {isEditing ? (
-                          <>
-                            <button
-                              onClick={() => handleSaveEdit(d.id)}
-                              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingId(null)}
-                              className="text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleViewDept(d.id)}
-                              className={`text-xs font-semibold transition-colors ${viewingDeptId === d.id ? "text-emerald-600 hover:text-emerald-800" : "text-emerald-500 hover:text-emerald-700"}`}
-                            >
-                              {viewingDeptId === d.id ? "Hide" : "View Staff"}
-                            </button>
-                            <button
-                              onClick={() => handleStartEdit(d)}
-                              className="text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => onDeleteDepartment(d.id)}
-                              className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      {filteredDepts.length === 0 && deptYearId ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-xs text-gray-400 py-4">
+                            No departments found for this academic year.
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                      {pagedDepts.map((d) => {
+                        const yearName = academicYears.find(y => y.id === d.academicYearId)?.yearName ?? d.academicYearId;
+                        const isEditing = editingId === d.id;
+                        return (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-medium text-gray-800">
+                              {isEditing ? (
+                                <Input
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  inputSize="sm"
+                                  className="w-full"
+                                  autoFocus
+                                />
+                              ) : d.departmentName}
+                            </TableCell>
+                            <TableCell className="text-gray-500">{yearName}</TableCell>
+                            <TableCell className="text-right space-x-3">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    onClick={() => handleSaveEdit(d.id)}
+                                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingId(null)}
+                                    className="text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleViewDept(d.id)}
+                                    className={`text-xs font-semibold transition-colors ${viewingDeptId === d.id ? "text-emerald-600 hover:text-emerald-800" : "text-emerald-500 hover:text-emerald-700"}`}
+                                  >
+                                    {viewingDeptId === d.id ? "Hide" : "View Staff"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleStartEdit(d)}
+                                    className="text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => onDeleteDepartment(d.id)}
+                                    className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {totalPages > 1 && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="px-0 py-0">
+                            <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50/60 border-t border-gray-100">
+                              <span className="text-xs text-gray-400">
+                                {(safePage - 1) * DEPTS_PER_PAGE + 1}–{Math.min(safePage * DEPTS_PER_PAGE, filteredDepts.length)} of {filteredDepts.length} departments
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => setDeptPage(p => Math.max(1, p - 1))}
+                                  disabled={safePage === 1}
+                                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  ‹ Prev
+                                </button>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+                                  <button
+                                    key={pg}
+                                    onClick={() => setDeptPage(pg)}
+                                    className={`w-7 h-7 rounded-md text-xs font-semibold transition-colors ${
+                                      pg === safePage ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-200"
+                                    }`}
+                                  >
+                                    {pg}
+                                  </button>
+                                ))}
+                                <button
+                                  onClick={() => setDeptPage(p => Math.min(totalPages, p + 1))}
+                                  disabled={safePage === totalPages}
+                                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  Next ›
+                                </button>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   );
-                })}
+                })()}
               </TableBody>
             </Table>
           </div>
@@ -736,7 +819,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add another row
+                Add Department
               </button>
             </div>
 
@@ -803,7 +886,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 ...academicYears.map(y => ({ label: y.yearName, value: y.id })),
               ]}
               value={holidayYearId}
-              onValueChange={setHolidayYearId}
+              onValueChange={(v) => { setHolidayYearId(v); setHolidayPage(1); }}
               className="w-full"
             />
           </div>
@@ -892,54 +975,105 @@ export const AcademicConfigTab: React.FC<Props> = ({
         </div>
 
         {/* Holidays list */}
-        {holidays.length > 0 && (
-          <div className="border border-gray-100 rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Holiday Name</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Note</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {holidays.map(h => (
-                  <TableRow key={h.id} className={holidayEditId === h.id ? "bg-indigo-50" : undefined}>
-                    <TableCell className="font-medium text-gray-800">{h.holidayname}</TableCell>
-                    <TableCell className="text-gray-600">
-                      {new Date(h.from_date ?? h.date ?? "").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      {h.to_date && h.to_date !== h.from_date && (
-                        <> – {new Date(h.to_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${HOLIDAY_TYPE_COLORS[h.type] ?? "bg-gray-100 text-gray-700"}`}>
-                        {HOLIDAY_TYPE_LABELS[h.type] ?? h.type}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-gray-500 text-sm">{h.note || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <button
-                        onClick={() => handleEditHoliday(h)}
-                        className="text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors mr-3"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onDeleteHoliday(h.id)}
-                        className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </TableCell>
+        {holidays.length > 0 && (() => {
+          const filteredHolidays = holidayYearId
+            ? holidays.filter(h => h.academicYearId === holidayYearId)
+            : holidays;
+          const totalPages = Math.ceil(filteredHolidays.length / HOLIDAYS_PER_PAGE);
+          const safePage = Math.min(holidayPage, totalPages || 1);
+          const pagedHolidays = filteredHolidays.slice((safePage - 1) * HOLIDAYS_PER_PAGE, safePage * HOLIDAYS_PER_PAGE);
+          return (
+            <div className="border border-gray-100 rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Holiday Name</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Note</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {filteredHolidays.length === 0 && holidayYearId ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-xs text-gray-400 py-4">
+                        No holidays found for this academic year.
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                  {pagedHolidays.map(h => (
+                    <TableRow key={h.id} className={holidayEditId === h.id ? "bg-indigo-50" : undefined}>
+                      <TableCell className="font-medium text-gray-800">{h.holidayname}</TableCell>
+                      <TableCell className="text-gray-600">
+                        {new Date(h.from_date ?? h.date ?? "").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        {h.to_date && h.to_date !== h.from_date && (
+                          <> – {new Date(h.to_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${HOLIDAY_TYPE_COLORS[h.type] ?? "bg-gray-100 text-gray-700"}`}>
+                          {HOLIDAY_TYPE_LABELS[h.type] ?? h.type}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-gray-500 text-sm">{h.note || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <button
+                          onClick={() => handleEditHoliday(h)}
+                          className="text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors mr-3"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onDeleteHoliday(h.id)}
+                          className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100 bg-gray-50/60">
+                  <span className="text-xs text-gray-400">
+                    {(safePage - 1) * HOLIDAYS_PER_PAGE + 1}–{Math.min(safePage * HOLIDAYS_PER_PAGE, filteredHolidays.length)} of {filteredHolidays.length} holidays
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setHolidayPage(p => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                      className="px-2.5 py-1 rounded-md text-xs font-semibold text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ‹ Prev
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+                      <button
+                        key={pg}
+                        onClick={() => setHolidayPage(pg)}
+                        className={`w-7 h-7 rounded-md text-xs font-semibold transition-colors ${
+                          pg === safePage
+                            ? "bg-indigo-600 text-white"
+                            : "text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setHolidayPage(p => Math.min(totalPages, p + 1))}
+                      disabled={safePage === totalPages}
+                      className="px-2.5 py-1 rounded-md text-xs font-semibold text-gray-600 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Next ›
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {holidays.length === 0 && (
           <p className="text-xs text-gray-400 text-center py-4">No holidays added yet.</p>
@@ -1132,7 +1266,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add another row
+                Add Department
               </button>
             </div>
 

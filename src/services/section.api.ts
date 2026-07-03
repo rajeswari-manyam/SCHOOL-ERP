@@ -97,3 +97,40 @@ export const getSectionsByTeacherId = async (classTeacherId: string): Promise<Se
   );
   return data.data ?? [];
 };
+
+export interface SectionStrength {
+  sectionId: string;
+  sectionName: string;
+  totalStrength: number;
+  currentStrength: number;
+  availableSeats: number;
+}
+
+export interface SectionStudent {
+  id: string;
+  first_name: string;
+  last_name: string;
+  roll_number: string;
+  admission_number: string;
+  class_id: string;
+  class_name: string;
+  section_id: string;
+  section_name: string;
+}
+
+/** GET /tenant/getsectionstrength/{sectionId} */
+export const getSectionStrength = async (sectionId: string): Promise<SectionStrength> => {
+  const { data } = await api.get<{ status: boolean; data: SectionStrength }>(
+    `/tenant/getsectionstrength/${sectionId}`
+  );
+  return data.data;
+};
+
+/** GET /tenant/studentsbyclasssection?class_id=&section_id= */
+export const getStudentsByClassSection = async (classId: string, sectionId: string): Promise<SectionStudent[]> => {
+  const { data } = await api.get<{ status: boolean; count: number; data: SectionStudent[] }>(
+    `/tenant/studentsbyclasssection`,
+    { params: { class_id: classId, section_id: sectionId } }
+  );
+  return data.data ?? [];
+};

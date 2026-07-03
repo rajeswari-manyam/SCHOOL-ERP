@@ -18,10 +18,12 @@ interface Props {
 
 /* ── Styles ── */
 const labelCls = "block text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-1.5";
-const inputCls =
-  "w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition";
+const inputBase = "w-full h-11 px-3.5 rounded-xl bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition";
+const inputCls = `${inputBase} border border-slate-200 focus:ring-indigo-300 focus:border-indigo-400`;
+const inputErrCls = `${inputBase} border border-red-400 focus:ring-red-300 focus:border-red-400`;
 const selectCls =
   "w-full h-11 pl-3.5 pr-9 rounded-xl bg-white border border-slate-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 appearance-none transition";
+const ic = (err?: string) => err ? inputErrCls : inputCls;
 
 /* ── Field wrapper ── */
 const Field = ({
@@ -126,11 +128,34 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
   const validate = () => {
     const errs: Record<string, string> = {};
+
+    if (!form.fullName.trim()) errs.fullName = "Full name is required";
+    if (!form.role)            errs.role     = "Role is required";
+    if (!form.joiningDate)     errs.joiningDate = "Date of joining is required";
+
+    // Phone — required, exactly 10 digits, starts with 6-9
     const cleanPhone = form.phone.trim().replace(/[^0-9]/g, "");
-    if (!form.fullName.trim())           errs.fullName    = "This field is required";
-    if (!form.role)                       errs.role        = "This field is required";
-    if (!/^[0-9]{10}$/.test(cleanPhone)) errs.phone       = "Enter a valid 10-digit phone number";
-    if (!form.joiningDate)               errs.joiningDate = "This field is required";
+    if (!cleanPhone)
+      errs.phone = "Phone number is required";
+    else if (cleanPhone.length !== 10)
+      errs.phone = `Phone must be 10 digits — you entered ${cleanPhone.length}`;
+    else if (!/^[6-9]/.test(cleanPhone))
+      errs.phone = "Phone number must start with 6, 7, 8 or 9";
+
+    // Bank account number — if filled, digits only, 9–18 chars
+    const acNum = form.bankAccountNumber.trim().replace(/\s/g, "");
+    if (acNum && !/^[0-9]{9,18}$/.test(acNum))
+      errs.bankAccountNumber = `Account number must be 9–18 digits (you entered ${acNum.length})`;
+
+    // IFSC — if filled, must be 11 chars: 4 alpha + 0 + 6 alphanumeric
+    const ifsc = form.ifscCode.trim().toUpperCase();
+    if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))
+      errs.ifscCode = "Invalid IFSC — expected format: SBIN0001234 (4 letters, 0, 6 chars)";
+
+    // Bank account name — required when account number or IFSC is filled
+    if ((acNum || ifsc) && !form.bankAccountName.trim())
+      errs.bankAccountName = "Account holder name is required when bank details are provided";
+
     return errs;
   };
 
@@ -212,7 +237,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* FULL NAME */}
             <Field label="Full Name" required error={errors.fullName}>
-              <input className={inputCls} placeholder="Priya Reddy" value={form.fullName} onChange={set("fullName")} />
+              <input className={ic(errors.fullName)} placeholder="Priya Reddy" value={form.fullName} onChange={set("fullName")} />
             </Field>
 
             {/* ROLE */}
@@ -231,7 +256,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
               <label className={labelCls}>
                 Phone Number <span className="text-red-500">*</span>
               </label>
-              <div className="flex h-11 rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-300 focus-within:border-indigo-400 transition bg-white">
+              <div className={`flex h-11 rounded-xl border overflow-hidden focus-within:ring-2 transition bg-white ${errors.phone ? "border-red-400 focus-within:ring-red-300" : "border-slate-200 focus-within:ring-indigo-300 focus-within:border-indigo-400"}`}>
                 <span className="flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-sm font-semibold text-gray-600 shrink-0">
                   +91
                 </span>
@@ -240,11 +265,14 @@ export const AddStaffModal = ({ onClose }: Props) => {
                   value={form.phone}
                   onChange={(e) => { setForm((p) => ({ ...p, phone: e.target.value })); setErrors((p) => ({ ...p, phone: "" })); }}
                   placeholder="98765 43210"
+                  maxLength={10}
                   className="flex-1 h-full px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
                 />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">Used for OTP login and WhatsApp</p>
-              {errors.phone && <p className="text-[10px] text-red-500 font-medium mt-0.5">{errors.phone}</p>}
+              {errors.phone
+                ? <p className="text-[10px] text-red-500 font-medium mt-1">{errors.phone}</p>
+                : <p className="text-[10px] text-gray-400 mt-1">10-digit mobile number</p>
+              }
             </div>
 
             {/* EMAIL */}
@@ -282,22 +310,28 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* DATE OF JOINING */}
             <Field label="Date of Joining" required error={errors.joiningDate}>
-              <input className={inputCls} type="date" value={form.joiningDate} onChange={set("joiningDate")} />
+              <input className={ic(errors.joiningDate)} type="date" value={form.joiningDate} onChange={set("joiningDate")} />
             </Field>
 
             {/* BANK ACCOUNT NAME */}
-            <Field label="Bank Account Name">
-              <input className={inputCls} placeholder="Account holder name" value={form.bankAccountName} onChange={set("bankAccountName")} />
+            <Field label="Bank Account Name" error={errors.bankAccountName}>
+              <input className={ic(errors.bankAccountName)} placeholder="Account holder name" value={form.bankAccountName} onChange={set("bankAccountName")} />
             </Field>
 
             {/* BANK ACCOUNT NUMBER */}
-            <Field label="Bank Account Number">
-              <input className={inputCls} placeholder="Enter account number" value={form.bankAccountNumber} onChange={set("bankAccountNumber")} />
+            <Field label="Bank Account Number" error={errors.bankAccountNumber} hint="9–18 digits, numbers only">
+              <input className={ic(errors.bankAccountNumber)} placeholder="e.g. 012345678901" value={form.bankAccountNumber} onChange={set("bankAccountNumber")} maxLength={18} />
             </Field>
 
             {/* IFSC CODE */}
-            <Field label="IFSC Code">
-              <input className={inputCls} placeholder="SBIN0001234" value={form.ifscCode} onChange={set("ifscCode")} />
+            <Field label="IFSC Code" error={errors.ifscCode} hint="Format: SBIN0001234">
+              <input
+                className={ic(errors.ifscCode)}
+                placeholder="SBIN0001234"
+                value={form.ifscCode}
+                maxLength={11}
+                onChange={(e) => { setForm((p) => ({ ...p, ifscCode: e.target.value.toUpperCase() })); setErrors((p) => ({ ...p, ifscCode: "" })); }}
+              />
             </Field>
 
             {/* STATUS */}

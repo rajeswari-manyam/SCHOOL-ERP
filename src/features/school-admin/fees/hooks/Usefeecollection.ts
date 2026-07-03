@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useUIStore } from "@/store/uiStore";
 import {
   getAllPendingFees,
   getAllRecordFeePayments,
@@ -78,6 +79,8 @@ function recordToTransaction(r: RecordFeePaymentRecord): FeeTransaction {
 }
 
 export function useFeeCollection() {
+  const academicYearId = useUIStore((s) => s.academicYearId);
+
   // Tab
   const [activeTab, setActiveTab] = useState<FeeTab>("pending");
 
@@ -139,7 +142,17 @@ export function useFeeCollection() {
   } | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Load initial data
+  // Reset filters when academic year changes so stale class/section names are cleared
+  useEffect(() => {
+    setClassFilter("All Classes");
+    setSectionFilter("All Sections");
+    setTxClassFilter("All Classes");
+    setTxSectionFilter("All Sections");
+    setSelectedIds(new Set());
+    setClassStudentIds(null);
+  }, [academicYearId]);
+
+  // Load initial data; re-runs whenever the selected academic year changes
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -249,7 +262,7 @@ export function useFeeCollection() {
       }
     }
     load();
-  }, []);
+  }, [academicYearId]);
 
   // Load sections for transactions tab when txClassFilter changes
   useEffect(() => {

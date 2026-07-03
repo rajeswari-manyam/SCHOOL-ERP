@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,11 @@ import { useStaffStore } from "../store/usestore";
 import type { Department } from "@/features/school-admin/settings/types/settings.types";
 import type { AcademicYearRecord } from "@/services/academicYear.api";
 
+const ROLE_OPTIONS = [
+  "Class Teacher", "Subject Teacher", "Principal", "Vice Principal",
+  "Admin", "Librarian", "Lab Assistant", "Accountant", "Support Staff",
+];
+
 interface StaffRow {
   name: string;
   phone: string;
@@ -22,8 +27,13 @@ interface StaffRow {
   dateOfBirth: string;
   dateOfJoin: string;
   empNumber: string;
+  autoGenEmp: boolean;
   departmentId: string;
   academicYearId: string;
+  status: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  ifscCode: string;
 }
 
 const emptyRow = (): StaffRow => ({
@@ -36,28 +46,69 @@ const emptyRow = (): StaffRow => ({
   dateOfBirth: "2000-01-01",
   dateOfJoin: new Date().toISOString().slice(0, 10),
   empNumber: "",
+  autoGenEmp: true,
   departmentId: "",
   academicYearId: "",
+  status: "ACTIVE",
+  bankAccountName: "",
+  bankAccountNumber: "",
+  ifscCode: "",
 });
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex flex-col gap-1">
-    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{label}</label>
-    {children}
-  </div>
+const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!checked)}
+    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${checked ? "bg-indigo-600" : "bg-gray-200"}`}
+  >
+    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${checked ? "translate-x-4" : "translate-x-0.5"}`} />
+  </button>
 );
+
+const inputBase = "w-full h-9 px-3 rounded-lg bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 border border-slate-200 transition";
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => {
+  const isRequired = label.endsWith(" *");
+  const displayLabel = isRequired ? label.slice(0, -2) : label;
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+        {displayLabel}
+        {isRequired && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+};
 
 interface Props {
   onClose: () => void;
 }
 
+const genEmpId = (base: number, offset: number) =>
+  `EMP-${String(base + offset).padStart(3, "0")}`;
+
 const BulkAddStaffModal = ({ onClose }: Props) => {
   const schoolcode = useAuthStore((s) => s.user?.schoolcode ?? "");
   const schoolId = useAuthStore((s) => s.user?.id ?? "");
-  const academicYearId = useUIStore((s) => s.academicYearId);
+  const globalAcademicYearId = useUIStore((s) => s.academicYearId);
   const loadStaff = useStaffStore((s) => s.loadStaff);
+  const staffData  = useStaffStore((s) => s.staffData);
 
-  const [rows, setRows] = useState<StaffRow[]>([emptyRow()]);
+  // Compute the next EMP number from existing staff once on mount
+  const nextEmpBase = useState(() => {
+    const nums = staffData
+      .map((s) => parseInt(s.employeeId?.replace(/\D/g, "") || "0", 10))
+      .filter((n) => !isNaN(n) && n > 0);
+    return nums.length > 0 ? Math.max(...nums) + 1 : 1;
+  })[0];
+
+  const makeRow = (offset: number): StaffRow => ({
+    ...emptyRow(),
+    empNumber: genEmpId(nextEmpBase, offset),
+  });
+
+  const [rows, setRows] = useState<StaffRow[]>([makeRow(0)]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYearRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,11 +121,12 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
     getAllAcademicYears().then((res) => setAcademicYears(res.data));
   }, []);
 
-  const updateRow = (index: number, field: keyof StaffRow, value: string) => {
+  const updateRow = (index: number, field: keyof StaffRow, value: string | boolean) => {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
   };
 
-  const addRow = () => setRows((prev) => [...prev, emptyRow()]);
+  const addRow = () =>
+    setRows((prev) => [...prev, makeRow(prev.length)]);
 
   const removeRow = (index: number) => {
     if (rows.length <= 1) return;
@@ -114,10 +166,14 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
         salary: Number(r.salary || 0),
         date_of_birth: r.dateOfBirth,
         date_of_join: r.dateOfJoin,
-        emp_number: r.empNumber.trim() || `EMP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        emp_number: r.empNumber.trim() || "EMP-001",
         school_code: schoolcode,
-        ...(r.departmentId ? { department_id: r.departmentId } : {}),
-        ...(r.academicYearId ? { academicYearId: r.academicYearId } : {}),
+        status: r.status || "ACTIVE",
+        ...(r.departmentId        ? { department_id: r.departmentId } : {}),
+        ...(r.academicYearId || globalAcademicYearId ? { academicYearId: r.academicYearId || (globalAcademicYearId ?? undefined) } : {}),
+        ...(r.bankAccountName.trim()   ? { bank_account_name: r.bankAccountName.trim() } : {}),
+        ...(r.bankAccountNumber.trim() ? { bank_account_number: r.bankAccountNumber.trim() } : {}),
+        ...(r.ifscCode.trim()          ? { ifsc_code: r.ifscCode.trim().toUpperCase() } : {}),
       }));
 
       const payload = {
@@ -212,17 +268,40 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                               <Input placeholder="Priya Reddy" value={row.name} onChange={(e) => updateRow(i, "name", e.target.value)} />
                             </Field>
                             <Field label="Role *">
-                              <Input placeholder="Teacher / Accountant" value={row.role} onChange={(e) => updateRow(i, "role", e.target.value)} />
+                              <Select
+                                value={row.role}
+                                onValueChange={(v) => updateRow(i, "role", v)}
+                                options={[
+                                  { label: "Select role…", value: "" },
+                                  ...ROLE_OPTIONS.map((r) => ({ label: r, value: r })),
+                                ]}
+                              />
                             </Field>
                             <Field label="Email *">
                               <Input type="email" placeholder="priya@school.edu" value={row.email} onChange={(e) => updateRow(i, "email", e.target.value)} />
                             </Field>
                             <Field label="Phone *">
-                              <Input type="tel" placeholder="9876543210" value={row.phone} onChange={(e) => updateRow(i, "phone", e.target.value)} />
+                              <Input type="tel" placeholder="9876543210" value={row.phone} maxLength={10} onChange={(e) => updateRow(i, "phone", e.target.value)} />
                             </Field>
-                            <Field label="Employee ID">
-                              <Input placeholder="EMP-12345" value={row.empNumber} onChange={(e) => updateRow(i, "empNumber", e.target.value)} />
-                            </Field>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Employee ID</label>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Auto</span>
+                                  <Toggle
+                                    checked={row.autoGenEmp}
+                                    onChange={(v) => updateRow(i, "autoGenEmp", v)}
+                                  />
+                                </div>
+                              </div>
+                              <input
+                                className={inputBase + (row.autoGenEmp ? " bg-slate-50 text-gray-400 cursor-not-allowed" : "")}
+                                value={row.empNumber}
+                                readOnly={row.autoGenEmp}
+                                placeholder="EMP-001"
+                                onChange={(e) => { if (!row.autoGenEmp) updateRow(i, "empNumber", e.target.value); }}
+                              />
+                            </div>
                             <Field label="Qualification">
                               <Input placeholder="B.Ed, M.Sc" value={row.qualification} onChange={(e) => updateRow(i, "qualification", e.target.value)} />
                             </Field>
@@ -234,6 +313,16 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                             </Field>
                             <Field label="Monthly Salary (₹)">
                               <Input type="number" placeholder="25000" value={row.salary} onChange={(e) => updateRow(i, "salary", e.target.value)} />
+                            </Field>
+                            <Field label="Status">
+                              <Select
+                                value={row.status}
+                                onValueChange={(v) => updateRow(i, "status", v)}
+                                options={[
+                                  { label: "Active",   value: "ACTIVE" },
+                                  { label: "Inactive", value: "INACTIVE" },
+                                ]}
+                              />
                             </Field>
                             <Field label="Department">
                               <Select
@@ -255,6 +344,15 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                                 ]}
                               />
                             </Field>
+                            <Field label="Bank Account Name">
+                              <Input placeholder="Account holder name" value={row.bankAccountName} onChange={(e) => updateRow(i, "bankAccountName", e.target.value)} />
+                            </Field>
+                            <Field label="Bank Account Number">
+                              <Input placeholder="e.g. 012345678901" value={row.bankAccountNumber} maxLength={18} onChange={(e) => updateRow(i, "bankAccountNumber", e.target.value)} />
+                            </Field>
+                            <Field label="IFSC Code">
+                              <Input placeholder="SBIN0001234" value={row.ifscCode} maxLength={11} onChange={(e) => updateRow(i, "ifscCode", e.target.value.toUpperCase())} />
+                            </Field>
                           </div>
                         )}
                       </div>
@@ -263,7 +361,7 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                 </div>
                 <div className="px-4 py-3 border-t border-gray-100">
                   <Button type="button" variant="outline" size="sm" onClick={addRow} className="text-xs">
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Row
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Staff
                   </Button>
                 </div>
               </div>

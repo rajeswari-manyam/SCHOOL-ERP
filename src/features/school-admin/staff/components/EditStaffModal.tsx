@@ -19,7 +19,6 @@ interface Props {
 
 const STATUS_OPTIONS = [
   { label: "Active", value: "ACTIVE" },
-  { label: "On Leave", value: "ON_LEAVE" },
   { label: "Inactive", value: "INACTIVE" },
 ];
 

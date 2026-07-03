@@ -12,9 +12,16 @@ import { useReportsStore } from "../store/useReportStore";
 import { Outlet } from "react-router-dom";
 import type { GenerateReportInput } from "../types/reports.types";
 import type { ReportFilterValues } from "../components/ReportFilters";
-import { reportCards } from "../data/report.data";
+import type { ReportType } from "../types/reports.types";
 
-
+const reportCards = [
+  { id: "monthly_income" as ReportType, title: "Monthly Fee Collection", description: "Total collected, pending, class-wise breakdown, payment mode analysis", icon: "fee", color: "blue", autoSend: true },
+  { id: "defaulters" as ReportType, title: "Fee Defaulters Report", description: "Students with overdue fees, days overdue, parent contact list", icon: "defaulters", color: "amber" },
+  { id: "reconciliation" as ReportType, title: "Payment Reconciliation", description: "UPI, cash, cheque breakdown for bank statement matching", icon: "reconciliation", color: "emerald" },
+  { id: "annual" as ReportType, title: "Annual Fee Summary", description: "Full academic year collection vs expected, class-wise annual breakdown", icon: "annual", color: "violet" },
+  { id: "payroll" as ReportType, title: "Payroll Report", description: "Monthly salary outflow, staff-wise breakdown, annual payroll summary", icon: "payroll", color: "rose" },
+  { id: "ledger" as ReportType, title: "Income & Expense Report", description: "Full ledger export with income, expenses, and net balance", icon: "ledger", color: "cyan" },
+] as const;
 
 const ACADEMIC_YEARS = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"];
 

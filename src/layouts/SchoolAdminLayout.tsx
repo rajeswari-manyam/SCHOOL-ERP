@@ -9,7 +9,7 @@ import {
   FaMoneyBill,
   FaBullhorn,
   FaCog,
-  FaBook
+  FaBook,
 } from "react-icons/fa";
 
 import Sidebar from "../components/common/Sidebar";
@@ -35,16 +35,16 @@ const BreadcrumbLabels: Record<string, string> = {
 };
 
 const NavItem = [
-  { label: "Dashboard", to: "/schooladmin/dashboard", icon: <FaThLarge /> },
-  { label: "Admissions", to: "/schooladmin/admissions", icon: <FaUserFriends /> },
-  { label: "Attendance", to: "/schooladmin/attendance", icon: <FaUserCheck /> },
-  { label: "Students", to: "/schooladmin/students", icon: <FaUserFriends /> },
-  { label: "Staff", to: "/schooladmin/staff", icon: <FaUserTie /> },
-  { label: "Classes", to: "/schooladmin/classes", icon: <FaBook /> },
-  { label: "Timetable", to: "/schooladmin/timetable", icon: <FaCalendarAlt /> },
-  { label: "Fee Collection", to: "/schooladmin/fees", icon: <FaMoneyBill /> },
-  { label: "Reports", to: "/schooladmin/reports", icon: <FaBullhorn /> },
-  { label: "Settings", to: "/schooladmin/settings", icon: <FaCog /> },
+  { label: "Dashboard",      to: "/schooladmin/dashboard",  icon: <FaThLarge /> },
+  { label: "Admissions",     to: "/schooladmin/admissions", icon: <FaUserFriends /> },
+  { label: "Attendance",     to: "/schooladmin/attendance", icon: <FaUserCheck /> },
+  { label: "Students",       to: "/schooladmin/students",   icon: <FaUserFriends /> },
+  { label: "Staff",          to: "/schooladmin/staff",      icon: <FaUserTie /> },
+  { label: "Classes",        to: "/schooladmin/classes",    icon: <FaBook /> },
+  { label: "Timetable",      to: "/schooladmin/timetable",  icon: <FaCalendarAlt /> },
+  { label: "Fee Collection", to: "/schooladmin/fees",       icon: <FaMoneyBill /> },
+  { label: "Reports",        to: "/schooladmin/reports",    icon: <FaBullhorn /> },
+  { label: "Settings",       to: "/schooladmin/settings",   icon: <FaCog /> },
 ];
 
 
@@ -74,7 +74,10 @@ export const SchoolAdminLayout = () => {
     }
 
     // Always unlocked
-    const unlocked = new Set(['/schooladmin/dashboard', '/schooladmin/settings']);
+    const unlocked = new Set([
+      '/schooladmin/dashboard',
+      '/schooladmin/settings',
+    ]);
 
     const done = (id: string) => setupItems.find(s => s.id === id)?.done ?? false;
 

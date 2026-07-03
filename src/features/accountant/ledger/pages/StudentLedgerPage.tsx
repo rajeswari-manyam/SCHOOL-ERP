@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronRight, Search, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/statcard";
@@ -6,8 +6,9 @@ import { cn } from "@/utils/cn";
 import { formatINR } from "@/utils/formatters";
 import { getModeBadgeClass } from "@/utils/payment";
 import typography from "@/styles/typography";
-import { mockStudents, mockFees, mockTransactions } from "../../fees/data/fee.data";
 import type { Student, Transaction } from "../../fees/types/fees.types";
+import { getAllPendingFees, getAllRecordFeePayments } from "@/services/fee.api";
+import { studentsApi } from "@/services/school-students.api";
 
 type PaymentStatus = "PAID" | "PARTIAL" | "PENDING";
 
@@ -21,39 +22,61 @@ export default function StudentLedgerPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [studentTransactions, setStudentTransactions] = useState<Transaction[]>([]);
+  const [studentFees, setStudentFees] = useState<{ amount: number }[]>([]);
+
+  useEffect(() => {
+    studentsApi.getAll({}).then((res) => {
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setAllStudents(list.map((s: any) => ({
+        id: s.id ?? s._id ?? "",
+        name: s.student_name ?? s.name ?? "",
+        admissionNo: s.admission_number ?? s.admissionNo ?? "",
+        className: s.class_name ?? s.className ?? "",
+        parentName: s.parent_name ?? s.parentName ?? "",
+        pendingAmount: 0,
+      })));
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!selectedStudent) { setStudentFees([]); setStudentTransactions([]); return; }
+    getAllPendingFees().then((res) => {
+      const entry = (res.data ?? []).find((e: any) => e.student?.id === selectedStudent.id || e.student?.name === selectedStudent.name);
+      const details = entry?.details ?? [];
+      setStudentFees(details.map((d: any) => ({ amount: d.finalAmount ?? d.amount ?? 0 })));
+    }).catch(() => {});
+    getAllRecordFeePayments().then((res) => {
+      const records = (res.data ?? []).filter((r: any) => r.studentName === selectedStudent.name || r.student_id === selectedStudent.id);
+      setStudentTransactions(records.map((r: any) => {
+        const remaining = r.amount - r.topay;
+        return {
+          id: r.id,
+          date: r.payment_date ?? "",
+          student: r.studentName ?? "",
+          className: r.className ?? "",
+          amount: r.amount,
+          paidAmount: r.topay,
+          remainingAmount: Math.max(0, remaining),
+          status: (remaining <= 0 ? "PAID" : r.topay > 0 ? "PARTIAL" : "PENDING") as PaymentStatus,
+          mode: r.payment_mode,
+          transactionId: r.transaction_id,
+          receiptNo: r.receipt_no,
+        } satisfies Transaction;
+      }).sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    }).catch(() => {});
+  }, [selectedStudent]);
 
   const filteredStudents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return [];
-    return mockStudents.filter(
+    return allStudents.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
         s.admissionNo.toLowerCase().includes(q)
     );
-  }, [searchQuery]);
-
-  const studentFees = useMemo(() => {
-    if (!selectedStudent) return [];
-    return mockFees.filter((f) => f.student === selectedStudent.name);
-  }, [selectedStudent]);
-
-  const studentTransactions = useMemo(() => {
-    if (!selectedStudent) return [];
-    const txMap = new Map<string, Transaction[]>();
-    for (const tx of mockTransactions) {
-      const key = tx.student;
-      if (!txMap.has(key)) txMap.set(key, []);
-      txMap.get(key)!.push(tx);
-    }
-    for (const fee of mockFees) {
-      if (fee.student === selectedStudent.name) {
-        if (!txMap.has(fee.student)) txMap.set(fee.student, []);
-      }
-    }
-    return (txMap.get(selectedStudent.name) || []).sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [selectedStudent]);
+  }, [searchQuery, allStudents]);
 
   const totalFees = useMemo(
     () => studentFees.reduce((sum, f) => sum + f.amount, 0),

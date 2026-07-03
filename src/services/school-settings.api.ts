@@ -188,31 +188,18 @@ export const fetchAcademicYears = async (): Promise<AcademicYear[]> => {
 
 export const createAcademicYear = async (payload: CreateAcademicYearPayload): Promise<AcademicYear> => {
   try {
-    const { data } = await api.post<{ status: boolean; data: AcademicYear }>("/tenant/academic-years", payload);
+    const { data } = await api.post<{ status: boolean; data: AcademicYear; message?: string }>("/tenant/academic-years", payload);
     if (data?.status && data?.data) return data.data;
     if (data && !data.status) {
-      const msg = (data as any)?.message || "Server returned unsuccessful status";
-      throw new Error(msg);
+      throw new Error(data?.message || "Server returned unsuccessful status");
     }
   } catch (err: any) {
-    const responseDetail = err?.response?.data ?? err?.message ?? "Unknown error";
-    const detailStr =
-      typeof responseDetail === "object"
-        ? JSON.stringify(responseDetail, null, 2)
-        : String(responseDetail);
-    console.error("createAcademicYear failed", { url: "/tenant/academic-years", payload, response: detailStr });
-    const fullMsg = [
-      `POST /tenant/academic-years`,
-      `Payload: ${JSON.stringify(payload)}`,
-      `Response: ${detailStr}`,
-    ].join("\n");
-    throw new Error(fullMsg);
+    const serverMsg = err?.response?.data?.message;
+    const msg = serverMsg || err?.message || "Failed to create academic year";
+    console.error("createAcademicYear failed", { url: "/tenant/academic-years", payload, error: msg });
+    throw new Error(msg);
   }
-  return {
-    id: `ay-${Date.now()}`,
-    ...payload,
-    active: false,
-  };
+  throw new Error("Unexpected error: no data returned from server");
 };
 
 export const updateAcademicYear = async (

@@ -1,11 +1,4 @@
 import { create } from "zustand";
-import {
-  initialStaffData,
-  attendanceDeductionsData,
-  initialSalaryData,
-  initialHistory,
-} from "../data/payroll.data";
-
 import type {
   StaffPayroll,
   PayrollSummary,
@@ -47,19 +40,19 @@ type PayrollStore = {
 };
 
 export const usePayrollStore = create<PayrollStore>((set) => ({
-  staffData: initialStaffData,
-  isProcessed: true,
-  processedDate: "1 April 2025",
-  processedBy: "Ramu Teja",
+  staffData: [],
+  isProcessed: false,
+  processedDate: null,
+  processedBy: null,
 
   summary: {
-    totalStaff: initialStaffData.length,
-    totalGross: initialStaffData.reduce((s, x) => s + x.gross, 0),
-    totalDeductions: initialStaffData.reduce((s, x) => s + x.deductions, 0),
-    totalNet: initialStaffData.reduce((s, x) => s + x.net, 0),
-    month: "April",
-    year: 2025,
-    processingDueDate: "1 May 2025",
+    totalStaff: 0,
+    totalGross: 0,
+    totalDeductions: 0,
+    totalNet: 0,
+    month: new Date().toLocaleString("en-IN", { month: "long" }),
+    year: new Date().getFullYear(),
+    processingDueDate: "",
   },
 
   processPayroll: () => {
@@ -125,9 +118,9 @@ export const usePayrollStore = create<PayrollStore>((set) => ({
     }));
   },
 
-  getAttendanceDeductions: () => attendanceDeductionsData,
+  getAttendanceDeductions: () => [],
 
-  salaryData: initialSalaryData,
+  salaryData: [],
   editingStaff: null,
   isEditing: false,
 
@@ -158,5 +151,5 @@ export const usePayrollStore = create<PayrollStore>((set) => ({
     }));
   },
 
-  history: initialHistory,
+  history: [],
 }));

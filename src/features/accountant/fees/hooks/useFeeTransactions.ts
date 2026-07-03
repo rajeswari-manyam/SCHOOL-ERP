@@ -8,8 +8,6 @@ import {
   derivePaymentStatus,
   
 } from "../utils/lateFee.utils";
-import { mockTransactions } from "../data/fee.data";
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface RecordPaymentInput {
@@ -37,7 +35,7 @@ export interface RecordPaymentInput {
  */
 export function useFeeTransactions() {
   const [transactions, setTransactions] =
-    useState<FeeTransaction[]>(mockTransactions);
+    useState<FeeTransaction[]>([]);
 
   /**
    * Running totals per fee ID: { [feeId]: paidSoFar }

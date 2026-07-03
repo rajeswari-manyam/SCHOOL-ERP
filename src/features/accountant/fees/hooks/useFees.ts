@@ -1,13 +1,12 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { initialSlabs, initialStudents } from "../data/fee.data";
 import type { FeeRow, TransportSlab, TransportStudent, Transaction } from "../types/fees.types";
 import { getAllPendingFees, getAllRecordFeePayments } from "../../../../services/fee.api";
 import type { AllPendingFeesEntry, StudentFeeSummaryDetail, RecordFeePaymentRecord } from "../../../../services/fee.api";
 
 
 export const useTransportFees = () => {
-  const [slabs, setSlabs] = useState<TransportSlab[]>(initialSlabs);
-  const [students, setStudents] = useState<TransportStudent[]>(initialStudents);
+  const [slabs, setSlabs] = useState<TransportSlab[]>([]);
+  const [students, setStudents] = useState<TransportStudent[]>([]);
 
   const [search, setSearch] = useState("");
   const [slabFilter, setSlabFilter] = useState<string | null>(null);

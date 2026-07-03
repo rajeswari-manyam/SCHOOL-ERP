@@ -190,8 +190,8 @@ export const BulkAddSectionModal = ({ classId: preselectedClassId = "", onClose,
 
           {/* Column headers */}
           <div className="hidden sm:grid sm:grid-cols-[1fr_1.2fr_1.4fr_0.7fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
-            <span>Section Name</span>
-            <span>Class</span>
+            <span>Section Name <span className="text-red-500">*</span></span>
+            <span>Class <span className="text-red-500">*</span></span>
             <span>Teacher {loadingTeachers && <Loader2 className="inline w-2.5 h-2.5 animate-spin ml-0.5" />}</span>
             <span>Strength</span>
             <span className="w-10" />
@@ -201,7 +201,7 @@ export const BulkAddSectionModal = ({ classId: preselectedClassId = "", onClose,
           {rows.map((row, idx) => (
             <div key={row.id} className="grid grid-cols-2 sm:grid-cols-[1fr_1.2fr_1.4fr_0.7fr_auto] gap-2 sm:gap-3 items-start p-3 rounded-xl border border-gray-100 bg-white">
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Section Name</Label>
+                <Label className="sm:hidden text-[10px] text-gray-400">Section Name <span className="text-red-500">*</span></Label>
                 <Input
                   placeholder="e.g. A"
                   value={row.sectionName}
@@ -211,7 +211,7 @@ export const BulkAddSectionModal = ({ classId: preselectedClassId = "", onClose,
               </div>
 
               <div className="space-y-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Class</Label>
+                <Label className="sm:hidden text-[10px] text-gray-400">Class <span className="text-red-500">*</span></Label>
                 <Select
                   value={row.classId}
                   onValueChange={(value) => updateRow(row.id, "classId", value)}
@@ -257,7 +257,7 @@ export const BulkAddSectionModal = ({ classId: preselectedClassId = "", onClose,
 
           {/* Academic year — applied to all rows */}
           <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year (all rows):</span>
+            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year (all rows): <span className="text-red-500">*</span></span>
             {yearsLoading ? (
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Loader2 size={12} className="animate-spin" /> Loading...

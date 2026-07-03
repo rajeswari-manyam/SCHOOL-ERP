@@ -37,6 +37,27 @@ export interface CreateSubjectResponse {
   data?: SubjectRecord;
 }
 
+export interface SubjectDetail {
+  id: string;
+  subject_name: string;
+  class_id: string;
+  class_name: string;
+  teacher_id: string;
+  teacher_name: string;
+  sectionid: string;
+  section_name: string;
+  academicYearId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getSubjectById = async (id: string): Promise<SubjectDetail> => {
+  const { data } = await api.get<{ status: boolean; data: SubjectDetail }>(
+    `/tenant/getsubjectById/${id}`
+  );
+  return data.data;
+};
+
 export const getAllSubjects = async (
   params?: GetAllSubjectsParams
 ): Promise<GetAllSubjectsResponse> => {

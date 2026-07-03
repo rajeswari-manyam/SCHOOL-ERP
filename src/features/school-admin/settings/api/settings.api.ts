@@ -151,18 +151,15 @@ export const createAcademicYear = async (payload: CreateAcademicYearPayload): Pr
       throw new Error(msg);
     }
   } catch (err: any) {
-    const responseDetail = err?.response?.data ?? err?.message ?? "Unknown error";
-    const detailStr =
-      typeof responseDetail === "object"
-        ? JSON.stringify(responseDetail, null, 2)
-        : String(responseDetail);
-    console.error("createAcademicYear failed", { url: "/tenant/academic-years", payload, response: detailStr });
-    const fullMsg = [
-      `POST /tenant/academic-years`,
-      `Payload: ${JSON.stringify(payload)}`,
-      `Response: ${detailStr}`,
-    ].join("\n");
-    throw new Error(fullMsg);
+    const data = err?.response?.data;
+    const userMsg =
+      (typeof data === "object" && data !== null && (data.message || data.error))
+        ? (data.message || data.error)
+        : err?.message === "Network Error"
+        ? "Network error — check your connection and try again"
+        : err?.message || "Failed to create academic year";
+    console.error("createAcademicYear failed", { url: "/tenant/academic-years", payload, response: data ?? err?.message });
+    throw new Error(userMsg);
   }
   return {
     id: `ay-${Date.now()}`,

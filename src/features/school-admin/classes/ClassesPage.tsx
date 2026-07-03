@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, BookOpen, Users, Layers, BookText, Loader2, Calendar, ChevronDown, ChevronLeft, ChevronRight, Trash2, Pencil } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, BookOpen, Users, Layers, BookText, Loader2, Calendar, ChevronDown, ChevronLeft, ChevronRight, Trash2, Pencil, X, GraduationCap, User, School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUIStore } from "@/store/uiStore";
 import { useClasses } from "./hooks/useClasses";
@@ -16,6 +16,10 @@ import { BulkAddSubjectModal } from "./components/BulkAddSubjectModal";
 import { EditSectionModal } from "./components/EditSectionModal";
 import { EditSubjectModal } from "./components/EditSubjectModal";
 import type { SectionItem, SubjectItem } from "./types/classes.types";
+import { getSectionStrength, getStudentsByClassSection } from "@/services/section.api";
+import type { SectionStrength, SectionStudent } from "@/services/section.api";
+import { getSubjectById } from "@/services/subject.api";
+import type { SubjectDetail } from "@/services/subject.api";
 
 /* ── Draft row type ── */
 interface DraftRow {
@@ -42,10 +46,307 @@ const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label:
   </div>
 );
 
+/* ── Section students side panel ── */
+const SectionStudentsPanel = ({
+  sectionId, sectionName, classId, onClose,
+}: {
+  sectionId: string; sectionName: string; classId: string; onClose: () => void;
+}) => {
+  const [strength, setStrength] = useState<SectionStrength | null>(null);
+  const [students, setStudents] = useState<SectionStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      getSectionStrength(sectionId).catch(() => null),
+      getStudentsByClassSection(classId, sectionId).catch(() => []),
+    ]).then(([s, st]) => {
+      setStrength(s);
+      setStudents(st ?? []);
+    }).finally(() => setLoading(false));
+  }, [sectionId, classId]);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
+
+      {/* Panel */}
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">Section {sectionName} — Students</h3>
+            <p className="text-[10px] text-gray-400 mt-0.5">Students enrolled in this section</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Strength bar */}
+        {strength && (
+          <div className="px-5 py-3 border-b border-gray-100 bg-purple-50/60 shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-purple-500">Seat Strength</span>
+              <span className="text-xs font-bold text-purple-700">{strength.currentStrength} / {strength.totalStrength}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-purple-100 overflow-hidden">
+              <div
+                className="h-full bg-purple-500 rounded-full transition-all"
+                style={{ width: `${Math.min(100, (strength.currentStrength / strength.totalStrength) * 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[10px] text-gray-400">Filled: <span className="font-semibold text-gray-700">{strength.currentStrength}</span></span>
+              <span className="text-[10px] text-gray-400">Available: <span className="font-semibold text-emerald-600">{strength.availableSeats}</span></span>
+            </div>
+          </div>
+        )}
+
+        {/* Student list */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-40">
+              <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+            </div>
+          ) : students.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 text-center px-4">
+              <Users className="w-8 h-8 text-gray-200 mb-2" />
+              <p className="text-sm text-gray-400 font-medium">No students enrolled</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {students.map((s, idx) => (
+                <div key={s.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 text-[11px] font-bold flex items-center justify-center shrink-0">
+                    {idx + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-gray-900 truncate">
+                      {s.first_name}{s.last_name ? ` ${s.last_name}` : ""}
+                    </p>
+                    <p className="text-[10px] text-gray-400 truncate">
+                      Roll: {s.roll_number} · {s.admission_number}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ── Subject detail popup ── */
+const SubjectDetailPopup = ({
+  subjectId, onClose,
+}: {
+  subjectId: string; onClose: () => void;
+}) => {
+  const [detail, setDetail] = useState<SubjectDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    getSubjectById(subjectId)
+      .then(setDetail)
+      .catch(() => setError("Failed to load subject details."))
+      .finally(() => setLoading(false));
+  }, [subjectId]);
+
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm pointer-events-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                <BookText className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-sm font-bold text-gray-900">Subject Details</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-5 py-5">
+            {loading && (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+              </div>
+            )}
+            {error && (
+              <p className="text-sm text-red-500 text-center py-8">{error}</p>
+            )}
+            {!loading && !error && detail && (
+              <div className="space-y-4">
+                {/* Subject name */}
+                <div className="text-center pb-3 border-b border-gray-100">
+                  <p className="text-xl font-bold text-gray-900">{detail.subject_name}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest">Subject</p>
+                </div>
+
+                {/* Info rows */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                      <School className="w-3.5 h-3.5 text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Class</p>
+                      <p className="text-sm font-semibold text-gray-800">{detail.class_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+                      <Layers className="w-3.5 h-3.5 text-purple-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Section</p>
+                      <p className="text-sm font-semibold text-gray-800">Section {detail.section_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                      <User className="w-3.5 h-3.5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Teacher</p>
+                      <p className="text-sm font-semibold text-gray-800">{detail.teacher_name || "Not assigned"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                      <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Academic Year ID</p>
+                      <p className="text-xs font-mono text-gray-600 truncate max-w-[200px]">{detail.academicYearId}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer timestamps */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <span className="text-[10px] text-gray-400">Added: <span className="text-gray-600 font-medium">{fmt(detail.createdAt)}</span></span>
+                  <span className="text-[10px] text-gray-400">Updated: <span className="text-gray-600 font-medium">{fmt(detail.updatedAt)}</span></span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ── Section card with strength ── */
+const SectionCard = ({
+  sec, classId, clsName, refreshKey,
+  onAddSubject, onBulkAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects,
+  onEditSection, onDeleteSection, onViewStudents, onViewSubject,
+}: {
+  sec: SectionItem; classId: string; clsName: string; refreshKey: number;
+  onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
+  onBulkAddSubject: () => void;
+  onEditSubject: (p: { id: string; name: string }) => void;
+  onDeleteSubject: (p: { id: string; name: string }) => void;
+  onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
+  onEditSection: (p: { id: string; name: string }) => void;
+  onDeleteSection: (p: { id: string; name: string }) => void;
+  onViewStudents: (p: { sectionId: string; sectionName: string; classId: string }) => void;
+  onViewSubject: (id: string) => void;
+}) => {
+  const [strength, setStrength] = useState<SectionStrength | null>(null);
+
+  useEffect(() => {
+    getSectionStrength(sec.id).then(setStrength).catch(() => {});
+  }, [sec.id]);
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all" onMouseEnter={e => (e.currentTarget.style.background = '#EFF4FF')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+      {/* Clickable header */}
+      <div
+        className="flex items-center gap-2.5 p-3 cursor-pointer"
+        onClick={() => onViewStudents({ sectionId: sec.id, sectionName: sec.name, classId })}
+      >
+        <div className="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center text-xs font-medium shrink-0">
+          {sec.name}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-gray-900">Section {sec.name}</p>
+          <p className="text-[10px] text-gray-500 truncate">{sec.classTeacher || "No teacher assigned"}</p>
+        </div>
+        {/* Strength badge */}
+        {strength ? (
+          <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+            {strength.currentStrength}/{strength.totalStrength}
+          </span>
+        ) : (
+          <div className="flex items-center gap-1 text-[10px] text-gray-500 whitespace-nowrap shrink-0">
+            <Users className="w-3 h-3 text-purple-400" />
+            {sec.totalStudents}
+          </div>
+        )}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEditSection({ id: sec.id, name: sec.name }); }}
+            className="p-1.5 rounded-lg text-gray-300 hover:text-indigo-500 hover:bg-indigo-50 transition-colors"
+            title="Edit section"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDeleteSection({ id: sec.id, name: sec.name }); }}
+            className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+            title="Delete section"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+      <div className="border-t border-gray-100 px-3 pb-3">
+        <p className="text-[9px] font-medium uppercase tracking-widest text-gray-400 mb-1 pt-2">Subjects</p>
+        <SectionSubjectChips
+          key={`${sec.id}-${refreshKey}`}
+          sectionId={sec.id}
+          sectionName={sec.name}
+          classId={classId}
+          className={clsName}
+          onAddSubject={onAddSubject}
+          onBulkAddSubject={onBulkAddSubject}
+          onEditSubject={onEditSubject}
+          onDeleteSubject={onDeleteSubject}
+          onUpdateSubjects={onUpdateSubjects}
+          onViewSubject={onViewSubject}
+        />
+      </div>
+    </div>
+  );
+};
+
 /* ── Subject chips for one section ── */
 const SectionSubjectChips = ({
   sectionId, sectionName, classId, className: clsName,
-  onAddSubject, onBulkAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects,
+  onAddSubject, onBulkAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects, onViewSubject,
 }: {
   sectionId: string; sectionName: string; classId: string; className: string;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
@@ -53,6 +354,7 @@ const SectionSubjectChips = ({
   onEditSubject: (p: { id: string; name: string }) => void;
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
+  onViewSubject: (id: string) => void;
 }) => {
   const { subjects, loading, error, refresh } = useSubjectsBySection(
     sectionId,
@@ -66,7 +368,13 @@ const SectionSubjectChips = ({
       {!loading && !error && subjects.length === 0 && <span className="text-[10px] text-gray-400 italic">No subjects yet</span>}
       {!loading && !error && subjects.map((sub) => (
         <span key={sub.id} className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-md font-medium group">
-          {sub.name}
+          <button
+            onClick={() => onViewSubject(sub.id)}
+            className="hover:text-indigo-600 hover:underline transition-colors"
+            title="View subject details"
+          >
+            {sub.name}
+          </button>
           <button
             onClick={() => onEditSubject({ id: sub.id, name: sub.name })}
             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-indigo-600 transition-all"
@@ -104,7 +412,7 @@ const SelectedClassSections = ({
   classId, className: clsName, refreshKey,
   onAddSection, onBulkAddSection, onBulkAddSubject, onAddSubject,
   onEditSection, onDeleteSection, onEditSubject, onDeleteSubject,
-  onUpdateSections, onUpdateSubjects,
+  onUpdateSections, onUpdateSubjects, onViewStudents, onViewSubject,
 }: {
   classId: string; className: string; refreshKey: number;
   onAddSection: (p: { classId: string; className: string }) => void;
@@ -117,6 +425,8 @@ const SelectedClassSections = ({
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSections: (classId: string, sections: SectionItem[]) => void;
   onUpdateSubjects: (sectionId: string, subjects: SubjectItem[]) => void;
+  onViewStudents: (p: { sectionId: string; sectionName: string; classId: string }) => void;
+  onViewSubject: (id: string) => void;
 }) => {
   const { sections, loading, error, refresh } = useSectionsByClass(
     classId,
@@ -145,52 +455,22 @@ const SelectedClassSections = ({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sections.map((sec) => (
-            <div key={sec.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 transition-all" style={{}} onMouseEnter={e => (e.currentTarget.style.background = '#EFF4FF')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-              <div className="flex items-center gap-2.5 mb-2.5">
-                <div className="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center text-xs font-medium shrink-0">
-                  {sec.name}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-gray-900">Section {sec.name}</p>
-                  <p className="text-[10px] text-gray-500 truncate">{sec.classTeacher || "No teacher assigned"}</p>
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-gray-500 whitespace-nowrap">
-                  <Users className="w-3 h-3 text-purple-400" />
-                  {sec.totalStudents}
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => onEditSection({ id: sec.id, name: sec.name })}
-                    className="p-1.5 rounded-lg text-gray-300 hover:text-indigo-500 hover:bg-indigo-50 transition-colors"
-                    title="Edit section"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDeleteSection({ id: sec.id, name: sec.name })}
-                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    title="Delete section"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-              <div className="border-t border-gray-100 pt-2">
-                <p className="text-[9px] font-medium uppercase tracking-widest text-gray-400 mb-1">Subjects</p>
-                <SectionSubjectChips
-                  key={`${sec.id}-${refreshKey}`}
-                  sectionId={sec.id}
-                  sectionName={sec.name}
-                  classId={classId}
-                  className={clsName}
-                  onAddSubject={onAddSubject}
-                  onBulkAddSubject={onBulkAddSubject}
-                  onEditSubject={onEditSubject}
-                  onDeleteSubject={onDeleteSubject}
-                  onUpdateSubjects={onUpdateSubjects}
-                />
-              </div>
-            </div>
+            <SectionCard
+              key={sec.id}
+              sec={sec}
+              classId={classId}
+              clsName={clsName}
+              refreshKey={refreshKey}
+              onAddSubject={onAddSubject}
+              onBulkAddSubject={onBulkAddSubject}
+              onEditSubject={onEditSubject}
+              onDeleteSubject={onDeleteSubject}
+              onUpdateSubjects={onUpdateSubjects}
+              onEditSection={onEditSection}
+              onDeleteSection={onDeleteSection}
+              onViewStudents={onViewStudents}
+              onViewSubject={onViewSubject}
+            />
           ))}
         </div>
       )}
@@ -242,6 +522,8 @@ const ClassesPage = () => {
   const [editSectionFor, setEditSectionFor] = useState<{ id: string; name: string } | null>(null);
   const [editSubjectFor, setEditSubjectFor] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: "class" | "section" | "subject"; name: string } | null>(null);
+  const [viewStudentsFor, setViewStudentsFor] = useState<{ sectionId: string; sectionName: string; classId: string } | null>(null);
+  const [viewSubjectId, setViewSubjectId] = useState<string | null>(null);
 
   /* ── Inline draft rows ── */
   const [draftRows, setDraftRows] = useState<DraftRow[]>([]);
@@ -550,10 +832,10 @@ const ClassesPage = () => {
             </div>
             <button
               onClick={() => setSelectedClassId("")}
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-indigo-50 border border-indigo-100"
+              className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-indigo-50 border border-indigo-100"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              All Classes
+              <ChevronLeft className="w-4 h-4" />
+              Back to Classes
             </button>
           </div>
 
@@ -572,6 +854,8 @@ const ClassesPage = () => {
             onDeleteSubject={(p) => setDeleteTarget({ ...p, type: "subject" })}
             onUpdateSections={updateClassSections}
             onUpdateSubjects={updateSectionSubjects}
+            onViewStudents={setViewStudentsFor}
+            onViewSubject={setViewSubjectId}
           />
         </div>
       )}
@@ -654,6 +938,24 @@ const ClassesPage = () => {
           }}
         />
       )}
+      {/* Students side panel */}
+      {viewStudentsFor && (
+        <SectionStudentsPanel
+          sectionId={viewStudentsFor.sectionId}
+          sectionName={viewStudentsFor.sectionName}
+          classId={viewStudentsFor.classId}
+          onClose={() => setViewStudentsFor(null)}
+        />
+      )}
+
+      {/* Subject detail popup */}
+      {viewSubjectId && (
+        <SubjectDetailPopup
+          subjectId={viewSubjectId}
+          onClose={() => setViewSubjectId(null)}
+        />
+      )}
+
       <AlertDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

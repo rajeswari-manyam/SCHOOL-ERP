@@ -174,10 +174,10 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
 
           {/* Header labels */}
           <div className="hidden sm:grid sm:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr_auto] gap-3 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-1">
-            <span>Subject Name</span>
-            <span>Class</span>
-            <span>Section</span>
-            <span>Teacher</span>
+            <span>Subject Name <span className="text-red-500">*</span></span>
+            <span>Class <span className="text-red-500">*</span></span>
+            <span>Section <span className="text-red-500">*</span></span>
+            <span>Teacher <span className="text-red-500">*</span></span>
             <span className="w-10" />
           </div>
 
@@ -185,7 +185,7 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
           {rows.map((row) => (
             <div key={row.id} className="grid grid-cols-2 sm:grid-cols-[1.2fr_0.9fr_0.9fr_1.2fr_auto] gap-2 sm:gap-3 items-start p-3 rounded-xl border border-gray-100 bg-white">
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Subject Name</Label>
+                <Label className="sm:hidden text-[10px] text-gray-400">Subject Name <span className="text-red-500">*</span></Label>
                 <Input
                   placeholder="e.g. Mathematics"
                   value={row.subjectName}
@@ -193,7 +193,7 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Class</Label>
+                <Label className="sm:hidden text-[10px] text-gray-400">Class <span className="text-red-500">*</span></Label>
                 <Select
                   value={row.classId}
                   onValueChange={(value) => updateRow(row.id, "classId", value)}
@@ -202,7 +202,7 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Section</Label>
+                <Label className="sm:hidden text-[10px] text-gray-400">Section <span className="text-red-500">*</span></Label>
                 <Select
                   value={row.sectionId}
                   onValueChange={(value) => updateRow(row.id, "sectionId", value)}
@@ -212,7 +212,7 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="sm:hidden text-[10px] text-gray-400">Teacher</Label>
+                <Label className="sm:hidden text-[10px] text-gray-400">Teacher <span className="text-red-500">*</span></Label>
                 <Select
                   value={row.teacherId}
                   onValueChange={(value) => updateRow(row.id, "teacherId", value)}
@@ -236,7 +236,7 @@ export const BulkAddSubjectModal = ({ onClose, onSubmit }: Props) => {
 
           {/* Academic year selector */}
           <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year:</span>
+            <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Academic Year: <span className="text-red-500">*</span></span>
             {yearsLoading ? (
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Loader2 size={12} className="animate-spin" /> Loading...

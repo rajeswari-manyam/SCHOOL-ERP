@@ -34,11 +34,6 @@ import type {
   GetClassTodayAttendanceResponse,
   CreateStaffAttendancePayload,
 } from "../types/attendance.types";
-import {
-  mockAttendanceToday,
-  mockAttendanceHistory,
-} from "../store/mockData";
-
 
 export const attendanceKeys = {
   all: ["attendance"] as const,
@@ -102,15 +97,15 @@ export const useSubmitAttendance = () => {
 
 // ─── Today ────────────────────────────────────────────────────────────────────
 export const useAttendanceToday = (className: string, section: string) => {
-  return useQuery<AttendanceDay>({
+  return useQuery<AttendanceDay | null>({
     queryKey: attendanceKeys.today(className, section),
     queryFn:  async () => {
       try {
         const res = await getAllAttendance("", new Date().toISOString().slice(0, 10));
-        if (!res?.data?.length) return mockAttendanceToday;
-        return mockAttendanceToday; // replace with real mapper when endpoint is stable
+        if (!res?.data?.length) return null;
+        return null;
       } catch {
-        return mockAttendanceToday;
+        return null;
       }
     },
     refetchInterval: 60_000,
@@ -143,9 +138,9 @@ export const useClassTodayAttendance = (classId: string, sectionId: string) => {
 // ─── History ──────────────────────────────────────────────────────────────────
 export const useAttendanceHistory = () => {
   const { historyDateFrom, historyDateTo, historyClass } = useAttendanceStore();
-  return useQuery<AttendanceHistory>({
+  return useQuery<AttendanceHistory | null>({
     queryKey: attendanceKeys.history(historyDateFrom, historyDateTo, historyClass),
-    queryFn:  async () => mockAttendanceHistory,
+    queryFn:  async () => null,
     staleTime: 2 * 60_000,
   });
 };

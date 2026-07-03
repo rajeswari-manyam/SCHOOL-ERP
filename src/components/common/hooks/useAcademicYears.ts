@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import { useUIStore } from "@/store/uiStore";
 import { getAllAcademicYears, selectAcademicYear, type AcademicYearRecord } from "@/services/academicYear.api";
+import { queryClient } from "@/config/queryClient";
 
 export type AcademicYearInfo = AcademicYearRecord;
 
@@ -57,11 +57,15 @@ export const useAcademicYears = () => {
     } catch {
       // best-effort — backend may not support the endpoint yet; still switch locally
     }
+    // Update store first so axios interceptor picks up the new year for all refetches
     setActiveYear(year);
     setStoredAcademicYearId(year.id);
     setStoredAcademicYearName(year.yearName);
     setSwitching(false);
-    toast.success(`Switched to ${year.yearName} — data reloaded`);
+    // Invalidate every TanStack Query cache — they'll refetch with the new X-Academic-Year header.
+    // Non-Query hooks (useStudents, useClasses, useStaff, useFeeCollection) react via
+    // their own useEffect([academicYearId]) subscriptions.
+    void queryClient.invalidateQueries();
   };
 
   return { years, activeYear, loading, switching, error, switchYear, retry: load };

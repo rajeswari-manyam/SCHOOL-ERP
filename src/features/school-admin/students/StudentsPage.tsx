@@ -9,6 +9,7 @@ import StudentTable from "../students/components/StudentTable";
 import AddStudentModal from "../students/components/AddStudentModal";
 import BulkAddStudentModal from "../students/components/BulkAddStudentModal";
 import { EditStudentModal } from "../students/components/EditStudentModal";
+import PromoteStudentsModal from "../students/components/PromoteStudentsModal";
 
 import StudentStatCards from "../students/components/StudentStatCards";
 import type { AddStudentFormData, Student } from "../students/types/student.types";
@@ -35,6 +36,7 @@ const StudentsPage = () => {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const handleAddStudent = async (data: AddStudentFormData) => {
@@ -56,6 +58,12 @@ const StudentsPage = () => {
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Bulk Add
+          </button>
+          <button
+            onClick={() => setShowPromoteModal(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 h-9 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+          >
+            Promote Students
           </button>
           <button
             onClick={() => setShowAddModal(true)}
@@ -126,6 +134,10 @@ const StudentsPage = () => {
             loadStudents(academicYearId);
           }}
         />
+      )}
+
+      {showPromoteModal && (
+        <PromoteStudentsModal onClose={() => setShowPromoteModal(false)} />
       )}
     </div>
   );

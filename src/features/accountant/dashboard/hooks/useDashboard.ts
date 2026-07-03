@@ -6,7 +6,6 @@ import type {
 } from "@/services/accountant-reports.api";
 import { getUserById } from "@/services/auth.api";
 import { useAuthStore } from "@/store/authStore";
-import { reminderMock } from "../data/dashboard.data";
 import type { Transaction, PaymentModeSummary, MonthlyTrendItem } from "../types/dashboard.types";
 
 export const useDashboardData = () => {
@@ -86,6 +85,6 @@ export const useDashboardData = () => {
     trend,
     accountantName,
     dateOfJoin,
-    reminder: reminderMock,
+    reminder: null,
   };
 };

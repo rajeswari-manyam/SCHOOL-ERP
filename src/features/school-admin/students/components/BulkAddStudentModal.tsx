@@ -57,12 +57,19 @@ interface StudentParentRow {
 const inputCls = "w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition";
 const selectCls = "h-10 rounded-xl bg-slate-50 border-slate-200";
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{label}</label>
-    {children}
-  </div>
-);
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => {
+  const isRequired = label.endsWith(" *");
+  const displayLabel = isRequired ? label.slice(0, -2) : label;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+        {displayLabel}
+        {isRequired && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+};
 
 const emptyPersonalRow = (): StudentPersonalRow => ({
   firstName: "", lastName: "", dob: "", gender: "", bloodGroup: "",
@@ -115,11 +122,20 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
   }, []);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [personalRows, setPersonalRows] = useState<StudentPersonalRow[]>([emptyPersonalRow()]);
+  const admissionNoCounterRef = useRef(0);
+
+  const nextAdmNo = () => {
+    admissionNoCounterRef.current += 1;
+    return `ADM-${admissionYear}-${String(admissionNoCounterRef.current).padStart(3, "0")}`;
+  };
+
+  const [personalRows, setPersonalRows] = useState<StudentPersonalRow[]>([{ ...emptyPersonalRow(), admissionNo: `ADM-${admissionYear}-001` }]);
   const [parentRows, setParentRows] = useState<StudentParentRow[]>([]);
   const [createdStudents, setCreatedStudents] = useState<Student[]>([]);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set([0]));
-  const admissionNoCounterRef = useRef(0);
+
+  // Sync counter with initial row
+  useEffect(() => { admissionNoCounterRef.current = 1; }, []);
 
   const updatePersonalRow = (index: number, field: keyof StudentPersonalRow, value: string) =>
     setPersonalRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
@@ -137,7 +153,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
 
   const addRow = () => {
     const newIdx = personalRows.length;
-    setPersonalRows((prev) => [...prev, emptyPersonalRow()]);
+    setPersonalRows((prev) => [...prev, { ...emptyPersonalRow(), admissionNo: nextAdmNo() }]);
     if (parentRows.length > 0) setParentRows((prev) => [...prev, emptyParentRow()]);
     setExpandedRows((prev) => new Set([...prev, newIdx]));
   };
@@ -161,21 +177,12 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
     });
 
   const generateAdmissionNo = (index: number) => {
-    admissionNoCounterRef.current += 1;
-    const seq = String(admissionNoCounterRef.current).padStart(3, "0");
-    updatePersonalRow(index, "admissionNo", `ADR-${admissionYear}-${seq}`);
+    updatePersonalRow(index, "admissionNo", nextAdmNo());
   };
 
   const generateAllAdmissionNos = () =>
     setPersonalRows((prev) =>
-      prev.map((r) => {
-        if (!r.admissionNo) {
-          admissionNoCounterRef.current += 1;
-          const seq = String(admissionNoCounterRef.current).padStart(3, "0");
-          return { ...r, admissionNo: `ADR-${admissionYear}-${seq}` };
-        }
-        return r;
-      })
+      prev.map((r) => (!r.admissionNo ? { ...r, admissionNo: nextAdmNo() } : r))
     );
 
   const getSectionsForClass = (classId: string) =>
@@ -324,7 +331,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                         <div className="px-4 sm:px-6 pb-5 pt-1 bg-slate-50/40 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                           {/* Class + Section span full width */}
                           <div className="sm:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                            <Field label="Class">
+                            <Field label="Class *">
                               {clsLoading ? (
                                 <div className="flex items-center gap-2 h-10 px-3 rounded-xl bg-slate-50 border border-slate-200">
                                   <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
@@ -343,7 +350,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                                 />
                               )}
                             </Field>
-                            <Field label="Section">
+                            <Field label="Section *">
                               {!row.classId ? (
                                 <div className="flex items-center h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-gray-400">
                                   Select a class first
@@ -363,7 +370,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                             </Field>
                           </div>
 
-                          <Field label="First Name">
+                          <Field label="First Name *">
                             <input className={inputCls} placeholder="Rahul" value={row.firstName}
                               onChange={(e) => updatePersonalRow(i, "firstName", e.target.value)} />
                           </Field>

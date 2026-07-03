@@ -1,5 +1,5 @@
 import api from "@/config/axios";
-import { getAllClasses, getAcademicYearClasses, getAllStaff } from "@/services/class.api";
+import { getAllClasses, getAllStaff } from "@/services/class.api";
 import { getSectionsByClassIdFromApi, getSectionById } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiResponse, BulkAddClassesResponse, BulkAddSectionsResponse, BulkAddSubjectsResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "@/features/school-admin/classes/types/classes.types";
@@ -7,14 +7,13 @@ import type { ClassItem, SectionItem, SubjectItem, CreateClassPayload, ClassApiR
 export const fetchClasses = async (academicYearId?: string | null): Promise<ClassItem[]> => {
   let classesRes: { status: boolean; data: import("@/services/class.api").ClassRecord[] };
 
-  if (academicYearId) {
-    const res = await getAcademicYearClasses(academicYearId);
-    classesRes = res;
-  } else {
-    const params: import("@/services/class.api").GetAllClassesParams = {};
-    const res = await getAllClasses(params);
-    classesRes = res;
-  }
+  // Always use getAllClasses with academicYearId as a query param.
+  // getAcademicYearClasses uses a path param that only works for the active year;
+  // getAllClasses?academicYearId= works for any year including previous ones.
+  const params: import("@/services/class.api").GetAllClassesParams = academicYearId
+    ? { academicYearId }
+    : {};
+  classesRes = await getAllClasses(params);
 
   if (!classesRes?.status || !Array.isArray(classesRes.data)) {
     throw new Error(classesRes?.status === false

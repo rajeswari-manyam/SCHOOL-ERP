@@ -1,9 +1,5 @@
 import { create } from "zustand";
-import type { AttendanceTab } from "../types/attendance.types";
-import {
-  mockAttendanceToday,
-  mockAttendanceHistory,
-} from "./mockData";
+import type { AttendanceTab, AttendanceDay, AttendanceHistory } from "../types/attendance.types";
 
 interface AttendanceState {
   activeTab: AttendanceTab;
@@ -13,10 +9,10 @@ interface AttendanceState {
   setSelectedDate: (date: string) => void;
 
   // Today
-  todayData: typeof mockAttendanceToday;
+  todayData: AttendanceDay | null;
 
   // History
-  historyData: typeof mockAttendanceHistory;
+  historyData: AttendanceHistory | null;
   historyDateFrom: string;
   historyDateTo: string;
   historyClass: string;
@@ -53,8 +49,8 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   selectedDate: "2025-04-07",
   setSelectedDate: (date) => set({ selectedDate: date }),
 
-  todayData: mockAttendanceToday,
-  historyData: mockAttendanceHistory,
+  todayData: null,
+  historyData: null,
 
   historyDateFrom: "2025-03-01",
   historyDateTo: "2025-04-07",
