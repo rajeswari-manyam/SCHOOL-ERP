@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getHomeworkByClass,
+  getHomeworkThisWeek,
   getSubmissionsByStudentId,
 } from "../../../../services/homework.api";
 import { getStudyMaterialsByFilter } from "../../../../services/studymaterial.api";
@@ -117,6 +118,7 @@ export const useHomework = () => {
 
   const [activeTab, setActiveTab]         = useState<ActiveTab>("week");
   const [homework, setHomework]           = useState<Homework[]>([]);
+  const [weekHomework, setWeekHomework]   = useState<Homework[]>([]);
   const [materials, setMaterials]         = useState<StudyMaterial[]>([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState<string | null>(null);
@@ -125,17 +127,6 @@ export const useHomework = () => {
   const [studentSection, setStudentSection] = useState("");
   const [classId, setClassId]             = useState("");
   const [sectionId, setSectionId]         = useState("");
-
-  const weekDays = getCurrentWeekDays();
-  const today = new Date();
-  const defaultDay =
-    weekDays.find(
-      (d) =>
-        d.date === today.getDate() &&
-        d.month === today.getMonth() &&
-        d.year === today.getFullYear()
-    ) ?? weekDays[0];
-  const [selectedDay, setSelectedDay] = useState(defaultDay);
 
   const [submitModalOpen, setSubmitModalOpen]     = useState(false);
   const [selectedHomework, setSelectedHomework]   = useState<Homework | null>(null);
@@ -175,13 +166,15 @@ export const useHomework = () => {
     setLoading(true);
     setError(null);
     try {
-      const [hwRes, matRes, subRes] = await Promise.all([
+      const [hwRes, weekRes, matRes, subRes] = await Promise.all([
         getHomeworkByClass({ class_id: classId, section_id: sectionId }),
+        getHomeworkThisWeek({ class_id: classId, section_id: sectionId }),
         getStudyMaterialsByFilter({ class_id: classId, section_id: sectionId }),
         getSubmissionsByStudentId(String(authUser.id)),
       ]);
 
       const mapped = (hwRes.data ?? []).map(mapApiHomework);
+      const mappedWeek = (weekRes.data ?? []).map(mapApiHomework);
 
       // Build submitted set from student's own submissions
       const submittedSet = new Set<string>();
@@ -194,6 +187,9 @@ export const useHomework = () => {
 
       setHomework(
         mapped.map((hw) => ({ ...hw, submitted: submittedSet.has(hw.id) }))
+      );
+      setWeekHomework(
+        mappedWeek.map((hw) => ({ ...hw, submitted: submittedSet.has(hw.id) }))
       );
       setMaterials((matRes.data ?? []).map(mapApiMaterial));
     } catch (err: any) {
@@ -217,17 +213,8 @@ export const useHomework = () => {
     closeSubmitModal();
   };
 
-  // ── "This Week" filter ────────────────────────────────────────────────────
-  const thisWeekHomework = homework.filter((hw) => {
-    if (!hw.submissionDate) return false;
-    const due = new Date(
-      hw.submissionDate.getFullYear(),
-      hw.submissionDate.getMonth(),
-      hw.submissionDate.getDate()
-    ).getTime();
-    const sel = new Date(selectedDay.year, selectedDay.month, selectedDay.date).getTime();
-    return due >= sel;
-  });
+  // ── "This Week" — direct from API ────────────────────────────────────────
+  const thisWeekHomework = weekHomework;
 
   return {
     activeTab, setActiveTab,
@@ -241,8 +228,6 @@ export const useHomework = () => {
     studentSection,
     classId,
     studentId: String(authUser?.id ?? ""),
-    weekDays,
-    selectedDay, setSelectedDay,
     submitModalOpen,
     selectedHomework,
     openSubmitModal,

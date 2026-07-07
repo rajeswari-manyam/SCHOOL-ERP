@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { createStaff } from "@/services/school-staff.api";
 import { fetchDepartments } from "@/services/department.api";
+import { getAllAcademicYears, type AcademicYearRecord } from "@/services/academicYear.api";
 import { useStaffStore } from "../store/usestore";
 import { useAuthStore } from "@/store/authStore";
 import type { StaffMember } from "../types/staff.types";
@@ -92,6 +93,7 @@ const INITIAL_FORM = {
   dob:         "",
   joiningDate: getToday(),
   departmentId: "",
+  academicYearId: "",
   status:      "ACTIVE",
   bankAccountName: "",
   bankAccountNumber: "",
@@ -99,21 +101,23 @@ const INITIAL_FORM = {
 };
 
 export const AddStaffModal = ({ onClose }: Props) => {
-  const schoolcode     = useAuthStore((s) => s.user?.schoolcode ?? "");
-  const loadStaff      = useStaffStore((s) => s.loadStaff);
-  const staffData      = useStaffStore((s) => s.staffData);
-  const academicYearId = useUIStore.getState().academicYearId ?? "";
+  const schoolcode           = useAuthStore((s) => s.user?.schoolcode ?? "");
+  const loadStaff            = useStaffStore((s) => s.loadStaff);
+  const staffData            = useStaffStore((s) => s.staffData);
+  const globalAcademicYearId = useUIStore((s) => s.academicYearId) ?? "";
 
-  const [form, setForm]       = useState(INITIAL_FORM);
+  const [form, setForm]       = useState(() => ({ ...INITIAL_FORM, academicYearId: globalAcademicYearId }));
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearRecord[]>([]);
   const [autoGenEmp, setAutoGenEmp]   = useState(true);
   const [generatedEmpId]      = useState(() => genNextEmpId(staffData));
 
   useEffect(() => {
     fetchDepartments().then(setDepartments).catch(() => {});
+    getAllAcademicYears().then((res) => setAcademicYears(res.data)).catch(() => {});
   }, []);
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -171,8 +175,8 @@ export const AddStaffModal = ({ onClose }: Props) => {
       date_of_join:  form.joiningDate,
       school_code:   schoolcode,
       role:          form.role,
-      ...(form.departmentId && { department_id: form.departmentId }),
-      ...(academicYearId    && { academicYearId }),
+      ...(form.departmentId    && { department_id: form.departmentId }),
+      ...(form.academicYearId && { academicYearId: form.academicYearId }),
       ...(form.bankAccountName.trim()   && { bank_account_name: form.bankAccountName.trim() }),
       ...(form.bankAccountNumber.trim() && { bank_account_number: form.bankAccountNumber.trim() }),
       ...(form.ifscCode.trim()          && { ifsc_code: form.ifscCode.trim() }),
@@ -345,6 +349,17 @@ export const AddStaffModal = ({ onClose }: Props) => {
                 </div>
               </Field>
             )}
+
+            {/* ACADEMIC YEAR */}
+            <Field label="Academic Year">
+              <div className="relative">
+                <select value={form.academicYearId} onChange={set("academicYearId")} className={selectCls}>
+                  <option value="">Select academic year…</option>
+                  {academicYears.map((y) => <option key={y.id} value={y.id}>{y.yearName}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            </Field>
 
           </div>
 

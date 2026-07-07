@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import type { Homework } from "../../../../services/homework.api";
-import type { ExamTimetableListItem } from "../../../../services/examtimetable.api";
+import type { UpcomingExamItem } from "../../../../services/examtimetable.api";
 import type { Announcement } from "../../../../services/announcements.api";
 
 
@@ -21,7 +21,7 @@ interface DashboardState {
   homework: Homework[]
 
   // Exams
-  exams: ExamTimetableListItem[]
+  exams: UpcomingExamItem[]
 
   // Announcements
   announcements: Announcement[]
@@ -37,7 +37,7 @@ interface DashboardState {
   setMonthlyPct: (pct: number) => void
   setTodayStatus: (s: "present" | "absent" | "not_marked") => void
   setHomework: (hw: Homework[]) => void
-  setExams: (exams: ExamTimetableListItem[]) => void
+  setExams: (exams: UpcomingExamItem[]) => void
   setAnnouncements: (a: Announcement[]) => void
   setLoadingAttendance: (v: boolean) => void
   setLoadingHomework: (v: boolean) => void

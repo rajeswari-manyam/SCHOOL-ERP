@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { ExamTab } from "../types/exam.types";
-import type { ExamTimetableListItem } from "../../../../services/examtimetable.api";
+import type { UpcomingExamItem } from "../../../../services/examtimetable.api";
 import type { Mark } from "../../../../services/marks.api";
 
 interface ExamsState {
@@ -8,11 +8,11 @@ interface ExamsState {
   setTab: (tab: ExamTab) => void;
 
   // Upcoming exams (from API)
-  upcomingExams: ExamTimetableListItem[];
+  upcomingExams: UpcomingExamItem[];
 
   upcomingLoading: boolean;
   upcomingError: string | null;
-  setUpcomingExams: (data: ExamTimetableListItem[]) => void;
+  setUpcomingExams: (data: UpcomingExamItem[]) => void;
   setUpcomingLoading: (v: boolean) => void;
   setUpcomingError: (e: string | null) => void;
 

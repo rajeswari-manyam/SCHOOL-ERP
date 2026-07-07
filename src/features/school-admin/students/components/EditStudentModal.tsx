@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X, Camera, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -56,16 +56,40 @@ type FormState = ReturnType<typeof toForm>;
 export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
   const [form, setForm] = useState<FormState>(() => toForm(student));
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(student.photo ?? null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setForm(toForm(student));
+      setPhotoFile(null);
+      setPhotoPreview(student.photo ?? null);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [student]);
 
   const set = (field: keyof FormState) => (value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handlePhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setPhotoFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(student.photo ?? null);
+    }
+  };
+
+  // Reverts a newly staged (not-yet-saved) photo back to the student's current one.
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(student.photo ?? null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +111,7 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
       emergency_contact: form.emergencyContact.trim() || undefined,
       email: form.email.trim() || undefined,
       status: form.status as UpdateStudentPayload["status"],
+      ...(photoFile ? { photo: photoFile } : {}),
     };
 
     setLoading(true);
@@ -130,6 +155,31 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Photo */}
+          <div className="sm:col-span-2 flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+              {photoPreview
+                ? <img src={photoPreview} alt={student.firstName} className="w-full h-full object-cover" />
+                : <Camera className="w-5 h-5 text-gray-300" />
+              }
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Student Photo</label>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => photoInputRef.current?.click()} className="text-xs">
+                  {photoPreview ? "Change" : "Upload Photo"}
+                </Button>
+                {photoFile && (
+                  <button type="button" onClick={handleRemovePhoto}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+            </div>
+          </div>
+
           <Field label="Status">
             <Select options={STATUS_OPTIONS} value={form.status} onValueChange={set("status")} placeholder="Select status" />
           </Field>

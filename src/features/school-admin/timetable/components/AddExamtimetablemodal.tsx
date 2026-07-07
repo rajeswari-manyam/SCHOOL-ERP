@@ -7,6 +7,7 @@ import type { CreateExamTimetablePayload, ExamEntry } from "../types/timetable.t
 import { useExamNameOptions } from "../hooks/useTimetable";
 import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
 import { getSubjectsBySectionId } from "../../../../services/subject.api";
+import { getAllStaff } from "../../../../services/staff.api";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 import { fetchAllWorkingDays } from "@/services/working-days.api";
 import type { WorkingDayRecord } from "@/services/working-days.api";
@@ -56,6 +57,8 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
   const [editDate,  setEditDate]  = useState("");
   const [editStart, setEditStart] = useState("09:00");
   const [editEnd,   setEditEnd]   = useState("12:00");
+  const [teacherId, setTeacherId] = useState("");
+  const [roomNo,    setRoomNo]    = useState("");
 
   // ── Bulk entries ──────────────────────────────────────────
   const [entries, setEntries] = useState<BulkEntry[]>([]);
@@ -64,6 +67,7 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
   const [classOptions,   setClassOptions]   = useState<DropdownOption[]>([]);
   const [sectionOptions, setSectionOptions] = useState<DropdownOption[]>([]);
   const [subjectOptions, setSubjectOptions] = useState<DropdownOption[]>([]);
+  const [staffOptions,   setStaffOptions]   = useState<DropdownOption[]>([]);
   const [workingDays,    setWorkingDays]    = useState<WorkingDayRecord[]>([]);
 
   // ── Loading ───────────────────────────────────────────────
@@ -107,9 +111,12 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
       setEditDate(editData.date ?? "");
       setEditStart(stripSec(editData.startTime));
       setEditEnd(stripSec(editData.endTime));
+      setTeacherId(editData.teacher_id ?? "");
+      setRoomNo(editData.venue ?? "");
     } else {
       setClassId(""); setSectionId(""); setSubjectId("");
       setExamNameId(""); setAcademicYearId(defaultAcYear); setSchoolWorkingDayId("");
+      setTeacherId(""); setRoomNo("");
       setEntries([createEntry()]);
     }
     setSectionOptions([]); setSubjectOptions([]);
@@ -120,6 +127,10 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
       .then((res) => setClassOptions(res.data.map((c) => ({ value: c.id, label: c.class_name }))))
       .catch(console.error)
       .finally(() => setLoadingClasses(false));
+
+    getAllStaff()
+      .then((res) => setStaffOptions((res.data ?? []).map((s: any) => ({ value: s.id, label: s.name ?? s.staff_name ?? s.id }))))
+      .catch(console.error);
 
   }, [open]);
 
@@ -190,7 +201,8 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
       class_id: classId, section_id: sectionId, subject_id: subjectId,
       examnameid: examNameId, academicYearId,
       schoolWorkingDayId: schoolWorkingDayId || undefined,
-      teacher_id: "", room_no: "",
+      teacher_id: teacherId,
+      room_no: roomNo,
     };
 
     const examsTimetables: CreateExamTimetablePayload[] = isEditMode
@@ -272,28 +284,41 @@ const AddExamTimetableModal: React.FC<AddExamTimetableModalProps> = ({
                 error={errors.examNameId} />
             </div>
 
-            {/* ── Edit mode: single date/time row ── */}
+            {/* ── Edit mode: date/time + teacher + room ── */}
             {isEditMode ? (
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Exam Date <span className="text-red-500">*</span></Label>
-                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)}
-                    className={inputCls(!!errors.editDate || !!isHoliday(editDate))} />
-                  {isHoliday(editDate) && (
-                    <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-red-50 border border-red-200 px-2.5 py-1.5">
-                      <AlertTriangle size={12} className="text-red-500 shrink-0" />
-                      <p className="text-[10px] font-semibold text-red-600">{isHoliday(editDate)} is a holiday</p>
-                    </div>
-                  )}
-                  {errors.editDate && <p className="mt-1 text-xs text-red-600">{errors.editDate}</p>}
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <Label className="mb-2 block text-sm font-bold text-slate-700">Exam Date <span className="text-red-500">*</span></Label>
+                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)}
+                      className={inputCls(!!errors.editDate || !!isHoliday(editDate))} />
+                    {isHoliday(editDate) && (
+                      <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-red-50 border border-red-200 px-2.5 py-1.5">
+                        <AlertTriangle size={12} className="text-red-500 shrink-0" />
+                        <p className="text-[10px] font-semibold text-red-600">{isHoliday(editDate)} is a holiday</p>
+                      </div>
+                    )}
+                    {errors.editDate && <p className="mt-1 text-xs text-red-600">{errors.editDate}</p>}
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-bold text-slate-700">Start Time <span className="text-red-500">*</span></Label>
+                    <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)} className={inputCls()} />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-bold text-slate-700">End Time <span className="text-red-500">*</span></Label>
+                    <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className={inputCls()} />
+                  </div>
                 </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Start Time <span className="text-red-500">*</span></Label>
-                  <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)} className={inputCls()} />
-                </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">End Time <span className="text-red-500">*</span></Label>
-                  <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className={inputCls()} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SF label="Assign Teacher" value={teacherId}
+                    options={staffOptions} placeholder="Select teacher (optional)"
+                    onChange={setTeacherId} />
+                  <div>
+                    <Label className="mb-2 block text-sm font-bold text-slate-700">Room No.</Label>
+                    <input type="text" value={roomNo} onChange={(e) => setRoomNo(e.target.value)}
+                      placeholder="e.g. 101"
+                      className={inputCls()} />
+                  </div>
                 </div>
               </div>
             ) : (

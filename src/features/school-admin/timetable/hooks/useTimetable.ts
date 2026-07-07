@@ -409,6 +409,18 @@ export const useFilteredExamTimetable = (
     staleTime: 1000 * 60 * 2,
   });
 
+// ─── Exam timetable by class + section (no exam name required) ─────────────────
+export const useExamTimetableByClassSection = (classId: string, sectionId: string) =>
+  useQuery({
+    queryKey: [...TIMETABLE_KEYS.all, "exam-by-class-section", classId, sectionId],
+    queryFn: async (): Promise<ExamTimetableListItem[]> => {
+      const res = await getAllExamTimetable({ class_id: classId, section_id: sectionId });
+      return Array.isArray(res) ? res : [];
+    },
+    enabled: !!classId && !!sectionId,
+    staleTime: 1000 * 60 * 2,
+  });
+
 // ─── Today's exam timetable (by date) ──────────────────────────────────────────
 export const useTodayExamTimetable = (date: string) =>
   useQuery({
@@ -636,7 +648,7 @@ export const useCreateExamTimetable = () => {
   return useMutation({
     mutationFn: (payload: CreateExamTimetablePayload) => createExamSlot(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
       toast.success("Exam timetable created successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -649,7 +661,7 @@ export const useBulkCreateExamTimetable = () => {
   return useMutation({
     mutationFn: (payload: BulkExamTimetablePayload) => bulkCreateExamTimetable(payload),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
       if (res.failed > 0) {
         toast.warning(`${res.inserted} added, ${res.failed} skipped (holiday/non-working day)`);
       } else {

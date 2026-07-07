@@ -118,6 +118,19 @@ export const getHomeworkByClass = async (params: {
   return res.data;
 };
 
+export const getHomeworkThisWeek = async (params: {
+  class_id: string;
+  section_id?: string;
+}) => {
+  const res = await api.get<ApiResponse<Homework[]>>("/tenant/homeworkthisweek", {
+    params: {
+      class_id: params.class_id,
+      ...(params.section_id && { section_id: params.section_id }),
+    },
+  });
+  return res.data;
+};
+
 export const updateHomeworkById = async (
   id: string,
   payload: Partial<{

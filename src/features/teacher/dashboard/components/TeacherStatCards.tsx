@@ -1,4 +1,5 @@
-import { Users, FileText, CheckSquare, Calendar } from "lucide-react";
+import { Users, FileText, CheckSquare, Calendar, BookOpen } from "lucide-react";
+import type { UpcomingExamItem } from "@/services/examtimetable.api";
 
 interface StatCard {
   label: string;
@@ -31,10 +32,11 @@ interface Props {
   attendanceThisMonth: number;
   leaveUsed: number;
   leaveAllocated: number;
+  nextExam?: UpcomingExamItem | null;
 }
 
-const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionName, homeworkPending, attendanceThisMonth, leaveUsed, leaveAllocated }: Props) => (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionName, homeworkPending, attendanceThisMonth, leaveUsed, leaveAllocated, nextExam }: Props) => (
+  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
     <Card
       label="Class Strength"
       value={`${currentStrength}/${totalStrength}`}
@@ -52,7 +54,7 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
     <Card
       label="Attendance"
       value={`${attendanceThisMonth}%`}
-      sub="Monthly average"
+      sub="Monthly attendance"
       accent="text-emerald-600"
       iconBg="bg-emerald-50"
       icon={<CheckSquare size={14} className="text-emerald-600" />}
@@ -64,6 +66,14 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
       accent="text-indigo-600"
       iconBg="bg-indigo-50"
       icon={<Calendar size={14} className="text-indigo-600" />}
+    />
+    <Card
+      label="Next Exam"
+      value={nextExam ? (nextExam.subject?.subject_name ?? "—") : "—"}
+      sub={nextExam ? nextExam.exam_date : "No upcoming exams"}
+      accent="text-purple-600"
+      iconBg="bg-purple-50"
+      icon={<BookOpen size={14} className="text-purple-600" />}
     />
   </div>
 );

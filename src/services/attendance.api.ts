@@ -269,6 +269,18 @@ export const getClassTodayAttendance = async (
   return data;
 };
 
+// GET class attendance for today (date param not supported by this endpoint)
+export const getClassAttendanceByDate = async (
+  class_id: string,
+  section_id: string,
+  _date: string
+): Promise<GetClassTodayAttendanceResponse> => {
+  const { data } = await api.get(`/tenant/getclasstodayattendance`, {
+    params: { class_id, section_id },
+  });
+  return data;
+};
+
 export const getAttendanceRoster = async (payload: {
   className: string;
   section: string;

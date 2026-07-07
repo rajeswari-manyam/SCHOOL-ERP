@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { getUserById } from "@/services/auth.api";
 import { getStudentById } from "../../services/student.api";
 import type { ParentDetail } from "../../services/student.api";
-
+import { useAuthStore } from "@/store/authStore";
 
 export interface ChildInfo {
   id: string;
@@ -49,39 +48,42 @@ export interface ChildInfo {
   createdAt: string;
   updatedAt: string;
 }
-export function useParentChildren(parentId: string) {
+
+// Reads the linked-student list straight from the OTP-verify response
+// (persisted in the auth store) instead of re-fetching it via getUserById.
+// The selected student is enriched with full detail (class/section names,
+// photo, etc.) so existing pages that read `activeChild.classDetail` and
+// friends keep working unchanged.
+export function useParentChildren() {
+  const students          = useAuthStore((s) => s.students);
+  const selectedStudent   = useAuthStore((s) => s.selectedStudent);
+  const setSelectedStudent = useAuthStore((s) => s.setSelectedStudent);
+
   const [children, setChildren] = useState<ChildInfo[]>([]);
-
-  const [activeChild, setActiveChild] = useState<ChildInfo | null>(() => {
-    const saved = localStorage.getItem("activeChild");
-    return saved ? JSON.parse(saved) : null;
-  });
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ FETCH DATA
   useEffect(() => {
-    if (!parentId) {
+    if (!students || students.length === 0) {
+      setChildren([]);
       setLoading(false);
       return;
     }
+
+    let cancelled = false;
 
     const fetchChildren = async () => {
       setLoading(true);
       setError(null);
       try {
-        const userRes = await getUserById(parentId);
-        const studentList = userRes.data.students ?? [];
-
-        const students: ChildInfo[] = await Promise.all(
-          studentList.map(async (item) => {
+        const enriched: ChildInfo[] = await Promise.all(
+          students.map(async (item) => {
             const student = await getStudentById(item.id);
 
             return {
               id: student.id,
               studentId: student.id,
-              name: `${student.first_name} ${student.last_name}`.trim(),
+              name: `${student.first_name} ${student.last_name}`.trim() || item.name,
               firstName: student.first_name,
               lastName: student.last_name,
               gender: student.gender,
@@ -90,11 +92,11 @@ export function useParentChildren(parentId: string) {
               address: student.address,
               photo: student.photo || "",
 
-              classId: student.class_id ?? "",
-              sectionId: student.sectionId ?? "",
+              classId: student.class_id ?? item.class_id ?? "",
+              sectionId: student.sectionId ?? item.sectionId ?? "",
               academicYearId: student.academicYearId ?? "",
 
-              rollNumber: student.roll_number,
+              rollNumber: student.roll_number ?? item.roll_number ?? "",
               admissionNumber: student.admission_number,
               admissionDate: student.admission_date,
               status: student.status,
@@ -127,42 +129,30 @@ export function useParentChildren(parentId: string) {
           })
         );
 
-        setChildren(students);
-
-        // ✅ keep previous selection
-      if (students.length > 0) {
-  const saved = localStorage.getItem("activeChild");
-
-  if (saved) {
-    const savedChild = JSON.parse(saved);
-
-    const matchedChild =
-      students.find((c) => c.studentId === savedChild.studentId) ||
-      students[0];
-
-    setActiveChild(matchedChild);
-  } else {
-    setActiveChild(students[0]);
-  }
-}
-
+        if (!cancelled) setChildren(enriched);
       } catch (err) {
         console.error("Error fetching children:", err);
-        setError("Failed to fetch children data");
+        if (!cancelled) setError("Failed to fetch children data");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchChildren();
-  }, [parentId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [students]);
 
-  // ✅ SAVE TO LOCALSTORAGE (SEPARATE HOOK)
-  useEffect(() => {
-    if (activeChild) {
-      localStorage.setItem("activeChild", JSON.stringify(activeChild));
-    }
-  }, [activeChild]);
+  const activeChild =
+    children.find((c) => c.studentId === selectedStudent?.id) ?? children[0] ?? null;
+
+  // Keeps the store's selectedStudent in sync so every other consumer
+  // (dashboard, protected routes, API calls) points at the same student.
+  const setActiveChild = (child: ChildInfo) => {
+    const match = students.find((s) => s.id === child.studentId);
+    setSelectedStudent(match ?? { id: child.studentId, name: child.name, roll_number: child.rollNumber, class_id: child.classId, sectionId: child.sectionId });
+  };
 
   return { children, activeChild, setActiveChild, loading, error };
 }

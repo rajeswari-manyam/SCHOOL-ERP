@@ -67,8 +67,6 @@ export const HomeworkPage = () => {
     thisWeekHomework,
     materials,
     loading, error, refetch,
-    weekDays,
-    selectedDay, setSelectedDay,
     submitModalOpen,
     selectedHomework,
     openSubmitModal,
@@ -120,9 +118,6 @@ export const HomeworkPage = () => {
       </div>
     );
   }
-
-  const firstDay = weekDays[0].fullDate;
-  const monthYear = firstDay.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 
   return (
     <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
@@ -188,50 +183,6 @@ export const HomeworkPage = () => {
 
         {/* MAIN */}
         <div className="flex-1 flex flex-col gap-4 min-w-0">
-
-          {/* Calendar strip */}
-          <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                🗓 {monthYear}
-              </span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto">
-              {weekDays.map((d) => {
-                const isActive =
-                  d.date === selectedDay.date &&
-                  d.month === selectedDay.month &&
-                  d.year === selectedDay.year;
-
-                const todayDate = new Date();
-                const isToday =
-                  d.date === todayDate.getDate() &&
-                  d.month === todayDate.getMonth() &&
-                  d.year === todayDate.getFullYear();
-
-                return (
-                  <button
-                    key={`${d.year}-${d.month}-${d.date}`}
-                    onClick={() => setSelectedDay(d)}
-                    className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-colors
-                      ${isActive
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-                      }`}
-                  >
-                    <span className={`text-[10px] font-semibold uppercase tracking-wide
-                      ${isActive ? "text-indigo-200" : "text-gray-400"}`}>
-                      {d.label}
-                    </span>
-                    <span className="text-sm font-medium">{d.date}</span>
-                    <span className={`w-1 h-1 rounded-full
-                      ${isActive ? "bg-white/60" : isToday ? "bg-indigo-500" : "bg-transparent"}`}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
           {/* This Week */}
           {activeTab === "week" && (

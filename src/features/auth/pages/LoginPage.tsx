@@ -12,11 +12,10 @@ import {
   Phone,
   School,
   Shield,
-  BookOpen,
   GraduationCap,
-  Users,
   UserSquare2,
   ChevronDown,
+  MessageCircle,
 } from "lucide-react";
 
 import { sendOtp } from "@/services/auth.api";
@@ -41,15 +40,15 @@ const studentLoginSchema = z.object({
 type StaffLoginValues   = z.infer<typeof staffLoginSchema>;
 type StudentLoginValues = z.infer<typeof studentLoginSchema>;
 type LoginMode          = "staff" | "student";
-type SchoolItem         = { school_name: string; school_code: string };
+type SchoolItem = {
+  school_name: string;
+  school_code: string;
+  logo?: string | null;
+  image?: string | null;
+};
 
-// ── Role display list (right panel) ───────────────────────────────────────────
-const ROLES = [
-  { label: "Teachers",    icon: BookOpen,      color: "text-emerald-500", bg: "bg-emerald-50" },
-  { label: "Students",    icon: GraduationCap, color: "text-violet-500",  bg: "bg-violet-50"  },
-  { label: "Parents",     icon: Users,         color: "text-rose-500",    bg: "bg-rose-50"    },
-  { label: "Accountants", icon: Shield,        color: "text-amber-500",   bg: "bg-amber-50"   },
-];
+// ── Feature pills (branding panel) ────────────────────────────────────────────
+const FEATURE_PILLS = ["Attendance Alerts", "Fee Reminders", "Broadcast Messages"];
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -66,7 +65,7 @@ const LoginPage = () => {
   const fetchSchools = async () => {
     try {
       setSchoolsLoading(true);
-      const response = await axiosInstance.get("/organization/getallschools");
+      const response = await axiosInstance.get("/organization/getallschooldetails");
       if (response?.data?.schools) setSchools(response.data.schools);
     } catch (error) {
       console.error(error);
@@ -106,6 +105,12 @@ const LoginPage = () => {
     setStudentValue("schoolcode", schoolCode);
   };
 
+  // ── Selected school (for the right-panel logo) ────────────────────────────────
+  const selectedSchoolCode =
+    loginMode === "staff" ? watchStaff("schoolcode") : watchStudent("schoolcode");
+  const selectedSchool = schools.find((s) => s.school_code === selectedSchoolCode) ?? null;
+  const selectedSchoolLogo = selectedSchool?.logo || selectedSchool?.image || null;
+
   // ── Staff login ──────────────────────────────────────────────────────────────
   const onStaffSubmit = async (values: StaffLoginValues) => {
     setLoading(true);
@@ -116,17 +121,17 @@ const LoginPage = () => {
       });
 
       if (response?.status === true) {
+        const school = schools.find((s) => s.school_code === values.schoolcode);
+
         // Save meta for OtpPage
         localStorage.setItem("phone",      values.phone);
         localStorage.setItem("schoolcode", values.schoolcode);
         localStorage.setItem("userType",   response.userType);
+        localStorage.setItem("schoolName", school?.school_name ?? "");
+        localStorage.setItem("schoolLogo", school?.logo || school?.image || "");
 
         if (import.meta.env.DEV && response.otp) {
-          console.log(
-            "%c🔑 DEV OTP:",
-            "font-size:16px; font-weight:bold; color:#d97706;",
-            response.otp
-          );
+          localStorage.setItem("otp", response.otp);
         }
 
         toast.success(response.message ?? "OTP sent successfully!");
@@ -198,9 +203,87 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex bg-white">
 
-      {/* ── Left panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 xs:px-6 py-8 sm:py-12 sm:px-10">
-        <div className="w-full max-w-md">
+      {/* ── Left panel (school branding) ── */}
+<div className="hidden lg:flex w-[600px] xl:w-[720px] 2xl:w-[820px] flex-col bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-violet-500/20 blur-3xl" />
+        </div>
+
+        <div className="relative flex flex-col items-center justify-center px-10 h-full text-center">
+          {/* Mockup frame */}
+          <div className="relative w-full max-w-sm h-64 rounded-[2rem] bg-violet-600/90 border border-white/20 shadow-2xl overflow-hidden flex flex-col items-center justify-center mb-8">
+            {selectedSchoolLogo ? (
+              <>
+                <img
+                  src={selectedSchoolLogo}
+                  alt={selectedSchool?.school_name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <div className="relative mt-auto mb-5 text-center">
+                  <p className="text-white font-bold text-sm tracking-wide uppercase">
+                    {selectedSchool?.school_name}
+                  </p>
+                  <p className="text-indigo-200 text-xs mt-1">Code: {selectedSchool?.school_code}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/15 flex items-center justify-center">
+                  <GraduationCap size={32} className="text-white" />
+                </div>
+                <p className="mt-4 text-white font-bold text-sm tracking-wide uppercase">
+                  {selectedSchool ? selectedSchool.school_name : "School Management"}
+                </p>
+                {selectedSchool && (
+                  <p className="text-indigo-200 text-xs mt-1">Code: {selectedSchool.school_code}</p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Quote */}
+          <h2 className="text-2xl xl:text-[28px] font-bold text-white leading-snug max-w-sm">
+            "Complete school management,<br />automated on WhatsApp."
+          </h2>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-7 max-w-sm">
+            {FEATURE_PILLS.map((label) => (
+              <span
+                key={label}
+                className="px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+
+          {/* Trust caption */}
+          <p className="mt-7 text-indigo-200/80 text-[11px] font-semibold uppercase tracking-widest">
+            Trusted by 200+ schools across India
+          </p>
+
+          <div className="mt-8 flex items-center gap-2 text-indigo-300/70 text-xs">
+            <Shield size={12} />
+            <span>256-bit encrypted · ISO 27001 certified</span>
+          </div>
+        </div>
+
+        {/* Floating help button */}
+        <a
+          href="#"
+          className="absolute bottom-6 right-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-lg transition-colors"
+        >
+          <MessageCircle size={15} />
+          Get Help
+        </a>
+      </div>
+
+      {/* ── Right panel (login form) ── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 xs:px-6 py-8 sm:py-12 sm:px-10 bg-[#F8F9FF]">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-indigo-100 border border-slate-100 p-6 sm:p-8">
 
           {/* Logo */}
           <div className="mb-8">
@@ -405,47 +488,6 @@ const LoginPage = () => {
               Contact your school administrator
             </a>
           </p>
-        </div>
-      </div>
-
-      {/* ── Right panel ── */}
-      <div className="hidden lg:flex w-[480px] xl:w-[520px] flex-col bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-violet-500/20 blur-3xl" />
-        </div>
-        <div className="relative flex flex-col justify-center px-12 h-full">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium w-fit mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Trusted by 200+ schools
-          </div>
-          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-            One platform.<br />Every role.<br />
-            <span className="text-indigo-200">Fully connected.</span>
-          </h2>
-          <p className="text-indigo-200 text-sm leading-relaxed mb-10 max-w-xs">
-            From classrooms to boardrooms — vidyatracker connects teachers,
-            students, parents and admins into one secure ecosystem.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {ROLES.map(({ label, icon: Icon, color, bg }) => (
-              <div
-                key={label}
-                className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl bg-white/10 border border-white/15"
-              >
-                <div
-                  className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}
-                >
-                  <Icon size={15} className={color} />
-                </div>
-                <span className="text-white text-sm font-medium">{label}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-12 flex items-center gap-2 text-indigo-300/70 text-xs">
-            <Shield size={12} />
-            <span>256-bit encrypted · ISO 27001 certified</span>
-          </div>
         </div>
       </div>
 

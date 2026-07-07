@@ -3,27 +3,26 @@ import {
   getAllAttendance,
   getAllClassesTodayAttendance,
   getClassTodayAttendance,
+  getClassAttendanceByDate,
   getStudentsByClassSection,
   createAttendance,
+  updateAttendanceById,
+  updateStaffAttendanceById,
+  deleteStaffAttendanceById,
+  createStaffAttendance,
+  getAllStaffAttendance,
   getAbsentMoreThan5Days,
   type CreateAttendancePayload,
+  type UpdateAttendancePayload,
+  type UpdateStaffAttendancePayload,
+  type CreateStaffAttendancePayload as ApiCreateStaffAttendancePayload,
 } from "../../../../services/attendance.api";
 import {
   getAllHolidays,
   createHoliday,
   type CreateHolidayPayload,
 } from "../../../../services/holidays.api";
-import {
-  updateStaffAttendanceById,
-  deleteStaffAttendanceById,
-  type UpdateStaffAttendancePayload,
-} from "../../../../services/attendance.api";
 import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
-import {
-  createStaffAttendance,
-  getAllStaffAttendance,
-  type CreateStaffAttendancePayload as ApiCreateStaffAttendancePayload,
-} from "../../../../services/attendance.api";
 import { fetchStaff } from "../../../../services/school-staff.api";
 import { getAuthUser } from "../../../../store/authStore";
 import { useAttendanceStore } from "../store";
@@ -285,5 +284,32 @@ export const useChronicAbsentees = () => {
     queryFn:  () => getAbsentMoreThan5Days(),
     staleTime: 2 * 60_000,
     retry: 1,
+  });
+};
+
+// ─── Class Attendance by Date ─────────────────────────────────────────────────
+export const useClassAttendanceByDate = (
+  classId: string,
+  sectionId: string,
+  date: string
+) => {
+  return useQuery({
+    queryKey: [...attendanceKeys.all, "byDate", classId, sectionId, date] as const,
+    queryFn:  () => getClassAttendanceByDate(classId, sectionId, date),
+    enabled:  !!classId && !!sectionId && !!date,
+    staleTime: 30_000,
+    retry: 1,
+  });
+};
+
+// ─── Update Individual Student Attendance ─────────────────────────────────────
+export const useUpdateStudentAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateAttendancePayload }) =>
+      updateAttendanceById(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+    },
   });
 };

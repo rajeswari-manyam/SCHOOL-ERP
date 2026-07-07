@@ -53,6 +53,14 @@ export interface Student {
   studentName?: string;
 
   parentDetail?: ParentDetail[];
+
+  classTeacher?: {
+    id?: string;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+    email?: string;
+  } | null;
 }
 
 export interface ApiResponse<T> {

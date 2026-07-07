@@ -26,9 +26,11 @@ interface AttendanceState {
   goToPrevMonth: () => void;
   goToNextMonth: () => void;
 
-  // Mark Attendance Modal (visibility only; form state lives in the component)
+  // Mark Attendance Modal
   showMarkAttendanceModal: boolean;
-  openMarkAttendance: () => void;
+  prefilledClassId: string;
+  prefilledSectionId: string;
+  openMarkAttendance: (classId?: string, sectionId?: string) => void;
   closeMarkAttendance: () => void;
 
   // Add Holiday Modal
@@ -79,8 +81,12 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   },
 
   showMarkAttendanceModal: false,
-  openMarkAttendance: () => set({ showMarkAttendanceModal: true }),
-  closeMarkAttendance: () => set({ showMarkAttendanceModal: false }),
+  prefilledClassId: "",
+  prefilledSectionId: "",
+  openMarkAttendance: (classId = "", sectionId = "") =>
+    set({ showMarkAttendanceModal: true, prefilledClassId: classId, prefilledSectionId: sectionId }),
+  closeMarkAttendance: () =>
+    set({ showMarkAttendanceModal: false, prefilledClassId: "", prefilledSectionId: "" }),
 
   showAddHolidayModal: false,
   openAddHoliday: () => set({ showAddHolidayModal: true }),

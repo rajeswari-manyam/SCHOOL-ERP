@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getDashboard } from "@/services/accountant-reports.api";
+import { getDashboard, getDashboardSummary } from "@/services/accountant-reports.api";
 import type {
   DashboardRecentPayment,
   DashboardSummary,
@@ -32,25 +32,22 @@ export const useDashboardData = () => {
       .catch(() => {});
   }, [userId]);
 
-  // Fetch dashboard data
+  // Fetch stat card summary from dedicated endpoint
+  useEffect(() => {
+    getDashboardSummary()
+      .then((res) => {
+        if (!res.status) return;
+        setSummary(res.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch transactions, payment modes, and monthly trend
   useEffect(() => {
     getDashboard()
       .then((res) => {
         if (!res.status) return;
         const d = res.data;
-
-        setSummary({
-          collected_today:    d.summary.today_collection,
-          month_collection:   d.summary.month_collection,
-          weekly_collection:  0,
-          fee_collection:     d.summary.total_income,
-          other_income:       d.summary.other_income,
-          total_income:       d.summary.total_income,
-          total_expense:      d.summary.total_expenses,
-          total_pending_fees: d.summary.pending_amount,
-          net_profit: d.summary.net_balance > 0 ? d.summary.net_balance : 0,
-          net_loss:   d.summary.net_balance < 0 ? Math.abs(d.summary.net_balance) : 0,
-        });
 
         setPaymentModes(
           d.payment_mode_summary.map((p) => ({

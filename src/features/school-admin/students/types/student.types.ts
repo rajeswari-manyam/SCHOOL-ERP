@@ -58,6 +58,7 @@ export interface UpdateStudentPayload {
   date_of_birth?: string;
   blood_group?: BloodGroup;
   address?: string;
+  photo?: File | null;
   class?: string;
   section?: string;
   roll_number?: string;
@@ -78,7 +79,7 @@ export interface CreateStudentPayload {
   date_of_birth: string;
   blood_group?: BloodGroup;
   address?: string;
-  photo?: string;
+  photo?: File | null;
   class_id?: string;
   sectionId?: string;
   academicYearId?: string;

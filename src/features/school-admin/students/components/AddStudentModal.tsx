@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X, ArrowRight, MessageCircle } from "lucide-react";
+import { Loader2, X, ArrowRight, MessageCircle, Camera, Trash2 } from "lucide-react";
 
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
@@ -48,16 +48,19 @@ const inputCls = "w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-
 
 /* ── Field wrapper ── */
 const Field = ({
-  label, children, className = "", required = false, hasError = false,
+  label, children, className = "", required = false, hasError = false, errorText,
 }: {
-  label: string; children: React.ReactNode; className?: string; required?: boolean; hasError?: boolean;
+  label: string; children: React.ReactNode; className?: string; required?: boolean; hasError?: boolean; errorText?: string;
 }) => (
   <div className={`flex flex-col gap-1.5 ${className}`}>
     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
       {label}{required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
     {children}
-    {hasError && <p className="text-[10px] text-red-500 font-medium -mt-0.5">This field is required</p>}
+    {errorText
+      ? <p className="text-[10px] text-red-500 font-medium -mt-0.5">{errorText}</p>
+      : hasError && <p className="text-[10px] text-red-500 font-medium -mt-0.5">This field is required</p>
+    }
   </div>
 );
 
@@ -112,9 +115,12 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
   const [errors, setErrors] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [autoGenerate, setAutoGenerate] = useState(false);
   const [studentData, setStudentData] = useState<{ id?: string; school_id?: string } | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAuthStore();
   const academicYearId = useUIStore((s) => s.academicYearId);
@@ -139,8 +145,20 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
     }
   }, [form.sameAsFather, form.fatherPhone]);
 
-  const clearError = (field: string) =>
+  const clearError = (field: string) => {
     setErrors((prev) => { const next = new Set(prev); next.delete(field); return next; });
+    setFieldErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+  };
+
+  // Parse API error message → which field it belongs to
+  const parseApiFieldError = (msg: string): { field: string | null; text: string } => {
+    const lower = msg.toLowerCase();
+    if (lower.includes("admission")) return { field: "admissionNo", text: msg };
+    if (lower.includes("roll"))      return { field: "rollNumber",  text: msg };
+    if (lower.includes("email"))     return { field: "email",       text: msg };
+    if (lower.includes("phone"))     return { field: "fatherPhone", text: msg };
+    return { field: null, text: msg };
+  };
 
   const set = (field: keyof AddStudentFormData) => (value: string | boolean) => {
     clearError(String(field));
@@ -158,6 +176,24 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
       }
       return { ...prev, [field]: value } as AddStudentFormData;
     });
+  };
+
+  const handlePhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setForm((prev) => ({ ...prev, photo: file }));
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(null);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setForm((prev) => ({ ...prev, photo: null }));
+    setPhotoPreview(null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
   const e = (field: string) => errors.has(field);
@@ -188,6 +224,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
     if (!validateStep1()) return;
     setLoading(true);
     setFormError(null);
+    setFieldErrors({});
     try {
       const response = await onSubmit(form);
       const student = response?.data;
@@ -199,7 +236,14 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
       setStep(2);
     } catch (err: any) {
       setStudentData(null);
-      setFormError(err?.message || "Student API error");
+      const msg = err?.message || "Student API error";
+      const { field, text } = parseApiFieldError(msg);
+      if (field) {
+        setFieldErrors({ [field]: text });
+        setErrors((prev) => new Set([...prev, field]));
+      } else {
+        setFormError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -229,6 +273,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
       ]);
       setForm(EMPTY_FORM);
       setStudentData(null);
+      setPhotoPreview(null);
       setStep(1);
       onClose();
     } catch (err: any) {
@@ -267,6 +312,32 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
           {step === 1 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+              {/* Photo */}
+              <div className="sm:col-span-2 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                  {photoPreview
+                    ? <img src={photoPreview} alt="Student" className="w-full h-full object-cover" />
+                    : <Camera className="w-5 h-5 text-gray-300" />
+                  }
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Student Photo</label>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => photoInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                      {photoPreview ? "Change" : "Upload Photo"}
+                    </button>
+                    {photoPreview && (
+                      <button type="button" onClick={handleRemovePhoto}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                </div>
+              </div>
+
               <Field label="First Name" required hasError={e("firstName")}>
                 <input className={inputCls} placeholder="e.g. Rahul"
                   value={form.firstName} onChange={(ev) => set("firstName")(ev.target.value)} />
@@ -283,7 +354,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
               </Field>
 
               {/* Admission Number */}
-              <Field label="Admission Number" required hasError={e("admissionNo")}>
+              <Field label="Admission Number" required hasError={e("admissionNo")} errorText={fieldErrors["admissionNo"]}>
                 <div className="flex items-center justify-between mb-1 -mt-0.5">
                   <span />
                   <div className="flex items-center gap-1.5">
@@ -292,7 +363,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                   </div>
                 </div>
                 <input
-                  className={`${inputCls} ${autoGenerate ? "bg-indigo-50 text-indigo-700 font-semibold border-indigo-200" : ""}`}
+                  className={`${inputCls} ${autoGenerate ? "bg-indigo-50 text-indigo-700 font-semibold border-indigo-200" : ""} ${fieldErrors["admissionNo"] ? "border-red-400 ring-1 ring-red-300" : ""}`}
                   placeholder="ADM-001"
                   value={form.admissionNo}
                   readOnly={autoGenerate}
@@ -367,8 +438,8 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                   placeholder="Select Blood Group" className="h-11 rounded-xl bg-slate-50 border-slate-200" />
               </Field>
 
-              <Field label="Roll Number">
-                <input className={inputCls} placeholder="e.g. 24"
+              <Field label="Roll Number" errorText={fieldErrors["rollNumber"]}>
+                <input className={`${inputCls} ${fieldErrors["rollNumber"] ? "border-red-400 ring-1 ring-red-300" : ""}`} placeholder="e.g. 24"
                   value={form.rollNumber} onChange={(ev) => set("rollNumber")(ev.target.value)} />
               </Field>
 

@@ -33,14 +33,17 @@ const RESEND_COUNTDOWN = 45;
 
 const OtpPage = () => {
   const navigate = useNavigate();
-  const setAuth        = useAuthStore((s) => s.setAuth);
-  const setUserProfile = useAuthStore((s) => s.setUserProfile);
+  const setAuth          = useAuthStore((s) => s.setAuth);
+  const setUserProfile   = useAuthStore((s) => s.setUserProfile);
+  const setParentSession = useAuthStore((s) => s.setParentSession);
 
   // ── Read meta saved by LoginPage after sendOtp ──────────────────────────────
   const phone       = localStorage.getItem("phone")      ?? "";
   const schoolcode  = localStorage.getItem("schoolcode") ?? "";
   const rawUserType = localStorage.getItem("userType")   ?? "Teacher";
   const devOtp      = localStorage.getItem("otp")        ?? "";
+  const schoolName  = localStorage.getItem("schoolName") || "";
+  const schoolLogo  = localStorage.getItem("schoolLogo") || "";
 
   const normalizedUserType =
     rawUserType.charAt(0).toUpperCase() + rawUserType.slice(1).toLowerCase();
@@ -51,14 +54,18 @@ const OtpPage = () => {
     if (!phone) navigate("/login", { replace: true });
   }, [phone, navigate]);
 
-  // Log OTP in dev (never auto-fill)
-  if (import.meta.env.DEV && devOtp) {
-    console.log(
-      "%c🔑 DEV OTP:",
-      "font-size:16px; font-weight:bold; color:#d97706;",
-      devOtp
-    );
-  }
+  // Log OTP in dev exactly once per value — ref prevents StrictMode double-fire
+  const loggedOtpRef = useRef("");
+  useEffect(() => {
+    if (import.meta.env.DEV && devOtp && devOtp !== loggedOtpRef.current) {
+      loggedOtpRef.current = devOtp;
+      console.log(
+        "%c🔑 DEV OTP:",
+        "font-size:16px; font-weight:bold; color:#d97706;",
+        devOtp
+      );
+    }
+  }, [devOtp]);
 
   // ── State ───────────────────────────────────────────────────────────────────
   const [otp,       setOtp]       = useState("");
@@ -66,7 +73,8 @@ const OtpPage = () => {
   const [loading,   setLoading]   = useState(false);
   const [timer,     setTimer]     = useState(RESEND_COUNTDOWN);
   const [canResend, setCanResend] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submittingRef = useRef(false);
 
   // ── Countdown ───────────────────────────────────────────────────────────────
   const startTimer = useCallback(() => {
@@ -120,6 +128,8 @@ const OtpPage = () => {
       return;
     }
 
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setError("");
     setLoading(true);
 
@@ -134,11 +144,12 @@ const OtpPage = () => {
       }
 
       const token  = response.token ?? `token-${Date.now()}`;
-      const userId = response.userId ?? response.user?.id ?? response.data?.id ?? "";
+      const userId = response.userId ?? response.user?.id ?? response.data?.id ?? response.parent?.id ?? "";
 
       // Use the verified userType from the OTP response if available;
       // fall back to the one returned by sendOtp (stored in localStorage).
       const verifiedUserType = (response.userType ?? rawUserType) as UserType;
+      const isParent = verifiedUserType.toLowerCase() === "parent";
 
       // ── Step 2: commit token to Zustand IMMEDIATELY ───────────────────────
       // The axios interceptor reads useAuthStore.getState().token — NOT
@@ -146,9 +157,9 @@ const OtpPage = () => {
       // Bearer header is present on that request.
       const initialUser: AuthUser = {
         id:          userId,
-        name:        response.name ?? "User",
-        phone:       phone,
-        email:       response.email,
+        name:        response.parent?.parent_name ?? response.name ?? "User",
+        phone:       response.parent?.phone ?? phone,
+        email:       response.parent?.email ?? response.email,
         userType:    verifiedUserType,
         schoolcode:  schoolcode,
         role:        response.role,
@@ -157,13 +168,25 @@ const OtpPage = () => {
       setAuth(initialUser, token);
       localStorage.setItem("userId", userId);
 
+      // ── Parent Portal — seed parent + students[], auto-select if only one ──
+      let landingRoute = USER_TYPE_ROUTE_MAP[verifiedUserType] ?? "/login";
+      if (isParent && response.parent) {
+        setParentSession(response.parent, response.students ?? []);
+        const students = response.students ?? [];
+        const { selectedStudent } = useAuthStore.getState();
+        if (students.length > 1 && !selectedStudent) {
+          landingRoute = "/parent/select-student";
+        }
+      }
+
       toast.success("OTP Verified Successfully!");
-      const route = USER_TYPE_ROUTE_MAP[verifiedUserType] ?? "/login";
-      navigate(route, { replace: true });
+      navigate(landingRoute, { replace: true });
 
       // ── Step 4: enrich profile after navigation (non-fatal) ─────────────
       // Moved after navigate so a 401 on getUserById doesn't kill the session
       // before the user reaches the dashboard (the 401 interceptor logs out).
+      // Not needed for Parent — the OTP response already carries parent + students.
+      if (isParent) return;
       try {
         getUserById(userId).then((userProfile) => {
           if (userProfile?.status) setUserProfile(userProfile);
@@ -181,6 +204,7 @@ const OtpPage = () => {
       toast.error(msg);
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -232,7 +256,68 @@ const OtpPage = () => {
   return (
     <div className="min-h-screen flex bg-white">
 
-      {/* ── Left: OTP panel ── */}
+      {/* ── Left: School branding panel ── */}
+      <div className="hidden lg:flex w-[600px] xl:w-[720px]  items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-violet-500/20 blur-3xl" />
+        </div>
+        <div className="relative text-center px-12">
+          {/* Mockup frame */}
+        <div className="relative w-full max-w-md h-80 xl:h-96 rounded-[2rem] bg-violet-600/90 border border-white/20 shadow-2xl overflow-hidden flex flex-col items-center justify-center mb-8 mx-auto">
+            {schoolLogo ? (
+              <>
+                <img
+                  src={schoolLogo}
+                  alt={schoolName}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <div className="relative mt-auto mb-5 text-center">
+                  <p className="text-white font-bold text-sm tracking-wide uppercase">{schoolName}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/15 flex items-center justify-center">
+                  <GraduationCap size={32} className="text-white" />
+                </div>
+                <p className="mt-4 text-white font-bold text-sm tracking-wide uppercase">
+                  {schoolName || "School Management"}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="flex justify-center gap-2 mb-10">
+            {["●", "●", "●", "●", "●", "●"].map((dot, i) => (
+              <div
+                key={i}
+                className={`w-10 h-12 rounded-lg flex items-center justify-center text-xl font-bold border-2 transition-all duration-300 ${
+                  i < 3
+                    ? `${visual.accent} border-transparent text-white shadow-lg`
+                    : "border-white/20 bg-white/5 text-white/20"
+                }`}
+              >
+                {i < 3 ? dot : "–"}
+              </div>
+            ))}
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3">
+            Verify your identity
+          </h3>
+          <p className="text-indigo-200 text-sm leading-relaxed max-w-xs mx-auto">
+            Enter the one-time password sent to your registered mobile number to
+            continue.
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-2 text-indigo-300/70 text-xs">
+            <Shield size={11} />
+            <span>Valid for 10 minutes · Do not share</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right: OTP panel ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 xs:px-6 py-8 sm:py-12 sm:px-10">
         <div className="w-full max-w-md">
 
@@ -374,53 +459,6 @@ const OtpPage = () => {
           <div className="flex items-center gap-2 mt-8 text-xs text-slate-400">
             <Shield size={12} />
             <span>Secure encrypted verification · Manyam Technologies</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Right: Dark accent panel ── */}
-      <div className="hidden lg:flex w-[480px] xl:w-[520px] items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="absolute inset-0 pointer-events-none">
-          <div
-            className={`absolute -top-20 -right-20 w-80 h-80 rounded-full ${visual.accent} opacity-15 blur-3xl`}
-          />
-          <div
-            className={`absolute -bottom-20 -left-20 w-64 h-64 rounded-full ${visual.accent} opacity-10 blur-2xl`}
-          />
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-            }}
-          />
-        </div>
-        <div className="relative text-center px-12">
-          <div className="flex justify-center gap-2 mb-10">
-            {["●", "●", "●", "●", "●", "●"].map((dot, i) => (
-              <div
-                key={i}
-                className={`w-10 h-12 rounded-lg flex items-center justify-center text-xl font-bold border-2 transition-all duration-300 ${
-                  i < 3
-                    ? `${visual.accent} border-transparent text-white shadow-lg`
-                    : "border-white/20 bg-white/5 text-white/20"
-                }`}
-              >
-                {i < 3 ? dot : "–"}
-              </div>
-            ))}
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-3">
-            Verify your identity
-          </h3>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
-            Enter the one-time password sent to your registered mobile number to
-            continue.
-          </p>
-          <div className="mt-8 flex items-center justify-center gap-2 text-slate-500 text-xs">
-            <Shield size={11} />
-            <span>Valid for 10 minutes · Do not share</span>
           </div>
         </div>
       </div>

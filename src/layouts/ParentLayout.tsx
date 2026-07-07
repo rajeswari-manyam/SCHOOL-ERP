@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNavBar";
 import WhatsAppFAB from "../components/ui/whatsappfab";
 import { X } from "lucide-react";
@@ -7,56 +7,67 @@ import { useAuthStore } from "@/store/authStore";
 import { useParentChildren } from "./hooks/useParentChildren";
 
 const ParentLayout = () => {
-  const authUser = useAuthStore((s) => s.user);
-  // Always derive parentId — no early return before hooks
-  const parentId = localStorage.getItem("parentId") || authUser?.id || "";
+  const students = useAuthStore((s) => s.students);
+  const location = useLocation();
 
-  // Hooks always called unconditionally
-  const { children, activeChild, setActiveChild, loading } =
-    useParentChildren(parentId);
+  const { children, activeChild, setActiveChild, loading } = useParentChildren();
 
   const [showChildModal, setShowChildModal] = useState(false);
 
-  // Guards AFTER all hooks
-  if (!parentId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        No parent ID found
-      </div>
-    );
-  }
+  // Scroll to top on every page navigation
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location.pathname]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading profile...
-      </div>
-    );
-  }
-
-  if (!activeChild) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        No student profiles found
-      </div>
-    );
-  }
-
+  // ── Always render the shell so <Outlet> stays mounted ──────────────────────
+  // Early returns that remove <Outlet> from the tree cause React Router v7
+  // to lose the route context and stale-render the previous page.
   return (
     <div className="min-h-screen bg-[#F4F6FA] overflow-x-hidden">
-      <ParentTopNavBar
-        activeChild={activeChild}
-        onSwitchChild={() => setShowChildModal(true)}
-      />
+
+      {/* Nav: only shown when we have an active child */}
+      {activeChild && (
+        <ParentTopNavBar
+          activeChild={activeChild}
+          onSwitchChild={() => setShowChildModal(true)}
+          hasMultipleChildren={children.length > 1}
+        />
+      )}
 
       <main
         className={
           showChildModal ? "blur-sm pointer-events-none select-none" : ""
         }
       >
-        <Outlet context={{ activeChild }}  />
+        {/* Loading screen — Outlet still mounts below (zero-height, invisible) */}
+        {loading && (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-gray-400">
+              <div className="w-7 h-7 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+              <p className="text-sm">Loading profile…</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && students.length === 0 && (
+          <div className="min-h-screen flex items-center justify-center text-gray-500 text-sm">
+            No student is linked to this parent.
+          </div>
+        )}
+
+        {!loading && students.length > 0 && !activeChild && (
+          <div className="min-h-screen flex items-center justify-center text-gray-500 text-sm">
+            No student profiles found.
+          </div>
+        )}
+
+        {/* Always keep Outlet in the tree — hidden while loading */}
+        <div className={loading || students.length === 0 || !activeChild ? "hidden" : ""}>
+          <Outlet context={{ activeChild }} />
+        </div>
       </main>
 
+      {/* Switch-child modal */}
       {showChildModal && (
         <>
           <div
@@ -79,7 +90,7 @@ const ParentLayout = () => {
               </div>
               <div className="p-4 space-y-2">
                 {children.map((child) => {
-                  const isActive = activeChild.studentId === child.studentId;
+                  const isActive = activeChild?.studentId === child.studentId;
                   return (
                     <button
                       key={child.studentId}

@@ -1,7 +1,7 @@
 // src/store/authStore.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { AuthUser, UserType, GetUserByIdResponse } from "@/features/auth/types/auth.types";
+import type { AuthUser, UserType, GetUserByIdResponse, Parent, Student } from "@/features/auth/types/auth.types";
 
 // ── API userType  →  dashboard route ─────────────────────────────────────────
 export const USER_TYPE_ROUTE_MAP: Record<string, string> = {
@@ -53,12 +53,22 @@ interface AuthState {
   userType: UserType | null;
   role: string | null;           // lowercase role key, e.g. "teacher"
 
-  
+  // ── Parent Portal — multi-student support ────────────────────────────────
+  parent: Parent | null;
+  students: Student[];
+  selectedStudent: Student | null;
+
   setLoginMeta: (userType: UserType, phone: string, schoolcode: string) => void;
 
   setAuth: (user: AuthUser, token: string) => void;
 
   login: (token: string, user: Partial<AuthUser>, rawRole: string) => void;
+
+  // Called after OTP verify for Parent userType — seeds parent + students,
+  // auto-selecting when there's exactly one student.
+  setParentSession: (parent: Parent, students: Student[]) => void;
+
+  setSelectedStudent: (student: Student | null) => void;
 
   // Called after getUserById — merges full profile into user
   setUserProfile: (profile: GetUserByIdResponse) => void;
@@ -80,6 +90,10 @@ export const useAuthStore = create<AuthState>()(
       token:    null,
       userType: null,
       role:     null,
+
+      parent:          null,
+      students:        [],
+      selectedStudent: null,
 
       // ── After LOGIN API ───────────────────────────────────────────────────
       setLoginMeta: (userType, phone, schoolcode) => {
@@ -126,6 +140,20 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem("userId", user.id);
       },
 
+      // ── After OTP VERIFY (Parent) ─────────────────────────────────────────
+      setParentSession: (parent, students) => {
+        const prevSelected = get().selectedStudent;
+        const restored = prevSelected
+          ? students.find((s) => s.id === prevSelected.id) ?? null
+          : null;
+        const selectedStudent =
+          students.length === 1 ? students[0] : restored;
+
+        set({ parent, students, selectedStudent });
+      },
+
+      setSelectedStudent: (student) => set({ selectedStudent: student }),
+
       // ── After getUserById — merge full profile into existing user ─────────
       setUserProfile: (profile) => {
         const current = get().user;
@@ -159,13 +187,19 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        set({ user: null, token: null, userType: null, role: null });
+        set({
+          user: null, token: null, userType: null, role: null,
+          parent: null, students: [], selectedStudent: null,
+        });
         localStorage.removeItem("__auth_meta__");
         localStorage.removeItem("userType");
         localStorage.removeItem("phone");
         localStorage.removeItem("schoolcode");
         localStorage.removeItem("otp");
         localStorage.removeItem("userId");
+        localStorage.removeItem("activeChild");
+        localStorage.removeItem("schoolName");
+        localStorage.removeItem("schoolLogo");
       },
 
       isAuthenticated: () => {
@@ -185,10 +219,13 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        user:     state.user,
-        token:    state.token,
-        userType: state.userType,
-        role:     state.role,
+        user:            state.user,
+        token:           state.token,
+        userType:        state.userType,
+        role:            state.role,
+        parent:          state.parent,
+        students:        state.students,
+        selectedStudent: state.selectedStudent,
       }),
     }
   )

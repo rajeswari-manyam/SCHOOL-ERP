@@ -5,8 +5,14 @@ import {
   useAttendanceClasses,
   useAttendanceSections,
   useStudentsByClassSection,
+  useClassAttendanceByDate,
   useSubmitAttendance,
 } from "../hooks/useAttendance";
+import {
+  getAllAttendance,
+  updateAttendanceById,
+} from "../../../../services/attendance.api";
+import type { ClassTodayStudentRecord } from "../../../../services/attendance.api";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../../../../components/ui/card";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
@@ -21,17 +27,31 @@ interface StudentRow {
   rollNo: string;
   name: string;
   isPresent: boolean;
+  isMarked: boolean; // has an existing attendance record for this date
 }
 
 const MarkAttendanceModal = () => {
-  const { showMarkAttendanceModal, closeMarkAttendance } = useAttendanceStore();
+  const { showMarkAttendanceModal, closeMarkAttendance, prefilledClassId, prefilledSectionId } =
+    useAttendanceStore();
 
-  // Selected IDs
-  const [selectedClassId, setSelectedClassId] = useState("");
-  const [selectedSectionId, setSelectedSectionId] = useState("");
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Selected IDs — initialised from store prefill when modal opens
+  const [selectedClassId, setSelectedClassId] = useState(prefilledClassId);
+  const [selectedSectionId, setSelectedSectionId] = useState(prefilledSectionId);
+  const [date, setDate] = useState(todayStr);
 
   // Student rows local state
   const [rows, setRows] = useState<StudentRow[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  // Sync selections when modal opens with a prefilled class/section (Edit button)
+  useEffect(() => {
+    if (showMarkAttendanceModal) {
+      if (prefilledClassId)   setSelectedClassId(prefilledClassId);
+      if (prefilledSectionId) setSelectedSectionId(prefilledSectionId);
+    }
+  }, [showMarkAttendanceModal, prefilledClassId, prefilledSectionId]);
 
   // ── Fetch classes ──
   const { data: classesData, isLoading: classesLoading } = useAttendanceClasses();
@@ -64,19 +84,32 @@ const MarkAttendanceModal = () => {
     error: studentsError,
   } = useStudentsByClassSection(selectedClassId, selectedSectionId);
 
-  // Populate rows when students load — default all present
+  // ── Fetch existing attendance for the selected date ──
+  const { data: existingAttendance, isLoading: attendanceLoading } =
+    useClassAttendanceByDate(selectedClassId, selectedSectionId, date);
+
+  // Populate rows — merge students with any existing records for the date
   useEffect(() => {
-    if (studentsData?.data) {
-      setRows(
-        studentsData.data.map((s) => ({
+    if (!studentsData?.data) return;
+    // Build a set of already-marked student names (attendance_status from the date's records)
+    const existingByName = new Map<string, string>(); // name → status
+    (existingAttendance?.students ?? []).forEach((s: ClassTodayStudentRecord) => {
+      existingByName.set(s.student_name.toLowerCase().trim(), s.attendance_status);
+    });
+    setRows(
+      studentsData.data.map((s) => {
+        const fullName = `${s.first_name} ${s.last_name}`.trim();
+        const existingStatus = existingByName.get(fullName.toLowerCase());
+        return {
           studentId: s.id,
           rollNo: s.roll_number,
-          name: `${s.first_name}${s.last_name}`.trim(),
-          isPresent: true,
-        }))
-      );
-    }
-  }, [studentsData]);
+          name: fullName,
+          isPresent: existingStatus ? existingStatus !== "absent" : true,
+          isMarked: existingByName.has(fullName.toLowerCase()),
+        };
+      })
+    );
+  }, [studentsData, existingAttendance]);
 
   // Reset section + rows when class changes
   const handleClassChange = useCallback((value: string) => {
@@ -107,6 +140,31 @@ const MarkAttendanceModal = () => {
   const selectedClass = classesData?.data?.find((c) => c.id === selectedClassId);
   const selectedSection = sectionsData?.data?.find((s) => s.id === selectedSectionId);
 
+  // ── Per-student update ──
+  // Fetch the real attendance record ID at click time (the class-attendance response
+  // returns student IDs in `id`, not the attendance record ID).
+  const handleUpdateOne = useCallback(async (row: StudentRow) => {
+    if (!row.isMarked) return;
+    setSavingId(row.studentId);
+    try {
+      const res = await getAllAttendance(row.studentId, date);
+      const record = (res.data ?? []).find((r) => r.date?.slice(0, 10) === date);
+      if (!record?.id) {
+        toast.error(`No attendance record found for ${row.name} on ${date}`);
+        return;
+      }
+      await updateAttendanceById(record.id, {
+        status: row.isPresent ? "present" : "absent",
+        remarks: "",
+      });
+      toast.success(`Updated ${row.name} → ${row.isPresent ? "Present" : "Absent"}`);
+    } catch {
+      toast.error(`Failed to update ${row.name}`);
+    } finally {
+      setSavingId(null);
+    }
+  }, [date]);
+
   // ── Submit ──
   const submitMutation = useSubmitAttendance();
 
@@ -122,7 +180,7 @@ const MarkAttendanceModal = () => {
       section_id: selectedSectionId,
       teacher_id: teacherId,
       academicYearId,
-      date: new Date().toISOString().slice(0, 10),
+      date,
       attendance: rows.map((s) => ({
         studentId: s.studentId,
         status: s.isPresent ? ("present" as const) : ("absent" as const),
@@ -137,7 +195,7 @@ const MarkAttendanceModal = () => {
 
   if (!showMarkAttendanceModal) return null;
 
-  const loading = studentsLoading;
+  const loading = studentsLoading || attendanceLoading;
   const bothSelected = !!selectedClassId && !!selectedSectionId;
 
   return (
@@ -200,22 +258,18 @@ const MarkAttendanceModal = () => {
               />
             </div>
 
-            {/* Date (read-only) */}
+            {/* Date */}
             <div>
               <Label htmlFor="mark-date" className="uppercase tracking-wide text-xs text-gray-500">
                 Date
               </Label>
               <Input
                 id="mark-date"
-                type="text"
-                value={new Date().toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-                readOnly
-                className="mt-2 bg-gray-50 text-gray-600"
+                type="date"
+                value={date}
+                max={todayStr}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-2"
               />
             </div>
           </div>
@@ -293,12 +347,23 @@ const MarkAttendanceModal = () => {
                         {student.name}
                       </span>
                     </div>
-                    <Badge
-                      variant={student.isPresent ? "success" : "error"}
-                      className="uppercase text-[10px] px-2 py-0.5 shrink-0"
-                    >
-                      {student.isPresent ? "PRESENT" : "ABSENT"}
-                    </Badge>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge
+                        variant={student.isPresent ? "success" : "error"}
+                        className="uppercase text-[10px] px-2 py-0.5"
+                      >
+                        {student.isPresent ? "PRESENT" : "ABSENT"}
+                      </Badge>
+                      {student.isMarked && (
+                        <button
+                          onClick={() => handleUpdateOne(student)}
+                          disabled={savingId === student.studentId}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[11px] font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                        >
+                          {savingId === student.studentId ? "…" : "Update"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

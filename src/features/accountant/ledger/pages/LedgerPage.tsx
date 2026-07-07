@@ -37,7 +37,6 @@ export default function LedgerPage() {
     expense,
     payrollExpense,
     operatingExpenses,
-    chartData,
     createEntry,
     updateEntry,
     deleteEntry,
@@ -190,7 +189,7 @@ export default function LedgerPage() {
         )}
 
         {activeTab === "balance" && (
-          <BalanceSheet income={totalIncome} expense={expense} chartData={chartData} balanceSheetData={balanceSheetData} />
+          <BalanceSheet income={totalIncome} expense={expense} balanceSheetData={balanceSheetData} />
         )}
 
       </div>

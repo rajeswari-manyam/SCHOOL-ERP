@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { HelpCircle, Loader2, AlertCircle } from "lucide-react";
 import { useHomeworkStore } from "../store/HomeWork.store";
 import { groupBySubject, sortByDueDate, mapApiHomework } from "../utils/homework.utils";
-import { getHomeworkByClass } from "../../../../services/homework.api";
+import { getHomeworkThisWeek } from "../../../../services/homework.api";
 import { useStudyMaterials } from "../hooks/useStudymaterial";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
@@ -77,7 +77,6 @@ const NeedHelpCard = () => (
 
 export default function HomeworkPage() {
   const { activeChild } = useOutletContext<ParentLayoutContext>();
-
   const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "");
   const { student } = useStudentById(studentId);
 
@@ -112,7 +111,7 @@ export default function HomeworkPage() {
     setAllLoading(true);
     setAllError(null);
 
-    getHomeworkByClass({
+    getHomeworkThisWeek({
       class_id: classIdForApi,
       section_id: sectionIdForApi || undefined,
     })
@@ -140,13 +139,21 @@ export default function HomeworkPage() {
 
   const allGrouped = groupBySubject(sortByDueDate(allHomeworks ?? []));
 
+  if (!activeChild) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-6 w-6 animate-spin text-[#3525CD]" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-[1200px] mx-auto pt-6 sm:pt-[28px] px-4 sm:px-6 md:px-8 lg:px-[40px]
       pb-16 sm:pb-[64px] bg-[#F8FAFF] min-h-screen flex flex-col gap-4 sm:gap-[20px]">
 
       {/* BREADCRUMB */}
       <p className={combineTypography(typography.body.xs, "text-gray-400")}>
-        {activeChild.name} ›{" "}
+       {activeChild?.name ?? ""} › {" "}
         <span className="text-gray-600 font-medium">Homework</span>
       </p>
 
@@ -156,7 +163,7 @@ export default function HomeworkPage() {
           Homework &amp; Study Materials
         </h1>
         <p className={combineTypography(typography.body.small, "text-gray-400 mt-0.5")}>
-          {activeChild.name} — {displayClass}{displaySection ? ` · ${displaySection}` : ""}
+          {activeChild?.name ?? ""} — {displayClass}{displaySection ? ` · ${displaySection}` : ""}
         </p>
       </div>
 

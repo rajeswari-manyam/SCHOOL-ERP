@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { getStudentById } from "../../../../services/student.api";
-import { getHomeworkByClass } from "../../../../services/homework.api";
+import { getHomeworkThisWeek } from "../../../../services/homework.api";
 import { getAllTimetable } from "../../../../services/timetable.api";
 import { getAllExamTimetables } from "../../../../services/examtimetable.api";
 import { getMonthlyAttendance, getStudentTodayAttendance } from "../../../../services/attendance.api";
@@ -178,7 +178,7 @@ export const useDashboard = (): DashboardState => {
 
         if (classId && sectionId) {
           fetches.push(
-            getHomeworkByClass({ class_id: classId, section_id: sectionId }).catch(() => ({ data: [] })),
+            getHomeworkThisWeek({ class_id: classId, section_id: sectionId }).catch(() => ({ data: [] })),
             getAllTimetable(classId, sectionId).catch(() => ({ data: [] })),
             getAllExamTimetables({ class_id: classId, section_id: sectionId }).catch(() => []),
           );

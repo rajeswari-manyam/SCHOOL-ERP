@@ -15,15 +15,17 @@ import {
   carryForward,
   type AcademicYearRecord,
   type CarryForwardPreviewItem,
+  type CarryForwardModule,
 } from "@/services/academicYear.api";
 
-const MODULES = [
-  { key: "classes",      label: "Classes",           desc: "Class names and structure" },
-  { key: "sections",     label: "Sections",          desc: "Sections and teacher assignments" },
-  { key: "subjects",     label: "Subjects",          desc: "Subject–section–teacher mappings" },
-  { key: "staff",        label: "Staff Assignments", desc: "Staff class and section assignments" },
-  { key: "feeStructure", label: "Fee Structure",     desc: "Fee categories and amounts" },
-  { key: "timetable",    label: "Timetable",         desc: "Period and schedule configurations" },
+// Keys must match CarryForwardModule exactly — these are the only modules the backend supports.
+const MODULES: { key: CarryForwardModule; label: string; desc: string }[] = [
+  { key: "classes",            label: "Classes",             desc: "Class names and structure" },
+  { key: "sections",           label: "Sections",            desc: "Sections and teacher assignments" },
+  { key: "subjects",           label: "Subjects",            desc: "Subject definitions" },
+  { key: "subjectAssignments", label: "Subject Assignments", desc: "Subject–section–teacher mappings" },
+  { key: "staff",              label: "Staff",               desc: "Staff records and assignments" },
+  { key: "departments",        label: "Departments",         desc: "Department structure" },
 ];
 
 export default function CarryForwardPage() {
@@ -31,13 +33,13 @@ export default function CarryForwardPage() {
   const [yearsLoading, setYearsLoading] = useState(true);
   const [sourceYearId, setSourceYearId] = useState("");
   const [targetYearId, setTargetYearId] = useState("");
-  const [modules, setModules] = useState<Record<string, boolean>>({
+  const [modules, setModules] = useState<Record<CarryForwardModule, boolean>>({
     classes: true,
     sections: true,
     subjects: true,
+    subjectAssignments: true,
     staff: false,
-    feeStructure: false,
-    timetable: false,
+    departments: false,
   });
   const [preview, setPreview]     = useState<CarryForwardPreviewItem[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -58,7 +60,7 @@ export default function CarryForwardPage() {
       .finally(() => setYearsLoading(false));
   }, []);
 
-  const activeModuleKeys = Object.keys(modules).filter((k) => modules[k]);
+  const activeModuleKeys = (Object.keys(modules) as CarryForwardModule[]).filter((k) => modules[k]);
 
   const canPreview =
     !!sourceYearId &&
@@ -66,8 +68,7 @@ export default function CarryForwardPage() {
     sourceYearId !== targetYearId &&
     activeModuleKeys.length > 0;
 
-  const modulesPayload = (): import("@/services/academicYear.api").CarryForwardModule[] =>
-    activeModuleKeys as import("@/services/academicYear.api").CarryForwardModule[];
+  const modulesPayload = (): CarryForwardModule[] => activeModuleKeys;
 
   const handlePreview = async () => {
     if (!canPreview) return;

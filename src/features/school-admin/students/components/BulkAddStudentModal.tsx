@@ -116,6 +116,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
   const [allSections, setAllSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rowErrors, setRowErrors] = useState<Record<number, string>>({});
 
   useEffect(() => {
     getAllSections().then(setAllSections).catch(() => {});
@@ -198,7 +199,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
     setStep(2);
   };
 
-  const handleBack = () => { setError(null); setStep(1); };
+  const handleBack = () => { setError(null); setRowErrors({}); setStep(1); };
 
   const createParentsForStudent = async (studentId: string, parent: StudentParentRow, address: string) => {
     const promises: Promise<unknown>[] = [];
@@ -222,19 +223,44 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+    setRowErrors({});
     try {
-      const validPersonal = personalRows.filter((r) => r.firstName.trim());
-      if (validPersonal.length === 0) throw new Error("No students to add.");
-      const students: CreateStudentPayload[] = validPersonal.map((r) => ({
-        first_name: r.firstName.trim(), last_name: r.lastName.trim(),
-        gender: (r.gender || "Male").toLowerCase() as Lowercase<Gender>,
-        date_of_birth: r.dob || "", blood_group: (r.bloodGroup || undefined) as never,
-        address: r.address || undefined, class_id: r.classId, sectionId: r.sectionId,
-        roll_number: r.rollNumber || undefined, admission_number: r.admissionNo || undefined,
-        admission_date: new Date().toISOString().split("T")[0],
-        school_code: schoolcode, ...(academicYearId ? { academicYearId } : {}),
-      }));
-      const created = await studentsApi.bulkCreateStudents(students);
+      const validIndices = personalRows
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => r.firstName.trim());
+      if (validIndices.length === 0) throw new Error("No students to add.");
+
+      const newRowErrors: Record<number, string> = {};
+      const created: Student[] = [];
+
+      // Create one-by-one so we get per-row errors
+      for (const { r, i } of validIndices) {
+        const payload: CreateStudentPayload = {
+          first_name: r.firstName.trim(), last_name: r.lastName.trim(),
+          gender: (r.gender || "Male").toLowerCase() as Lowercase<Gender>,
+          date_of_birth: r.dob || "", blood_group: (r.bloodGroup || undefined) as never,
+          address: r.address || undefined, class_id: r.classId, sectionId: r.sectionId,
+          roll_number: r.rollNumber || undefined, admission_number: r.admissionNo || undefined,
+          admission_date: new Date().toISOString().split("T")[0],
+          school_code: schoolcode, ...(academicYearId ? { academicYearId } : {}),
+        };
+        try {
+          const student = await studentsApi.createStudent(payload);
+          created.push(student);
+        } catch (err: any) {
+          newRowErrors[i] = err?.message || "Failed to create student";
+        }
+      }
+
+      if (Object.keys(newRowErrors).length > 0) {
+        setRowErrors(newRowErrors);
+        if (created.length === 0) {
+          setError("Some students could not be added. Check the errors below each row.");
+          return;
+        }
+        setError(`${Object.keys(newRowErrors).length} student(s) failed. The rest were added successfully.`);
+      }
+
       setCreatedStudents(created);
       if (created.length > 0) {
         const parentPromises: Promise<unknown>[] = [];
@@ -246,7 +272,8 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
         }
         if (parentPromises.length > 0) await Promise.all(parentPromises);
       }
-      setStep(3);
+
+      if (Object.keys(newRowErrors).length === 0) setStep(3);
     } catch (err: any) {
       setError(err?.message || "Failed to add students");
     } finally {
@@ -301,21 +328,27 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                 {personalRows.map((row, i) => {
                   const expanded = expandedRows.has(i);
                   return (
-                    <div key={i}>
+                    <div key={i} className={rowErrors[i] ? "border border-red-200 rounded-xl bg-red-50/30" : ""}>
                       {/* Row header */}
                       <div className="flex items-center gap-2 px-4 py-3 hover:bg-slate-50/50 transition-colors">
                         <button type="button" onClick={() => toggleRow(i)} className="p-1 text-gray-400 hover:text-indigo-600 shrink-0">
                           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </button>
-                        <span className="text-xs font-bold text-indigo-600 shrink-0 w-6">#{i + 1}</span>
+                        <span className={`text-xs font-bold shrink-0 w-6 ${rowErrors[i] ? "text-red-500" : "text-indigo-600"}`}>#{i + 1}</span>
                         <span className="text-sm font-medium text-gray-700 min-w-[120px] truncate">
                           {row.firstName || row.lastName ? `${row.firstName} ${row.lastName}`.trim() : "New Student"}
                         </span>
-                        <span className="text-xs text-gray-400 truncate hidden sm:inline">
-                          {row.className
-                            ? `${row.className}${row.sectionName ? " / " + row.sectionName : ""}`
-                            : row.admissionNo || "—"}
-                        </span>
+                        {rowErrors[i] ? (
+                          <span className="text-[10px] font-semibold text-red-600 bg-red-100 border border-red-200 px-2 py-0.5 rounded-full truncate max-w-[200px]">
+                            {rowErrors[i]}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 truncate hidden sm:inline">
+                            {row.className
+                              ? `${row.className}${row.sectionName ? " / " + row.sectionName : ""}`
+                              : row.admissionNo || "—"}
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => removeRow(i)}
@@ -391,16 +424,22 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                               options={BLOOD_GROUP_OPTIONS} placeholder="Select" className={selectCls} />
                           </Field>
                           <Field label="Roll Number">
-                            <input className={inputCls} placeholder="24" value={row.rollNumber}
-                              onChange={(e) => updatePersonalRow(i, "rollNumber", e.target.value)} />
+                            <input
+                              className={`${inputCls} ${rowErrors[i]?.toLowerCase().includes("roll") ? "border-red-400 ring-1 ring-red-300" : ""}`}
+                              placeholder="24" value={row.rollNumber}
+                              onChange={(e) => { updatePersonalRow(i, "rollNumber", e.target.value); setRowErrors((p) => { const n = { ...p }; delete n[i]; return n; }); }}
+                            />
+                            {rowErrors[i]?.toLowerCase().includes("roll") && (
+                              <p className="text-[10px] text-red-500 font-medium mt-0.5">{rowErrors[i]}</p>
+                            )}
                           </Field>
                           <Field label="Admission Number">
                             <div className="flex gap-1.5">
                               <input
-                                className={`${inputCls} flex-1 min-w-0`}
+                                className={`${inputCls} flex-1 min-w-0 ${rowErrors[i]?.toLowerCase().includes("admission") ? "border-red-400 ring-1 ring-red-300" : ""}`}
                                 placeholder={`ADR-${admissionYear}-001`}
                                 value={row.admissionNo}
-                                onChange={(e) => updatePersonalRow(i, "admissionNo", e.target.value)}
+                                onChange={(e) => { updatePersonalRow(i, "admissionNo", e.target.value); setRowErrors((p) => { const n = { ...p }; delete n[i]; return n; }); }}
                               />
                               <button
                                 type="button"
@@ -410,6 +449,9 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                                 <Wand2 className="w-3 h-3" /> Gen
                               </button>
                             </div>
+                            {rowErrors[i]?.toLowerCase().includes("admission") && (
+                              <p className="text-[10px] text-red-500 font-medium mt-1">{rowErrors[i]}</p>
+                            )}
                           </Field>
                           <div className="sm:col-span-2 lg:col-span-4">
                             <Field label="Address">

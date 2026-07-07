@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Edit3, Trash2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Student } from "../types/student.types";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import { AlertDialog } from "@/components/ui/alert-dialog";
@@ -18,17 +18,54 @@ const AVATAR_COLORS = [
   "bg-teal-100 text-teal-700",
 ];
 
-const Avatar = ({ s }: { s: Student }) => {
+const Avatar = ({ s, onPreview }: { s: Student; onPreview?: (s: Student) => void }) => {
   const first = s.firstName?.[0] ?? "?";
   const last  = s.lastName?.[0]  ?? "";
   const initials = (first + last).toUpperCase();
   const color = AVATAR_COLORS[parseInt(s.id, 16) % AVATAR_COLORS.length] ?? AVATAR_COLORS[0];
+
+  if (s.photo) {
+    return (
+      <button
+        type="button"
+        title="View photo"
+        onClick={(e) => { e.stopPropagation(); onPreview?.(s); }}
+        className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden ring-1 ring-black/5 hover:ring-2 hover:ring-indigo-400 transition"
+      >
+        <img src={s.photo} alt={`${s.firstName ?? ""} ${s.lastName ?? ""}`.trim()} className="w-full h-full object-cover" />
+      </button>
+    );
+  }
+
   return (
     <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${color}`}>
       {initials}
     </div>
   );
 };
+
+const PhotoPreviewModal = ({ student, onClose }: { student: Student; onClose: () => void }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    onClick={onClose}
+  >
+    <div className="relative max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+      <button
+        onClick={onClose}
+        className="absolute -top-10 right-0 text-white/80 hover:text-white transition-colors"
+      >
+        <X className="w-6 h-6" />
+      </button>
+      <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+        <img src={student.photo} alt={`${student.firstName ?? ""} ${student.lastName ?? ""}`.trim()} className="w-full max-h-[70vh] object-contain bg-gray-50" />
+        <div className="px-4 py-3 border-t border-gray-100">
+          <p className="text-sm font-semibold text-gray-900">{student.firstName} {student.lastName}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{student.admissionNo}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const TH = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <th className={`px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${className}`}>
@@ -45,6 +82,7 @@ interface StudentTableProps {
 const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
   const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
+  const [previewStudent, setPreviewStudent] = useState<Student | null>(null);
   const [page, setPage] = useState(1);
 
   const totalPages = Math.max(1, Math.ceil(students.length / PAGE_SIZE));
@@ -86,7 +124,7 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
                 className="hover:bg-[#EFF4FF] transition-colors cursor-pointer"
                 onClick={() => navigate(`/schooladmin/students/${s.id}`)}
               >
-                <td className="px-4 py-3"><Avatar s={s} /></td>
+                <td className="px-4 py-3"><Avatar s={s} onPreview={setPreviewStudent} /></td>
                 <td className="px-4 py-3">
                   <span className="text-xs font-semibold text-gray-500 tabular-nums">
                     {s.admissionNo ?? (s as any).admissionNumber ?? "—"}
@@ -196,6 +234,10 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
         cancelText="Cancel"
         variant="destructive"
       />
+
+      {previewStudent && (
+        <PhotoPreviewModal student={previewStudent} onClose={() => setPreviewStudent(null)} />
+      )}
     </div>
   );
 };

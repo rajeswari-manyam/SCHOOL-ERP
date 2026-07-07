@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { leaveApi } from "@/services/teacher-leave.api";
 import { teacherDashboardApi } from "@/services/teacher-dashboard.api";
-import { getMonthlyStaffAttendance } from "@/services/attendance.api";
+import { getMonthlyStaffAttendance, getYearlyStaffAttendance } from "@/services/attendance.api";
 import { getSectionsByTeacherId } from "@/services/section.api";
+import { getUpcomingExams } from "@/services/examtimetable.api";
 
 export const TEACHER_KEYS = {
   all:                    ["teacher"] as const,
@@ -88,6 +89,14 @@ export const useTeacherMonthlyAttendance = (staffId: string, month: number, year
     staleTime: 5 * 60_000,
   });
 
+export const useTeacherYearlyAttendance = (staffId: string, year: number) =>
+  useQuery({
+    queryKey: [...TEACHER_KEYS.all, "yearly-attendance", staffId, year] as const,
+    queryFn: () => getYearlyStaffAttendance({ staff_id: staffId, year }),
+    enabled: Boolean(staffId),
+    staleTime: 10 * 60_000,
+  });
+
 export const useMarkAttendance = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -95,6 +104,15 @@ export const useMarkAttendance = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: TEACHER_KEYS.all }),
   });
 };
+
+export const useTeacherUpcomingExams = (classId: string, sectionId: string) =>
+  useQuery({
+    queryKey: [...TEACHER_KEYS.all, "upcoming-exams", classId, sectionId] as const,
+    queryFn:  () => getUpcomingExams({ class_id: classId, section_id: sectionId }),
+    enabled:  Boolean(classId) && Boolean(sectionId),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
 
 export const useMarkAttendanceViaWA = () =>
   useMutation({ mutationFn: teacherDashboardApi.markAttendanceViaWA });

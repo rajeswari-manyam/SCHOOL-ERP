@@ -143,8 +143,14 @@ export default function PromoteStudentsModal({ onClose }: Props) {
   const setAllAction = (action: PromotionAction) =>
     setRows((prev) => prev.map((r) => ({ ...r, action, targetClassId: "", targetSectionId: "" })));
 
+  // Rows marked PROMOTE must have an explicit destination class/section —
+  // everything else (REPEAT/DROPOUT/TRANSFERRED/GRADUATED) keeps the source class/section.
+  const missingTarget = rows.some(
+    (r) => needsClassSelect(r.action) && (!r.targetClassId || !r.targetSectionId)
+  );
+
   const handleSave = async () => {
-    if (!sourceYearId || !targetYearId || rows.length === 0) return;
+    if (!sourceYearId || !targetYearId || rows.length === 0 || missingTarget) return;
     setConfirming(false);
     setSaving(true);
     setError(null);
@@ -154,8 +160,8 @@ export default function PromoteStudentsModal({ onClose }: Props) {
         targetAcademicYearId: targetYearId,
         students: rows.map((r) => ({
           studentId: r.student.id,
-          classId:   classId,
-          sectionId: sectionId,
+          classId:   needsClassSelect(r.action) ? r.targetClassId   : classId,
+          sectionId: needsClassSelect(r.action) ? r.targetSectionId : sectionId,
           action:    r.action,
         })),
       });
@@ -171,7 +177,7 @@ export default function PromoteStudentsModal({ onClose }: Props) {
 
   const currentClassName   = classes.find((c) => c.value === classId)?.label ?? "";
   const currentSectionName = sections.find((s) => s.value === sectionId)?.label ?? "";
-  const canSave = !!sourceYearId && !!targetYearId && sourceYearId !== targetYearId && rows.length > 0;
+  const canSave = !!sourceYearId && !!targetYearId && sourceYearId !== targetYearId && rows.length > 0 && !missingTarget;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -282,6 +288,12 @@ export default function PromoteStudentsModal({ onClose }: Props) {
           {sourceYearId && targetYearId && sourceYearId === targetYearId && (
             <p className="text-xs text-red-500 flex items-center gap-1.5">
               <AlertCircle size={12} /> From and To year must be different.
+            </p>
+          )}
+
+          {missingTarget && (
+            <p className="text-xs text-red-500 flex items-center gap-1.5">
+              <AlertCircle size={12} /> Select a New Class and New Section for every student marked "Promote".
             </p>
           )}
 

@@ -238,7 +238,16 @@ export const studentsApi = {
     } as Student;
   },
   createStudent: async (payload: CreateStudentPayload): Promise<Student> => {
-    const { data: raw } = await api.post("/tenant/createstudents", payload);
+    // Backend expects multipart/form-data (so it can accept an optional photo file).
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") return;
+      formData.append(key, value instanceof File ? value : String(value));
+    });
+
+    const { data: raw } = await api.post("/tenant/createstudents", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     if (obj?.status === false) {
       throw new Error((obj?.message as string) ?? "Student creation failed");
@@ -300,7 +309,22 @@ export const studentsApi = {
   },
 
   updateStudent: async (id: string, payload: UpdateStudentPayload): Promise<Student> => {
-    const { data: raw } = await api.put(`/tenant/updatestudentById/${id}`, payload);
+    // Only switch to multipart when a new photo file is actually attached —
+    // keeps the plain-JSON path (already working) untouched otherwise.
+    const hasPhoto = payload.photo instanceof File;
+    const body: UpdateStudentPayload | FormData = hasPhoto
+      ? Object.entries(payload).reduce((fd, [key, value]) => {
+          if (value === undefined || value === null || value === "") return fd;
+          fd.append(key, value instanceof File ? value : String(value));
+          return fd;
+        }, new FormData())
+      : payload;
+
+    const { data: raw } = await api.put(
+      `/tenant/updatestudentById/${id}`,
+      body,
+      hasPhoto ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+    );
 
     if (raw && typeof raw === "object") {
       const obj = raw as Record<string, unknown>;

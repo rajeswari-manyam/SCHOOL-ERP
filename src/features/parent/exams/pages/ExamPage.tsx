@@ -10,8 +10,8 @@ import { ResultSummaryCard } from "../components/ResultSummaryCard";
 import { ResultsTable } from "../components/ResultTable";
 import { ReportCardTable } from "../components/ReportCardTable";
 import { Card, CardContent } from "@/components/ui/card";
-import { getAllExamTimetables } from "../../../../services/examtimetable.api";
-import type { ExamTimetableListItem } from "../../../../services/examtimetable.api";
+import { getUpcomingExams } from "../../../../services/examtimetable.api";
+import type { UpcomingExamItem } from "../../../../services/examtimetable.api";
 import { getMarksByStudentId } from "../../../../services/marks.api";
 import type { Mark } from "../../../../services/marks.api";
 import { getAllExams } from "../../../../services/exam.api";
@@ -62,20 +62,20 @@ const EmptyState = ({ message }: { message: string }) => (
   </div>
 );
 
-function mapApiExam(e: ExamTimetableListItem): Exam {
+function mapApiExam(e: UpcomingExamItem): Exam {
   const dateObj = dayjs(e.exam_date);
   return {
     id: e.id,
-    subject: e.subject.subject_name,
+    subject: e.subject?.subject_name ?? "—",
     date: dateObj.isValid() ? dateObj.format("DD MMM YYYY") : e.exam_date,
     day: dateObj.isValid() ? dateObj.format("dddd") : "",
     time: `${e.start_time} – ${e.end_time}`,
-    venue: `Room ${e.room_no}`,
-    examName: e.exam.exam_name,
+    venue: e.room_no ? `Room ${e.room_no}` : "—",
+    examName: e.exam?.exam_name ?? "—",
   };
 }
 
-function buildBannerProps(e: ExamTimetableListItem): ExamBannerProps {
+function buildBannerProps(e: UpcomingExamItem): ExamBannerProps {
   const examDate = dayjs(e.exam_date);
   const today = dayjs().startOf("day");
   const daysLeft = examDate.isValid() ? Math.max(0, examDate.diff(today, "day")) : 0;
@@ -84,10 +84,10 @@ function buildBannerProps(e: ExamTimetableListItem): ExamBannerProps {
       ? Math.max(0, dayjs(`${e.exam_date} ${e.start_time}`).diff(dayjs(), "hour"))
       : 0;
   return {
-    name: `${e.exam.exam_name} — ${e.subject.subject_name}`,
+    name: `${e.exam?.exam_name ?? "Exam"} — ${e.subject?.subject_name ?? "—"}`,
     date: examDate.isValid() ? examDate.format("DD MMMM YYYY") : e.exam_date,
     time: e.start_time,
-    venue: `Room ${e.room_no}`,
+    venue: e.room_no ? `Room ${e.room_no}` : "—",
     daysLeft,
     hoursLeft,
   };
@@ -201,13 +201,10 @@ export default function ExamsPage() {
     setUpcomingLoading(true);
     setUpcomingError(null);
 
-    getAllExamTimetables({
-      class_id: classId,
-      section_id: sectionId,
-    })
-      .then((res: ExamTimetableListItem[]) => {
+    getUpcomingExams({ class_id: classId, section_id: sectionId })
+      .then((res) => {
         if (cancelled) return;
-        if (Array.isArray(res)) setUpcomingExams(res);
+        if (res.status && Array.isArray(res.data)) setUpcomingExams(res.data);
         else setUpcomingError("Failed to load exam timetable.");
       })
       .catch((err: Error) => {
@@ -267,7 +264,7 @@ export default function ExamsPage() {
   const bannerProps = sortedRaw.length > 0 ? buildBannerProps(sortedRaw[0]) : null;
   const groupLabel =
     sortedRaw.length > 0
-      ? `${sortedRaw[0].exam.exam_name} — ${dayjs(sortedRaw[0].exam_date).format("MMMM YYYY")}`
+      ? `${sortedRaw[0].exam?.exam_name ?? "Exam"} — ${dayjs(sortedRaw[0].exam_date).format("MMMM YYYY")}`
       : "Upcoming Exams";
   const resultSummary =
     results.length > 0

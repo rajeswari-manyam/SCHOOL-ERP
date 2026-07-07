@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import ParentLayout from "../../layouts/ParentLayout";
 
+import StudentSelectPage from "./studentSelect/pages/StudentSelectPage";
 import DashboardPage from "./dashboard/pages/ParentDashBoard";
 import AttendancePage from "./attendance/pages/AttendeancePage";
 import FeesPage from "./fees/pages/FeePage";
@@ -14,6 +15,9 @@ import ComplaintsPage from "./complaints/pages/ComplaintsPage";
 export default function ParentRouter() {
   return (
     <Routes>
+      {/* Full-screen — no ParentLayout nav bar */}
+      <Route path="select-student" element={<StudentSelectPage />} />
+
       <Route element={<ParentLayout />}>
         
         {/* Default redirect */}

@@ -301,7 +301,7 @@ export const getTotalExpensesByMonth = async (
 
 export interface MonthlyPaidPayroll {
   month: number;
-  year: number;
+  academicYearId: string;
   total_paid: number;
 }
 
@@ -313,11 +313,11 @@ export interface GetMonthlyPaidPayrollResponse {
 
 export const getMonthlyPaidPayroll = async (
   month: number,
-  year: number
+  academicYearId: string
 ): Promise<GetMonthlyPaidPayrollResponse> => {
   const { data } = await api.get<GetMonthlyPaidPayrollResponse>(
     "/tenant/getmonthlypaidpayroll",
-    { params: { month, year } }
+    { params: { month, academicYearId } }
   );
   return data;
 };

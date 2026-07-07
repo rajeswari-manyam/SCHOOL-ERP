@@ -101,10 +101,10 @@ export const Dashboard = () => {
 
   return (
     <div className="min-h-screen">
-      <main className="p-3 sm:p-4 md:p-6 max-w-screen-xl mx-auto space-y-4 sm:space-y-5">
+      <main className="px-3 sm:px-4 md:px-6 pt-2 pb-4 sm:pb-6 max-w-screen-xl mx-auto space-y-4 sm:space-y-5">
 
         {/* ── GREETING ── */}
-        <div className="px-1 sm:px-2 py-2 sm:py-3">
+        <div className="px-1 sm:px-2 py-1">
           <h1 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
             Good morning, {studentName}!
           </h1>

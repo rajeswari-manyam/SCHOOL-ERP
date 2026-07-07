@@ -27,6 +27,24 @@ export interface OtpVerifyPayload {
   schoolcode: string;
   phone: string;
   otp: string;
+  userType?: string;
+}
+
+// ── Parent Portal — multi-student support ───────────────────────────────────────
+export interface Parent {
+  id: string;
+  parent_name: string;
+  email: string;
+  phone: string;
+  school_id: string;
+}
+
+export interface Student {
+  id: string;
+  name: string;
+  roll_number: string;
+  class_id: string;
+  sectionId: string;
 }
 
 export interface OtpVerifyResponse {
@@ -60,6 +78,10 @@ export interface OtpVerifyResponse {
     userType: UserType;
     schoolcode: string;
   };
+
+  // Present when userType is Parent
+  parent?: Parent;
+  students?: Student[];
 }
 
 // ── Logout API ──────────────────────────────────────────────────────────────────

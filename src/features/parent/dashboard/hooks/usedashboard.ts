@@ -7,9 +7,9 @@ import {
   getMonthlyAttendance,
 } from "../../../../services/attendance.api";
 
-import { getHomeworkByClass } from "../../../../services/homework.api";
+import { getHomeworkThisWeek } from "../../../../services/homework.api";
 
-import { getAllExamTimetables } from "../../../../services/examtimetable.api";
+import { getUpcomingExams } from "../../../../services/examtimetable.api";
 
 import { getAnnouncementsByType } from "../../../../services/announcements.api";
 
@@ -172,7 +172,7 @@ export function useDashboard() {
       setLoadingHomework(true)
 
       try {
-        const res = await getHomeworkByClass({ class_id: classId, section_id: sectionId })
+        const res = await getHomeworkThisWeek({ class_id: classId, section_id: sectionId })
 
         console.log("Homework API:", res)
 
@@ -201,14 +201,14 @@ export function useDashboard() {
       setLoadingExams(true)
 
       try {
-        const res = await getAllExamTimetables({
+        const res = await getUpcomingExams({
           class_id: classId,
           section_id: sectionId,
         })
 
         console.log("Exams API:", res)
 
-        const exams = Array.isArray(res) ? res : []
+        const exams = res.status && Array.isArray(res.data) ? res.data : []
         setExams(exams)
       } catch (err) {
         console.error("fetchExams:", err)

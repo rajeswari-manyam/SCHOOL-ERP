@@ -8,7 +8,7 @@ import HomeworkDueCard from "./components/HomeworkDueCard";
 import AssignHomeworkModal from "./components/AssignHomeworkModal";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
-import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher, useTeacherMonthlyAttendance, useTeacherSections } from "./hooks/useTeacherDashboard";
+import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher, useTeacherMonthlyAttendance, useTeacherSections, useTeacherUpcomingExams } from "./hooks/useTeacherDashboard";
 import { useTodayAttendanceSummary } from "../attendance/hooks/useAttendance";
 import { useAuthStore } from "../../../store/authStore";
 import { format } from "date-fns";
@@ -31,8 +31,9 @@ const TeacherDashboardPage = () => {
   const { data: monthlyAttendance } = useTeacherMonthlyAttendance(staffId, now.getMonth() + 1, now.getFullYear());
 
   const liveAttendancePct = (() => {
-    const s = monthlyAttendance?.summary;
-    if (!s || s.workingDays === 0) return null;
+    if (!monthlyAttendance) return null;           // not loaded yet → keep fallback
+    const s = monthlyAttendance.summary;
+    if (!s || s.workingDays === 0) return 0;       // loaded but no working days → 0%
     return Math.round((s.present / s.workingDays) * 100);
   })();
 
@@ -44,6 +45,12 @@ const TeacherDashboardPage = () => {
   const section        = sections[0];
   const leaveUsed      = leaveResponse?.totalUsed ?? 0;
   const leaveAllocated = leaveResponse?.totalAllocated ?? 0;
+
+  const { data: upcomingExamsData } = useTeacherUpcomingExams(
+    section?.classId ?? "",
+    section?.id ?? ""
+  );
+  const nextExam = upcomingExamsData?.data?.[0] ?? null;
 
   const stats = {
     currentStrength:     section?.currentStrength ?? (todayAttendance?.totalStudents ?? 0),
@@ -114,6 +121,7 @@ const TeacherDashboardPage = () => {
         attendanceThisMonth={stats.attendanceThisMonth}
         leaveUsed={stats.leaveUsed}
         leaveAllocated={stats.leaveAllocated}
+        nextExam={nextExam}
       />
 
       {/* Main grid */}

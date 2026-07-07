@@ -9,9 +9,8 @@ import {
   useTimetablePage,
   useClassList,
   useSectionsByClass,
-  useFilteredExamTimetable,
   useTodayExamTimetable,
-  useExamNameOptions,
+  useExamTimetableByClassSection,
   useBulkCreateTimetable,
   useBulkCreateExamTimetable,
   useUpdateExamTimetable,
@@ -313,78 +312,89 @@ const ExamTimetableFilteredTab: React.FC<{
 }> = ({ onAddExamTimetable, onEditExam, onDeleteExam: _onDeleteExam }) => {
   const [filterClassId,    setFilterClassId]    = useState("");
   const [filterSectionId,  setFilterSectionId]  = useState("");
-  const [filterExamNameId, setFilterExamNameId] = useState("");
-  const [filterDate,       setFilterDate]       = useState(() => new Date().toISOString().split("T")[0]);
-  const [filterClassInit,   setFilterClassInit]   = useState(false);
-  const [filterSectionInit, setFilterSectionInit] = useState(false);
+  const [classInit,        setClassInit]        = useState(false);
+  const [sectionInit,      setSectionInit]      = useState(false);
 
-  const { data: classList = [],   isLoading: classLoading }     = useClassList();
-  const { data: sectionList = [], isLoading: sectionLoading }   = useSectionsByClass(filterClassId);
-  const { data: examNames = [],   isLoading: examNamesLoading } = useExamNameOptions();
+  const today = new Date().toISOString().split("T")[0];
   const { mutate: deleteExamTt } = useDeleteExam();
 
-  const allThreeSelected = !!filterClassId && !!filterSectionId && !!filterExamNameId;
-  const allFourSelected  = allThreeSelected && !!filterDate;
+  const { data: classList = [],   isLoading: classLoading }   = useClassList();
+  const { data: sectionList = [], isLoading: sectionLoading } = useSectionsByClass(filterClassId);
 
-  // Query 1: class + section + exam (always runs when 3 filters set)
-  const { data: allRows = [], isLoading: allLoading, isError: allError, refetch: refetchAll } =
-    useFilteredExamTimetable(filterClassId, filterSectionId, filterExamNameId);
+  const hasClassSection = !!filterClassId && !!filterSectionId;
 
-  // Query 2: date-specific (only runs when date is set)
-  const { data: todayData, isLoading: todayLoading, isError: todayError, refetch: refetchToday } =
-    useTodayExamTimetable(filterDate);
+  // When class+section selected → filtered API; else → today's exams
+  const {
+    data: filteredData = [], isLoading: filteredLoading, isError: filteredError, refetch: refetchFiltered,
+  } = useExamTimetableByClassSection(filterClassId, filterSectionId);
 
-  const tableLoading = allFourSelected ? todayLoading : allLoading;
-  const tableError   = allFourSelected ? todayError   : allError;
-  const refetch      = allFourSelected ? refetchToday  : refetchAll;
+  const {
+    data: todayData, isLoading: todayLoading, isError: todayError, refetch: refetchToday,
+  } = useTodayExamTimetable(today);
+
+  const isLoading = hasClassSection ? filteredLoading : todayLoading;
+  const isError   = hasClassSection ? filteredError   : todayError;
+  const refetch   = hasClassSection ? refetchFiltered : refetchToday;
 
   // Auto-select first class
   useEffect(() => {
-    if (!filterClassInit && classList.length > 0) {
-      setFilterClassId(classList[0].id);
-      setFilterClassInit(true);
-      setFilterSectionInit(false);
+    if (!classInit && classList.length > 0) {
+      setClassInit(true);
     }
-  }, [classList, filterClassInit]);
+  }, [classList, classInit]);
 
   // Auto-select first section when class changes
   useEffect(() => {
-    if (!filterSectionInit && sectionList.length > 0) {
-      setFilterSectionId(sectionList[0].id);
-      setFilterSectionInit(true);
+    if (!sectionInit && filterClassId && sectionList.length > 0) {
+      setSectionInit(true);
     }
-  }, [sectionList, filterSectionInit]);
+  }, [sectionList, sectionInit, filterClassId]);
 
-  // Unified display row type mapped from either API
   type DisplayRow = {
-    id: string; subject: string; exam_date: string; start_time: string; end_time: string;
-    room_no: string; teacher_name: string; teacher_id: string;
-    section_id: string; subject_id: string; exam_id: string; class_id: string;
-    section_name: string; class_name: string;
+    id: string; subject: string; exam_name: string; exam_date: string;
+    start_time: string; end_time: string; room_no: string;
+    teacher_name: string; teacher_id: string;
+    section_id: string; subject_id: string; exam_id: string;
+    class_id: string; section_name: string; class_name: string;
   };
 
-  const filteredRows: DisplayRow[] = allThreeSelected
-    ? allFourSelected
-      ? (todayData?.data?.find((c) => c.class_id === filterClassId)?.exams ?? [])
-          .filter((e) => e.section_id === filterSectionId && e.exam_id === filterExamNameId)
-          .map((e) => ({
-            id: e.id, subject: e.subject_name, exam_date: e.exam_date,
-            start_time: e.start_time, end_time: e.end_time, room_no: e.room_no ?? "",
-            teacher_name: e.teacher_name ?? "", teacher_id: e.teacher_id ?? "",
-            section_id: e.section_id, subject_id: e.subject_id, exam_id: e.exam_id,
-            class_id: filterClassId, section_name: e.section_name,
-            class_name: todayData?.data?.find((c) => c.class_id === filterClassId)?.class_name ?? "",
-          }))
-      : allRows.map((r) => ({
-          id: r.id, subject: r.subject?.subject_name ?? "—",
-          exam_date: r.exam_date, start_time: r.start_time, end_time: r.end_time,
-          room_no: r.room_no ?? "", teacher_name: r.teacher?.name ?? "",
-          teacher_id: r.teacher?.id ?? "", section_id: r.section?.id ?? "",
-          subject_id: r.subject?.id ?? "", exam_id: r.exam?.id ?? "",
-          class_id: r.class?.id ?? "", section_name: r.section?.sectionName ?? "",
-          class_name: r.class?.class_name ?? "",
+  const rows: DisplayRow[] = hasClassSection
+    ? filteredData.map((r) => ({
+        id: r.id,
+        subject: r.subject?.subject_name ?? "—",
+        exam_name: r.exam?.exam_name ?? "—",
+        exam_date: r.exam_date,
+        start_time: r.start_time,
+        end_time: r.end_time,
+        room_no: r.room_no ?? "",
+        teacher_name: r.teacher?.name ?? "",
+        teacher_id: r.teacher?.id ?? "",
+        section_id: r.section?.id ?? "",
+        subject_id: r.subject?.id ?? "",
+        exam_id: r.exam?.id ?? "",
+        class_id: r.class?.id ?? "",
+        class_name: r.class?.class_name ?? "",
+        section_name: r.section?.sectionName ?? "",
+      }))
+    : (todayData?.data ?? []).flatMap((cls) =>
+        cls.exams.map((e) => ({
+          id: e.id,
+          subject: e.subject_name ?? "—",
+          exam_name: e.exam_name ?? "—",
+          exam_date: e.exam_date,
+          start_time: e.start_time,
+          end_time: e.end_time,
+          room_no: e.room_no ?? "",
+          teacher_name: e.teacher_name ?? "",
+          teacher_id: e.teacher_id ?? "",
+          section_id: e.section_id,
+          subject_id: e.subject_id,
+          exam_id: e.exam_id,
+          class_id: cls.class_id,
+          class_name: cls.class_name,
+          section_name: e.section_name,
         }))
-    : [];
+      );
 
   const fmt = (t: string) => {
     if (!t) return "—";
@@ -398,7 +408,7 @@ const ExamTimetableFilteredTab: React.FC<{
   return (
     <div className="flex flex-col gap-5">
 
-      {/* Filter bar */}
+      {/* Filter bar — Class + Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex flex-wrap items-end gap-4">
           {/* Class */}
@@ -412,11 +422,11 @@ const ExamTimetableFilteredTab: React.FC<{
                 onChange={(e) => {
                   setFilterClassId(e.target.value);
                   setFilterSectionId("");
-                  setFilterSectionInit(false);
+                  setSectionInit(false);
                 }}
                 className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
               >
-                <option value="">Select class</option>
+                <option value="">All Classes</option>
                 {classList.map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
@@ -436,7 +446,7 @@ const ExamTimetableFilteredTab: React.FC<{
                 disabled={!filterClassId}
                 className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 disabled:opacity-50"
               >
-                <option value="">Select section</option>
+                <option value="">All Sections</option>
                 {sectionList.map((s) => (
                   <option key={s.id} value={s.id}>{s.label}</option>
                 ))}
@@ -444,46 +454,14 @@ const ExamTimetableFilteredTab: React.FC<{
             )}
           </div>
 
-          {/* Exam Name */}
-          <div className="flex flex-col gap-1 min-w-[160px]">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Exam Name</label>
-            {examNamesLoading ? (
-              <div className="h-10 w-full rounded-xl bg-gray-100 animate-pulse" />
-            ) : (
-              <select
-                value={filterExamNameId}
-                onChange={(e) => setFilterExamNameId(e.target.value)}
-                className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-              >
-                <option value="">Select exam</option>
-                {examNames.map((ex) => (
-                  <option key={ex.value} value={ex.value}>{ex.label}</option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Date */}
-          <div className="flex flex-col gap-1 min-w-[150px]">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Date</label>
-            <input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-            />
+          {/* label showing mode */}
+          <div className="flex items-end pb-0.5">
+            <span className="text-[10px] text-gray-400 italic">
+              {hasClassSection ? "Showing all exams for selected class/section" : `Showing today's exams · ${fmtDate(today)}`}
+            </span>
           </div>
 
           <div className="flex gap-2 ml-auto">
-            {allThreeSelected && (
-              <button
-                onClick={() => refetch()}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5"/><path d="M13.5 2.5v3h-3"/></svg>
-                Refresh
-              </button>
-            )}
             <button
               onClick={onAddExamTimetable}
               className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition"
@@ -496,24 +474,21 @@ const ExamTimetableFilteredTab: React.FC<{
 
       {/* Results table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {!allThreeSelected ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <BookOpen size={32} className="text-gray-200" />
-            <p className="text-sm text-gray-400">Select Class, Section and Exam Name to view the timetable.</p>
-          </div>
-        ) : tableLoading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-16 gap-2 text-sm text-gray-400">
             <Loader2 size={18} className="animate-spin text-indigo-500" /> Loading…
           </div>
-        ) : tableError ? (
+        ) : isError ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <p className="text-sm text-red-500">Failed to load exam timetable.</p>
             <button onClick={() => refetch()} className="text-xs text-indigo-500 underline">Try again</button>
           </div>
-        ) : filteredRows.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <BookOpen size={28} className="text-gray-200" />
-            <p className="text-sm text-gray-400">No exam entries found for the selected filters.</p>
+            <p className="text-sm text-gray-400">
+              {hasClassSection ? "No exam entries found for this class and section." : `No exams scheduled for today (${fmtDate(today)}).`}
+            </p>
             <button
               onClick={onAddExamTimetable}
               className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
@@ -523,39 +498,41 @@ const ExamTimetableFilteredTab: React.FC<{
           </div>
         ) : (
           <div className="overflow-x-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#e2e8f0 transparent" }}>
-            <table className="w-full text-sm" style={{ minWidth: 640 }}>
+            <table className="w-full text-sm" style={{ minWidth: 760 }}>
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  {["#", "Subject", "Date", "Day", "Time", "Room No", "Teacher", "Actions"].map((h, i) => (
-                    <th key={h} className={`px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-500 ${i === 7 ? "text-right" : "text-left"}`}>{h}</th>
+                  {["#", "Class / Sec", "Subject", "Exam", "Date", "Time", "Room", "Teacher", "Actions"].map((h, i) => (
+                    <th key={h} className={`px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-500 ${i === 8 ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredRows.map((row, idx) => {
-                  const dayName = new Date(row.exam_date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long" });
+                {rows.map((row, idx) => {
                   const entry: ExamEntry = {
                     id: row.id,
-                    subject: row.subject ?? "—",
-                    className: `${row.class_name ?? ""} ${row.section_name ?? ""}`.trim(),
+                    subject: row.subject,
+                    className: `${row.class_name} ${row.section_name}`.trim(),
                     date: row.exam_date,
                     startTime: row.start_time,
                     endTime: row.end_time,
-                    venue: row.room_no ?? "",
+                    venue: row.room_no,
                     notifyStatus: "PENDING" as const,
-                    teacher_id: row.teacher_id ?? "",
-                    section_id: row.section_id ?? "",
-                    class_id: filterClassId,
-                    subject_id: row.subject_id ?? "",
-                    examnameid: row.exam_id ?? "",
+                    teacher_id: row.teacher_id,
+                    section_id: row.section_id,
+                    class_id: row.class_id,
+                    subject_id: row.subject_id,
+                    examnameid: row.exam_id,
                     academicYearId: "",
                   };
                   return (
                     <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-4 py-3 text-xs font-mono text-gray-400">{idx + 1}</td>
-                      <td className="px-4 py-3 font-semibold text-gray-800">{row.subject ?? "—"}</td>
+                      <td className="px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                        {row.class_name}<span className="text-indigo-600">{row.section_name}</span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{row.subject}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{row.exam_name}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{fmtDate(row.exam_date)}</td>
-                      <td className="px-4 py-3 text-gray-500">{dayName}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{fmt(row.start_time)} – {fmt(row.end_time)}</td>
                       <td className="px-4 py-3 text-gray-600">{row.room_no || "—"}</td>
                       <td className="px-4 py-3">

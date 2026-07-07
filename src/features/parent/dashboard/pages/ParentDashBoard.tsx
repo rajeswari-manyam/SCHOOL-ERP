@@ -88,9 +88,8 @@ const DashboardPage = () => {
     .filter((e) => new Date(e.exam_date).getTime() >= now)
     .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())[0]
 
-  const daysToExam = nextExam
-    ? Math.ceil((new Date(nextExam.exam_date).getTime() - now) / (1000 * 60 * 60 * 24))
-    : null
+  const fmtExamDate = (d: string) =>
+    new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
 
   const stats = [
     {
@@ -133,13 +132,12 @@ const DashboardPage = () => {
       label: "Next Exam",
       value: isLoadingExams
         ? undefined
-        : daysToExam !== null
-          ? `${daysToExam} day${daysToExam !== 1 ? "s" : ""}`
+        : nextExam
+          ? (nextExam.subject?.subject_name ?? "—")
           : "None scheduled",
-      badge: nextExam
-        ? { text: nextExam.subject?.subject_name ?? "", variant: "blue" as const }
+      sub: nextExam
+        ? `${fmtExamDate(nextExam.exam_date)}${nextExam.exam?.exam_name ? ` · ${nextExam.exam.exam_name}` : ""}`
         : undefined,
-      sub: nextExam?.exam?.exam_name ?? undefined,
       path: "/parent/exams",
     },
   ]

@@ -6,8 +6,8 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getAllExamTimetables } from "../../../../services/examtimetable.api"
-import type { ExamTimetableListItem } from "../../../../services/examtimetable.api"
+import { getUpcomingExams } from "../../../../services/examtimetable.api"
+import type { UpcomingExamItem } from "../../../../services/examtimetable.api"
 import { useStudentById } from "../../dashboard/hooks/useStudent"
 import { useOutletContext } from "react-router-dom"
 
@@ -24,7 +24,7 @@ type ParentLayoutContext = {
   };
 };
 
-const columnHelper = createColumnHelper<ExamTimetableListItem>()
+const columnHelper = createColumnHelper<UpcomingExamItem>()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -68,33 +68,35 @@ function fmtDay(d: string) {
 export const UpcomingExamsTable = () => {
   const { activeChild } = useOutletContext<ParentLayoutContext>()
 
-  // ✅ Resolve real UUIDs from student detail
   const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "")
   const { student } = useStudentById(studentId)
 
-  const [exams, setExams] = useState<ExamTimetableListItem[]>([])
+  const [exams,     setExams]     = useState<UpcomingExamItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error,     setError]     = useState<string | null>(null)
+  const [filterDate, setFilterDate] = useState("")   // "" = no filter (all upcoming)
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const classId = student?.classDetail?.id
+    const classId   = student?.classDetail?.id
     const sectionId = student?.sectionDetail?.id
 
-    // class_id is required — wait until student resolves
     if (!classId) return
 
     let cancelled = false
     setIsLoading(true)
     setError(null)
 
-    getAllExamTimetables({
-      class_id: classId,
-      section_id: sectionId, // optional
-    })
+    const params: { class_id: string; section_id?: string; date?: string } = {
+      class_id:   classId,
+      section_id: sectionId,
+    }
+    if (filterDate) params.date = filterDate
+
+    getUpcomingExams(params)
       .then((res) => {
         if (cancelled) return
-        if (Array.isArray(res)) setExams(res)
+        if (res.status && Array.isArray(res.data)) setExams(res.data)
         else setError("Failed to load exams.")
       })
       .catch((err: Error) => {
@@ -105,22 +107,21 @@ export const UpcomingExamsTable = () => {
       })
 
     return () => { cancelled = true }
-  }, [student?.classDetail?.id, student?.sectionDetail?.id])
+  }, [student?.classDetail?.id, student?.sectionDetail?.id, filterDate])
 
-  // ── Filter: only today or future, sorted ascending ────────────────────────
-  const today = new Date().setHours(0, 0, 0, 0)
-  const upcoming = exams
-    .filter((e) => new Date(e.exam_date).getTime() >= today)
-    .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())
+  const upcoming = [...exams].sort(
+    (a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime()
+  )
 
   // ── Columns ───────────────────────────────────────────────────────────────
   const columns = useMemo(
     () => [
-      columnHelper.accessor("subject", {
+      columnHelper.accessor((row) => row.subject?.subject_name ?? "—", {
+        id: "subject",
         header: "Subject",
         cell: (info) => (
           <span className="font-semibold text-[#0B1C30] text-sm">
-            {info.getValue().subject_name}
+            {info.getValue()}
           </span>
         ),
       }),
@@ -166,13 +167,26 @@ export const UpcomingExamsTable = () => {
   return (
     <Card className="w-full rounded-xl border border-[#E8EBF2] shadow-none hover:border-[#3525CD] transition-colors">
       <CardHeader className="px-5 sm:px-6 pt-5 pb-3 border-none">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-[15px] font-semibold text-[#0B1C30]">
             Upcoming Exams
           </CardTitle>
-          <button className="text-[12px] text-[#3525CD] border border-[#D0D8FF] px-3 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-[#EEF0FF] transition whitespace-nowrap">
-            📅 Add to Google Calendar
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="text-[12px] text-[#374151] border border-[#D0D8FF] rounded-md px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[#3525CD] focus:border-[#3525CD] cursor-pointer"
+            />
+            {filterDate && (
+              <button
+                onClick={() => setFilterDate("")}
+                className="text-[11px] text-[#6B7280] border border-[#E8EBF2] px-2 py-1.5 rounded-md hover:bg-gray-50 transition whitespace-nowrap"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
       </CardHeader>
 
@@ -256,7 +270,7 @@ export const UpcomingExamsTable = () => {
               >
                 <div className="flex justify-between items-start gap-2">
                   <p className="font-semibold text-[#0B1C30] text-sm">
-                    {e.subject.subject_name}
+                    {e.subject?.subject_name ?? "—"}
                   </p>
                   <span className="text-[11px] font-medium text-[#374151] bg-[#F4F6FA] border border-[#E8EBF2] px-2.5 py-1 rounded-md whitespace-nowrap">
                     {e.room_no || "—"}

@@ -47,7 +47,7 @@ const AttendancePage = () => {
           <div className="flex items-center gap-2">
             {activeTab === "today" && (
               <Button
-                onClick={openMarkAttendance}
+                onClick={() => openMarkAttendance()}
                 className="flex items-center gap-1.5 rounded-lg px-3 h-9 text-xs font-medium text-white"
                 style={{ background: 'linear-gradient(101.74deg, #3525CD 0%, #4F46E5 100%)' }}
               >

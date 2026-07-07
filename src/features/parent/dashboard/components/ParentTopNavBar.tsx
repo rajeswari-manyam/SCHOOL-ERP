@@ -40,8 +40,9 @@ interface ParentTopNavBarProps {
     avatar?: string;
   };
   onSwitchChild: () => void;
+  hasMultipleChildren?: boolean;
 }
-const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) => {
+const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = false }: ParentTopNavBarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -143,14 +144,16 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                     {/* RIGHT: switch child + bell + user */}
                     <div className="flex items-center gap-1 md:gap-2 shrink-0">
 
-                        {/* Switch Child */}
-                        <button
-                            onClick={onSwitchChild}
-                            className="hidden lg:flex items-center gap-1.5 text-[12px] text-[#3525CD] px-2.5 py-1.5 rounded-md hover:bg-[#F4F6FA] transition"
-                        >
-                            <RefreshCw size={12} />
-                            Switch Child
-                        </button>
+                        {/* Switch Child — only when more than one student is linked */}
+                        {hasMultipleChildren && (
+                            <button
+                                onClick={onSwitchChild}
+                                className="hidden lg:flex items-center gap-1.5 text-[12px] text-[#3525CD] px-2.5 py-1.5 rounded-md hover:bg-[#F4F6FA] transition"
+                            >
+                                <RefreshCw size={12} />
+                                Switch Child
+                            </button>
+                        )}
 
                         {/* Notification bell */}
                         <div className="relative">
@@ -159,28 +162,17 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                                 className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F6FA] transition relative"
                             >
                                 <Bell size={16} className="text-[#6B7280]" />
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                             </button>
 
                             {notifOpen && (
                                 <div className="absolute right-0 top-11 w-72 max-w-[calc(100vw-1rem)] bg-white border border-[#E8EBF2] rounded-xl shadow-lg py-2 z-[55]">
-                                    <p className={`${typography.body.small} font-medium text-[#0B1C30] px-4 py-2`}>
+                                    <p className={`${typography.body.small} font-medium text-[#0B1C30] px-4 py-2 border-b border-[#F1F3F8]`}>
                                         Notifications
                                     </p>
-                                    {[
-                                        { title: "Fee reminder", desc: "Tuition fee due on 9 Apr", time: "2h ago", dot: "bg-red-500" },
-                                        { title: "Attendance alert", desc: "Anjali was absent today", time: "4h ago", dot: "bg-amber-400" },
-                                        { title: "New homework", desc: "Maths: Quadratic Equations", time: "1d ago", dot: "bg-indigo-500" },
-                                    ].map((n) => (
-                                        <div key={n.title} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F4F6FA] cursor-pointer">
-                                            <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.dot}`} />
-                                            <div>
-                                                <p className={`${typography.body.small} font-medium text-[#0B1C30]`}>{n.title}</p>
-                                                <p className={`${typography.body.xs} text-[#6B7280]`}>{n.desc}</p>
-                                                <p className={`${typography.body.xs} text-[#9CA3AF] mt-0.5`}>{n.time}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <div className="flex flex-col items-center justify-center py-6 gap-1">
+                                        <Bell size={20} className="text-gray-300" />
+                                        <p className={`${typography.body.xs} text-[#9CA3AF]`}>No notifications yet</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -287,13 +279,15 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild }: ParentTopNavBarProps) =
                                     <p className="text-[11px] text-[#9CA3AF]">{user.className}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => { setMobileOpen(false); onSwitchChild(); }}
-                                className="mt-3 w-full flex items-center justify-center gap-2 text-[12px] text-[#3525CD] border border-[#D0D8FF] py-2 rounded-lg hover:bg-[#EEF0FF] transition"
-                            >
-                                <RefreshCw size={12} />
-                                Switch Child
-                            </button>
+                            {hasMultipleChildren && (
+                                <button
+                                    onClick={() => { setMobileOpen(false); onSwitchChild(); }}
+                                    className="mt-3 w-full flex items-center justify-center gap-2 text-[12px] text-[#3525CD] border border-[#D0D8FF] py-2 rounded-lg hover:bg-[#EEF0FF] transition"
+                                >
+                                    <RefreshCw size={12} />
+                                    Switch Child
+                                </button>
+                            )}
                         </div>
 
                         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">

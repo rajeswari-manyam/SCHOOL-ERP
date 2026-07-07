@@ -109,7 +109,7 @@ export const useStudents = () => {
       school_code: schoolcode,
       ...(data.bloodGroup ? { blood_group: data.bloodGroup } : {}),
       ...(data.residentialAddress ? { address: data.residentialAddress } : {}),
-      ...(data.photo ? { photo: data.photo as unknown as string } : {}),
+      ...(data.photo ? { photo: data.photo } : {}),
       ...(data.class_id ? { class_id: data.class_id } : {}),
       ...(data.sectionId ? { sectionId: data.sectionId } : {}),
       ...(data.rollNumber ? { roll_number: data.rollNumber } : {}),

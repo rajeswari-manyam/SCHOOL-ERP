@@ -211,3 +211,34 @@ export const getTodayExamTimetable = async (date: string): Promise<TodayExamTime
   const res = await api.get("/tenant/todayexamtimetable", { params: { date } });
   return res.data;
 };
+
+/** ================= UPCOMING EXAMS (for parent/student portals) ================= */
+
+export interface UpcomingExamItem {
+  id: string;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  room_no: string | null;
+  class: { id: string; class_name: string } | null;
+  section: { id: string; sectionName: string } | null;
+  subject: { id: string; subject_name: string } | null;
+  exam: { id: string; exam_name: string } | null;
+  teacher: { id: string; name: string } | null;
+}
+
+export interface UpcomingExamsResponse {
+  status: boolean;
+  message: string;
+  count: number;
+  data: UpcomingExamItem[];
+}
+
+export const getUpcomingExams = async (params: {
+  class_id: string;
+  section_id?: string;
+  date?: string;
+}): Promise<UpcomingExamsResponse> => {
+  const res = await api.get("/tenant/upcomingexams", { params });
+  return res.data;
+};

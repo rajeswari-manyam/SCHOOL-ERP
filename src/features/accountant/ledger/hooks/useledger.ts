@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { useUIStore } from "@/store/uiStore";
 import {
   getRecentIncomeTransactions,
   getTotalExpensesByMonth,
@@ -38,6 +39,7 @@ export function useLedger(month?: number, year?: number) {
   const now = new Date();
   const m   = month ?? (now.getMonth() + 1);
   const y   = year  ?? now.getFullYear();
+  const academicYearId = useUIStore((s) => s.academicYearId) ?? "";
 
   // ── Raw data (all records from API) ──────────────────────────────────────
 
@@ -104,13 +106,13 @@ export function useLedger(month?: number, year?: number) {
     getTotalExpensesByMonth(m, y)
       .then((res) => { if (res.status) setTotalExpenses(res.data.totalExpenses); })
       .catch(() => {});
-    getMonthlyPaidPayroll(m, y)
+    getMonthlyPaidPayroll(m, academicYearId)
       .then((res) => { if (res.status) setPaidPayroll(res.data.total_paid); })
       .catch(() => {});
     getBalanceSheet(m, y)
       .then((res) => { if (res.status) setBalanceSheetData(res.data); })
       .catch(() => {});
-  }, [m, y]);
+  }, [m, y, academicYearId]);
 
   // ── Client-side month filtering ───────────────────────────────────────────
 

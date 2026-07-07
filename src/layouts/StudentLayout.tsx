@@ -17,7 +17,7 @@ const StudentLayout = memo(() => {
           max-w-[1650px]
           mx-auto
           px-3 sm:px-4 md:px-6 lg:px-8
-          py-3 sm:py-4 md:py-6 lg:py-8
+          pt-1 sm:pt-2 pb-4 sm:pb-6 lg:pb-8
         "
       >
         <Outlet />

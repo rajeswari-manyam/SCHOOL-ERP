@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  getAllExamTimetables,
+  getUpcomingExams,
   getExamTimetableById,
-  type ExamTimetableListItem,
+  type UpcomingExamItem,
   type ExamTimetableDetail,
 } from "../../../../services/examtimetable.api";
 import {
@@ -16,17 +16,17 @@ import type { Exam, ExamResult, Result } from "../types/exams.types";
    Helper: map API ExamTimetable → local Exam
 ───────────────────────────────────────────── */
 const mapTimetableToExam = (
-  t: ExamTimetableListItem | ExamTimetableDetail
+  t: UpcomingExamItem | ExamTimetableDetail
 ): Exam => ({
   id: t.id,
   subject: (
-    (t as ExamTimetableListItem).subject?.subject_name ??
+    (t as UpcomingExamItem).subject?.subject_name ??
     (t as ExamTimetableDetail).subject_id
   ) as Exam["subject"],
   date: t.exam_date,
   startTime: t.start_time,
   endTime: t.end_time,
-  venue: t.room_no,
+  venue: t.room_no ?? "",
 });
 
 /* ─────────────────────────────────────────────
@@ -120,13 +120,12 @@ export const useExamData = (
     setExamsLoading(true);
     setExamsError(null);
     try {
-      const data = await getAllExamTimetables({
+      const res = await getUpcomingExams({
         class_id: classId,
-        section_id: sectionId,
-        academicYearId: academicYearId || undefined,
+        section_id: sectionId || undefined,
       });
-      if (Array.isArray(data)) {
-        setExams(data.map(mapTimetableToExam));
+      if (res.status && Array.isArray(res.data)) {
+        setExams(res.data.map(mapTimetableToExam));
       } else {
         setExamsError("Failed to fetch exam timetable.");
       }
@@ -136,7 +135,7 @@ export const useExamData = (
     } finally {
       setExamsLoading(false);
     }
-  }, [classId, sectionId, academicYearId]);
+  }, [classId, sectionId]);
 
   /* ── Fetch exam name list for dropdown ── */
   const fetchExamList = useCallback(async () => {

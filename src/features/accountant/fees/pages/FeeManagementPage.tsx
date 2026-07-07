@@ -4,7 +4,6 @@ import { FeeTabs } from "../components/FeeTabs";
 import { FilterBar } from "../components/FilterBar";
 import { PendingFeesTable } from "../components/PendingFeeTable";
 import { useFeeData } from "../hooks/useFees";
-import { StatCard } from "../../../../components/ui/statcard";
 import { ChevronLeft, ChevronRight, Send, Download } from "lucide-react";
 import typography from "@/styles/typography";
 import { RecordFeePaymentModal } from "../components/RecordPaymentModal";
@@ -14,7 +13,6 @@ import { TransportFees } from "../components/TransportFee";
 import { deleteRecordFeePayment } from "@/services/fee.api";
 import { toast } from "sonner";
 
-import { FEE_STATS } from "../constants/fee.constants";
 import { applyDueStatus, applySortBy } from "../utils/fee.utils";
 import type { FeeRow, FilterValues } from "../types/fees.types";
 
@@ -38,8 +36,7 @@ export default function FeeManagementPage() {
   const isAllTx         = activeTab === "All Transactions";
   const isFeeStructure  = activeTab === "Fee Structure";
   const isTransportFees = activeTab === "Transport Fees";
-  const hideFilterBar      = isFeeStructure || isTransportFees;
-  const hideStandardHeader = isFeeStructure || isTransportFees || isAllTx;
+  const hideFilterBar = isFeeStructure || isTransportFees;
 
   const handlePrevMonth = () =>
     setCurrentDate((prev) => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d; });
@@ -75,19 +72,6 @@ export default function FeeManagementPage() {
     <div className="flex flex-col w-full min-w-0 space-y-4 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 px-4 md:px-6 lg:px-8">
       {showPaymentModal && (
         <RecordFeePaymentModal onClose={() => setShowPaymentModal(false)} />
-      )}
-
-      {/* ── Stats Cards ── */}
-      {!hideStandardHeader && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {FEE_STATS.map((s) => (
-            <StatCard
-              key={s.label}
-              label={s.label}
-              value={<span className={`${s.color} font-bold text-lg md:text-xl`}>{s.value}</span>}
-            />
-          ))}
-        </div>
       )}
 
       {/* ── Main Card ── */}

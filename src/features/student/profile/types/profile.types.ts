@@ -1,5 +1,14 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
+export interface ParentInfo {
+  id:         string;
+  parent_name: string;
+  relation:   string;
+  phone:      string;
+  email:      string;
+  occupation: string;
+}
+
 export type StudentStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
 export type DocumentType  = "ACADEMIC" | "IDENTITY" | "FINANCIAL";
 export type Gender        = "Male" | "Female" | "Other";
@@ -53,6 +62,7 @@ export interface Student {
   academic:       AcademicInfo;
   personal:       PersonalInfo;
   quickDownloads: QuickDownload[];
+  parentDetails:  ParentInfo[];
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────

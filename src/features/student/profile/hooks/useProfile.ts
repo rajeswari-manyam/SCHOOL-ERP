@@ -48,13 +48,14 @@ const mapApiStudent = (s: ApiStudent): Student => {
     schoolCode:     s.school_code ?? "",
     rawClass:       s.classDetail?.class_name ?? "",
 
-    // placeholder — will be overwritten by useClassTeacher
-    classTeacher: {
-      id:             "",
-      name:           "Loading…",
-      title:          "",
-      avatarInitials: "--",
-    },
+    classTeacher: s.classTeacher
+      ? {
+          id:             s.classTeacher.id ?? "",
+          name:           `${s.classTeacher.first_name ?? ""} ${s.classTeacher.last_name ?? ""}`.trim() || "Not assigned",
+          title:          "",
+          avatarInitials: `${s.classTeacher.first_name?.charAt(0) ?? ""}${s.classTeacher.last_name?.charAt(0) ?? ""}`.toUpperCase() || "--",
+        }
+      : { id: "", name: "Not assigned", title: "", avatarInitials: "--" },
 
     academic: {
       academicYear: STUDENT_DATA.academic.academicYear,
@@ -72,6 +73,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
     },
 
     quickDownloads: STUDENT_DATA.quickDownloads,
+    parentDetails:  s.parentDetail ?? [],
   };
 };
 

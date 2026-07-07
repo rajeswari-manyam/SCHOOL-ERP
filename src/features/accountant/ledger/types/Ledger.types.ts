@@ -60,7 +60,6 @@ export type BalanceSheetItem = { description: string; amount: number };
 export type BalanceSheetProps = {
   income: number;
   expense: number;
-  chartData: MonthlyData[];
   balanceSheetData?: {
     income: BalanceSheetItem[];
     expenses: BalanceSheetItem[];

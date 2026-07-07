@@ -113,10 +113,10 @@ export default function AttendancePage(): React.ReactElement {
 
   return (
     <div className="min-h-screen bg-indigo-50 font-sans">
-      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-6 sm:py-7 pb-12">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 pt-2 pb-12">
 
         {/* ── HEADER ── */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
           <div>
             <h1 className="text-lg sm:text-[22px] font-bold tracking-tight text-gray-900">
               My Attendance
