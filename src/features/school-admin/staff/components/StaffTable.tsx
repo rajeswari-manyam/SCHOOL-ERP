@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { StaffMember } from "../types/staff.types";
 import { AlertDialog } from "@/components/ui/alert-dialog";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 const PAGE_SIZE = 5;
@@ -17,8 +18,20 @@ const AVATAR_COLORS = [
   "bg-teal-100 text-teal-700",
 ];
 
-const Avatar = ({ initials, id }: { initials: string; id: string }) => {
+const Avatar = ({ initials, id, image, onPreview }: { initials: string; id: string; image?: string; onPreview?: () => void }) => {
   const colorIdx = id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
+  if (image) {
+    return (
+      <button
+        type="button"
+        title="View photo"
+        onClick={(e) => { e.stopPropagation(); onPreview?.(); }}
+        className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden ring-1 ring-black/5 hover:ring-2 hover:ring-indigo-400 transition"
+      >
+        <img src={image} alt={initials} className="w-full h-full object-cover" />
+      </button>
+    );
+  }
   return (
     <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${AVATAR_COLORS[colorIdx]}`}>
       {initials}
@@ -57,6 +70,7 @@ interface Props {
 
 export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) => {
   const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null);
+  const [previewStaff, setPreviewStaff] = useState<StaffMember | null>(null);
   const [page, setPage] = useState(1);
 
   const totalPages = Math.max(1, Math.ceil(staff.length / PAGE_SIZE));
@@ -95,7 +109,7 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
                   {/* Name & Contact */}
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      <Avatar initials={s.initials ?? s.name?.slice(0, 2).toUpperCase() ?? "NA"} id={s.id} />
+                      <Avatar initials={s.initials ?? s.name?.slice(0, 2).toUpperCase() ?? "NA"} id={s.id} image={s.image} onPreview={() => setPreviewStaff(s)} />
                       <div>
                         <p className="text-sm font-semibold text-gray-900 leading-snug">{s.name ?? "—"}</p>
                         <p className="text-xs text-gray-400">
@@ -204,6 +218,16 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
         cancelText="Cancel"
         variant="destructive"
       />
+
+      {previewStaff?.image && (
+        <ImagePreviewModal
+          src={previewStaff.image}
+          alt={previewStaff.name}
+          title={previewStaff.name}
+          subtitle={previewStaff.employeeId || previewStaff.role}
+          onClose={() => setPreviewStaff(null)}
+        />
+      )}
     </div>
   );
 };

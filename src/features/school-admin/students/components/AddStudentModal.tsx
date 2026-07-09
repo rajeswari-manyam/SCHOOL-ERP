@@ -9,7 +9,7 @@ import { useClassesList } from "../hooks/useClassesList";
 import { useSectionsList } from "../hooks/useSectionsList";
 
 import type { AddStudentFormData, Student } from "../types/student.types";
-import { useBulkCreateParentsMutation } from "../hooks/useCreateParentMutation";
+import { parentsApi } from "@/services/school-parents.api";
 import type { CreateParentPayload } from "../types/parent.types";
 
 interface CreateStudentResponse {
@@ -121,13 +121,18 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
   const [studentData, setStudentData] = useState<{ id?: string; school_id?: string } | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [fatherPhoto, setFatherPhoto] = useState<File | null>(null);
+  const [fatherPhotoPreview, setFatherPhotoPreview] = useState<string | null>(null);
+  const fatherPhotoInputRef = useRef<HTMLInputElement>(null);
+  const [motherPhoto, setMotherPhoto] = useState<File | null>(null);
+  const [motherPhotoPreview, setMotherPhotoPreview] = useState<string | null>(null);
+  const motherPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAuthStore();
   const academicYearId = useUIStore((s) => s.academicYearId);
 
   const { classes, loading: classesLoading, error: classesError, retry: retryClasses } = useClassesList(academicYearId);
   const { sections, loading: sectionsLoading, error: sectionsError, retry: retrySections } = useSectionsList(selectedClassId);
-  const { mutateAsync: createParents, isPending: parentLoading, error: parentApiError, reset: resetParentError } = useBulkCreateParentsMutation();
 
   const [generatedAdmNo] = useState(() => genNextAdmissionNo(students));
 
@@ -196,6 +201,42 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
+  const handleFatherPhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setFatherPhoto(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setFatherPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setFatherPhotoPreview(null);
+    }
+  };
+
+  const handleRemoveFatherPhoto = () => {
+    setFatherPhoto(null);
+    setFatherPhotoPreview(null);
+    if (fatherPhotoInputRef.current) fatherPhotoInputRef.current.value = "";
+  };
+
+  const handleMotherPhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setMotherPhoto(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setMotherPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setMotherPhotoPreview(null);
+    }
+  };
+
+  const handleRemoveMotherPhoto = () => {
+    setMotherPhoto(null);
+    setMotherPhotoPreview(null);
+    if (motherPhotoInputRef.current) motherPhotoInputRef.current.value = "";
+  };
+
   const e = (field: string) => errors.has(field);
 
   const validateStep1 = (): boolean => {
@@ -251,29 +292,37 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
 
   const handleBack = () => { setFormError(null); setErrors(new Set()); setStep(1); };
 
-  const buildParentPayload = (parent_name: string, relation: string, occupation: string, phone: string): CreateParentPayload => ({
-    parent_name, relation,
-    occupation: occupation || "Not specified",
-    email: form.email, phone,
+  const buildParentPayload = (): CreateParentPayload => ({
+    father_name: form.fatherName.trim(),
+    father_occupation: form.fatherOccupation || "Not specified",
+    father_email: form.email,
+    father_phone: form.fatherPhone.trim(),
+    mother_name: form.motherName.trim(),
+    mother_occupation: form.motherOccupation || "Not specified",
+    mother_email: form.email,
+    mother_phone: form.motherPhone.trim(),
     students: [studentData?.id ?? ""],
     address: form.residentialAddress,
-    school_id: studentData?.school_id || user?.schoolcode || "",
+    ...(fatherPhoto ? { father_image: fatherPhoto } : {}),
+    ...(motherPhoto ? { mother_image: motherPhoto } : {}),
   });
 
   const handleSubmit = async () => {
     if (!validateStep2()) return;
     setLoading(true);
     setFormError(null);
-    resetParentError();
     try {
       if (!studentData?.id) { setFormError("Student data missing."); return; }
-      await createParents([
-        buildParentPayload(form.fatherName, form.fatherRelation, form.fatherOccupation, form.fatherPhone),
-        buildParentPayload(form.motherName, form.motherRelation, form.motherOccupation, form.motherPhone),
-      ]);
+
+      await parentsApi.createParent(buildParentPayload());
+
       setForm(EMPTY_FORM);
       setStudentData(null);
       setPhotoPreview(null);
+      setFatherPhoto(null);
+      setFatherPhotoPreview(null);
+      setMotherPhoto(null);
+      setMotherPhotoPreview(null);
       setStep(1);
       onClose();
     } catch (err: any) {
@@ -471,6 +520,58 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                       value={form.motherName} onChange={(ev) => set("motherName")(ev.target.value)} />
                   </Field>
 
+                  {/* Father's Photo */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                      {fatherPhotoPreview
+                        ? <img src={fatherPhotoPreview} alt="Father" className="w-full h-full object-cover" />
+                        : <Camera className="w-4 h-4 text-gray-300" />
+                      }
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Father's Photo</label>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => fatherPhotoInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                          {fatherPhotoPreview ? "Change" : "Upload Photo"}
+                        </button>
+                        {fatherPhotoPreview && (
+                          <button type="button" onClick={handleRemoveFatherPhoto}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <input ref={fatherPhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleFatherPhotoChange} />
+                    </div>
+                  </div>
+
+                  {/* Mother's Photo */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                      {motherPhotoPreview
+                        ? <img src={motherPhotoPreview} alt="Mother" className="w-full h-full object-cover" />
+                        : <Camera className="w-4 h-4 text-gray-300" />
+                      }
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Mother's Photo</label>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => motherPhotoInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                          {motherPhotoPreview ? "Change" : "Upload Photo"}
+                        </button>
+                        {motherPhotoPreview && (
+                          <button type="button" onClick={handleRemoveMotherPhoto}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <input ref={motherPhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleMotherPhotoChange} />
+                    </div>
+                  </div>
+
                   {/* Father's Phone */}
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
@@ -497,6 +598,11 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                   <Field label="Father's Occupation">
                     <input className={inputCls} placeholder="e.g. Software Engineer"
                       value={form.fatherOccupation} onChange={(ev) => set("fatherOccupation")(ev.target.value)} />
+                  </Field>
+
+                  <Field label="Mother's Occupation">
+                    <input className={inputCls} placeholder="e.g. Teacher"
+                      value={form.motherOccupation} onChange={(ev) => set("motherOccupation")(ev.target.value)} />
                   </Field>
 
                   <Field label="Emergency Contact">
@@ -546,10 +652,10 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
         </div>
 
         {/* API Error */}
-        {(formError || parentApiError) && (
+        {formError && (
           <div className="px-5 sm:px-7 pb-2 shrink-0">
             <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
-              <p className="text-xs text-red-600">{formError || (parentApiError as Error)?.message}</p>
+              <p className="text-xs text-red-600">{formError}</p>
             </div>
           </div>
         )}
@@ -577,10 +683,10 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
             )}
 
             {step === 2 && (
-              <button onClick={handleSubmit} disabled={loading || parentLoading}
+              <button onClick={handleSubmit} disabled={loading}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 shadow-sm">
-                {loading || parentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
-                {loading || parentLoading ? "Adding…" : "Add Student & Send Welcome WhatsApp"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                {loading ? "Adding…" : "Add Student & Send Welcome WhatsApp"}
               </button>
             )}
           </div>

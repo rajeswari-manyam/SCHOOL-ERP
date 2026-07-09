@@ -17,6 +17,7 @@ export interface CreateHomeworkPayload {
   is_published: boolean;
   academicYearId: string;
   submission_type?: "physical" | "online" | "both";
+  files?: File[];
 }
 
 export type UpdateHomeworkPayload = Partial<{
@@ -141,7 +142,7 @@ export interface AssignHomeworkFormValues {
   description: string;
   attachments: string[];
   is_published: boolean;
-  attachmentFile?: FileList;
+  attachmentFile?: File[];
   submission_type?: "physical" | "online" | "both";
 }
 

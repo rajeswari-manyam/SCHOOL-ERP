@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Plus, Trash2, Loader2, CheckCircle, ChevronDown, ChevronUp, Wand2, ArrowRight } from "lucide-react";
+import { X, Plus, Trash2, Loader2, CheckCircle, ChevronDown, ChevronUp, Wand2, ArrowRight, Camera } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { useClassesList } from "../hooks/useClassesList";
@@ -47,10 +47,14 @@ interface StudentParentRow {
   fatherRelation: string;
   fatherOccupation: string;
   fatherPhone: string;
+  fatherImage: File | null;
+  fatherImagePreview: string | null;
   motherName: string;
   motherRelation: string;
   motherOccupation: string;
   motherPhone: string;
+  motherImage: File | null;
+  motherImagePreview: string | null;
   email: string;
 }
 
@@ -79,7 +83,9 @@ const emptyPersonalRow = (): StudentPersonalRow => ({
 
 const emptyParentRow = (): StudentParentRow => ({
   fatherName: "", fatherRelation: "Father", fatherOccupation: "", fatherPhone: "",
+  fatherImage: null, fatherImagePreview: null,
   motherName: "", motherRelation: "Mother", motherOccupation: "", motherPhone: "",
+  motherImage: null, motherImagePreview: null,
   email: "",
 });
 
@@ -152,6 +158,22 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
   const updateParentRow = (index: number, field: keyof StudentParentRow, value: string) =>
     setParentRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
 
+  const updateParentImage = (index: number, which: "father" | "mother", file: File | null) => {
+    const imageField = which === "father" ? "fatherImage" : "motherImage";
+    const previewField = which === "father" ? "fatherImagePreview" : "motherImagePreview";
+    setParentRows((prev) => prev.map((r, i) => (i === index ? { ...r, [imageField]: file } : r)));
+    if (!file) {
+      setParentRows((prev) => prev.map((r, i) => (i === index ? { ...r, [previewField]: null } : r)));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const preview = reader.result as string;
+      setParentRows((prev) => prev.map((r, i) => (i === index ? { ...r, [previewField]: preview } : r)));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const addRow = () => {
     const newIdx = personalRows.length;
     setPersonalRows((prev) => [...prev, { ...emptyPersonalRow(), admissionNo: nextAdmNo() }]);
@@ -201,23 +223,33 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
 
   const handleBack = () => { setError(null); setRowErrors({}); setStep(1); };
 
-  const createParentsForStudent = async (studentId: string, parent: StudentParentRow, address: string) => {
-    const promises: Promise<unknown>[] = [];
-    if (parent.fatherName.trim() && parent.fatherPhone.trim()) {
-      promises.push(parentsApi.createParent({
-        parent_name: parent.fatherName.trim(), relation: parent.fatherRelation,
-        occupation: parent.fatherOccupation || "Not specified", email: parent.email,
-        phone: parent.fatherPhone.trim(), students: [studentId], address, school_id: schoolcode,
-      }));
+  // Never throws — a failure here shouldn't block the rest of the bulk-add
+  // flow. Returns a label per failure (empty array on success).
+  const createParentsForStudent = async (studentId: string, parent: StudentParentRow, address: string): Promise<string[]> => {
+    if (!parent.fatherName.trim() && !parent.motherName.trim()) return [];
+    try {
+      await parentsApi.createParent({
+        ...(parent.fatherName.trim() ? {
+          father_name: parent.fatherName.trim(),
+          father_occupation: parent.fatherOccupation || "Not specified",
+          father_email: parent.email,
+          father_phone: parent.fatherPhone.trim(),
+          ...(parent.fatherImage ? { father_image: parent.fatherImage } : {}),
+        } : {}),
+        ...(parent.motherName.trim() ? {
+          mother_name: parent.motherName.trim(),
+          mother_occupation: parent.motherOccupation || "Not specified",
+          mother_email: parent.email,
+          mother_phone: parent.motherPhone.trim(),
+          ...(parent.motherImage ? { mother_image: parent.motherImage } : {}),
+        } : {}),
+        students: [studentId],
+        address,
+      });
+      return [];
+    } catch (err: any) {
+      return [`Parent: ${err?.message ?? "Failed to save"}`];
     }
-    if (parent.motherName.trim() && parent.motherPhone.trim()) {
-      promises.push(parentsApi.createParent({
-        parent_name: parent.motherName.trim(), relation: parent.motherRelation,
-        occupation: parent.motherOccupation || "Not specified", email: parent.email,
-        phone: parent.motherPhone.trim(), students: [studentId], address, school_id: schoolcode,
-      }));
-    }
-    await Promise.all(promises);
   };
 
   const handleSubmit = async () => {
@@ -252,28 +284,39 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
         }
       }
 
-      if (Object.keys(newRowErrors).length > 0) {
-        setRowErrors(newRowErrors);
-        if (created.length === 0) {
-          setError("Some students could not be added. Check the errors below each row.");
-          return;
-        }
-        setError(`${Object.keys(newRowErrors).length} student(s) failed. The rest were added successfully.`);
-      }
-
       setCreatedStudents(created);
+      const parentFailures: string[] = [];
       if (created.length > 0) {
-        const parentPromises: Promise<unknown>[] = [];
+        const parentJobs: Promise<string[]>[] = [];
         for (let i = 0; i < created.length && i < parentRows.length; i++) {
           const parent = parentRows[i];
           if (parent.fatherName.trim() || parent.motherName.trim()) {
-            parentPromises.push(createParentsForStudent(created[i].id, parent, personalRows[i]?.address ?? ""));
+            parentJobs.push(createParentsForStudent(created[i].id, parent, personalRows[i]?.address ?? ""));
           }
         }
-        if (parentPromises.length > 0) await Promise.all(parentPromises);
+        if (parentJobs.length > 0) {
+          const perStudentFailures = await Promise.all(parentJobs);
+          parentFailures.push(...perStudentFailures.flat());
+        }
       }
 
-      if (Object.keys(newRowErrors).length === 0) setStep(3);
+      const studentErrorCount = Object.keys(newRowErrors).length;
+      if (studentErrorCount > 0 || parentFailures.length > 0) {
+        setRowErrors(newRowErrors);
+        const parts: string[] = [];
+        if (studentErrorCount > 0) {
+          parts.push(created.length === 0
+            ? "Some students could not be added. Check the errors below each row."
+            : `${studentErrorCount} student(s) failed. The rest were added successfully.`);
+        }
+        if (parentFailures.length > 0) {
+          parts.push(`Some parent records could not be saved: ${parentFailures.join("; ")}`);
+        }
+        setError(parts.join(" "));
+        if (created.length === 0) return;
+      }
+
+      if (studentErrorCount === 0) setStep(3);
     } catch (err: any) {
       setError(err?.message || "Failed to add students");
     } finally {
@@ -515,6 +558,26 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                           <input className={inputCls} placeholder="9876543210" value={row.fatherPhone}
                             onChange={(e) => updateParentRow(i, "fatherPhone", e.target.value)} />
                         </Field>
+                        <Field label="Photo">
+                          <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 rounded-full bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                              {row.fatherImagePreview
+                                ? <img src={row.fatherImagePreview} alt="" className="w-full h-full object-cover" />
+                                : <Camera className="w-3.5 h-3.5 text-gray-300" />
+                              }
+                            </div>
+                            <label className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-slate-200 bg-white text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                              {row.fatherImagePreview ? "Change" : "Upload"}
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => updateParentImage(i, "father", e.target.files?.[0] ?? null)} />
+                            </label>
+                            {row.fatherImagePreview && (
+                              <button type="button" onClick={() => updateParentImage(i, "father", null)}
+                                className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </Field>
                       </div>
 
                       <div className="sm:col-span-2 lg:col-span-2 space-y-3">
@@ -534,6 +597,26 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                         <Field label="Phone">
                           <input className={inputCls} placeholder="9876543210" value={row.motherPhone}
                             onChange={(e) => updateParentRow(i, "motherPhone", e.target.value)} />
+                        </Field>
+                        <Field label="Photo">
+                          <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 rounded-full bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                              {row.motherImagePreview
+                                ? <img src={row.motherImagePreview} alt="" className="w-full h-full object-cover" />
+                                : <Camera className="w-3.5 h-3.5 text-gray-300" />
+                              }
+                            </div>
+                            <label className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-slate-200 bg-white text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                              {row.motherImagePreview ? "Change" : "Upload"}
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => updateParentImage(i, "mother", e.target.files?.[0] ?? null)} />
+                            </label>
+                            {row.motherImagePreview && (
+                              <button type="button" onClick={() => updateParentImage(i, "mother", null)}
+                                className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
                         </Field>
                       </div>
 

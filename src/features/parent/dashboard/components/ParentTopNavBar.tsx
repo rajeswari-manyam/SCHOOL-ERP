@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import typography from "@/styles/typography";
 import { useStudentById } from "../hooks/useStudent";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 const navLinks = [
     { label: "Dashboard", path: "/parent/dashboard", icon: LayoutDashboard },
@@ -48,11 +49,13 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = fal
     const [mobileOpen, setMobileOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [showAvatarPreview, setShowAvatarPreview] = useState(false);
 
    const studentId = activeChild?.studentId
   ? String(activeChild.studentId)
   : String(activeChild.id ?? "");
     const { student } = useStudentById(studentId);
+    const avatarImage = useAuthStore((s) => s.user?.image);
 
     // ✅ Close all dropdowns on route change — prevents overlay blocking clicks
     useEffect(() => {
@@ -183,9 +186,19 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = fal
                                 onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
                                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#F4F6FA] transition cursor-pointer"
                             >
-                                <div className="w-7 h-7 rounded-full bg-[#3525CD] flex items-center justify-center shrink-0">
-                                    <span className="text-white text-[11px] font-semibold">{user.initials}</span>
-                                </div>
+                                {avatarImage ? (
+                                    <img
+                                        src={avatarImage}
+                                        alt="Profile"
+                                        title="View photo"
+                                        onClick={(e) => { e.stopPropagation(); setShowAvatarPreview(true); }}
+                                        className="w-7 h-7 rounded-full object-cover shrink-0 cursor-pointer hover:ring-2 hover:ring-indigo-400 transition"
+                                    />
+                                ) : (
+                                    <div className="w-7 h-7 rounded-full bg-[#3525CD] flex items-center justify-center shrink-0">
+                                        <span className="text-white text-[11px] font-semibold">{user.initials}</span>
+                                    </div>
+                                )}
                                 <div className="leading-tight text-left">
                                     <p className={`${typography.body.small} font-semibold text-[#0B1C30] whitespace-nowrap`}>{user.name}</p>
                                     <p className={`${typography.body.xs} text-[#9CA3AF]`}>{user.className}</p>
@@ -271,9 +284,19 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = fal
 
                         <div className="px-4 py-4 border-b border-[#E8EBF2] shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#3525CD] flex items-center justify-center shrink-0">
-                                    <span className="text-white text-[13px] font-semibold">{user.initials}</span>
-                                </div>
+                                {avatarImage ? (
+                                    <img
+                                        src={avatarImage}
+                                        alt="Profile"
+                                        title="View photo"
+                                        onClick={(e) => { e.stopPropagation(); setShowAvatarPreview(true); }}
+                                        className="w-10 h-10 rounded-full object-cover shrink-0 cursor-pointer hover:ring-2 hover:ring-indigo-400 transition"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-[#3525CD] flex items-center justify-center shrink-0">
+                                        <span className="text-white text-[13px] font-semibold">{user.initials}</span>
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-[14px] font-semibold text-[#0B1C30]">{user.name}</p>
                                     <p className="text-[11px] text-[#9CA3AF]">{user.className}</p>
@@ -334,6 +357,14 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = fal
     className="fixed inset-0 z-40"
     onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
   />
+)}
+
+{showAvatarPreview && avatarImage && (
+    <ImagePreviewModal
+        src={avatarImage}
+        alt="Profile"
+        onClose={() => setShowAvatarPreview(false)}
+    />
 )}
         </>
     );

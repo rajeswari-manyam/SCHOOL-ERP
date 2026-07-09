@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Trash2, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Plus, Trash2, Loader2, CheckCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
-import { bulkCreateStaff } from "@/services/school-staff.api";
+import { createStaff } from "@/services/school-staff.api";
 import { fetchDepartments } from "@/services/department.api";
 import { getAllAcademicYears } from "@/services/academicYear.api";
 import { useStaffStore } from "../store/usestore";
@@ -19,7 +19,6 @@ interface StaffRow {
   email: string;
   role: string;
   qualification: string;
-  salary: string;
   dateOfBirth: string;
   dateOfJoin: string;
   empNumber: string;
@@ -30,6 +29,8 @@ interface StaffRow {
   bankAccountName: string;
   bankAccountNumber: string;
   ifscCode: string;
+  image: File | null;
+  imagePreview: string | null;
 }
 
 const emptyRow = (): StaffRow => ({
@@ -38,7 +39,6 @@ const emptyRow = (): StaffRow => ({
   email: "",
   role: "",
   qualification: "",
-  salary: "0",
   dateOfBirth: "2000-01-01",
   dateOfJoin: new Date().toISOString().slice(0, 10),
   empNumber: "",
@@ -49,6 +49,8 @@ const emptyRow = (): StaffRow => ({
   bankAccountName: "",
   bankAccountNumber: "",
   ifscCode: "",
+  image: null,
+  imagePreview: null,
 });
 
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
@@ -121,6 +123,20 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
   };
 
+  const handleRowImageChange = (index: number, file: File | null) => {
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, image: file } : r)));
+    if (!file) {
+      setRows((prev) => prev.map((r, i) => (i === index ? { ...r, imagePreview: null } : r)));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const preview = reader.result as string;
+      setRows((prev) => prev.map((r, i) => (i === index ? { ...r, imagePreview: preview } : r)));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const addRow = () =>
     setRows((prev) => [...prev, makeRow(prev.length)]);
 
@@ -153,32 +169,35 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
     setError(null);
 
     try {
-      const staffPayload = valid.map((r) => ({
-        name: r.name.trim(),
-        email: r.email.trim(),
-        phone: r.phone.trim().replace(/[^0-9]/g, ""),
-        role: r.role.trim(),
-        qualification: r.qualification.trim(),
-        salary: Number(r.salary || 0),
-        date_of_birth: r.dateOfBirth,
-        date_of_join: r.dateOfJoin,
-        emp_number: r.empNumber.trim() || "EMP-001",
-        school_code: schoolcode,
-        status: r.status || "ACTIVE",
-        ...(r.departmentId        ? { department_id: r.departmentId } : {}),
-        ...(r.academicYearId || globalAcademicYearId ? { academicYearId: r.academicYearId || (globalAcademicYearId ?? undefined) } : {}),
-        ...(r.bankAccountName.trim()   ? { bank_account_name: r.bankAccountName.trim() } : {}),
-        ...(r.bankAccountNumber.trim() ? { bank_account_number: r.bankAccountNumber.trim() } : {}),
-        ...(r.ifscCode.trim()          ? { ifsc_code: r.ifscCode.trim().toUpperCase() } : {}),
-      }));
+      // No bulk-with-images endpoint exists, so each row is created individually
+      // via the same multipart endpoint the single Add Staff form uses.
+      const results = await Promise.allSettled(
+        valid.map((r) =>
+          createStaff({
+            school_id: schoolId,
+            name: r.name.trim(),
+            email: r.email.trim(),
+            phone: r.phone.trim().replace(/[^0-9]/g, ""),
+            role: r.role.trim(),
+            qualification: r.qualification.trim(),
+            date_of_birth: r.dateOfBirth,
+            date_of_join: r.dateOfJoin,
+            emp_number: r.empNumber.trim() || "EMP-001",
+            school_code: schoolcode,
+            status: r.status || "ACTIVE",
+            ...(r.departmentId        ? { department_id: r.departmentId } : {}),
+            ...(r.academicYearId || globalAcademicYearId ? { academicYearId: r.academicYearId || (globalAcademicYearId ?? undefined) } : {}),
+            ...(r.bankAccountName.trim()   ? { bank_account_name: r.bankAccountName.trim() } : {}),
+            ...(r.bankAccountNumber.trim() ? { bank_account_number: r.bankAccountNumber.trim() } : {}),
+            ...(r.ifscCode.trim()          ? { ifsc_code: r.ifscCode.trim().toUpperCase() } : {}),
+            ...(r.image ? { image: r.image } : {}),
+          })
+        )
+      );
 
-      const payload = {
-        school_id: schoolId,
-        staff: staffPayload,
-      };
-
-      const res = await bulkCreateStaff(payload);
-      setResult({ inserted: res.inserted ?? 0, skipped: res.skipped ?? 0 });
+      const inserted = results.filter((r) => r.status === "fulfilled").length;
+      const skipped = results.length - inserted;
+      setResult({ inserted, skipped });
       setSuccess(true);
       await loadStaff();
     } catch (err: any) {
@@ -303,9 +322,6 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                             <Field label="Date of Joining *">
                               <Input type="date" value={row.dateOfJoin} onChange={(e) => updateRow(i, "dateOfJoin", e.target.value)} />
                             </Field>
-                            <Field label="Monthly Salary (₹)">
-                              <Input type="number" placeholder="25000" value={row.salary} onChange={(e) => updateRow(i, "salary", e.target.value)} />
-                            </Field>
                             <Field label="Status">
                               <Select
                                 value={row.status}
@@ -345,6 +361,27 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                             <Field label="IFSC Code">
                               <Input placeholder="SBIN0001234" value={row.ifscCode} maxLength={11} onChange={(e) => updateRow(i, "ifscCode", e.target.value.toUpperCase())} />
                             </Field>
+                            <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Photo</label>
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-full bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                  {row.imagePreview
+                                    ? <img src={row.imagePreview} alt="" className="w-full h-full object-cover" />
+                                    : <Camera className="w-4 h-4 text-gray-300" />
+                                  }
+                                </div>
+                                <label className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                                  {row.imagePreview ? "Change" : "Upload Photo"}
+                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleRowImageChange(i, e.target.files?.[0] ?? null)} />
+                                </label>
+                                {row.imagePreview && (
+                                  <button type="button" onClick={() => handleRowImageChange(i, null)}
+                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>

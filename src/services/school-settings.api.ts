@@ -133,7 +133,8 @@ const mapApiToSchoolProfile = (school: Record<string, unknown>): SchoolProfile =
   email: String(school.email ?? ""),
   schoolType: String(school.school_type ?? ""),
   address: String(school.address ?? ""),
-  logoUrl: (school.logo ?? school.image ?? undefined) as string | undefined,
+  logoUrl: (school.logo ?? undefined) as string | undefined,
+  adminImageUrl: (school.image ?? undefined) as string | undefined,
 });
 
 export const fetchSchoolProfile = async (): Promise<SchoolProfile> => {
@@ -148,7 +149,17 @@ export const fetchSchoolProfile = async (): Promise<SchoolProfile> => {
   }
 };
 
-export const updateSchoolProfile = async (profile: Partial<SchoolProfile>): Promise<SchoolProfile> => {
+export interface SchoolProfileFiles {
+  /** New school logo — sent as the `logo` field. */
+  logo?: File | null;
+  /** New admin/principal photo — sent as the `image` field. */
+  adminImage?: File | null;
+}
+
+export const updateSchoolProfile = async (
+  profile: Partial<SchoolProfile>,
+  files?: SchoolProfileFiles,
+): Promise<SchoolProfile> => {
   const schoolId = getSchoolIdFromToken();
   if (!schoolId) throw new Error("Unable to determine school ID");
 
@@ -161,10 +172,32 @@ export const updateSchoolProfile = async (profile: Partial<SchoolProfile>): Prom
   if (profile.totalStudentCapacity !== undefined) payload.totalSchoolstrength = profile.totalStudentCapacity;
   if (profile.email !== undefined) payload.email = profile.email;
   if (profile.address !== undefined) payload.address = profile.address;
-  if (profile.logoUrl !== undefined) payload.logo = profile.logoUrl;
+  // logoUrl / adminImageUrl are display-only fields derived from the server's
+  // `logo` / `image` — never write them back as-is (they may be local
+  // preview data URLs). Real new files are uploaded separately below.
+
+  const logoFile = files?.logo;
+  const adminImageFile = files?.adminImage;
+  const hasFiles = logoFile instanceof File || adminImageFile instanceof File;
+
+  const body: Record<string, unknown> | FormData = hasFiles
+    ? Object.entries(payload).reduce((fd, [key, value]) => {
+        if (value === undefined || value === null || value === "") return fd;
+        fd.append(key, String(value));
+        return fd;
+      }, new FormData())
+    : payload;
+  if (hasFiles) {
+    if (logoFile instanceof File) (body as FormData).append("logo", logoFile);
+    if (adminImageFile instanceof File) (body as FormData).append("image", adminImageFile);
+  }
 
   try {
-    const { data } = await api.put(`/organization/updateSchool/${schoolId}`, payload);
+    const { data } = await api.put(
+      `/organization/updateSchool/${schoolId}`,
+      body,
+      hasFiles ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
+    );
     const school = data?.school ?? data?.data ?? data;
     return mapApiToSchoolProfile(school as Record<string, unknown>);
   } catch (err: any) {

@@ -210,17 +210,19 @@ const OtpPage = () => {
 
   // ── 6-box OTP input ─────────────────────────────────────────────────────────
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
-  const vals   = otp.padEnd(6, "").split("").slice(0, 6);
+  const vals = Array.from({ length: 6 }, (_, i) => otp[i] ?? "");
 
   const handleBoxChange = (idx: number, raw: string) => {
     const char = raw.replace(/\D/g, "").slice(-1);
-    const next = [...vals];
+    const next = Array.from({ length: 6 }, (_, i) => vals[i] ?? "");
     next[idx] = char;
-    const newOtp = next.join("").trimEnd();
+    const newOtp = next.join("");
     setOtp(newOtp);
     setError("");
     if (char && idx < 5) inputs.current[idx + 1]?.focus();
-    if (newOtp.length === 6) setTimeout(() => handleVerifyOtp(newOtp), 200);
+    if (newOtp.length === 6 && !newOtp.includes("")) {
+      setTimeout(() => handleVerifyOtp(newOtp), 200);
+    }
   };
 
   const handleBoxKey = (
@@ -228,14 +230,13 @@ const OtpPage = () => {
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Backspace") {
-      if (vals[idx]) {
-        const n = [...vals];
-        n[idx] = "";
-        setOtp(n.join("").trimEnd());
+      const next = Array.from({ length: 6 }, (_, i) => vals[i] ?? "");
+      if (next[idx]) {
+        next[idx] = "";
+        setOtp(next.join(""));
       } else if (idx > 0) {
-        const n = [...vals];
-        n[idx - 1] = "";
-        setOtp(n.join("").trimEnd());
+        next[idx - 1] = "";
+        setOtp(next.join(""));
         inputs.current[idx - 1]?.focus();
       }
     } else if (e.key === "ArrowLeft"  && idx > 0) inputs.current[idx - 1]?.focus();

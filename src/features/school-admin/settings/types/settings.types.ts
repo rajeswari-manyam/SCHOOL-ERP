@@ -12,6 +12,8 @@ export interface SchoolProfile {
   schoolType: string;
   address: string;
   logoUrl?: string;
+  /** Admin/principal photo — separate from the school logo. */
+  adminImageUrl?: string;
 }
 
 /** Legacy shape used by SchoolSettingsForm */

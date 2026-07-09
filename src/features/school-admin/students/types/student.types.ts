@@ -26,11 +26,14 @@ export interface Student {
   admittedOn?: string;
   // Parent/Contact
   parentId?: string;
+  parentImage?: string;
+  motherImage?: string;
   fatherName?: string;
   fatherPhone?: string;
   fatherOccupation?: string;
   motherName?: string;
   motherPhone?: string;
+  motherOccupation?: string;
   emergencyContact?: string;
   whatsappNumber?: string;
   email?: string;
@@ -61,6 +64,8 @@ export interface UpdateStudentPayload {
   photo?: File | null;
   class?: string;
   section?: string;
+  class_id?: string;
+  sectionId?: string;
   roll_number?: string;
   admission_number?: string;
   status?: StudentStatus;
@@ -70,6 +75,20 @@ export interface UpdateStudentPayload {
   mother_phone?: string;
   emergency_contact?: string;
   email?: string;
+}
+
+export interface UpdateParentPayload {
+  father_name?: string;
+  father_occupation?: string;
+  father_email?: string;
+  father_phone?: string;
+  mother_name?: string;
+  mother_occupation?: string;
+  mother_email?: string;
+  mother_phone?: string;
+  address?: string;
+  father_image?: File | null;
+  mother_image?: File | null;
 }
 
 export interface CreateStudentPayload {

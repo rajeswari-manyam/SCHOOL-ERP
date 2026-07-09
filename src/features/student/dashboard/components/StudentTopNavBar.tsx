@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout as logoutApi } from "@/services/auth.api";
+import { useAuthStore } from "@/store/authStore";
 import {
   Bell,
   LogOut,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useDashboard } from "../hooks/useDashboard";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 const navLinks = [
   { label: "Dashboard", path: "/student/dashboard", icon: LayoutDashboard },
@@ -30,6 +32,9 @@ const StudentTopNavBar = () => {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+
+  const avatarImage = useAuthStore((s) => s.user?.image);
 
   // ✅ Correct hook usage
   const {
@@ -109,9 +114,19 @@ const StudentTopNavBar = () => {
               className="flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-gray-100"
             >
               {/* Avatar */}
-              <div className="w-9 h-9 rounded-full bg-[#3525CD] flex items-center justify-center text-white text-xs font-bold">
-                {initials}
-              </div>
+              {avatarImage ? (
+                <img
+                  src={avatarImage}
+                  alt={studentName || "Student"}
+                  title="View photo"
+                  onClick={(e) => { e.stopPropagation(); setShowAvatarPreview(true); }}
+                  className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-indigo-400 transition"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#3525CD] flex items-center justify-center text-white text-xs font-bold">
+                  {initials}
+                </div>
+              )}
 
               {/* Info */}
               <div className="hidden sm:flex flex-col text-left leading-tight">
@@ -192,6 +207,15 @@ const StudentTopNavBar = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showAvatarPreview && avatarImage && (
+        <ImagePreviewModal
+          src={avatarImage}
+          alt={studentName || "Student"}
+          title={studentName || undefined}
+          onClose={() => setShowAvatarPreview(false)}
+        />
       )}
     </>
   );

@@ -88,7 +88,6 @@ const AssignHomeworkModal = ({
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver]             = useState(false);
   const [attachedFiles, setAttachedFiles]   = useState<File[]>([]);
-  const [attachmentFile, setAttachmentFile] = useState<FileList | null>(null);
   const initializingRef = useRef(false);
 
   const [academicYears,   setAcademicYears]   = useState<AcademicYearRecord[]>([]);
@@ -203,7 +202,6 @@ const AssignHomeworkModal = ({
   const handleClose = () => {
     reset();
     setAttachedFiles([]);
-    setAttachmentFile(null);
     setSections([]);
     setSubjects([]);
     onClose();
@@ -212,7 +210,7 @@ const AssignHomeworkModal = ({
   const onSubmit = (values: FormValues) => {
     onConfirm({
       ...values,
-      attachmentFile: attachmentFile ?? undefined,
+      attachmentFile: attachedFiles.length > 0 ? attachedFiles : undefined,
       attachments: initialValues?.attachments ?? [],
     });
   };
@@ -221,7 +219,6 @@ const AssignHomeworkModal = ({
     if (!files) return;
     const arr = Array.from(files);
     setAttachedFiles((prev) => [...prev, ...arr]);
-    setAttachmentFile(files);
   };
 
   const removeFile = (index: number) => {

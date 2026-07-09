@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAuthStore } from "@/store/authStore";
 import type {
   SchoolProfile,
   AcademicYear,
@@ -45,11 +46,21 @@ export function useSchoolProfile() {
     });
   }, []);
 
-  const save = useCallback(async (data: Partial<SchoolProfile>) => {
+  const save = useCallback(async (data: Partial<SchoolProfile>, files?: api.SchoolProfileFiles) => {
     setSaving(true);
-    const updated = await api.updateSchoolProfile(data);
-    setProfile(updated);
-    setSaving(false);
+    try {
+      const updated = await api.updateSchoolProfile(data, files);
+      setProfile(updated);
+      // Reflect a newly-uploaded admin photo in the sidebar right away.
+      if (files?.adminImage) {
+        useAuthStore.getState().setUserImage(updated.adminImageUrl ?? null);
+      }
+      if (updated.principalName) {
+        useAuthStore.getState().setPrincipalName(updated.principalName);
+      }
+    } finally {
+      setSaving(false);
+    }
   }, []);
 
   return { profile, loading, saving, save };

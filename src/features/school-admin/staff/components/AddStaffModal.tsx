@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { createStaff } from "@/services/school-staff.api";
@@ -114,6 +114,9 @@ export const AddStaffModal = ({ onClose }: Props) => {
   const [academicYears, setAcademicYears] = useState<AcademicYearRecord[]>([]);
   const [autoGenEmp, setAutoGenEmp]   = useState(true);
   const [generatedEmpId]      = useState(() => genNextEmpId(staffData));
+  const [imageFile, setImageFile]     = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchDepartments().then(setDepartments).catch(() => {});
@@ -123,6 +126,24 @@ export const AddStaffModal = ({ onClose }: Props) => {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleImageChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setImageFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
   const validate = () => {
@@ -180,6 +201,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
       ...(form.bankAccountName.trim()   && { bank_account_name: form.bankAccountName.trim() }),
       ...(form.bankAccountNumber.trim() && { bank_account_number: form.bankAccountNumber.trim() }),
       ...(form.ifscCode.trim()          && { ifsc_code: form.ifscCode.trim() }),
+      ...(imageFile && { image: imageFile }),
     };
 
     try {
@@ -233,6 +255,32 @@ export const AddStaffModal = ({ onClose }: Props) => {
         {/* ── Scrollable body ── */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col">
           <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 flex-1">
+
+            {/* PHOTO */}
+            <div className="sm:col-span-2 flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                {imagePreview
+                  ? <img src={imagePreview} alt="Staff" className="w-full h-full object-cover" />
+                  : <Camera className="w-5 h-5 text-gray-300" />
+                }
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={labelCls}>Photo</label>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => imageInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                    {imagePreview ? "Change" : "Upload Photo"}
+                  </button>
+                  {imagePreview && (
+                    <button type="button" onClick={handleRemoveImage}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              </div>
+            </div>
 
             {/* FULL NAME */}
             <Field label="Full Name" required error={errors.fullName}>

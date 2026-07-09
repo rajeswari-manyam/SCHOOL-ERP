@@ -31,11 +31,12 @@ export const AccountantLayout = () => {
   const user = useAuthStore((s) => s.user);
   const setUserProfile = useAuthStore((s) => s.setUserProfile);
 
-  // Fetch full profile on first load if name was never populated
+  // Always refresh the full profile once per page load — name and avatar
+  // can change over time, so there's no reliable persisted signal for
+  // "already up to date". The empty dep array keeps this to once.
   useEffect(() => {
     const userId = user?.id ?? localStorage.getItem("userId");
     if (!userId) return;
-    if (user?.name && user.name !== "User") return;
     getUserById(userId)
       .then(profile => { if (profile?.status) setUserProfile(profile); })
       .catch(() => {});
@@ -52,6 +53,7 @@ export const AccountantLayout = () => {
         user={{
           name: user?.name && user.name !== "User" ? user.name : "",
           role: user?.userType ?? user?.role?.name ?? "Accountant",
+          avatar: user?.image ?? undefined,
         }}
       />
       <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>

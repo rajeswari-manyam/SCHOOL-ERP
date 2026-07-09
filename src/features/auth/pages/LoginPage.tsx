@@ -1,5 +1,5 @@
 // src/features/auth/pages/LoginPage.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -58,6 +58,7 @@ const LoginPage = () => {
   const [schoolsLoading, setSchoolsLoading] = useState(false);
   const [schools,        setSchools]        = useState<SchoolItem[]>([]);
   const [loginMode,      setLoginMode]      = useState<LoginMode>("staff");
+  const submittingRef = useRef(false);
 
   // ── Fetch schools ────────────────────────────────────────────────────────────
   useEffect(() => { fetchSchools(); }, []);
@@ -113,8 +114,16 @@ const LoginPage = () => {
 
   // ── Staff login ──────────────────────────────────────────────────────────────
   const onStaffSubmit = async (values: StaffLoginValues) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     try {
+      // Clear any stale OTP-session meta from a previous login attempt so
+      // OtpPage can never read leftover values from a different phone/school.
+      localStorage.removeItem("otp");
+      localStorage.removeItem("phone");
+      localStorage.removeItem("schoolcode");
+
       const response = await sendOtp({
         schoolcode: values.schoolcode,
         phone:      values.phone,
@@ -146,6 +155,7 @@ const LoginPage = () => {
       toast.error(msg);
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 

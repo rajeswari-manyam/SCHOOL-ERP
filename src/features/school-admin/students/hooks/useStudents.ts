@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
-import { studentsApi, buildClassSectionMaps, resolveStudentNames, MOCK_ATTENDANCE, MOCK_DOCUMENTS } from "@/services/school-students.api";
+import { studentsApi, buildClassSectionMaps, resolveStudentNames } from "@/services/school-students.api";
 import { getPendingFeesByStudentId, getPaymentsByStudentId } from "@/services/fee.api";
 import type { StudentFeeSummaryResponse, PaymentsByStudentData } from "@/services/fee.api";
 import type { Student, AddStudentFormData, CreateStudentPayload, UpdateStudentPayload, Gender } from "../types/student.types";
@@ -203,7 +203,5 @@ export const useStudentProfile = (id: string) => {
     student, loading, error, retry,
     feeSummary,
     feePayments,
-    attendance: MOCK_ATTENDANCE,
-    documents: MOCK_DOCUMENTS,
   };
 };

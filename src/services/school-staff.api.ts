@@ -265,6 +265,7 @@ const normalizeStaffMember = (item: any): StaffMember => {
     salary: camel.salary != null ? Number(camel.salary) : undefined,
     dateOfBirth: camel.dateOfBirth ?? "",
     dateOfJoin: camel.dateOfJoin ?? "",
+    image: camel.image ?? "",
     createdAt: camel.createdAt,
     updatedAt: camel.updatedAt,
   };
@@ -396,8 +397,21 @@ export const fetchStaff = async (academicYearId?: string | null): Promise<StaffM
 export const createStaff = async (
   input: CreateStaffPayload,
 ): Promise<StaffMember> => {
+  const hasImage = input.image instanceof File;
+  const body: CreateStaffPayload | FormData = hasImage
+    ? Object.entries(input).reduce((fd, [key, value]) => {
+        if (value === undefined || value === null || value === "") return fd;
+        fd.append(key, value instanceof File ? value : String(value));
+        return fd;
+      }, new FormData())
+    : input;
+
   try {
-    const { data } = await api.post("/tenant/staff", input);
+    const { data } = await api.post(
+      "/tenant/staff",
+      body,
+      hasImage ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
+    );
     console.log("createStaff success", { url: "/tenant/staff", payload: input, response: data });
     return data;
   } catch (err: any) {
@@ -417,10 +431,22 @@ export const updateStaff = async (
   payload: UpdateStaffPayload,
 ): Promise<StaffMember> => {
   const url = `/tenant/updatestaffById/${id}`;
-  console.log("📤 updateStaff →", url, JSON.stringify(payload, null, 2));
+  const hasImage = payload.image instanceof File;
+  const body: UpdateStaffPayload | FormData = hasImage
+    ? Object.entries(payload).reduce((fd, [key, value]) => {
+        if (value === undefined || value === null || value === "") return fd;
+        fd.append(key, value instanceof File ? value : String(value));
+        return fd;
+      }, new FormData())
+    : payload;
+  console.log("📤 updateStaff →", url, hasImage ? "[multipart with image]" : JSON.stringify(payload, null, 2));
 
   try {
-    const { data: raw, status: httpStatus } = await api.put(url, payload);
+    const { data: raw, status: httpStatus } = await api.put(
+      url,
+      body,
+      hasImage ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
+    );
     console.log("📥 updateStaff ←", httpStatus, JSON.stringify(raw, null, 2));
 
     if (raw && typeof raw === "object") {
@@ -449,42 +475,6 @@ export const updateStaff = async (
       JSON.stringify(error?.response?.data) ??
       error?.message ??
       "Failed to update staff";
-    throw new Error(message);
-  }
-};
-
-export interface BulkCreateStaffPayload {
-  school_id: string;
-  staff: CreateStaffPayload[];
-}
-
-export interface BulkCreateStaffResponse {
-  status: boolean;
-  message: string;
-  inserted: number;
-  skipped: number;
-  data: StaffMember[];
-}
-
-/** POST /tenant/staff/bulk — create multiple staff members at once */
-export const bulkCreateStaff = async (
-  payload: BulkCreateStaffPayload,
-): Promise<BulkCreateStaffResponse> => {
-  try {
-    const { data } = await api.post<BulkCreateStaffResponse>("/tenant/staff/bulk", payload);
-    console.log("bulkCreateStaff success", { url: "/tenant/staff/bulk", payload, response: data });
-    return data;
-  } catch (err: any) {
-    console.error("bulkCreateStaff failed", {
-      url: "/tenant/staff/bulk",
-      payload,
-      response: err?.response?.data ?? err?.message,
-    });
-    const message =
-      err?.response?.data?.message ??
-      JSON.stringify(err?.response?.data) ??
-      err?.message ??
-      "Failed to create staff members";
     throw new Error(message);
   }
 };

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X, Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../../../components/ui/button";
 import { Form, FormField } from "../../../../components/ui/form";
@@ -61,6 +61,9 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
   const [form, setForm] = useState<FormState>(() => toForm(staff));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(staff.image ?? null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchDepartments().then(setDepartments);
@@ -69,9 +72,29 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setForm(toForm(staff));
+      setPhotoFile(null);
+      setPhotoPreview(staff.image ?? null);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [staff]);
+
+  const handlePhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setPhotoFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(staff.image ?? null);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(staff.image ?? null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
 
   const handleChange = (field: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -111,6 +134,7 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
       ifsc_code: form.ifscCode.trim() || undefined,
       date_of_birth: form.dob || undefined,
       date_of_join: form.joiningDate || undefined,
+      ...(photoFile ? { image: photoFile } : {}),
     };
 
     try {
@@ -139,6 +163,31 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
         </div>
 
         <Form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Photo */}
+          <div className="sm:col-span-2 flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+              {photoPreview
+                ? <img src={photoPreview} alt={staff.name} className="w-full h-full object-cover" />
+                : <Camera className="w-5 h-5 text-gray-300" />
+              }
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Photo</label>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => photoInputRef.current?.click()} className="text-xs">
+                  {photoPreview ? "Change" : "Upload Photo"}
+                </Button>
+                {photoFile && (
+                  <button type="button" onClick={handleRemovePhoto}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+            </div>
+          </div>
+
           <FormField label="Full Name *" error={errors.name}>
             <Input name="name" type="text" value={form.name} inputSize="sm"
               className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"

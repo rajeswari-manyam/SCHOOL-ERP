@@ -9,7 +9,7 @@ import { BOARD_OPTIONS, SCHOOL_TYPE_OPTIONS } from "../utils/Settings.utils";
 interface Props {
   profile: SchoolProfile;
   saving: boolean;
-  onSave: (data: Partial<SchoolProfile>) => void;
+  onSave: (data: Partial<SchoolProfile>, files?: { logo?: File | null; adminImage?: File | null }) => void;
 }
 
 const BOARD_SELECT_OPTIONS = BOARD_OPTIONS.map((v) => ({ label: v, value: v }));
@@ -43,10 +43,19 @@ function Field({
 // ─── SchoolProfileTab ─────────────────────────────────────────────────────────
 export const SchoolProfileTab: React.FC<Props> = ({ profile, saving, onSave }) => {
   const [form, setForm] = useState<SchoolProfile>(profile);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | undefined>(profile.logoUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [adminImageFile, setAdminImageFile] = useState<File | null>(null);
+  const [adminImagePreview, setAdminImagePreview] = useState<string | undefined>(profile.adminImageUrl);
+  const adminImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setForm(profile);
+    setLogoFile(null);
+    setLogoPreview(profile.logoUrl);
+    setAdminImageFile(null);
+    setAdminImagePreview(profile.adminImageUrl);
   }, [profile]);
 
   const handleChange = (key: keyof SchoolProfile, value: string | number) =>
@@ -55,9 +64,22 @@ export const SchoolProfileTab: React.FC<Props> = ({ profile, saving, onSave }) =
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, logoUrl: url }));
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
+
+  const handleAdminImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAdminImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setAdminImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => onSave(form, { logo: logoFile, adminImage: adminImageFile });
 
   const initials = form.schoolName
     .split(" ")
@@ -88,7 +110,7 @@ export const SchoolProfileTab: React.FC<Props> = ({ profile, saving, onSave }) =
           </div>
 
           <Button
-            onClick={() => onSave(form)}
+            onClick={handleSave}
             disabled={saving}
             className={[
               "w-full sm:w-auto shrink-0",
@@ -222,9 +244,9 @@ export const SchoolProfileTab: React.FC<Props> = ({ profile, saving, onSave }) =
             aria-hidden="true"
             className="mx-auto sm:mx-0 h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 flex items-center justify-center shadow-md overflow-hidden"
           >
-            {form.logoUrl ? (
+            {logoPreview ? (
               <img
-                src={form.logoUrl}
+                src={logoPreview}
                 alt={`${form.schoolName} logo`}
                 className="h-full w-full object-cover"
               />
@@ -252,6 +274,62 @@ export const SchoolProfileTab: React.FC<Props> = ({ profile, saving, onSave }) =
               className="sr-only"
               aria-label="Upload school logo"
               onChange={handleLogoChange}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium max-w-[260px] sm:max-w-none">
+              Recommended: 512×512 px. PNG, JPG or WebP — max 2 MB.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Admin Photo ────────────────────────────────────────────────────── */}
+      <section
+        aria-labelledby="admin-photo-heading"
+        className="rounded-2xl border border-indigo-200 dark:border-indigo-900 bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-indigo-950/40 dark:via-slate-900 dark:to-blue-950/40 p-5 sm:p-8 shadow-sm"
+      >
+        <h2
+          id="admin-photo-heading"
+          className="mb-5 text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent"
+        >
+          Admin Photo
+        </h2>
+
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+          {/* Avatar */}
+          <div
+            aria-hidden="true"
+            className="mx-auto sm:mx-0 h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-full border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 flex items-center justify-center shadow-md overflow-hidden"
+          >
+            {adminImagePreview ? (
+              <img
+                src={adminImagePreview}
+                alt={`${form.principalName || "Admin"} photo`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-xl sm:text-2xl font-bold text-indigo-700 dark:text-indigo-300 select-none">
+                {(form.principalName || "A").charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Upload */}
+          <div className="flex flex-col items-center sm:items-start gap-2 text-center sm:text-left">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => adminImageInputRef.current?.click()}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-bold text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-150"
+            >
+              Upload new photo
+            </Button>
+            <input
+              ref={adminImageInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
+              aria-label="Upload admin photo"
+              onChange={handleAdminImageChange}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium max-w-[260px] sm:max-w-none">
               Recommended: 512×512 px. PNG, JPG or WebP — max 2 MB.

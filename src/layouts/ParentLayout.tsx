@@ -4,15 +4,28 @@ import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNa
 import WhatsAppFAB from "../components/ui/whatsappfab";
 import { X } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { getUserById } from "@/services/auth.api";
 import { useParentChildren } from "./hooks/useParentChildren";
 
 const ParentLayout = () => {
   const students = useAuthStore((s) => s.students);
+  const user = useAuthStore((s) => s.user);
+  const setUserProfile = useAuthStore((s) => s.setUserProfile);
   const location = useLocation();
 
   const { children, activeChild, setActiveChild, loading } = useParentChildren();
 
   const [showChildModal, setShowChildModal] = useState(false);
+
+  // Always refresh the parent's own profile once per page load (for their
+  // avatar photo) — there's no reliable persisted signal for "already fresh".
+  useEffect(() => {
+    const userId = user?.id ?? localStorage.getItem("userId");
+    if (!userId) return;
+    getUserById(userId)
+      .then(profile => { if (profile?.status) setUserProfile(profile); })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll to top on every page navigation
   useEffect(() => {

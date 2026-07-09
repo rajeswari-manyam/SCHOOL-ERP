@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, X, Loader2, Pencil, Check } from "lucide-react";
+import { Plus, Trash2, X, Loader2, Pencil, Check, GitBranch } from "lucide-react";
 import { getCarryForwardStatus } from "@/services/academicYear.api";
+import { getPreviousAcademicYear } from "@/components/common/hooks/useAcademicYears";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -104,7 +105,9 @@ export const AcademicConfigTab: React.FC<Props> = ({
       .catch(() => {});
   }, []);
 
-  const [showCreateYear, setShowCreateYear] = useState(false);
+  const [yearModal, setYearModal] = useState<
+    { mode: "create" } | { mode: "carryForward"; year: AcademicYear } | null
+  >(null);
   const [editYearId, setEditYearId] = useState<string | null>(null);
   const [editYearName, setEditYearName] = useState("");
   const [editYearStart, setEditYearStart] = useState("");
@@ -403,7 +406,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowCreateYear(true)}
+            onClick={() => setYearModal({ mode: "create" })}
             className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 rounded-lg"
           >
             <span className="text-base leading-none">+</span> New Academic Year
@@ -441,6 +444,16 @@ export const AcademicConfigTab: React.FC<Props> = ({
                   </span>
                 )
               ) : null}
+              {/* Carry-forward entry point — only when a previous year exists and it hasn't run yet */}
+              {cfStatuses[year.id] !== true && getPreviousAcademicYear(academicYears, year) && (
+                <button
+                  onClick={() => setYearModal({ mode: "carryForward", year })}
+                  title="Carry forward data from the previous academic year"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors"
+                >
+                  <GitBranch className="w-3 h-3" /> Carry Forward
+                </button>
+              )}
               {/* Actions */}
               <button
                 onClick={() => openEditYear(year)}
@@ -1441,10 +1454,15 @@ export const AcademicConfigTab: React.FC<Props> = ({
         )}
       </div>
 
-      {showCreateYear && (
+      {yearModal && (
         <CreateAcademicYearModal
-          onClose={() => setShowCreateYear(false)}
-          onSubmit={async (data) => { await onCreateAcademicYear(data); }}
+          mode={yearModal.mode}
+          academicYears={academicYears}
+          carryForwardTarget={yearModal.mode === "carryForward" ? yearModal.year : undefined}
+          carryForwardDone={yearModal.mode === "carryForward" ? cfStatuses[yearModal.year.id] === true : false}
+          onClose={() => setYearModal(null)}
+          onSubmit={onCreateAcademicYear}
+          onCarryForwardComplete={(yearId) => setCfStatuses((prev) => ({ ...prev, [yearId]: true }))}
         />
       )}
     </div>

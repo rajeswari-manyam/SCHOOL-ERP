@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { X, Loader2, BookOpen, GraduationCap, Calendar, Phone, Mail, Briefcase, Award, Building2, CreditCard } from "lucide-react";
 import type { StaffDetails, AssignedClassSubject } from "../types/staff.types";
 import { getStaffDetailsById } from "@/services/school-staff.api";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 interface Props {
   staffId: string;
@@ -48,6 +49,7 @@ export const StaffDetailModal = ({ staffId, onClose }: Props) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [showPhoto, setShowPhoto] = useState(false);
 
   const fetchData = useCallback(() => {
     let cancelled = false;
@@ -77,9 +79,20 @@ export const StaffDetailModal = ({ staffId, onClose }: Props) => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-base font-bold">
-              {data ? data.name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() : "—"}
-            </div>
+            {data?.image ? (
+              <button
+                type="button"
+                title="View photo"
+                onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }}
+                className="w-10 h-10 rounded-full overflow-hidden shrink-0 ring-1 ring-black/5 hover:ring-2 hover:ring-indigo-400 transition"
+              >
+                <img src={data.image} alt={data.name} className="w-full h-full object-cover" />
+              </button>
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-base font-bold overflow-hidden">
+                {data ? data.name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() : "—"}
+              </div>
+            )}
             <div>
               <h2 className="text-lg font-bold text-gray-900">{data?.name ?? "Staff Details"}</h2>
               <p className="text-xs text-gray-400">{data?.emp_number ?? ""}</p>
@@ -165,6 +178,16 @@ export const StaffDetailModal = ({ staffId, onClose }: Props) => {
           )}
         </div>
       </div>
+
+      {showPhoto && data?.image && (
+        <ImagePreviewModal
+          src={data.image}
+          alt={data.name}
+          title={data.name}
+          subtitle={data.emp_number}
+          onClose={() => setShowPhoto(false)}
+        />
+      )}
     </div>
   );
 };

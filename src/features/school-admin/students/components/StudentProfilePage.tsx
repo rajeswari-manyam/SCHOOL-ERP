@@ -7,17 +7,22 @@ import { useStudentAttendance } from "../hooks/useStudentAttendance";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import StudentAttendanceTab from "./StudentAttendanceTab";
 import StudentFeeTab from "./StudentFeeTab";
-import StudentDocumentsTab from "./StudentDocumentTab";
 import { EditStudentModal } from "./EditStudentModal";
 import StudentExamMarksTab from "./StudentExamMarksTab";
 import { studentsApi } from "@/services/school-students.api";
 import { useUIStore } from "@/store/uiStore";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
-type Tab = "overview" | "attendance" | "fee-history" | "documents" | "exam-marks";
+type Tab = "overview" | "attendance" | "fee-history" | "exam-marks";
 
-const Avatar = ({ name, size = "lg" }: { name: string; size?: "sm" | "lg" }) => {
+const Avatar = ({ name, photo, size = "lg" }: { name: string; photo?: string | null; size?: "sm" | "lg" }) => {
   const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   const sz = size === "lg" ? "w-14 h-14 text-xl" : "w-9 h-9 text-sm";
+  if (photo) {
+    return (
+      <img src={photo} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0 ring-1 ring-black/5`} />
+    );
+  }
   return (
     <div className={`${sz} rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0`}>
       {initials}
@@ -35,10 +40,12 @@ const InfoRow = ({ label, value }: { label: string; value?: string | number }) =
 const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, loading, error, feeSummary, feePayments, documents, retry } = useStudentProfile(id!);
+  const { student, loading, error, feeSummary, feePayments, retry } = useStudentProfile(id!);
   const attendanceHook = useStudentAttendance(student ?? null);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showEdit, setShowEdit] = useState(false);
+  const [showParentPhoto, setShowParentPhoto] = useState(false);
+  const [showMotherPhoto, setShowMotherPhoto] = useState(false);
   const setPageTitle = useUIStore((s) => s.setPageTitle);
 
   useEffect(() => {
@@ -93,7 +100,6 @@ const StudentProfilePage = () => {
     { key: "attendance", label: "Attendance" },
     { key: "exam-marks", label: "Exam Marks" },
     { key: "fee-history", label: "Fee History" },
-    { key: "documents", label: "Documents" },
   ];
 
   return (
@@ -116,7 +122,7 @@ const StudentProfilePage = () => {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <Avatar name={fullName} size="lg" />
+            <Avatar name={fullName} photo={student.photo} size="lg" />
             <div>
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-base font-semibold text-gray-900">{fullName}</h1>
@@ -187,6 +193,40 @@ const StudentProfilePage = () => {
                 <InfoRow label="Father's Phone" value={student.fatherPhone} />
                 <InfoRow label="Mother's Name" value={student.motherName} />
                 <InfoRow label="Mother's Phone" value={student.motherPhone} />
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400">Father's Photo</p>
+                  <div className="mt-1">
+                    {student.parentImage ? (
+                      <button
+                        type="button"
+                        title="View photo"
+                        onClick={() => setShowParentPhoto(true)}
+                        className="h-9 w-9 rounded-full overflow-hidden ring-1 ring-black/5 hover:ring-2 hover:ring-indigo-400 transition"
+                      >
+                        <img src={student.parentImage} alt="Father" className="h-full w-full object-cover" />
+                      </button>
+                    ) : (
+                      <p className="text-xs text-gray-700">—</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400">Mother's Photo</p>
+                  <div className="mt-1">
+                    {student.motherImage ? (
+                      <button
+                        type="button"
+                        title="View photo"
+                        onClick={() => setShowMotherPhoto(true)}
+                        className="h-9 w-9 rounded-full overflow-hidden ring-1 ring-black/5 hover:ring-2 hover:ring-indigo-400 transition"
+                      >
+                        <img src={student.motherImage} alt="Mother" className="h-full w-full object-cover" />
+                      </button>
+                    ) : (
+                      <p className="text-xs text-gray-700">—</p>
+                    )}
+                  </div>
+                </div>
                 <InfoRow label="Emergency Contact" value={student.emergencyContact} />
                 <InfoRow label="WhatsApp Alert" value={student.whatsappNumber} />
               </div>
@@ -286,10 +326,6 @@ const StudentProfilePage = () => {
         <StudentFeeTab feeSummary={feeSummary} feePayments={feePayments} />
       )}
 
-      {activeTab === "documents" && (
-        <StudentDocumentsTab documents={documents} />
-      )}
-
       {showEdit && student && (
         <EditStudentModal
           student={student}
@@ -299,6 +335,24 @@ const StudentProfilePage = () => {
             window.location.reload();
             return updated;
           }}
+        />
+      )}
+
+      {showParentPhoto && student.parentImage && (
+        <ImagePreviewModal
+          src={student.parentImage}
+          alt="Father"
+          title={student.fatherName || "Father"}
+          onClose={() => setShowParentPhoto(false)}
+        />
+      )}
+
+      {showMotherPhoto && student.motherImage && (
+        <ImagePreviewModal
+          src={student.motherImage}
+          alt="Mother"
+          title={student.motherName || "Mother"}
+          onClose={() => setShowMotherPhoto(false)}
         />
       )}
     </div>

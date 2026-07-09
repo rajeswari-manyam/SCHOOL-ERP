@@ -249,6 +249,7 @@ const HomeworkPage = () => {
       attachments:     values.attachments ?? [],
       is_published:    values.is_published,
       submission_type: values.submission_type,
+      files:           values.attachmentFile,
     }),
     [teacherId],
   );

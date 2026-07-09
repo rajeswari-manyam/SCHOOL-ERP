@@ -7,6 +7,7 @@ export interface ParentInfo {
   phone:      string;
   email:      string;
   occupation: string;
+  image?:     string;
 }
 
 export type StudentStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";

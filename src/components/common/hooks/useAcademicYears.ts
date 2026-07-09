@@ -5,6 +5,21 @@ import { queryClient } from "@/config/queryClient";
 
 export type AcademicYearInfo = AcademicYearRecord;
 
+/**
+ * The academic year immediately preceding `reference`, chosen by start date.
+ * Used to force Carry Forward to always source from the one year right before
+ * the target — never an older year further back.
+ */
+export const getPreviousAcademicYear = <T extends { id: string; startDate: string }>(
+  years: T[],
+  reference: Pick<T, "id" | "startDate">,
+): T | null => {
+  const earlier = years
+    .filter((y) => y.id !== reference.id && new Date(y.startDate).getTime() < new Date(reference.startDate).getTime())
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  return earlier[0] ?? null;
+};
+
 export const useAcademicYears = () => {
   const setStoredAcademicYearId   = useUIStore((s) => s.setAcademicYearId);
   const setStoredAcademicYearName = useUIStore((s) => s.setAcademicYearName);
@@ -68,5 +83,7 @@ export const useAcademicYears = () => {
     void queryClient.invalidateQueries();
   };
 
-  return { years, activeYear, loading, switching, error, switchYear, retry: load };
+  const previousYear = activeYear ? getPreviousAcademicYear(years, activeYear) : null;
+
+  return { years, activeYear, previousYear, loading, switching, error, switchYear, retry: load };
 };

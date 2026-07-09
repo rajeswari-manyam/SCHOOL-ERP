@@ -50,6 +50,7 @@ export interface StaffMember {
   ifscCode?: string;
   dateOfBirth?: string;
   dateOfJoin?: string;
+  image?: string;
 
   createdAt?: string;
   updatedAt?: string;
@@ -72,6 +73,8 @@ export interface CreateStaffPayload {
   date_of_join: string;
   school_code: string;
   role: string;
+  status?: string;
+  image?: File | null;
 }
 
 export interface UpdateStaffPayload {
@@ -90,6 +93,7 @@ export interface UpdateStaffPayload {
   date_of_join?: string;
   role?: string;
   status?: StaffStatus;
+  image?: File | null;
 }
 
 export interface AssignedClassSubject {
@@ -120,5 +124,6 @@ export interface StaffDetails {
   leavesTaken?: number;
   leavesPending?: number;
   leavesBalance?: number;
+  image?: string | null;
   assigned_classes_subjects: AssignedClassSubject[];
 }

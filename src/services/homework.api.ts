@@ -81,8 +81,26 @@ export const createHomework = async (payload: {
   is_published: boolean;
   academicYearId: string;
   submission_type?: "physical" | "online" | "both";
+  files?: File[];
 }) => {
-  const res = await api.post<ApiResponse<Homework>>("/tenant/createhomework", payload);
+  const formData = new FormData();
+  formData.append("class_id", payload.class_id);
+  formData.append("section_id", payload.section_id);
+  formData.append("subject_id", payload.subject_id);
+  formData.append("teacher_id", payload.teacher_id);
+  formData.append("title", payload.title);
+  formData.append("description", payload.description);
+  formData.append("submission_date", payload.submission_date);
+  formData.append("academicYearId", payload.academicYearId);
+  formData.append("is_published", String(payload.is_published));
+  if (payload.submission_type) formData.append("submission_type", payload.submission_type);
+  if (payload.attachments.length > 0) {
+    formData.append("attachments", JSON.stringify(payload.attachments));
+  }
+  if (payload.files && payload.files.length > 0) {
+    payload.files.forEach((file) => formData.append("files", file));
+  }
+  const res = await api.post<ApiResponse<Homework>>("/tenant/createhomework", formData);
   return res.data;
 };
 

@@ -1,43 +1,7 @@
 import api from "@/config/axios";
-import type { CreateStudentPayload, UpdateStudentPayload, Student, FeePayment, StudentDocument, StudentAttendanceDay } from "@/features/school-admin/students/types/student.types";
+import type { CreateStudentPayload, UpdateStudentPayload, UpdateParentPayload, Student } from "@/features/school-admin/students/types/student.types";
 import { getAllClasses } from "@/services/class.api";
 import { getSectionsByClassId, getAllSections } from "@/services/section.api";
-
-export const MOCK_ATTENDANCE: StudentAttendanceDay[] = [
-  { date: "2025-03-31", status: null },
-  { date: "2025-04-01", status: "present" },
-  { date: "2025-04-02", status: "present" },
-  { date: "2025-04-03", status: "present" },
-  { date: "2025-04-04", status: "present" },
-  { date: "2025-04-05", status: "absent" },
-  { date: "2025-04-06", status: null },
-  { date: "2025-04-07", status: "present" },
-  { date: "2025-04-08", status: "present" },
-  { date: "2025-04-09", status: "present" },
-  { date: "2025-04-10", status: "present" },
-  { date: "2025-04-11", status: "present" },
-  { date: "2025-04-12", status: null },
-  { date: "2025-04-13", status: null },
-  { date: "2025-04-14", status: "present" },
-];
-
-export const MOCK_FEE_PAYMENTS: FeePayment[] = [
-  { id: "1", date: "6 APR 2025", description: "Tuition Fee — April 2025", amount: 8500, status: "PENDING" },
-  { id: "2", date: "5 MAR 2025", description: "Tuition Fee — Mar 2025", amount: 8500, status: "PAID", mode: "UPI", receiptNo: "RCP-0847" },
-  { id: "3", date: "3 FEB 2025", description: "Tuition Fee — Feb 2025", amount: 8500, status: "PAID", mode: "Cash", receiptNo: "RCP-0721" },
-  { id: "4", date: "5 JAN 2025", description: "Tuition Fee — Jan 2025", amount: 8500, status: "PAID", mode: "UPI", receiptNo: "RCP-0612" },
-  { id: "5", date: "3 JAN 2025", description: "Exam Fee — Q3", amount: 2000, status: "PAID", mode: "Cash", receiptNo: "RCP-0601" },
-  { id: "6", date: "5 DEC 2024", description: "Tuition Fee — Dec 2024", amount: 8500, status: "PAID", mode: "UPI", receiptNo: "RCP-0524" },
-  { id: "7", date: "5 NOV 2024", description: "Tuition Fee — Nov 2024", amount: 8500, status: "PAID", mode: "Cash", receiptNo: "RCP-0445" },
-];
-
-export const MOCK_DOCUMENTS: StudentDocument[] = [
-  { id: "1", name: "Birth Certificate", type: "pdf", size: "2.3 MB", verified: true },
-  { id: "2", name: "Previous TC", type: "pdf", size: "850 KB", verified: true },
-  { id: "3", name: "Aadhar Card", type: "pdf", size: "2.4 MB", verified: true },
-  { id: "4", name: "Caste Certificate", type: "pdf", size: "11 MB", verified: true },
-  { id: "5", name: "Passport Photo", type: "image", size: "450 KB", verified: true },
-];
 
 const toCamelCase = (obj: any): any => {
   if (Array.isArray(obj)) return obj.map(toCamelCase);
@@ -200,10 +164,8 @@ export const studentsApi = {
     const firstName = (camel.firstName ?? camel.first ?? camel.givenName ?? nameParts[0] ?? "") as string;
     const lastName = (camel.lastName ?? camel.last ?? camel.familyName ?? camel.surName ?? nameParts.slice(1).join(" ") ?? "") as string;
 
-    // Extract parent info from parentDetail array
-    const father = parentDetail?.find((p) => /father/i.test(String(p.relation ?? "")));
-    const mother = parentDetail?.find((p) => /mother/i.test(String(p.relation ?? "")));
-    const primaryParent = parentDetail?.[0];
+    // parentDetail is a single combined father+mother record (no per-relation rows anymore)
+    const parentRecord = parentDetail?.[0] as Record<string, unknown> | undefined;
 
     return {
       ...camel,
@@ -220,21 +182,23 @@ export const studentsApi = {
       rollNumber: camel.rollNumber !== undefined ? Number(camel.rollNumber) : undefined,
       admittedOn: (camel.admittedOn ?? camel.admissionDate ?? camel.admission_date ?? "") as string,
       academicYear: (academicYear?.yearName ?? academicYear?.year ?? camel.academicYear ?? "") as string,
-      parentPhone: (camel.parentPhone ?? camel.parentPhoneNumber ?? primaryParent?.phone ?? primaryParent?.parentPhone ?? camel.phone ?? camel.mobile ?? "") as string,
-      fatherName: (camel.fatherName ?? father?.parentName ?? father?.name ?? "") as string,
-      fatherPhone: (camel.fatherPhone ?? father?.phone ?? "") as string,
-      fatherOccupation: (camel.fatherOccupation ?? father?.occupation ?? "") as string,
-      motherName: (camel.motherName ?? mother?.parentName ?? mother?.name ?? "") as string,
-      motherPhone: (camel.motherPhone ?? mother?.phone ?? "") as string,
-      email: (camel.email ?? primaryParent?.email ?? "") as string,
-      emergencyContact: (camel.emergencyContact ?? primaryParent?.phone ?? "") as string,
-      whatsappNumber: (camel.whatsappNumber ?? primaryParent?.phone ?? "") as string,
+      parentPhone: (camel.parentPhone ?? camel.parentPhoneNumber ?? parentRecord?.fatherPhone ?? camel.phone ?? camel.mobile ?? "") as string,
+      fatherName: (camel.fatherName ?? parentRecord?.fatherName ?? "") as string,
+      fatherPhone: (camel.fatherPhone ?? parentRecord?.fatherPhone ?? "") as string,
+      fatherOccupation: (camel.fatherOccupation ?? parentRecord?.fatherOccupation ?? "") as string,
+      motherName: (camel.motherName ?? parentRecord?.motherName ?? "") as string,
+      motherPhone: (camel.motherPhone ?? parentRecord?.motherPhone ?? "") as string,
+      motherOccupation: (camel.motherOccupation ?? parentRecord?.motherOccupation ?? "") as string,
+      email: (camel.email ?? parentRecord?.fatherEmail ?? parentRecord?.motherEmail ?? "") as string,
+      emergencyContact: (camel.emergencyContact ?? parentRecord?.fatherPhone ?? "") as string,
+      whatsappNumber: (camel.whatsappNumber ?? parentRecord?.fatherPhone ?? "") as string,
       feeStatus: (String(camel.feeStatus ?? camel.fee ?? camel.feePaymentStatus ?? "PAID")).toUpperCase() as Student["feeStatus"],
       status: (String(camel.status ?? camel.studentStatus ?? "ACTIVE")).toUpperCase() as Student["status"],
       classId: (camel.classId ?? camel.class_id ?? classDetail?.id ?? "") as string,
       sectionId: (camel.sectionId ?? camel.section_id ?? sectionDetail?.id ?? "") as string,
       academicYearId: (camel.academicYearId ?? academicYear?.id ?? "") as string,
-      parentId: (camel.parentId ?? primaryParent?.id ?? "") as string,
+      parentId: (camel.parentId ?? parentRecord?.id ?? "") as string,
+      parentImage: (parentRecord?.fatherImage ?? parentRecord?.motherImage ?? "") as string,
     } as Student;
   },
   createStudent: async (payload: CreateStudentPayload): Promise<Student> => {
@@ -297,8 +261,17 @@ export const studentsApi = {
     });
   },
 
-  updateParent: async (parentId: string, payload: { parent_name?: string; phone?: string }): Promise<void> => {
-    const { data: raw } = await api.put(`/tenant/updateparentById/${parentId}`, payload);
+  updateParent: async (parentId: string, payload: UpdateParentPayload): Promise<void> => {
+    const body = Object.entries(payload).reduce((fd, [key, value]) => {
+      if (value === undefined || value === null || value === "") return fd;
+      fd.append(key, value instanceof File ? value : String(value));
+      return fd;
+    }, new FormData());
+
+  const { data: raw } = await api.put(
+  `/tenant/updateparentById/${parentId}`,
+  body
+);
     if (raw && typeof raw === "object" && (raw as Record<string, unknown>).status === false) {
       throw new Error(((raw as Record<string, unknown>).message as string) ?? "Parent update failed");
     }

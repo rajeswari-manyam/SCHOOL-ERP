@@ -7,7 +7,9 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { studentsApi } from "@/services/school-students.api";
-import type { Student, UpdateStudentPayload } from "../types/student.types";
+import { useClassesList } from "../hooks/useClassesList";
+import { useSectionsList } from "../hooks/useSectionsList";
+import type { Student, UpdateStudentPayload, UpdateParentPayload } from "../types/student.types";
 
 interface Props {
   student: Student;
@@ -15,8 +17,6 @@ interface Props {
   onSave: (id: string, payload: UpdateStudentPayload) => Promise<Student>;
 }
 
-const CLASSES = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
-const SECTIONS = ["A", "B", "C", "D"].map((s) => ({ value: s, label: s }));
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((b) => ({ value: b, label: b }));
 const STATUS_OPTIONS = [
   { label: "Active", value: "ACTIVE" },
@@ -37,14 +37,18 @@ const toForm = (s: Student) => ({
   dob: s.dob ?? "",
   gender: s.gender ?? "",
   class: s.class ?? "",
+  classId: s.classId ?? "",
   section: s.section ?? "",
+  sectionId: s.sectionId ?? "",
   bloodGroup: s.bloodGroup ?? "",
   rollNumber: String(s.rollNumber ?? ""),
   residentialAddress: s.residentialAddress ?? "",
   fatherName: s.fatherName ?? "",
   fatherPhone: s.fatherPhone ?? "",
+  fatherOccupation: s.fatherOccupation ?? "",
   motherName: s.motherName ?? "",
   motherPhone: s.motherPhone ?? "",
+  motherOccupation: s.motherOccupation ?? "",
   emergencyContact: s.emergencyContact ?? "",
   email: s.email ?? "",
   admissionNo: s.admissionNo ?? "",
@@ -59,18 +63,47 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(student.photo ?? null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [fatherPhotoFile, setFatherPhotoFile] = useState<File | null>(null);
+  const [fatherPhotoPreview, setFatherPhotoPreview] = useState<string | null>(student.parentImage ?? null);
+  const fatherPhotoInputRef = useRef<HTMLInputElement>(null);
+  const [motherPhotoFile, setMotherPhotoFile] = useState<File | null>(null);
+  const [motherPhotoPreview, setMotherPhotoPreview] = useState<string | null>(null);
+  const motherPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  // Real class/section option lists (with backend IDs) — mirrors AddStudentModal,
+  // so edits resolve to the same class_id/sectionId the backend expects instead
+  // of sending a raw "9"/"A" label the update endpoint can't look up.
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(student.classId ?? null);
+  const { classes } = useClassesList(student.academicYearId ?? null);
+  const { sections } = useSectionsList(selectedClassId);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setForm(toForm(student));
+      setSelectedClassId(student.classId ?? null);
       setPhotoFile(null);
       setPhotoPreview(student.photo ?? null);
+      setFatherPhotoFile(null);
+      setFatherPhotoPreview(student.parentImage ?? null);
+      setMotherPhotoFile(null);
+      setMotherPhotoPreview(null);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [student]);
 
   const set = (field: keyof FormState) => (value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleClassChange = (value: string) => {
+    const matched = classes.find((c) => c.value === value);
+    setSelectedClassId(matched?.id ?? null);
+    setForm((prev) => ({ ...prev, class: value, classId: matched?.id ?? "", section: "", sectionId: "" }));
+  };
+
+  const handleSectionChange = (value: string) => {
+    const matched = sections.find((s) => s.value === value);
+    setForm((prev) => ({ ...prev, section: value, sectionId: matched?.id ?? "" }));
+  };
 
   const handlePhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
     const file = ev.target.files?.[0] ?? null;
@@ -91,17 +124,55 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
+  const handleFatherPhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setFatherPhotoFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setFatherPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setFatherPhotoPreview(student.parentImage ?? null);
+    }
+  };
+
+  const handleRemoveFatherPhoto = () => {
+    setFatherPhotoFile(null);
+    setFatherPhotoPreview(student.parentImage ?? null);
+    if (fatherPhotoInputRef.current) fatherPhotoInputRef.current.value = "";
+  };
+
+  const handleMotherPhotoChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0] ?? null;
+    setMotherPhotoFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setMotherPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setMotherPhotoPreview(null);
+    }
+  };
+
+  const handleRemoveMotherPhoto = () => {
+    setMotherPhotoFile(null);
+    setMotherPhotoPreview(null);
+    if (motherPhotoInputRef.current) motherPhotoInputRef.current.value = "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const payload: UpdateStudentPayload = {
       first_name: form.firstName.trim() || undefined,
       last_name: form.lastName.trim() || undefined,
-      gender: form.gender.toLowerCase() as UpdateStudentPayload["gender"],
+      gender: (form.gender.trim().toLowerCase() || undefined) as UpdateStudentPayload["gender"],
       date_of_birth: form.dob || undefined,
       class: form.class || undefined,
       section: form.section || undefined,
-      blood_group: form.bloodGroup as UpdateStudentPayload["blood_group"],
+      class_id: form.classId || undefined,
+      sectionId: form.sectionId || undefined,
+      blood_group: (form.bloodGroup || undefined) as UpdateStudentPayload["blood_group"],
       roll_number: form.rollNumber || undefined,
       address: form.residentialAddress.trim() || undefined,
       father_name: form.fatherName.trim() || undefined,
@@ -119,9 +190,19 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
       const calls: Promise<unknown>[] = [onSave(student.id, payload)];
 
       if (student.parentId) {
-        const parentPayload: { parent_name?: string; phone?: string } = {};
-        if (form.fatherName.trim()) parentPayload.parent_name = form.fatherName.trim();
-        if (form.fatherPhone.trim()) parentPayload.phone = form.fatherPhone.trim();
+        const parentPayload: UpdateParentPayload = {
+          ...(form.fatherName.trim() ? { father_name: form.fatherName.trim() } : {}),
+          ...(form.fatherPhone.trim() ? { father_phone: form.fatherPhone.trim() } : {}),
+          ...(form.fatherOccupation.trim() ? { father_occupation: form.fatherOccupation.trim() } : {}),
+          ...(form.email.trim() ? { father_email: form.email.trim() } : {}),
+          ...(form.motherName.trim() ? { mother_name: form.motherName.trim() } : {}),
+          ...(form.motherPhone.trim() ? { mother_phone: form.motherPhone.trim() } : {}),
+          ...(form.motherOccupation.trim() ? { mother_occupation: form.motherOccupation.trim() } : {}),
+          ...(form.email.trim() ? { mother_email: form.email.trim() } : {}),
+          ...(form.residentialAddress.trim() ? { address: form.residentialAddress.trim() } : {}),
+          ...(fatherPhotoFile ? { father_image: fatherPhotoFile } : {}),
+          ...(motherPhotoFile ? { mother_image: motherPhotoFile } : {}),
+        };
         if (Object.keys(parentPayload).length > 0) {
           calls.push(studentsApi.updateParent(student.parentId, parentPayload));
         }
@@ -211,11 +292,21 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           </Field>
 
           <Field label="Class">
-            <Select options={CLASSES} value={form.class} onValueChange={set("class")} placeholder="Select Class" />
+            <Select
+              options={classes.map((c) => ({ value: c.value, label: c.label }))}
+              value={form.class}
+              onValueChange={handleClassChange}
+              placeholder="Select Class"
+            />
           </Field>
 
           <Field label="Section">
-            <Select options={SECTIONS} value={form.section} onValueChange={set("section")} placeholder="Select Section" />
+            <Select
+              options={sections.map((s) => ({ value: s.value, label: s.label }))}
+              value={form.section}
+              onValueChange={handleSectionChange}
+              placeholder="Select Section"
+            />
           </Field>
 
           <Field label="Blood Group">
@@ -240,6 +331,34 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
             <Input value={form.fatherPhone} onChange={(e) => set("fatherPhone")(e.target.value)} placeholder="9876543210" />
           </Field>
 
+          <Field label="Father's Occupation">
+            <Input value={form.fatherOccupation} onChange={(e) => set("fatherOccupation")(e.target.value)} placeholder="e.g. Software Engineer" />
+          </Field>
+
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+              {fatherPhotoPreview
+                ? <img src={fatherPhotoPreview} alt={form.fatherName} className="w-full h-full object-cover" />
+                : <Camera className="w-4 h-4 text-gray-300" />
+              }
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Father's Photo</label>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => fatherPhotoInputRef.current?.click()} className="text-xs">
+                  {fatherPhotoPreview ? "Change" : "Upload Photo"}
+                </Button>
+                {fatherPhotoFile && (
+                  <button type="button" onClick={handleRemoveFatherPhoto}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <input ref={fatherPhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleFatherPhotoChange} />
+            </div>
+          </div>
+
           <Field label="Mother's Name">
             <Input value={form.motherName} onChange={(e) => set("motherName")(e.target.value)} placeholder="Mother's name" />
           </Field>
@@ -248,11 +367,39 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
             <Input value={form.motherPhone} onChange={(e) => set("motherPhone")(e.target.value)} placeholder="9876543210" />
           </Field>
 
+          <Field label="Mother's Occupation">
+            <Input value={form.motherOccupation} onChange={(e) => set("motherOccupation")(e.target.value)} placeholder="e.g. Teacher" />
+          </Field>
+
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+              {motherPhotoPreview
+                ? <img src={motherPhotoPreview} alt={form.motherName} className="w-full h-full object-cover" />
+                : <Camera className="w-4 h-4 text-gray-300" />
+              }
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Mother's Photo</label>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => motherPhotoInputRef.current?.click()} className="text-xs">
+                  {motherPhotoPreview ? "Change" : "Upload Photo"}
+                </Button>
+                {motherPhotoFile && (
+                  <button type="button" onClick={handleRemoveMotherPhoto}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <input ref={motherPhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleMotherPhotoChange} />
+            </div>
+          </div>
+
           <Field label="Emergency Contact">
             <Input value={form.emergencyContact} onChange={(e) => set("emergencyContact")(e.target.value)} placeholder="9876543210" />
           </Field>
 
-          <Field label="Email">
+          <Field label="Email (Common)">
             <Input type="email" value={form.email} onChange={(e) => set("email")(e.target.value)} placeholder="rahul@example.com" />
           </Field>
 

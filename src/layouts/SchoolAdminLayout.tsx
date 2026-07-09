@@ -95,11 +95,12 @@ export const SchoolAdminLayout = () => {
     });
   }, [setupData, wizardDismissed]);
 
-  // Fetch full profile on first load if name was never populated
+  // Always refresh the full profile once per page load — name, avatar, and
+  // school image/logo can change over time, so there's no reliable persisted
+  // signal for "already up to date". The empty dep array keeps this to once.
   useEffect(() => {
     const userId = user?.id ?? localStorage.getItem("userId");
     if (!userId) return;
-    if (user?.name && user.name !== "User") return;
     getUserById(userId)
       .then(profile => { if (profile?.status) setUserProfile(profile); })
       .catch(() => {});
@@ -144,6 +145,7 @@ export const SchoolAdminLayout = () => {
         items={navItemsWithLock}
         user={{
           name: user?.principalName?.trim() || (user?.name && user.name !== "User" ? user.name : ""),
+          avatar: user?.image ?? undefined,
           role: (() => {
             const ut = user?.userType ?? "";
             if (ut === "Admin" || ut === "SchoolAdmin") return "Principal";

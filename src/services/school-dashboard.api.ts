@@ -492,7 +492,7 @@ const extractClassAttendanceStatus = (raw: unknown): ClassAttendanceStatus | nul
 export const dashboardApi = {
   async fetchDashboard(): Promise<DashboardData> {
     try {
-      const { data } = await api.get<DashboardData>("/tenant/dashboard");
+     const { data } = await api.get("/tenant/getdashboardsummary");
       // Unwrap common envelope: { status, message, data: { ... } } → use inner data
       if (data && typeof data === 'object' && 'status' in (data as unknown as Record<string, unknown>) && 'data' in (data as unknown as Record<string, unknown>)) {
         const inner = (data as unknown as Record<string, unknown>).data;

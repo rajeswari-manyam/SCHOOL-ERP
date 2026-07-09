@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit3, Trash2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Eye, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Student } from "../types/student.types";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import { AlertDialog } from "@/components/ui/alert-dialog";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 const PAGE_SIZE = 5;
 
@@ -43,29 +44,6 @@ const Avatar = ({ s, onPreview }: { s: Student; onPreview?: (s: Student) => void
     </div>
   );
 };
-
-const PhotoPreviewModal = ({ student, onClose }: { student: Student; onClose: () => void }) => (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-    onClick={onClose}
-  >
-    <div className="relative max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={onClose}
-        className="absolute -top-10 right-0 text-white/80 hover:text-white transition-colors"
-      >
-        <X className="w-6 h-6" />
-      </button>
-      <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
-        <img src={student.photo} alt={`${student.firstName ?? ""} ${student.lastName ?? ""}`.trim()} className="w-full max-h-[70vh] object-contain bg-gray-50" />
-        <div className="px-4 py-3 border-t border-gray-100">
-          <p className="text-sm font-semibold text-gray-900">{student.firstName} {student.lastName}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{student.admissionNo}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 const TH = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <th className={`px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap ${className}`}>
@@ -235,8 +213,14 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
         variant="destructive"
       />
 
-      {previewStudent && (
-        <PhotoPreviewModal student={previewStudent} onClose={() => setPreviewStudent(null)} />
+      {previewStudent?.photo && (
+        <ImagePreviewModal
+          src={previewStudent.photo}
+          alt={`${previewStudent.firstName ?? ""} ${previewStudent.lastName ?? ""}`.trim()}
+          title={`${previewStudent.firstName ?? ""} ${previewStudent.lastName ?? ""}`.trim()}
+          subtitle={previewStudent.admissionNo}
+          onClose={() => setPreviewStudent(null)}
+        />
       )}
     </div>
   );

@@ -20,8 +20,11 @@ import AcademicYearSetupWizard from "../school-admin/academic-year-setup/Academi
 import { useCarryForwardStore } from "@/store/carryForwardStore";
 import { getCarryForwardStatus } from "@/services/academicYear.api";
 
-// ── Guard: checks carry-forward status once per session ───────────────────────
-// If carry-forward is pending, redirects to the setup wizard.
+// ── Guard: checks carry-forward eligibility once per session ──────────────────
+// Only redirects to the setup wizard when the backend says a previous academic
+// year exists AND carry-forward hasn't run for it yet (canCarryForward: true).
+// A school's first-ever academic year has nothing to carry forward from, so
+// canCarryForward is false and the user goes straight to the Dashboard.
 // Shows a brief loading screen while the check is in-flight.
 
 function CarryForwardGuard({ children }: { children: ReactNode }) {
@@ -35,13 +38,14 @@ function CarryForwardGuard({ children }: { children: ReactNode }) {
     }
     getCarryForwardStatus()
       .then((res) => {
-        setStatus(res.completed);
-        if (!res.completed) {
+        const canCarryForward = res.canCarryForward === true;
+        setStatus(!canCarryForward);
+        if (canCarryForward) {
           navigate("/schooladmin/academic-year-setup", { replace: true });
         }
       })
       .catch(() => {
-        // On error assume complete — never block the user.
+        // On error assume nothing to carry forward — never block the user.
         setStatus(true);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps

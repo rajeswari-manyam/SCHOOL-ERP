@@ -106,6 +106,10 @@ export interface GetUserByIdResponse {
   userType: string;
   role: Role;
   permissions: Permission[];
+  // Present for Admin/SchoolAdmin — the school's own profile fields
+  principalName?: string;
+  schoolImage?: string | null;
+  schoolLogo?: string | null;
   data: {
     // Common
     id: string;
@@ -140,6 +144,7 @@ export interface GetUserByIdResponse {
     class_id?: string;
     section_id?: string;
     school_code?: string;
+    image?: string | null;
   };
 }
 
@@ -173,6 +178,7 @@ export interface AuthUser {
   permissions?: Permission[];
   role?: Role;
   students?: { id: string; name: string }[];
+  image?: string | null;
 }
 
 // ── Login Step State ───────────────────────────────────────────────────────────

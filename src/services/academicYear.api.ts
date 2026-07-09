@@ -80,6 +80,16 @@ export type CarryForwardModule =
   | "staff"
   | "departments";
 
+// Modules copied automatically by the Academic Year Setup carry-forward flow
+export const DEFAULT_CARRY_FORWARD_MODULES: CarryForwardModule[] = [
+  "classes",
+  "sections",
+  "subjects",
+  "subjectAssignments",
+  "staff",
+  "departments",
+];
+
 export interface CarryForwardPreviewPayload {
   sourceAcademicYearId: string;
   modules: CarryForwardModule[];
@@ -123,20 +133,29 @@ export const carryForward = async (
 // ── Student Promotion ──────────────────────────────────────────────────────
 
 export interface CarryForwardStatusResponse {
-  status: boolean;
-  completed: boolean;
+  status?: boolean;
+  completed?: boolean;
+  /** True only when a previous academic year exists and carry-forward hasn't run for it yet. */
+  canCarryForward?: boolean;
   yearStatuses?: Record<string, boolean>;
 }
 
 export const getCarryForwardStatus = async (): Promise<CarryForwardStatusResponse> => {
   try {
-    const { data } = await api.get("/tenant/academic-years/carry-forward/status");
+    const { data } = await api.get("/tenant/carryforwardstatus");
     return data;
   } catch {
-    // On error, treat as complete so the user isn't stuck in the wizard.
-    return { status: true, completed: true };
+    // On error, never block the user with the wizard — assume nothing to carry forward.
+    return { status: true, completed: true, canCarryForward: false };
   }
 };
+
+/** True when carry-forward has already run for the given target academic year. */
+export const isCarryForwardCompleted = (
+  yearStatuses: Record<string, boolean> | undefined,
+  targetAcademicYearId: string,
+): boolean => Boolean(yearStatuses?.[targetAcademicYearId]);
+
 
 export type PromotionAction = "PROMOTE" | "REPEAT" | "DROPOUT" | "TRANSFERRED" | "GRADUATED";
 

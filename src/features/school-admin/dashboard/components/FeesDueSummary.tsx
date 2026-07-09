@@ -1,19 +1,24 @@
-import { motion } from 'framer-motion';
-import type { FeeDefaulter } from '../types';
+import { motion } from "framer-motion";
+import type { FeeDefaulter } from "../types";
 
 interface FeesDueSummaryProps {
   totalOutstanding: number;
   feeCollected?: number;
   paidPercent: number;
-  defaulters: FeeDefaulter[];
+  defaulters?: FeeDefaulter[];
   onViewAll?: () => void;
 }
 
-// FeeDefaulter retained in props for compatibility but Top Defaulters section is removed
-
-export function FeesDueSummary({ totalOutstanding, feeCollected = 0, paidPercent, defaulters, onViewAll }: FeesDueSummaryProps) {
+export function FeesDueSummary({
+  totalOutstanding,
+  feeCollected = 0,
+  paidPercent,
+  defaulters = [],
+  onViewAll,
+}: FeesDueSummaryProps) {
   const hasData = totalOutstanding > 0 || defaulters.length > 0;
-  const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+  const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
 
   // If we have real API data, compute paid/pending from fee_collection + total_pending_fees
   const totalFees     = feeCollected + totalOutstanding;

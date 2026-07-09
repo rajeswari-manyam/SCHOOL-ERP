@@ -20,6 +20,7 @@ import {
   type SectionStudent,
 } from "@/services/section.api";
 import { useCarryForwardStore } from "@/store/carryForwardStore";
+import { getPreviousAcademicYear } from "@/components/common/hooks/useAcademicYears";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -131,17 +132,36 @@ export default function AcademicYearSetupWizard() {
   const [step, setStep] = useState<Step>("year");
 
   // ── Load years on mount ────────────────────────────────────────────────────
+  // Target is always the newly created / active year; source is always the one
+  // immediately before it — neither is user-selectable, so older years can
+  // never be picked as the carry-forward source.
   useEffect(() => {
     getAllAcademicYears()
       .then((res) => {
         const list = res.data ?? [];
         setYears(list);
-        const active = list.find((y) => y.isActive || y.active);
-        if (active) setSourceYearId(active.id);
+        const active = list.find((y) => y.isActive || y.active) ?? null;
+        if (active) {
+          setTargetYearId(active.id);
+          const previous = getPreviousAcademicYear(list, active);
+          if (previous) setSourceYearId(previous.id);
+        }
       })
       .catch(() => {})
       .finally(() => setYearsLoading(false));
   }, []);
+
+  // ── Safety net: this wizard only makes sense when a previous year exists ──
+  // (the router guard already checks this before navigating here, but bail
+  // out to the Dashboard too if this route is ever reached without one).
+  useEffect(() => {
+    if (yearsLoading) return;
+    if (!targetYearId || !sourceYearId) {
+      setStatus(true);
+      navigate("/schooladmin/dashboard", { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yearsLoading, targetYearId, sourceYearId]);
 
   // ── Load promotion classes when entering promotion step ────────────────────
   useEffect(() => {
@@ -380,7 +400,7 @@ export default function AcademicYearSetupWizard() {
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Select Academic Years</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Choose the source year to copy from and the new target year.
+                  The previous academic year is carried forward into the new one automatically.
                 </p>
               </div>
 
@@ -396,15 +416,16 @@ export default function AcademicYearSetupWizard() {
                     </label>
                     <select
                       value={sourceYearId}
-                      onChange={(e) => setSourceYearId(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                      disabled
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 outline-none cursor-not-allowed"
                     >
-                      <option value="">Select source year</option>
-                      {years.map((y) => (
-                        <option key={y.id} value={y.id}>
-                          {y.yearName}{(y.isActive || y.active) ? " (Active)" : ""}
-                        </option>
-                      ))}
+                      {sourceYearId ? (
+                        years.filter((y) => y.id === sourceYearId).map((y) => (
+                          <option key={y.id} value={y.id}>{y.yearName}</option>
+                        ))
+                      ) : (
+                        <option value="">No previous academic year</option>
+                      )}
                     </select>
                   </div>
 
@@ -418,30 +439,31 @@ export default function AcademicYearSetupWizard() {
                     </label>
                     <select
                       value={targetYearId}
-                      onChange={(e) => setTargetYearId(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                      disabled
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 outline-none cursor-not-allowed"
                     >
-                      <option value="">Select target year</option>
-                      {years.filter((y) => y.id !== sourceYearId).map((y) => (
-                        <option key={y.id} value={y.id}>
-                          {y.yearName}{(y.isActive || y.active) ? " (Active)" : ""}
-                        </option>
-                      ))}
+                      {targetYearId ? (
+                        years.filter((y) => y.id === targetYearId).map((y) => (
+                          <option key={y.id} value={y.id}>{y.yearName}{(y.isActive || y.active) ? " (Active)" : ""}</option>
+                        ))
+                      ) : (
+                        <option value="">No academic year selected</option>
+                      )}
                     </select>
                   </div>
                 </div>
               )}
 
-              {sourceYearId && targetYearId && sourceYearId === targetYearId && (
+              {!yearsLoading && !sourceYearId && (
                 <p className="text-xs text-red-500 flex items-center gap-1.5">
-                  <AlertCircle size={12} /> Source and target year must be different.
+                  <AlertCircle size={12} /> No previous academic year found — nothing to carry forward from.
                 </p>
               )}
 
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setStep("modules")}
-                  disabled={!sourceYearId || !targetYearId || sourceYearId === targetYearId}
+                  disabled={!sourceYearId || !targetYearId}
                   className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Next: Select Modules <ChevronRight size={15} />

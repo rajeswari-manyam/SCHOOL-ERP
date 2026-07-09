@@ -76,6 +76,9 @@ interface AuthState {
   // Called after fetching school details — stores principal name
   setPrincipalName: (name: string) => void;
 
+  // Called after saving a new avatar/admin photo — refreshes it immediately
+  setUserImage: (image: string | null) => void;
+
   logout: () => void;
   isAuthenticated: () => boolean;
   getRoleRoute: () => string;
@@ -176,6 +179,10 @@ export const useAuthStore = create<AuthState>()(
             role:        profile.role  ?? current.role,
             permissions: profile.permissions ?? current.permissions,
             schoolcode:  d.school_code ?? current.schoolcode,
+            // schoolImage (Admin's own photo, set via School Profile) takes
+            // priority over the staff record's own `image` field.
+            image:       profile.schoolImage ?? d.image ?? current.image,
+            principalName: profile.principalName ?? current.principalName,
           },
         });
       },
@@ -184,6 +191,12 @@ export const useAuthStore = create<AuthState>()(
         const current = get().user;
         if (!current) return;
         set({ user: { ...current, principalName: name } });
+      },
+
+      setUserImage: (image) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, image } });
       },
 
       logout: () => {
