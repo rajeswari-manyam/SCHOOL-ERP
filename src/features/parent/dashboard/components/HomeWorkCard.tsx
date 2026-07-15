@@ -29,7 +29,8 @@ interface HomeworkCardProps {
 }
 
 export const HomeworkCard = ({ variant = "card" }: HomeworkCardProps) => {
-  const { homework, isLoadingHomework } = useDashboardStore()
+  const homework = useDashboardStore((s) => s.homework)
+  const isLoadingHomework = useDashboardStore((s) => s.isLoadingHomework)
 
   // Download helper
   const handleDownload = (url?: string, filename?: string) => {

@@ -1,13 +1,14 @@
 ﻿// src/components/common/Sidebar.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { X, ChevronDown, LogOut, Settings, Lock } from "lucide-react";
+import { X, ChevronDown, LogOut, User, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/cn";
 import { useUIStore } from "@/store/uiStore";
 import type { NavItem } from "@/types/NavItem.types";
 import { logout as logoutApi } from "@/services/auth.api";
+import { ProfileModal } from "./ProfileModal";
 
 interface SidebarProps {
   items: NavItem[];
@@ -37,6 +38,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
   const setCollapsed   = useUIStore((s) => s.setCollapsed);
 
   const [openMenu, setOpenMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   /* ── Close profile dropdown on outside click ── */
@@ -376,11 +378,11 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                     <Button
                       variant="ghost"
                       role="menuitem"
-                      onClick={() => { navigate("/account/settings"); setOpenMenu(false); }}
+                      onClick={() => { setShowProfile(true); setOpenMenu(false); }}
                       className="flex h-11 w-full items-center justify-start gap-3 rounded-none px-4 text-[13px] font-medium text-slate-200 hover:bg-white/10 hover:text-white"
                     >
-                      <Settings className="h-4 w-4 shrink-0 text-slate-400" />
-                      Settings
+                      <User className="h-4 w-4 shrink-0 text-slate-400" />
+                      Profile
                     </Button>
                     <div className="mx-3 border-t border-white/[0.06]" />
                     <Button
@@ -399,6 +401,8 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
           )}
         </div>
       </motion.aside>
+
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </>
   );
 };

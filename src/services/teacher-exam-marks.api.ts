@@ -13,6 +13,8 @@ import type {
   BulkMarksResponse,
   GetAllMarksQuery,
   MarksRecordItem,
+  PublishMarksPayload,
+  PublishMarksResponse,
 } from "@/features/teacher/exam/types/exam-marks.types";
 
 const isDev = import.meta.env.DEV;
@@ -69,8 +71,10 @@ function hasApiError(raw: unknown): string | null {
 function mapMarksRecordItem(item: Record<string, unknown>): MarksRecordItem {
   return {
     id:                   (item.id ?? item._id ?? "") as string,
+    examId:               (item.examId ?? item.exam_id ?? "") as string,
     examName:             (item.examName ?? item.exam_name ?? "") as string,
     academicYear:         (item.academicYear ?? item.academic_year ?? item.academicYearId ?? "") as string,
+    academicYearId:       (item.academicYearId ?? item.academic_year_id ?? "") as string,
     className:            (item.className ?? item.class_name ?? "") as string,
     subjectName:          (item.subjectName ?? item.subject_name ?? item.subject ?? "") as string,
     examDate:             (item.examDate ?? item.exam_date ?? "") as string,
@@ -343,6 +347,30 @@ export const examMarksApi = {
       const msg = errorsDetail ? `${prefix} — ${errorsDetail}` : (prefix || error?.message || "Failed to submit marks");
       logger("error", "submitMarksBulk failed", { count: marks.length, response: resData });
       throw new ExamMarksApiError(msg, error?.response?.status, "/tenant/marks/bulk", err);
+    }
+  },
+
+  // ── /tenant/markspublish ──────────────────────────────────────────────────
+
+  publishMarks: async (params: PublishMarksPayload): Promise<PublishMarksResponse> => {
+    logger("log", "Publishing marks", params);
+
+    try {
+      const { data } = await api.post<PublishMarksResponse>("/tenant/markspublish", params);
+
+      if (data?.status === false) {
+        logger("warn", "Publish marks API error", { message: data?.message });
+        throw new ExamMarksApiError(data?.message ?? "Failed to publish results", undefined, "/tenant/markspublish");
+      }
+
+      logger("log", "Marks published successfully", { examId: params.exam_id });
+      return data;
+    } catch (err) {
+      if (err instanceof ExamMarksApiError) throw err;
+      const error = err as { response?: { data?: { message?: string }; status?: number }; message?: string };
+      const message = error?.response?.data?.message ?? error?.message ?? "Failed to publish results";
+      logger("error", "publishMarks failed", { params, response: error?.response?.data });
+      throw new ExamMarksApiError(message, error?.response?.status, "/tenant/markspublish", err);
     }
   },
 };

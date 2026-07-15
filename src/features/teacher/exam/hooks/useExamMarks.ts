@@ -4,7 +4,6 @@ import type {
   StudentMarkEntry,
   ExamSummary,
   SubmittedExam,
-  PublishedResult,
   Grade,
   GetAllMarksQuery,
 } from "../types/exam-marks.types";
@@ -38,32 +37,8 @@ export const GRADE_CONFIG: Record<Grade, { classes: string; bg: string }> = {
   "F":  { classes: "bg-red-50 text-red-700 border-red-200",             bg: "bg-red-500"    },
 };
 
-// ── Mock published results ────────────────────────────────────────────────
-export const MOCK_PUBLISHED: PublishedResult[] = [
-  {
-    id: "pub-1",
-    examLabel: "Mid Term Examination",
-    className: "Class 8-A",
-    academicYear: "2024-25",
-    publishedOn: "2025-04-01",
-    classAverage: 70.4,
-    overallPassRate: 87.5,
-    topStudents: [
-      { rank: 1, name: "Sneha Patel",   rollNo: "04", marks: 94, maxMarks: 100, grade: "A+" },
-      { rank: 2, name: "Arjun Reddy",   rollNo: "01", marks: 88, maxMarks: 100, grade: "A"  },
-      { rank: 3, name: "Karthik Naidu", rollNo: "08", marks: 81, maxMarks: 100, grade: "A"  },
-    ],
-    subjectPerformance: [
-      { subject: "Mathematics",    average: 74.5, passRate: 87.5, highest: 94 },
-      { subject: "Science",        average: 68.3, passRate: 85.7, highest: 91 },
-      { subject: "English",        average: 72.1, passRate: 100,  highest: 89 },
-      { subject: "Social Studies", average: 66.8, passRate: 75.0, highest: 87 },
-    ],
-  },
-];
-
 // ── Hook ──────────────────────────────────────────────────────────────────
-export type ExamTab = "enter" | "submitted" | "published";
+export type ExamTab = "enter" | "submitted";
 
 const EMPTY_FILTER: SubmittedFilter = {
   class_id: "",
@@ -101,7 +76,6 @@ export const useExamMarks = () => {
   const [submitMsg, setSubmitMsg] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [dlMsg, setDlMsg] = useState(false);
 
   // ── /tenant/getallmarks — driven by the filter's activeFilter ─────────
   const marksQuery = useMemo((): GetAllMarksQuery => ({
@@ -274,11 +248,6 @@ export const useExamMarks = () => {
     }
   }, [entries, selector]);
 
-  const handleDownloadReport = () => {
-    setDlMsg(true);
-    setTimeout(() => setDlMsg(false), 3000);
-  };
-
   return {
     activeTab, setActiveTab,
     selector, setSelector,
@@ -287,14 +256,12 @@ export const useExamMarks = () => {
     summary, selectorLabel,
     showSubmitModal, setShowSubmitModal,
     confirmChecked, setConfirmChecked,
-    draftMsg, submitMsg, dlMsg,
+    draftMsg, submitMsg,
     handleSaveDraft, handleOpenSubmit, handleConfirmSubmit,
-    handleDownloadReport,
     submitting, submitError,
     submittedExams,
     marksLoading, marksError,
     refetchMarks,
-    publishedResults: MOCK_PUBLISHED,
     studentsLoading, studentsError,
     // Submitted tab filter
     submittedFilter, setSubmittedFilter,

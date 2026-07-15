@@ -1,12 +1,9 @@
-// teacher/attendance/api/attendance.api.ts
 import axios from "@/config/axios";
 import { createAttendance } from "@/services/attendance.api";
 import type {
   TodayAttendance,
   AttendanceHistoryEntry,
   MarkAttendancePayload,
-  CorrectionRequestPayload,
-  CorrectionRequest,
 } from "@/features/teacher/attendance/types/attendance.types";
 
 // ── Types matching /tenant/getteachertodayattendancesummary response ──────────
@@ -220,16 +217,6 @@ export const attendanceApi = {
   // ── History ────────────────────────────────────────────────────────────────
   getMyHistory: async (): Promise<AttendanceHistoryEntry[]> => {
     const { data } = await axios.get("/teacher/attendance/my-history");
-    return data;
-  },
-
-  // ── Correction ─────────────────────────────────────────────────────────────
-  submitCorrection: async (payload: CorrectionRequestPayload): Promise<void> => {
-    await axios.post("/teacher/attendance/correction", payload);
-  },
-
-  getMyCorrectionRequests: async (): Promise<CorrectionRequest[]> => {
-    const { data } = await axios.get("/teacher/attendance/corrections");
     return data;
   },
 

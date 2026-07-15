@@ -55,4 +55,5 @@ export const STUDENT_DATA: Student = {
       documentCode: "RCP-2025-0823",
     },
   ],
+  parentDetails: [],
 };

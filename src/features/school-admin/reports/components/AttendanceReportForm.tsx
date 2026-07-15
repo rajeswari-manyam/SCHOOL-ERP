@@ -6,7 +6,7 @@ import {
   Users, BookOpen, UserCheck, CalendarDays,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { reportsApi } from "@/services/school-reports.api";
+import { reportsApi } from "@/services/reports.api";
 import { REPORTS_KEYS } from "../hooks/useReports";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import { getStudentsByClassSection } from "@/services/fee.api";

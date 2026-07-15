@@ -21,7 +21,7 @@ import type {
   Department,
   CreateDepartmentPayload,
 } from "../types/settings.types";
-import * as api from "@/services/school-settings.api";
+import * as api from "@/services/settings.api";
 import * as settingsApi from "@/features/school-admin/settings/api/settings.api";
 import type { CreateFeeHeadPayload } from "@/features/school-admin/settings/api/settings.api";
 import * as deptApi from "@/services/department.api";
@@ -469,7 +469,7 @@ export function useHolidays() {
     setSaving(true);
     try {
       const res = await holidaysApi.createHoliday(payload);
-      if (res.data) setHolidays(prev => [...prev, res.data!]);
+      if (res.data?.length) setHolidays(prev => [...prev, ...res.data]);
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to create holiday";
       throw new Error(msg);

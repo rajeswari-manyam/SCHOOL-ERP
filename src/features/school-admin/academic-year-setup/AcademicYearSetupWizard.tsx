@@ -9,6 +9,7 @@ import {
   previewCarryForward,
   carryForward,
   promoteStudents,
+  markCarryForwardCompleted,
   type AcademicYearRecord,
   type CarryForwardPreviewItem,
   type CarryForwardModule,
@@ -240,6 +241,7 @@ export default function AcademicYearSetupWizard() {
         modules: activeModuleKeys,
       });
       if (res.status) {
+        markCarryForwardCompleted(targetYearId, activeModuleKeys);
         if (studentsIncluded) {
           setStep("promotion");
         } else {

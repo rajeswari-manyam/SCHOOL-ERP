@@ -94,11 +94,10 @@ export const createHomework = async (payload: {
   formData.append("academicYearId", payload.academicYearId);
   formData.append("is_published", String(payload.is_published));
   if (payload.submission_type) formData.append("submission_type", payload.submission_type);
-  if (payload.attachments.length > 0) {
-    formData.append("attachments", JSON.stringify(payload.attachments));
-  }
+  // The backend takes the uploaded file(s) themselves under "attachments" (multer field)
+  // and returns their storage URLs in the response — it does not accept a JSON URL list.
   if (payload.files && payload.files.length > 0) {
-    payload.files.forEach((file) => formData.append("files", file));
+    payload.files.forEach((file) => formData.append("attachments", file));
   }
   const res = await api.post<ApiResponse<Homework>>("/tenant/createhomework", formData);
   return res.data;
@@ -160,8 +159,13 @@ export const updateHomeworkById = async (
     class_id: string;
     section_id: string;
     subject_id: string;
+    submission_type: "physical" | "online" | "both";
   }>
 ) => {
+  // NOTE: sending this as multipart/form-data (to attach a new file, mirroring
+  // createHomework) causes the backend to return a 500 — /tenant/updatehomeworkById
+  // does not currently support file uploads. Adding/replacing an attachment on
+  // an existing homework isn't possible until the backend adds that support.
   const res = await api.put<ApiResponse<Homework>>(`/tenant/updatehomeworkById/${id}`, payload);
   return res.data;
 };

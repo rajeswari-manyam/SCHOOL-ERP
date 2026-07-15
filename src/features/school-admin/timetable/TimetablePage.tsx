@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { Printer, Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Download, Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // ── Timetable hooks ──────────────────────────────────────────────────────────
 import {
@@ -642,11 +644,36 @@ const TimetablePage: React.FC = () => {
   const [deletePeriodTarget, setDeletePeriodTarget] = useState<{
     id: string; day: DayOfWeek; periodNo: number; subject: string; teacherName: string;
   } | null>(null);
+  const [downloadingTimetable, setDownloadingTimetable] = useState(false);
+  const timetableGridRef = useRef<HTMLDivElement>(null);
 
   const { classTabs = [], classTimetable } = data ?? {};
   const headingClass   = classTimetable?.classLabel ?? activeClass.label;
   const headingSection = classTimetable?.section    ?? activeSection.label;
   const selectedClassId = activeClass.id;
+
+  const handleDownloadTimetable = async () => {
+    if (!timetableGridRef.current) return;
+    setDownloadingTimetable(true);
+    try {
+      const canvas = await html2canvas(timetableGridRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [canvas.width / 2, canvas.height / 2],
+      });
+      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`Timetable_${headingClass}_${headingSection}.pdf`);
+    } finally {
+      setDownloadingTimetable(false);
+    }
+  };
 
   // ── Tab definitions ──────────────────────────────────────────────────────────
   const mainTabs: { id: PageTab; label: string }[] = [
@@ -700,10 +727,12 @@ const TimetablePage: React.FC = () => {
                 <Plus size={13} /> Add Period
               </button>
               <button
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                onClick={handleDownloadTimetable}
+                disabled={downloadingTimetable || !classTimetable?.slots.length}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Printer size={13} /> Print Timetable
+                {downloadingTimetable ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                {downloadingTimetable ? "Generating…" : "Download Timetable"}
               </button>
             </div>
           )}
@@ -787,17 +816,19 @@ const TimetablePage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <WeeklyTimetableGrid
-                  timetable={classTimetable}
-                  onEditCell={() => setAddPeriodOpen(true)}
-                  onEditPeriod={() => {
-                    setAddPeriodOpen(true);
-                  }}
-                  onDeletePeriod={(id, day, periodNo, subject, teacherName) =>
-                    setDeletePeriodTarget({ id, day, periodNo, subject, teacherName })
-                  }
-                  workingDays={activeWDSelectedDays}
-                />
+                <div ref={timetableGridRef} className="bg-white">
+                  <WeeklyTimetableGrid
+                    timetable={classTimetable}
+                    onEditCell={() => setAddPeriodOpen(true)}
+                    onEditPeriod={() => {
+                      setAddPeriodOpen(true);
+                    }}
+                    onDeletePeriod={(id, day, periodNo, subject, teacherName) =>
+                      setDeletePeriodTarget({ id, day, periodNo, subject, teacherName })
+                    }
+                    workingDays={activeWDSelectedDays}
+                  />
+                </div>
               )}
             </div>
           </>

@@ -93,7 +93,10 @@ const StudentExamMarksTab: React.FC<Props> = ({ studentId, studentName }) => {
         }
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Failed to load marks");
+        // Backend returns 404 (not an empty array) when no marks exist yet for this student.
+        if (err?.response?.status !== 404) {
+          setError(err instanceof Error ? err.message : "Failed to load marks");
+        }
         setMarks([]);
       })
       .finally(() => setLoading(false));
@@ -119,7 +122,7 @@ const StudentExamMarksTab: React.FC<Props> = ({ studentId, studentName }) => {
     return (
       <div className="flex flex-col items-center justify-center h-52 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm gap-3">
         <BookOpen size={32} className="text-gray-300" />
-        <p className="text-sm text-gray-400">No exam marks found for {studentName}.</p>
+        <p className="text-sm text-gray-400">Marks have not been assigned for {studentName} yet.</p>
       </div>
     );
   }

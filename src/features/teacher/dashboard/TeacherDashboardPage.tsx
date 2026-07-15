@@ -10,10 +10,11 @@ import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
 import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher, useTeacherMonthlyAttendance, useTeacherSections, useTeacherUpcomingExams } from "./hooks/useTeacherDashboard";
 import { useTodayAttendanceSummary } from "../attendance/hooks/useAttendance";
+import { useMyStudents } from "../students/hooks/useMyStudents";
 import { useAuthStore } from "../../../store/authStore";
 import { format } from "date-fns";
 
-const MOCK_STATS = { classStrength: 42, homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
+const MOCK_STATS = { homeworkPending: 3, attendanceThisMonth: 87, leaveBalance: 8 };
 
 const TeacherDashboardPage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const TeacherDashboardPage = () => {
   const { data: todayAttendance } = useTodayAttendanceSummary(teacherId);
   const { data: sections = [] } = useTeacherSections(staffId);
   const { data: allHomework = [] } = usePendingHomeworkByTeacher(teacherId);
+  const { students: myStudents } = useMyStudents();
 
   const academicYearId = sections[0]?.academicYearId ?? "";
   const { data: leaveResponse } = useTeacherLeaveBalance(staffId, academicYearId);
@@ -52,9 +54,11 @@ const TeacherDashboardPage = () => {
   );
   const nextExam = upcomingExamsData?.data?.[0] ?? null;
 
+  const classStrength = myStudents.length;
+
   const stats = {
-    currentStrength:     section?.currentStrength ?? (todayAttendance?.totalStudents ?? 0),
-    totalStrength:       section?.totalStrength   ?? MOCK_STATS.classStrength,
+    currentStrength:     todayAttendance?.isMarked ? (todayAttendance.presentCount ?? 0) : classStrength,
+    totalStrength:       classStrength,
     className:           section?.className,
     sectionName:         section?.sectionName,
     homeworkPending:     allHomework.length,

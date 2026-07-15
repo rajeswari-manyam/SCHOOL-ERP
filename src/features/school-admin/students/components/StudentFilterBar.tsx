@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SlidersHorizontal, X } from "lucide-react";
-import type { ClassOption } from "@/services/school-students.api";
+import type { ClassOption } from "@/services/student.api";
 
 interface StudentFilterBarProps {
   search: string;

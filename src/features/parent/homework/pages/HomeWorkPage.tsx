@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { HelpCircle, Loader2, AlertCircle } from "lucide-react";
 import { useHomeworkStore } from "../store/HomeWork.store";
 import { groupBySubject, sortByDueDate, mapApiHomework } from "../utils/homework.utils";
-import { getHomeworkThisWeek } from "../../../../services/homework.api";
+import { getHomeworkThisWeek, getSubmissionsByStudentId } from "../../../../services/homework.api";
 import { useStudyMaterials } from "../hooks/useStudymaterial";
 import { HomeworkCard } from "../components/HomeWorkCard";
 import { StudyMaterialCard } from "../components/StudyMaterialCard";
@@ -111,14 +111,22 @@ export default function HomeworkPage() {
     setAllLoading(true);
     setAllError(null);
 
-    getHomeworkThisWeek({
-      class_id: classIdForApi,
-      section_id: sectionIdForApi || undefined,
-    })
-      .then((res) => {
+    Promise.all([
+      getHomeworkThisWeek({
+        class_id: classIdForApi,
+        section_id: sectionIdForApi || undefined,
+      }),
+      studentId ? getSubmissionsByStudentId(studentId).catch(() => null) : Promise.resolve(null),
+    ])
+      .then(([res, subRes]) => {
         if (cancelled) return;
         if (res.status && Array.isArray(res.data)) {
-          setAllHomeworks(res.data.map(mapApiHomework));
+          const submittedIds = new Set(
+            (subRes?.data ?? [])
+              .filter((s) => s.status === "submitted")
+              .map((s) => s.homework_id)
+          );
+          setAllHomeworks(res.data.map((hw) => mapApiHomework(hw, submittedIds.has(hw.id))));
         } else {
           setAllError(res.message ?? "Failed to load homework.");
         }
@@ -135,7 +143,7 @@ export default function HomeworkPage() {
     };
     // re-fires once classIdForApi resolves from ""
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, classIdForApi, sectionIdForApi]);
+  }, [tab, classIdForApi, sectionIdForApi, studentId]);
 
   const allGrouped = groupBySubject(sortByDueDate(allHomeworks ?? []));
 

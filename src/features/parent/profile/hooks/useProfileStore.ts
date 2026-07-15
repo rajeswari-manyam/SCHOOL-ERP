@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { ContactInfo, NotificationPref, Child } from "../types/profile.types";
 import { getUserById } from "../../../../services/auth.api";
 import { getStudentById } from "../../../../services/student.api";
+import type { ClassTeacherInfo } from "../components/ClassTeacherCard";
 
 interface ProfileState {
   parentName: string;
@@ -11,12 +12,13 @@ interface ProfileState {
   parentOccupation: string;
   parentAddress: string;
   contact: ContactInfo;
+  classTeacher: ClassTeacherInfo | null;
   notifications: NotificationPref[];
   children: Child[];
   isLoading: boolean;
   error: string | null;
 
-  fetchProfile: (parentId: string) => Promise<void>;
+  fetchProfile: (parentId: string, activeStudentId?: string) => Promise<void>;
   setContact: (contact: ContactInfo) => void;
   toggleNotification: (id: string) => void;
 }
@@ -46,12 +48,13 @@ export const useProfileStore = create<ProfileState>((set) => ({
   parentOccupation: "",
   parentAddress:    "",
   contact:          EMPTY_CONTACT,
+  classTeacher:     null,
   notifications:    DEFAULT_NOTIFICATIONS,
   children:         [],
   isLoading:        false,
   error:            null,
 
-  fetchProfile: async (parentId: string) => {
+  fetchProfile: async (parentId: string, activeStudentId?: string) => {
     set({ isLoading: true, error: null });
     try {
       const res = await getUserById(parentId);
@@ -72,16 +75,37 @@ export const useProfileStore = create<ProfileState>((set) => ({
         status:      "ACTIVE" as const,
       }));
 
-      const relation = parent.relation?.toLowerCase() ?? "";
-      const isMother = relation === "mother";
+      // Prefer the currently-selected child's own record — richer and more
+      // reliable than the parent-user record, which only carries one side
+      // (father or mother) based on which account logged in.
+      const activeStudent = students.find((s) => s.id === activeStudentId) ?? students[0];
+      const parentRecord = activeStudent?.parentDetail?.[0];
 
-      const contact: ContactInfo = {
-        fatherName:       isMother ? ""                        : (parent.parent_name ?? ""),
-        fatherPhone:      isMother ? ""                        : (parent.phone ?? ""),
-        motherName:       isMother ? (parent.parent_name ?? "") : "",
-        motherEmail:      isMother ? (parent.email ?? "")      : (parent.email ?? ""),
-        emergencyContact: parent.phone ?? "",
-      };
+      const contact: ContactInfo = parentRecord
+        ? {
+            fatherName:       parentRecord.father_name  ?? "",
+            fatherPhone:      parentRecord.father_phone  ?? "",
+            motherName:       parentRecord.mother_name   ?? "",
+            motherEmail:      parentRecord.mother_email  ?? "",
+            emergencyContact: parentRecord.father_phone || parentRecord.mother_phone || "",
+          }
+        : {
+            fatherName:       parent.relation?.toLowerCase() === "mother" ? "" : (parent.parent_name ?? ""),
+            fatherPhone:      parent.relation?.toLowerCase() === "mother" ? "" : (parent.phone ?? ""),
+            motherName:       parent.relation?.toLowerCase() === "mother" ? (parent.parent_name ?? "") : "",
+            motherEmail:      parent.email ?? "",
+            emergencyContact: parent.phone ?? "",
+          };
+
+      const teacher = activeStudent?.classTeacher;
+      const classTeacher: ClassTeacherInfo | null = teacher
+        ? {
+            name:  `${teacher.first_name} ${teacher.last_name ?? ""}`.trim(),
+            phone: teacher.phone ?? "",
+            email: teacher.email ?? "",
+            photo: teacher.photo ?? null,
+          }
+        : null;
 
       set({
         parentName:       parent.parent_name       ?? "",
@@ -91,6 +115,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
         parentOccupation: parent.occupation        ?? "",
         parentAddress:    parent.address           ?? "",
         contact,
+        classTeacher,
         children,
         isLoading: false,
       });

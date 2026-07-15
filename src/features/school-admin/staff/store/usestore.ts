@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import type { StaffMember, TabKey, UpdateStaffPayload, LeaveRequest } from "../types/staff.types";
-import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi, deleteStaff as deleteStaffApi } from "@/services/school-staff.api";
+import { fetchStaff, fetchStaffStats, fetchLeaves, approveLeave as approveLeaveApi, rejectLeave as rejectLeaveApi, updateStaff as updateStaffApi, deleteStaff as deleteStaffApi } from "@/services/staff.api";
 import { updateLeave as updateLeaveApi, deleteLeave as deleteLeaveApi } from "@/services/leaves.api";
-import type { LeaveRecord } from "@/services/school-staff.api";
+import type { LeaveRecord } from "@/services/staff.api";
 import { useUIStore } from "@/store/uiStore";
 
 interface StaffStats {

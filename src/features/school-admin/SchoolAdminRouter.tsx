@@ -15,16 +15,24 @@ import { ReportsPage }      from "../school-admin/reports";
 import { SettingsPage }     from "./settings";
 import TimetablePage        from "../school-admin/timetable/TimetablePage";
 import ClassesPage          from "../school-admin/classes/ClassesPage";
+import ResultsPage          from "../school-admin/results/ResultsPage";
 import AcademicYearSetupWizard from "../school-admin/academic-year-setup/AcademicYearSetupWizard";
 
 import { useCarryForwardStore } from "@/store/carryForwardStore";
-import { getCarryForwardStatus } from "@/services/academicYear.api";
+import {
+  getAllAcademicYears,
+  checkCarryForwardEligibility,
+  isCarryForwardCompleted,
+} from "@/services/academicYear.api";
+import { getPreviousAcademicYear } from "@/components/common/hooks/useAcademicYears";
 
 // ── Guard: checks carry-forward eligibility once per session ──────────────────
-// Only redirects to the setup wizard when the backend says a previous academic
-// year exists AND carry-forward hasn't run for it yet (canCarryForward: true).
+// There's no backend status endpoint for this, so eligibility is derived
+// locally: fetch the academic years, find the previous one relative to the
+// active year, and ask previewCarryForward whether it actually has records to
+// copy. "Already run" is tracked in localStorage (see isCarryForwardCompleted).
 // A school's first-ever academic year has nothing to carry forward from, so
-// canCarryForward is false and the user goes straight to the Dashboard.
+// the user goes straight to the Dashboard.
 // Shows a brief loading screen while the check is in-flight.
 
 function CarryForwardGuard({ children }: { children: ReactNode }) {
@@ -36,18 +44,29 @@ function CarryForwardGuard({ children }: { children: ReactNode }) {
       if (!complete) navigate("/schooladmin/academic-year-setup", { replace: true });
       return;
     }
-    getCarryForwardStatus()
-      .then((res) => {
-        const canCarryForward = res.canCarryForward === true;
-        setStatus(!canCarryForward);
-        if (canCarryForward) {
+
+    (async () => {
+      try {
+        const res = await getAllAcademicYears();
+        const years = res.data ?? [];
+        const activeYear = years.find((y) => y.active) ?? years[0] ?? null;
+        const previousYear = activeYear ? getPreviousAcademicYear(years, activeYear) : null;
+
+        if (!activeYear || !previousYear || isCarryForwardCompleted(activeYear.id)) {
+          setStatus(true);
+          return;
+        }
+
+        const eligible = await checkCarryForwardEligibility(previousYear.id);
+        setStatus(!eligible);
+        if (eligible) {
           navigate("/schooladmin/academic-year-setup", { replace: true });
         }
-      })
-      .catch(() => {
+      } catch {
         // On error assume nothing to carry forward — never block the user.
         setStatus(true);
-      });
+      }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -96,6 +115,7 @@ export default function SchoolAdminRouter() {
         <Route path="timetable"   element={<TimetablePage />} />
         <Route path="fees"        element={<FeeCollectionPage />} />
         <Route path="reports"     element={<ReportsPage />} />
+        <Route path="results"    element={<ResultsPage />} />
         <Route path="settings"    element={<SettingsPage />} />
 
         {/* Catch-all */}

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { X, ChevronDown, Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
-import { createStaff } from "@/services/school-staff.api";
+import { createStaff } from "@/services/staff.api";
 import { fetchDepartments } from "@/services/department.api";
 import { getAllAcademicYears, type AcademicYearRecord } from "@/services/academicYear.api";
 import { useStaffStore } from "../store/usestore";
@@ -75,7 +75,8 @@ const STATUS_OPTIONS = [
 
 const genNextEmpId = (staffList: StaffMember[]): string => {
   const nums = staffList
-    .map((s) => parseInt(s.employeeId?.replace(/\D/g, "") || "0", 10))
+    .map((s) => /^EMP-(\d+)$/i.exec(s.employeeId?.trim() ?? "")?.[1])
+    .map((n) => (n ? parseInt(n, 10) : NaN))
     .filter((n) => !isNaN(n) && n > 0);
   const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
   return `EMP-${String(next).padStart(3, "0")}`;

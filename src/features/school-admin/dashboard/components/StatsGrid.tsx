@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Users, CheckSquare, IndianRupee, UserPlus } from 'lucide-react';
+import { Users, CheckSquare, IndianRupee, UserCheck } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import type { StatsCard } from '../types';
 
@@ -7,14 +7,14 @@ const iconMap = {
   users:       Users,
   check:       CheckSquare,
   rupee:       IndianRupee,
-  'user-plus': UserPlus,
+  'user-check': UserCheck,
 };
 
 const cardAccent: Record<string, { border: string; badge: string; badgeText: string }> = {
-  attendance: { border: 'border-l-emerald-500', badge: 'bg-emerald-100', badgeText: 'text-emerald-700' },
-  classes:    { border: 'border-l-amber-400',   badge: 'bg-amber-100',   badgeText: 'text-amber-700'   },
-  fees:       { border: 'border-l-indigo-500',  badge: 'bg-indigo-100',  badgeText: 'text-indigo-700'  },
-  admissions: { border: 'border-l-violet-500',  badge: 'bg-violet-100',  badgeText: 'text-violet-700'  },
+  attendance:      { border: 'border-l-emerald-500', badge: 'bg-emerald-100', badgeText: 'text-emerald-700' },
+  classes:         { border: 'border-l-amber-400',   badge: 'bg-amber-100',   badgeText: 'text-amber-700'   },
+  fees:            { border: 'border-l-indigo-500',  badge: 'bg-indigo-100',  badgeText: 'text-indigo-700'  },
+  staffAttendance: { border: 'border-l-teal-500',    badge: 'bg-teal-100',    badgeText: 'text-teal-700'    },
 };
 
 const defaultAccent = { border: 'border-l-gray-300', badge: 'bg-gray-100', badgeText: 'text-gray-600' };

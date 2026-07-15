@@ -1,27 +1,24 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Calendar, BookOpen, Users, UserPlus, Palmtree,
-  CalendarClock, FileText,
+  Calendar, BookOpen, Users, UserPlus,
   CheckCircle2, X, Sparkles, Loader2,
 } from 'lucide-react';
 import type { SetupItem } from '../hooks/useSetupStatus';
 
+// Keys must match the SetupItem.id values produced by useSetupStatus's buildItems().
 const STEP_CFG: Record<string, {
   Icon: React.ElementType;
   bg: string;
   text: string;
 }> = {
-  'academic-year': { Icon: Calendar,     bg: 'bg-indigo-100',  text: 'text-indigo-600'  },
-  'classes':       { Icon: BookOpen,     bg: 'bg-blue-100',    text: 'text-blue-600'    },
-  'staff':         { Icon: Users,        bg: 'bg-purple-100',  text: 'text-purple-600'  },
-  'admissions':    { Icon: UserPlus,     bg: 'bg-emerald-100', text: 'text-emerald-600' },
-  'holidays':      { Icon: Palmtree,     bg: 'bg-orange-100',  text: 'text-orange-600'  },
-  'timetable':     { Icon: CalendarClock,bg: 'bg-cyan-100',    text: 'text-cyan-600'    },
-  'reports':       { Icon: FileText,     bg: 'bg-rose-100',    text: 'text-rose-600'    },
+  'settings': { Icon: Calendar, bg: 'bg-indigo-100',  text: 'text-indigo-600'  },
+  'staff':    { Icon: Users,    bg: 'bg-purple-100',  text: 'text-purple-600'  },
+  'classes':  { Icon: BookOpen, bg: 'bg-blue-100',    text: 'text-blue-600'    },
+  'students': { Icon: UserPlus, bg: 'bg-emerald-100', text: 'text-emerald-600' },
 };
 
-const FALLBACK_CFG = STEP_CFG['academic-year'];
+const FALLBACK_CFG = STEP_CFG['settings'];
 
 interface Props {
   items: SetupItem[] | undefined;

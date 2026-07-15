@@ -9,6 +9,7 @@ import {
   Clock,
   Paperclip,
   MessageCircle,
+  Download,
 } from "lucide-react";
 
 const SUBJECT_BADGE: Record<Subject, string> = {
@@ -93,15 +94,25 @@ function WeekCard({ hw }: { hw: Homework }) {
           </span>
 
           <div className="flex flex-wrap items-center gap-2">
-          {hw.attachment?.name && (
+          {(hw.attachments?.length
+            ? hw.attachments
+            : hw.attachment?.url
+            ? [{ name: hw.attachment.name, url: hw.attachment.url }]
+            : []
+          ).map((a, i) => (
             <a
-    href={hw.attachment.url ?? "#"}
-    className="flex items-center gap-1 text-[11px] text-[#3525CD] hover:underline"
-  >
-    <Paperclip size={11} strokeWidth={1.5} />
-    {hw.attachment.name}
-  </a>
-)}
+              key={`${a.url}-${i}`}
+              href={a.url}
+              target="_blank"
+              rel="noreferrer"
+              download
+              className="flex items-center gap-1 text-[11px] text-[#3525CD] hover:underline"
+            >
+              <Paperclip size={11} strokeWidth={1.5} />
+              {a.name}
+              <Download size={11} strokeWidth={1.5} />
+            </a>
+          ))}
             {hw.whatsappNotified && (
               <span className="flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
                 <MessageCircle size={10} strokeWidth={1.5} />
@@ -131,37 +142,74 @@ function AllCard({ hw }: { hw: Homework }) {
   const icon      = SUBJECT_ICONS[subject]   ?? <Pencil size={18} strokeWidth={1.5} />;
   const statusCls = STATUS_BADGE[status];
 
+  const attachments = hw.attachments?.length
+    ? hw.attachments
+    : hw.attachment?.url
+    ? [{ name: hw.attachment.name, url: hw.attachment.url }]
+    : [];
+
   return (
-    <div className="flex items-center gap-4 px-4 py-3.5
+    <div className="flex flex-col gap-2 px-4 py-3.5
       border-b border-[#F1F5F9] last:border-b-0
-      hover:bg-[#F8FAFF] transition-colors cursor-pointer group">
+      hover:bg-[#F8FAFF] transition-colors group">
 
-      {/* Subject icon pill */}
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
-        {icon}
-      </div>
+      <div className="flex items-center gap-4">
+        {/* Subject icon pill */}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+          {icon}
+        </div>
 
-      {/* Title + due */}
-      <div className="flex-1 min-w-0">
-        <p
-          className={combineTypography(
-            typography.body.small,
-            "font-semibold text-[#0B1C30] group-hover:text-[#3525CD] truncate"
-          )}
-          title={hw.title}
-        >
-          {hw.title}
-        </p>
-        <span className="flex items-center gap-1 text-[11px] text-gray-400 mt-0.5">
-          <Clock size={11} strokeWidth={1.5} />
-          Due: {hw.due}
+        {/* Title + due */}
+        <div className="flex-1 min-w-0">
+          <p
+            className={combineTypography(
+              typography.body.small,
+              "font-semibold text-[#0B1C30] group-hover:text-[#3525CD] truncate"
+            )}
+            title={hw.title}
+          >
+            {hw.title}
+          </p>
+          <span className="flex items-center gap-1 text-[11px] text-gray-400 mt-0.5">
+            <Clock size={11} strokeWidth={1.5} />
+            Due: {hw.due}
+          </span>
+        </div>
+
+        {/* Status pill */}
+        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide flex-shrink-0 ${statusCls}`}>
+          {hw.status}
         </span>
       </div>
 
-      {/* Status pill */}
-      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide flex-shrink-0 ${statusCls}`}>
-        {hw.status}
-      </span>
+      {/* Description + teacher + attachments */}
+      <div className="pl-14 flex flex-col gap-1.5">
+        {hw.description && (
+          <p className="text-[12px] text-gray-500 leading-relaxed">{hw.description}</p>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {hw.teacher && (
+            <span className="text-[11px] text-gray-400">
+              Assigned by <span className="text-gray-600 font-medium">{hw.teacher}</span>
+            </span>
+          )}
+          {attachments.map((a, i) => (
+            <a
+              key={`${a.url}-${i}`}
+              href={a.url}
+              target="_blank"
+              rel="noreferrer"
+              download
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-[11px] font-semibold text-[#3525CD] hover:underline"
+            >
+              <Paperclip size={11} strokeWidth={1.5} />
+              {a.name}
+              <Download size={11} strokeWidth={1.5} />
+            </a>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

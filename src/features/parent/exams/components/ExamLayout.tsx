@@ -19,6 +19,12 @@ const menu = [
 export default function ExamsLayout() {
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
+  // activeChild can briefly be missing right after login, on a page
+  // refresh, or during a route transition.
+  if (!activeChild) {
+    return null;
+  }
+
   return (
     <div className="w-full max-w-[1200px] mx-auto pt-8 px-4 sm:px-6 lg:px-10 pb-16 bg-[#F4F6FB] min-h-screen">
 

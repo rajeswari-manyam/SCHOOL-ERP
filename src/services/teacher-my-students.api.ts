@@ -24,27 +24,34 @@ const normalizeFeeStatus = (val: unknown): Student['feeStatus'] => {
 };
 
 /** Map a raw API record to the Student type used by the UI */
-const mapStudent = (item: Record<string, unknown>): Student => ({
-  id: String(item['id'] ?? item['student_id'] ?? item['_id'] ?? ''),
-  rollNo: String(item['roll_no'] ?? item['rollNo'] ?? item['roll_number'] ?? item['roll'] ?? ''),
-  name: String(item['name'] ?? item['student_name'] ?? item['studentName'] ?? ''),
-  className: String(item['class_name'] ?? item['className'] ?? item['class'] ?? ''),
-  classId: (item['class_id'] ?? item['classId']) as string | undefined,
-  section: String(item['section'] ?? item['section_name'] ?? item['sectionName'] ?? ''),
-  sectionId: (item['section_id'] ?? item['sectionId']) as string | undefined,
-  isActive: item['is_active'] !== false && item['isActive'] !== false && item['status'] !== 'inactive',
-  attendancePct: Number(item['attendance_pct'] ?? item['attendancePct'] ?? item['attendance_percentage'] ?? 0),
-  feeStatus: normalizeFeeStatus(item['fee_status'] ?? item['feeStatus'] ?? 'PENDING'),
-  fatherName: String(item['father_name'] ?? item['fatherName'] ?? ''),
-  fatherPhone: String(item['father_phone'] ?? item['fatherPhone'] ?? item['father_mobile'] ?? ''),
-  motherName: String(item['mother_name'] ?? item['motherName'] ?? ''),
-  motherPhone: String(item['mother_phone'] ?? item['motherPhone'] ?? item['mother_mobile'] ?? ''),
-  feeTotal: Number(item['fee_total'] ?? item['feeTotal'] ?? item['total_fee'] ?? 0),
-  feePaid: Number(item['fee_paid'] ?? item['feePaid'] ?? item['paid_fee'] ?? 0),
-  feeDueDate: String(item['fee_due_date'] ?? item['feeDueDate'] ?? item['due_date'] ?? ''),
-  attendanceDays: [],
-  homework: [],
-});
+const mapStudent = (item: Record<string, unknown>): Student => {
+  // The backend nests father/mother details under "parentDetail" (getstudentsById)
+  // or "parents" (getallstudents) rather than returning them as flat fields.
+  const parentDetail = ((item['parentDetail'] as Record<string, unknown>[] | undefined)?.[0]
+    ?? (item['parents'] as Record<string, unknown>[] | undefined)?.[0]) as Record<string, unknown> | undefined;
+
+  return {
+    id: String(item['id'] ?? item['student_id'] ?? item['_id'] ?? ''),
+    rollNo: String(item['roll_no'] ?? item['rollNo'] ?? item['roll_number'] ?? item['roll'] ?? ''),
+    name: String(item['name'] ?? item['student_name'] ?? item['studentName'] ?? ''),
+    className: String(item['class_name'] ?? item['className'] ?? item['class'] ?? ''),
+    classId: (item['class_id'] ?? item['classId']) as string | undefined,
+    section: String(item['section'] ?? item['section_name'] ?? item['sectionName'] ?? ''),
+    sectionId: (item['section_id'] ?? item['sectionId']) as string | undefined,
+    isActive: item['is_active'] !== false && item['isActive'] !== false && item['status'] !== 'inactive',
+    attendancePct: Number(item['attendance_pct'] ?? item['attendancePct'] ?? item['attendance_percentage'] ?? 0),
+    feeStatus: normalizeFeeStatus(item['fee_status'] ?? item['feeStatus'] ?? 'PENDING'),
+    fatherName: String(item['father_name'] ?? item['fatherName'] ?? parentDetail?.['father_name'] ?? parentDetail?.['fatherName'] ?? ''),
+    fatherPhone: String(item['father_phone'] ?? item['fatherPhone'] ?? item['father_mobile'] ?? parentDetail?.['father_phone'] ?? parentDetail?.['fatherPhone'] ?? ''),
+    motherName: String(item['mother_name'] ?? item['motherName'] ?? parentDetail?.['mother_name'] ?? parentDetail?.['motherName'] ?? ''),
+    motherPhone: String(item['mother_phone'] ?? item['motherPhone'] ?? item['mother_mobile'] ?? parentDetail?.['mother_phone'] ?? parentDetail?.['motherPhone'] ?? ''),
+    feeTotal: Number(item['fee_total'] ?? item['feeTotal'] ?? item['total_fee'] ?? 0),
+    feePaid: Number(item['fee_paid'] ?? item['feePaid'] ?? item['paid_fee'] ?? 0),
+    feeDueDate: String(item['fee_due_date'] ?? item['feeDueDate'] ?? item['due_date'] ?? ''),
+    attendanceDays: [],
+    homework: [],
+  };
+};
 
 export const getTeacherId = (): string => {
   const user = useAuthStore.getState().user;
@@ -77,9 +84,9 @@ export const myStudentsApi = {
 
   getStudent: async (id: string): Promise<Student | null> => {
     try {
-      const { data } = await api.get(`/tenant/teacher/students/${id}`);
-      const records = extractStudents(data);
-      return records.length > 0 ? mapStudent(records[0] as Record<string, unknown>) : null;
+      const { data } = await api.get(`/tenant/getstudentsById/${id}`);
+      const record = data?.data;
+      return record ? mapStudent(record as Record<string, unknown>) : null;
     } catch {
       return null;
     }

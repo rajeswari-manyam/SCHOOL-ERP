@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { X, Loader2, BookOpen, GraduationCap, Calendar, Phone, Mail, Briefcase, Award, Building2, CreditCard } from "lucide-react";
 import type { StaffDetails, AssignedClassSubject } from "../types/staff.types";
-import { getStaffDetailsById } from "@/services/school-staff.api";
+import { getStaffDetailsById } from "@/services/staff.api";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 interface Props {

@@ -23,10 +23,8 @@ export interface TodayAttendanceSummaryItem {
   }>;
 }
 
-export type AttendanceMark = "P" | "A" | "H";   // Present | Absent | Half-Day
 export type AttendanceStatus = "on_time" | "late" | "missed";
 export type AttendanceMethod = "whatsapp" | "web";
-export type CorrectionStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface AttendanceStudent {
   id: string;
@@ -78,25 +76,3 @@ export interface MarkAttendancePayload {
   records: { studentId: string; status: "PRESENT" | "ABSENT" | "HALF_DAY" }[];
 }
 
-export interface CorrectionRequestPayload {
-  date: string;
-  classId: string;
-  studentId: string;
-  currentMark: AttendanceMark;
-  requestedMark: AttendanceMark;
-  reason: string;
-}
-
-export interface CorrectionRequest {
-  id: string;
-  date: string;
-  classLabel: string;
-  studentName: string;
-  currentMark: AttendanceMark;
-  requestedMark: AttendanceMark;
-  reason: string;
-  status: CorrectionStatus;
-  submittedAt: string;
-  reviewedAt?: string;
-  reviewNote?: string;
-}

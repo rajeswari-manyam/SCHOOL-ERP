@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 
 import { StatCard } from "../../../../components/ui/statcard"
@@ -55,16 +55,32 @@ const DashboardPage = () => {
 
 
   // ── Fetch all dashboard data — classId is available immediately from context ──
+  // Guarded against StrictMode's double effect-invoke and rapid nav-away/back:
+  // without this, two overlapping fetchAll() runs can both call store.reset()
+  // and race each other's writes right as you navigate to another page.
+  const fetchedKeyRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!studentId) return
     if (!classId) return
+
+    const key = `${studentId}|${classId}|${sectionId ?? ""}`
+    if (fetchedKeyRef.current === key) return
+    fetchedKeyRef.current = key
+
+    let cancelled = false
 
     fetchAll({
       studentId,
       classId,
       sectionId,
-      academicYear: "2025-2026",
+    }).catch(() => {
+      if (!cancelled) fetchedKeyRef.current = null // allow retry on failure
     })
+
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId, classId, sectionId])
 

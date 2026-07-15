@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 import typography from "@/styles/typography";
 import { useStudentById } from "../hooks/useStudent";
+import { useNotifications } from "@/hooks/useNotifications";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
+import { NotificationDropdownPanel } from "@/components/common/NotificationDropdownPanel";
 
 const navLinks = [
     { label: "Dashboard", path: "/parent/dashboard", icon: LayoutDashboard },
@@ -53,9 +55,10 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = fal
 
    const studentId = activeChild?.studentId
   ? String(activeChild.studentId)
-  : String(activeChild.id ?? "");
+  : String(activeChild?.id ?? "");
     const { student } = useStudentById(studentId);
     const avatarImage = useAuthStore((s) => s.user?.image);
+    const { notifications, isLoading: isLoadingNotifications, unreadCount, refetch: refetchNotifications } = useNotifications();
 
     // ✅ Close all dropdowns on route change — prevents overlay blocking clicks
     useEffect(() => {
@@ -161,22 +164,27 @@ const ParentTopNavBar = ({ activeChild, onSwitchChild, hasMultipleChildren = fal
                         {/* Notification bell */}
                         <div className="relative">
                             <button
-                                onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
+                                onClick={() => {
+                                    const opening = !notifOpen;
+                                    setNotifOpen(opening);
+                                    setProfileOpen(false);
+                                    if (opening) refetchNotifications();
+                                }}
                                 className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F6FA] transition relative"
                             >
                                 <Bell size={16} className="text-[#6B7280]" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                                )}
                             </button>
 
                             {notifOpen && (
-                                <div className="absolute right-0 top-11 w-72 max-w-[calc(100vw-1rem)] bg-white border border-[#E8EBF2] rounded-xl shadow-lg py-2 z-[55]">
-                                    <p className={`${typography.body.small} font-medium text-[#0B1C30] px-4 py-2 border-b border-[#F1F3F8]`}>
-                                        Notifications
-                                    </p>
-                                    <div className="flex flex-col items-center justify-center py-6 gap-1">
-                                        <Bell size={20} className="text-gray-300" />
-                                        <p className={`${typography.body.xs} text-[#9CA3AF]`}>No notifications yet</p>
-                                    </div>
-                                </div>
+                                <NotificationDropdownPanel
+                                    className="absolute right-0 top-11"
+                                    notifications={notifications}
+                                    isLoading={isLoadingNotifications}
+                                    unreadCount={unreadCount}
+                                />
                             )}
                         </div>
 

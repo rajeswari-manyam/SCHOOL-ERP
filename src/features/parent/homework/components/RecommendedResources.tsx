@@ -2,8 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import typography, { combineTypography } from "@/styles/typography";
 import { Download, Link } from "lucide-react";
 
-import { resources } from "../data/HomeWork.data";
 import type { RecommendedResource } from "../types/homework.types";
+
+// TODO: replace with real resources from API
+const resources: RecommendedResource[] = [];
 
 export function RecommendedResources() {
   return (

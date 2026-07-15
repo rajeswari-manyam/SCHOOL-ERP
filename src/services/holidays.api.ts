@@ -72,7 +72,10 @@ export const getHolidayById = async (
 
 export const createHoliday = async (
   payload: CreateHolidayPayload
-): Promise<HolidayActionResponse> => {
+): Promise<BulkAddHolidaysResponse> => {
+  // The backend always expands from_date..to_date into one record per day and
+  // returns them as an array under `data` (with a `count`) — even for a
+  // single-day holiday — never a lone HolidayFromApi object.
   const { data } = await api.post(`/tenant/createholidays`, payload);
   return data;
 };

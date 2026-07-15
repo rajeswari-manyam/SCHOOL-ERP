@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
-import type { LeaveRecord } from "@/services/school-staff.api";
+import type { LeaveRecord } from "@/services/staff.api";
 import { useStaffStore } from "../store/usestore";
-import { getStaffLeaveSummary, fetchLeaves } from "@/services/school-staff.api";
-import type { LeaveSummaryEntry } from "@/services/school-staff.api";
+import { getStaffLeaveSummary, fetchLeaves } from "@/services/staff.api";
+import type { LeaveSummaryEntry } from "@/services/staff.api";
 import { useUIStore } from "@/store/uiStore";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 

@@ -1,15 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Plus, Trash2, Loader2, CheckCircle, ChevronDown, ChevronUp, Wand2, ArrowRight, Camera } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { useClassesList } from "../hooks/useClassesList";
-import { studentsApi } from "@/services/school-students.api";
+import { studentsApi } from "@/services/student.api";
 import { getAllSections } from "@/services/section.api";
 import type { CreateStudentPayload, Gender, Student } from "../types/student.types";
 import type { Section } from "@/services/section.api";
-import { parentsApi } from "@/services/school-parents.api";
+import { parentsApi, getParentById } from "@/services/parent.api";
 
 const GENDER_OPTIONS = [
   { value: "Male", label: "Male" },
@@ -55,7 +55,9 @@ interface StudentParentRow {
   motherPhone: string;
   motherImage: File | null;
   motherImagePreview: string | null;
-  email: string;
+  fatherEmail: string;
+  motherEmail: string;
+  selectedParentId: string;
 }
 
 const inputCls = "w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition";
@@ -86,7 +88,8 @@ const emptyParentRow = (): StudentParentRow => ({
   fatherImage: null, fatherImagePreview: null,
   motherName: "", motherRelation: "Mother", motherOccupation: "", motherPhone: "",
   motherImage: null, motherImagePreview: null,
-  email: "",
+  fatherEmail: "", motherEmail: "",
+  selectedParentId: "",
 });
 
 const StepIndicator = ({ step }: { step: 1 | 2 | 3 }) => (
@@ -123,6 +126,46 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rowErrors, setRowErrors] = useState<Record<number, string>>({});
+  const [existingStudents, setExistingStudents] = useState<Student[]>([]);
+
+  // Siblings already enrolled share one parent — surface them so a second
+  // (or third) child can reuse the parent's details instead of retyping them.
+  const existingParents = useMemo(() => {
+    const seen = new Set<string>();
+    const result: { parentId: string; label: string; student: Student }[] = [];
+    for (const s of existingStudents) {
+      if (!s.parentId || seen.has(s.parentId)) continue;
+      seen.add(s.parentId);
+      const name = s.fatherName || s.motherName || "Parent";
+      const phone = s.fatherPhone || s.motherPhone || "";
+      result.push({
+        parentId: s.parentId,
+        label: `${name}${phone ? ` — +91 ${phone}` : ""} (sibling of ${s.firstName} ${s.lastName})`,
+        student: s,
+      });
+    }
+    return result;
+  }, [existingStudents]);
+
+  const selectExistingParentForRow = (index: number, parentId: string) => {
+    const match = existingParents.find((p) => p.parentId === parentId)?.student;
+    setParentRows((prev) => prev.map((r, i) => {
+      if (i !== index) return r;
+      if (!match) return { ...r, selectedParentId: parentId };
+      return {
+        ...r,
+        selectedParentId: parentId,
+        fatherName: match.fatherName ?? "", fatherPhone: match.fatherPhone ?? "",
+        fatherOccupation: match.fatherOccupation ?? "", fatherEmail: match.fatherEmail ?? "",
+        motherName: match.motherName ?? "", motherPhone: match.motherPhone ?? "",
+        motherOccupation: match.motherOccupation ?? "", motherEmail: match.motherEmail ?? "",
+      };
+    }));
+  };
+
+  useEffect(() => {
+    studentsApi.getAll(academicYearId).then(setExistingStudents).catch(() => {});
+  }, [academicYearId]);
 
   useEffect(() => {
     getAllSections().then(setAllSections).catch(() => {});
@@ -225,21 +268,39 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
 
   // Never throws — a failure here shouldn't block the rest of the bulk-add
   // flow. Returns a label per failure (empty array on success).
+  //
+  // NOTE: /tenant/updateparentById REPLACES the parent's whole students list
+  // (unlinks everyone, then relinks only what's sent) rather than appending —
+  // confirmed against the backend controller. So the sibling-link path below
+  // fetches the parent's current students and sends the full merged list.
   const createParentsForStudent = async (studentId: string, parent: StudentParentRow, address: string): Promise<string[]> => {
+    if (parent.selectedParentId) {
+      try {
+        const existingParent = await getParentById(parent.selectedParentId);
+        const existingIds = (existingParent.students ?? []).map((s: any) =>
+          typeof s === "string" ? s : s.id
+        );
+        const mergedIds = Array.from(new Set([...existingIds, studentId]));
+        await studentsApi.updateParent(parent.selectedParentId, { students: mergedIds });
+        return [];
+      } catch (err: any) {
+        return [`Parent: ${err?.message ?? "Failed to link sibling"}`];
+      }
+    }
     if (!parent.fatherName.trim() && !parent.motherName.trim()) return [];
     try {
       await parentsApi.createParent({
         ...(parent.fatherName.trim() ? {
           father_name: parent.fatherName.trim(),
           father_occupation: parent.fatherOccupation || "Not specified",
-          father_email: parent.email,
+          father_email: parent.fatherEmail,
           father_phone: parent.fatherPhone.trim(),
           ...(parent.fatherImage ? { father_image: parent.fatherImage } : {}),
         } : {}),
         ...(parent.motherName.trim() ? {
           mother_name: parent.motherName.trim(),
           mother_occupation: parent.motherOccupation || "Not specified",
-          mother_email: parent.email,
+          mother_email: parent.motherEmail,
           mother_phone: parent.motherPhone.trim(),
           ...(parent.motherImage ? { mother_image: parent.motherImage } : {}),
         } : {}),
@@ -290,7 +351,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
         const parentJobs: Promise<string[]>[] = [];
         for (let i = 0; i < created.length && i < parentRows.length; i++) {
           const parent = parentRows[i];
-          if (parent.fatherName.trim() || parent.motherName.trim()) {
+          if (parent.selectedParentId || parent.fatherName.trim() || parent.motherName.trim()) {
             parentJobs.push(createParentsForStudent(created[i].id, parent, personalRows[i]?.address ?? ""));
           }
         }
@@ -539,8 +600,29 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                         {personal?.admissionNo ? ` (${personal.admissionNo})` : ""}
                       </p>
                     </div>
-                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                      <div className="sm:col-span-2 lg:col-span-2 space-y-3">
+                    {existingParents.length > 0 && (
+                      <div className="px-4 pt-3">
+                        <Field label="Sibling Already Enrolled? Select Existing Parent">
+                          <Select
+                            options={[
+                              { label: "None — add a new parent", value: "" },
+                              ...existingParents.map((p) => ({ label: p.label, value: p.parentId })),
+                            ]}
+                            value={row.selectedParentId}
+                            onValueChange={(v) => selectExistingParentForRow(i, v)}
+                            placeholder="None — add a new parent"
+                            className={selectCls}
+                          />
+                        </Field>
+                        {row.selectedParentId && (
+                          <p className="text-[11px] text-indigo-600 mt-1">
+                            Parent details filled in from the sibling's record below — edit if anything's changed.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Father / Parent 1</p>
                         <Field label="Name">
                           <input className={inputCls} placeholder="Father's name" value={row.fatherName}
@@ -557,6 +639,10 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                         <Field label="Phone">
                           <input className={inputCls} placeholder="9876543210" value={row.fatherPhone}
                             onChange={(e) => updateParentRow(i, "fatherPhone", e.target.value)} />
+                        </Field>
+                        <Field label="Email">
+                          <input type="email" className={inputCls} placeholder="father@email.com" value={row.fatherEmail}
+                            onChange={(e) => updateParentRow(i, "fatherEmail", e.target.value)} />
                         </Field>
                         <Field label="Photo">
                           <div className="flex items-center gap-2">
@@ -580,7 +666,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                         </Field>
                       </div>
 
-                      <div className="sm:col-span-2 lg:col-span-2 space-y-3">
+                      <div className="space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Mother / Parent 2</p>
                         <Field label="Name">
                           <input className={inputCls} placeholder="Mother's name" value={row.motherName}
@@ -597,6 +683,10 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                         <Field label="Phone">
                           <input className={inputCls} placeholder="9876543210" value={row.motherPhone}
                             onChange={(e) => updateParentRow(i, "motherPhone", e.target.value)} />
+                        </Field>
+                        <Field label="Email">
+                          <input type="email" className={inputCls} placeholder="mother@email.com" value={row.motherEmail}
+                            onChange={(e) => updateParentRow(i, "motherEmail", e.target.value)} />
                         </Field>
                         <Field label="Photo">
                           <div className="flex items-center gap-2">
@@ -617,14 +707,6 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                               </button>
                             )}
                           </div>
-                        </Field>
-                      </div>
-
-                      <div className="lg:col-span-1 space-y-3">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Common</p>
-                        <Field label="Email">
-                          <input type="email" className={inputCls} placeholder="parent@email.com" value={row.email}
-                            onChange={(e) => updateParentRow(i, "email", e.target.value)} />
                         </Field>
                       </div>
                     </div>

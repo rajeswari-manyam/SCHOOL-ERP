@@ -23,6 +23,12 @@ export default function SettingsPage() {
     const { notifications, toggleNotification } = useProfileStore();
     const { activeChild } = useOutletContext<ParentLayoutContext>();
 
+    // activeChild can briefly be missing right after login, on a page
+    // refresh, or during a route transition.
+    if (!activeChild) {
+        return null;
+    }
+
     return (
         <div className="min-h-screen bg-[#F4F6FB]">
             <div className="max-w-[1200px] mx-auto px-4 sm:px-8 lg:px-10 py-8">
@@ -60,5 +66,3 @@ export default function SettingsPage() {
 }
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
-
-

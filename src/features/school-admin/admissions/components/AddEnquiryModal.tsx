@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
 import { useAddEnquiry } from '../hooks/useAdmissionsQueries';
-import { fetchSchoolProfile } from '@/services/school-settings.api';
+import { fetchSchoolProfile } from '@/services/settings.api';
 import type { NewEnquiryFormData } from '../types';
 
 const schema = z.object({

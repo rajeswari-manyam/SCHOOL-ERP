@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchSubjectsBySectionId } from "@/services/school-classes.api";
+import { fetchSubjectsBySectionId } from "@/services/class.api";
 import type { SubjectItem } from "../types/classes.types";
 
 const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>

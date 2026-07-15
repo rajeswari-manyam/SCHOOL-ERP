@@ -23,7 +23,7 @@ import {
   type CreateHolidayPayload,
 } from "../../../../services/holidays.api";
 import { getAllClasses, getSectionsByClassId } from "../../../../services/class.api";
-import { fetchStaff } from "../../../../services/school-staff.api";
+import { fetchStaff } from "../../../../services/staff.api";
 import { getAuthUser } from "../../../../store/authStore";
 import { useAttendanceStore } from "../store";
 import type {

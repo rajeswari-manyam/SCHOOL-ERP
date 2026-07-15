@@ -1,4 +1,4 @@
-import { Paperclip, FileText } from "lucide-react";
+import { Paperclip, FileText, Download } from "lucide-react";
 import type { Homework } from "../types/homework.types";
 
 interface Props {
@@ -29,7 +29,7 @@ export const HomeworkCard = ({ item, onSubmit }: Props) => {
   const subjectCls = subjectBadge[item.subject] ?? DEFAULT_BADGE;
 
   const dueCls = dueBadge[item.dueUrgency] ?? dueBadge.normal;
-  const AttachIcon = item.attachment ? attachmentIcon(item.attachment) : Paperclip;
+  const attachmentUrls = item.attachments?.length ? item.attachments : item.attachment ? [item.attachment] : [];
 
   return (
 <div
@@ -73,12 +73,28 @@ export const HomeworkCard = ({ item, onSubmit }: Props) => {
         </p>
       </div>
 
-      {/* Attachment */}
-      {item.attachment && (
-        <a className="flex items-center gap-1.5 text-indigo-600 text-[11.5px] sm:text-[12px] cursor-pointer hover:underline w-fit">
-          <AttachIcon size={12} />
-          {item.attachment}
-        </a>
+      {/* Attachments */}
+      {attachmentUrls.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {attachmentUrls.map((url, i) => {
+            const name = url.split("/").pop() ?? url;
+            const AttachIcon = attachmentIcon(name);
+            return (
+              <a
+                key={`${url}-${i}`}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="flex items-center gap-1.5 text-indigo-600 text-[11.5px] sm:text-[12px] cursor-pointer hover:underline w-fit"
+              >
+                <AttachIcon size={12} />
+                {name}
+                <Download size={12} />
+              </a>
+            );
+          })}
+        </div>
       )}
 
       {/* Footer */}

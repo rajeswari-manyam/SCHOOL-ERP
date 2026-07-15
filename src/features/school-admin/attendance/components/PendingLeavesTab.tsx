@@ -3,10 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, RefreshCw, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/config/axios";
-import { approveLeave, rejectLeave, fetchLeaves } from "@/services/school-staff.api";
+import { approveLeave, rejectLeave, fetchLeaves } from "@/services/staff.api";
 import { getAllStaff } from "@/services/staff.api";
-import { getStaffLeaveBalance } from "@/services/school-staff.api";
-import type { LeaveBalanceResponse, LeaveRecord } from "@/services/school-staff.api";
+import { getStaffLeaveBalance } from "@/services/staff.api";
+import type { LeaveBalanceResponse, LeaveRecord } from "@/services/staff.api";
 import { useUIStore } from "@/store/uiStore";
 
 interface PendingLeave {

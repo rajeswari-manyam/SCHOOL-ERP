@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { format, parseISO, isToday, isTomorrow } from "date-fns";
 import { RefreshCw, AlertCircle, BookOpen } from "lucide-react";
 import { useAllHomeworkList } from "../hooks/useTeacherDashboard";
+
+const PAGE_SIZE = 3;
 
 const dueLabel = (dateStr: string) => {
   const d = parseISO(dateStr);
@@ -41,6 +44,8 @@ interface HomeworkDueCardProps {
 const HomeworkDueCard = ({ teacherId }: HomeworkDueCardProps) => {
   const { data: items = [], isLoading, isError, refetch } = useAllHomeworkList(teacherId);
   const errorMessage = isError ? "Failed to load homework" : null;
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? items : items.slice(0, PAGE_SIZE);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
@@ -79,23 +84,36 @@ const HomeworkDueCard = ({ teacherId }: HomeworkDueCardProps) => {
           <p className="text-sm text-gray-400">No pending homework 🎉</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {items.map((hw) => {
-            const due = dueLabel(hw.dueDate);
-            return (
-              <div key={hw.id} className="flex flex-col gap-0.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-semibold text-gray-900 leading-tight">{hw.title}</p>
-                    <p className="text-[10px] text-gray-400">{hw.subject} · {hw.class}</p>
+        <>
+          <div className="flex flex-col gap-3">
+            {visible.map((hw) => {
+              const due = dueLabel(hw.dueDate);
+              return (
+                <div key={hw.id} className="flex flex-col gap-0.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-900 leading-tight">{hw.title}</p>
+                      <p className="text-[10px] text-gray-400">{hw.subject} · {hw.class}</p>
+                    </div>
+                    <span className={`text-[10px] font-bold flex-shrink-0 ${due.color}`}>{due.text}</span>
                   </div>
-                  <span className={`text-[10px] font-bold flex-shrink-0 ${due.color}`}>{due.text}</span>
+                  <ProgressBar value={hw.submittedCount} max={hw.totalCount} />
                 </div>
-                <ProgressBar value={hw.submittedCount} max={hw.totalCount} />
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {items.length > PAGE_SIZE && (
+            <div className="border-t border-gray-100 mt-3 pt-1.5 text-center">
+              <button
+                onClick={() => setShowAll((v) => !v)}
+                className="text-[10px] text-indigo-500 hover:text-indigo-700 transition-colors"
+              >
+                {showAll ? "Show Less ▲" : `Show More (${items.length - PAGE_SIZE} more) ▼`}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

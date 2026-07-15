@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TabKey, StaffMember } from "../types/staff.types";
-import type { LeaveRecord, LeaveBalanceResponse } from "@/services/school-staff.api";
-import { getStaffLeaveBalance } from "@/services/school-staff.api";
+import type { LeaveRecord, LeaveBalanceResponse } from "@/services/staff.api";
+import { getStaffLeaveBalance } from "@/services/staff.api";
 import { useStaffStore, filterStaff } from "../store/usestore";
 import { useUIStore } from "@/store/uiStore";
 import { StatsCards } from "../components/StatCards";

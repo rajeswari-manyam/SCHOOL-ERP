@@ -4,7 +4,37 @@ import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
 
 import type { HelpBarProps } from "../types/fee.types";
-import { helpBarBannerData, helpBarCardsData } from  "../data/fee.data";
+
+// Static UI copy (moved inline since data/fee.data.ts was removed)
+const helpBarBannerData = {
+  title: "Need help with fee payments?",
+  description: "Contact the school accounts department for any discrepancies.",
+  buttons: {
+    call: "Call Office",
+    query: "Raise Query",
+  },
+};
+
+const helpBarCardsData = {
+  needHelp: {
+    title: "Need Help?",
+    description:
+      "Questions regarding fee structure or missed payments? Contact our administrative office.",
+    button: "Contact Admin",
+  },
+  refund: {
+    title: "Refund Policy",
+    description:
+      "Read about our fee refund guidelines and cancellation policies for the academic year.",
+    button: "View Policy",
+  },
+  quickPay: {
+    title: "Quick Pay",
+    description:
+      "You have no upcoming dues for the next 30 days. You're all caught up!",
+    status: "Excellent",
+  },
+};
 
 const cardBase =
   "transition-all duration-300 hover:-translate-y-1 hover:border-[#3525CD] hover:shadow-md cursor-pointer";

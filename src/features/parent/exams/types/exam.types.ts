@@ -1,4 +1,4 @@
-export type ExamTab = "upcoming" | "results" | "reportcard";
+export type ExamTab = "upcoming" | "results";
 
 export interface Exam {
   id: string;

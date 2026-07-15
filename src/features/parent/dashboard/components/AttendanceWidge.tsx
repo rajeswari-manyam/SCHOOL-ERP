@@ -12,8 +12,10 @@ function SkeletonDot() {
 }
 
 export const AttendanceWidget = () => {
-  const { weekDays, weeklyPct, monthlyPct, isLoadingAttendance } =
-    useDashboardStore()
+  const weekDays = useDashboardStore((s) => s.weekDays)
+  const weeklyPct = useDashboardStore((s) => s.weeklyPct)
+  const monthlyPct = useDashboardStore((s) => s.monthlyPct)
+  const isLoadingAttendance = useDashboardStore((s) => s.isLoadingAttendance)
 
   // Display weekly % if available, fallback to monthly
   const displayPct = weeklyPct > 0 ? weeklyPct : monthlyPct

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNavBar";
+import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
 import WhatsAppFAB from "../components/ui/whatsappfab";
 import { X } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -37,7 +38,6 @@ const ParentLayout = () => {
   // to lose the route context and stale-render the previous page.
   return (
     <div className="min-h-screen bg-[#F4F6FA] overflow-x-hidden">
-
       {/* Nav: only shown when we have an active child */}
       {activeChild && (
         <ParentTopNavBar
@@ -74,9 +74,15 @@ const ParentLayout = () => {
           </div>
         )}
 
-        {/* Always keep Outlet in the tree — hidden while loading */}
+        {/* Always keep Outlet in the tree — hidden while loading.
+            key={location.pathname} forces a clean remount on every route
+            change — works around a React Router v7 quirk where the outlet
+            can otherwise keep rendering the previous page after the URL
+            has already changed. */}
         <div className={loading || students.length === 0 || !activeChild ? "hidden" : ""}>
-          <Outlet context={{ activeChild }} />
+          <RouteErrorBoundary>
+            <Outlet key={location.pathname} context={{ activeChild }} />
+          </RouteErrorBoundary>
         </div>
       </main>
 

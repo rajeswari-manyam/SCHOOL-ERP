@@ -29,16 +29,18 @@ const OverviewTab = ({ student }: { student: Student }) => {
                 {icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-gray-900">{name}</p>
+                <p className="text-xs font-bold text-gray-900">{name || "Not added"}</p>
                 <p className="text-[11px] text-gray-400">{role}</p>
               </div>
-              <a
-                href={`tel:${phone}`}
-                className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-              >
-                <Phone size={12} className="text-current" strokeWidth={2} />
-                {phone}
-              </a>
+              {phone && (
+                <a
+                  href={`tel:${phone}`}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                >
+                  <Phone size={12} className="text-current" strokeWidth={2} />
+                  {phone}
+                </a>
+              )}
             </div>
           ))}
         </div>

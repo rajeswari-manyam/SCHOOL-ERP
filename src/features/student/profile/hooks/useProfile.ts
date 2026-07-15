@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { getStudentById } from "../../../../services/student.api";
 import type { Student as ApiStudent } from "../../../../services/student.api";
-import { getAllClasses, getAllStaff } from "../../../../services/class.api";
-import type { ClassRecord, StaffRecord } from "../../../../services/class.api";
+import { getAllClasses } from "../../../../services/class.api";
+import type { ClassRecord } from "../../../../services/class.api";
+import { getAllStaff } from "../../../../services/staff.api";
+import type { StaffRecord } from "../../../../services/staff.api";
 import { getAcademicYearById } from "../../../../services/academicYear.api";
 
 import type { Student, StudentStatus, Gender } from "../types/profile.types";

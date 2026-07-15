@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { studentsApi } from "@/services/school-students.api";
+import { studentsApi } from "@/services/student.api";
 import { useClassesList } from "../hooks/useClassesList";
 import { useSectionsList } from "../hooks/useSectionsList";
 import type { Student, UpdateStudentPayload, UpdateParentPayload } from "../types/student.types";
@@ -50,7 +50,8 @@ const toForm = (s: Student) => ({
   motherPhone: s.motherPhone ?? "",
   motherOccupation: s.motherOccupation ?? "",
   emergencyContact: s.emergencyContact ?? "",
-  email: s.email ?? "",
+  fatherEmail: s.fatherEmail ?? "",
+  motherEmail: s.motherEmail ?? "",
   admissionNo: s.admissionNo ?? "",
   status: s.status ?? "ACTIVE",
 });
@@ -180,7 +181,6 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
       mother_name: form.motherName.trim() || undefined,
       mother_phone: form.motherPhone.trim() || undefined,
       emergency_contact: form.emergencyContact.trim() || undefined,
-      email: form.email.trim() || undefined,
       status: form.status as UpdateStudentPayload["status"],
       ...(photoFile ? { photo: photoFile } : {}),
     };
@@ -194,11 +194,11 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           ...(form.fatherName.trim() ? { father_name: form.fatherName.trim() } : {}),
           ...(form.fatherPhone.trim() ? { father_phone: form.fatherPhone.trim() } : {}),
           ...(form.fatherOccupation.trim() ? { father_occupation: form.fatherOccupation.trim() } : {}),
-          ...(form.email.trim() ? { father_email: form.email.trim() } : {}),
+          ...(form.fatherEmail.trim() ? { father_email: form.fatherEmail.trim() } : {}),
           ...(form.motherName.trim() ? { mother_name: form.motherName.trim() } : {}),
           ...(form.motherPhone.trim() ? { mother_phone: form.motherPhone.trim() } : {}),
           ...(form.motherOccupation.trim() ? { mother_occupation: form.motherOccupation.trim() } : {}),
-          ...(form.email.trim() ? { mother_email: form.email.trim() } : {}),
+          ...(form.motherEmail.trim() ? { mother_email: form.motherEmail.trim() } : {}),
           ...(form.residentialAddress.trim() ? { address: form.residentialAddress.trim() } : {}),
           ...(fatherPhotoFile ? { father_image: fatherPhotoFile } : {}),
           ...(motherPhotoFile ? { mother_image: motherPhotoFile } : {}),
@@ -399,8 +399,12 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
             <Input value={form.emergencyContact} onChange={(e) => set("emergencyContact")(e.target.value)} placeholder="9876543210" />
           </Field>
 
-          <Field label="Email (Common)">
-            <Input type="email" value={form.email} onChange={(e) => set("email")(e.target.value)} placeholder="rahul@example.com" />
+          <Field label="Father's Email">
+            <Input type="email" value={form.fatherEmail} onChange={(e) => set("fatherEmail")(e.target.value)} placeholder="father@example.com" />
+          </Field>
+
+          <Field label="Mother's Email">
+            <Input type="email" value={form.motherEmail} onChange={(e) => set("motherEmail")(e.target.value)} placeholder="mother@example.com" />
           </Field>
 
           <div className="col-span-full flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 px-0 py-4 border-t border-gray-100 shrink-0">

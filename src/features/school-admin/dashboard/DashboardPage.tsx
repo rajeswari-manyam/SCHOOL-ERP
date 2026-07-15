@@ -3,10 +3,10 @@ import { Download, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
-  useDashboard, useAdmissionsThisWeek, useSchoolTodayAttendance,
+  useDashboard, useSchoolTodayAttendance,
   useAllClassesTodayAttendance, useClassAttendanceStatus,
   useEnquiriesPipeline, useSendReminders, useActiveAcademicYear, useFeeSummary,
-  usePendingLeaves,
+  usePendingLeaves, useStaffAttendanceToday,
 } from './hooks/index';
 import { useSetupStatus, useWizardState } from './hooks/useSetupStatus';
 import { AlertBanner }   from './components/AlertBanner';
@@ -42,7 +42,6 @@ export function DashboardPage() {
   const greetingName  = principalName || schoolName;
 
   const { data, isLoading, isError }                                    = useDashboard();
-  const { data: admissionsWeek,  isLoading: isAdmissionsLoading }       = useAdmissionsThisWeek();
   const { data: todayAttendance, isLoading: isAttendanceLoading }       = useSchoolTodayAttendance();
   const { data: classAttendance = [], isLoading: isClassAttendanceLoading } = useAllClassesTodayAttendance();
   const { data: classStatus }      = useClassAttendanceStatus();
@@ -54,6 +53,7 @@ export function DashboardPage() {
   const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
   const { data: feeSummary }                                            = useFeeSummary();
   const { data: pendingLeaves = [], isLoading: isPendingLeavesLoading } = usePendingLeaves();
+  const { data: staffAttendanceToday, isLoading: isStaffAttendanceLoading } = useStaffAttendanceToday();
   const wizardDismissed    = useUIStore((s) => s.wizardDismissed);
   const setWizardDismissed = useUIStore((s) => s.setWizardDismissed);
   const [showPendingModal, setShowPendingModal] = useState(false);
@@ -72,13 +72,20 @@ export function DashboardPage() {
     setWizardDismissed(true);
   }, [setWizardDismissed]);
 
-  const stats = useMemo<StatsCard[] | undefined>(() => {
-    if (!data?.stats) return undefined;
-    return data.stats.map((stat) => {
-      if (stat.id === 'admissions') {
-        if (admissionsWeek) return { ...stat, value: String(admissionsWeek.total), sub: `${admissionsWeek.pendingFollowUp} pending follow-up` };
-        return { ...stat, value: '—', sub: 'No data', action: undefined };
-      }
+  const DEFAULT_BASE_STATS: StatsCard[] = [
+    { id: 'attendance', label: 'STUDENTS PRESENT TODAY', value: '—', sub: 'No data', icon: 'users' },
+    { id: 'classes',    label: 'CLASSES MARKED TODAY',   value: '—', sub: 'No data', icon: 'check' },
+    { id: 'fees',       label: 'COLLECTED THIS MONTH',   value: '—', sub: 'No data', icon: 'rupee' },
+  ];
+
+  const stats = useMemo<StatsCard[]>(() => {
+    // Fall back to placeholder base cards if the backend didn't send a stats array
+    // (e.g. a freshly-created school with no data yet) so the row never disappears.
+    const baseStats: StatsCard[] = data?.stats && data.stats.length > 0 ? data.stats : DEFAULT_BASE_STATS;
+
+    const mapped = baseStats
+      .filter((stat) => stat.id !== 'admissions') // Admissions This Week card removed
+      .map((stat) => {
       if (stat.id === 'attendance') {
         if (todayAttendance) return { ...stat, value: `${todayAttendance.present}/${todayAttendance.totalStudents}`, sub: `${todayAttendance.absent} absent across ${todayAttendance.classesMarked} classes` };
         return { ...stat, value: '—', sub: 'No data', action: undefined };
@@ -106,15 +113,38 @@ export function DashboardPage() {
       }
       return stat;
     });
-  }, [data?.stats, admissionsWeek, todayAttendance, classStatus, classAttendance, feeSummary]);
+
+    // ── Staff / teacher attendance today — new card, not from the backend stats payload ──
+    const staffCard: StatsCard = staffAttendanceToday
+      ? {
+          id: 'staffAttendance',
+          label: 'Teacher Attendance Today',
+          value: `${staffAttendanceToday.present}/${staffAttendanceToday.total}`,
+          sub: staffAttendanceToday.notMarked > 0
+            ? `${staffAttendanceToday.notMarked} not marked yet`
+            : `${staffAttendanceToday.absent} absent today`,
+          alert: staffAttendanceToday.notMarked > 0,
+          icon: 'user-check',
+          action: { label: 'View Staff Attendance' },
+        }
+      : {
+          id: 'staffAttendance',
+          label: 'Teacher Attendance Today',
+          value: '—',
+          sub: 'No data',
+          icon: 'user-check',
+        };
+
+    return [...mapped, staffCard];
+  }, [data?.stats, todayAttendance, classStatus, classAttendance, feeSummary, staffAttendanceToday]);
 
   const loadingStatIds = useMemo(() => {
     const ids = new Set<string>();
-    if (isAdmissionsLoading)       ids.add('admissions');
     if (isAttendanceLoading)       ids.add('attendance');
     if (isClassAttendanceLoading && classAttendance.length === 0) ids.add('classes');
+    if (isStaffAttendanceLoading)  ids.add('staffAttendance');
     return ids.size > 0 ? ids : undefined;
-  }, [isAdmissionsLoading, isAttendanceLoading, isClassAttendanceLoading, classAttendance.length]);
+  }, [isAttendanceLoading, isClassAttendanceLoading, classAttendance.length, isStaffAttendanceLoading]);
 
   // Show wizard (full-page replacement) while setup is pending
   if (showSetup) {
@@ -204,7 +234,7 @@ export function DashboardPage() {
         )}
 
         {/* ── Stats ── */}
-        <StatsGrid stats={stats ?? data.stats} loadingStatIds={loadingStatIds} />
+        <StatsGrid stats={stats} loadingStatIds={loadingStatIds} />
 
         {/* ── Row 1: Attendance + Fee ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">

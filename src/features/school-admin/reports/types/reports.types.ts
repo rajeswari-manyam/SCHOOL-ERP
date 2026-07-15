@@ -68,7 +68,7 @@ export interface GenerateReportPayload {
   emailTo?: string[];
 }
 
-// ─── Raw API shapes (used by school-reports.api.ts) ────────────────────────────
+// ─── Raw API shapes (used by reports.api.ts) ────────────────────────────
 
 export interface RawReportFilters {
   from_date: string;

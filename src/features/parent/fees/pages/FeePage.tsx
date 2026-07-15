@@ -54,13 +54,24 @@ export default function FeesPage() {
 
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 
-  const studentId = activeChild.studentId;
-  const className = activeChild.classDetail?.className ?? "";
+  const studentId = activeChild?.studentId;
+  const className = activeChild?.classDetail?.className ?? "";
   const {
     history, pending, allPaid, selectedFee, setSelectedFee,
     loading, error, fetchFees, deletePayment,
     tuitionMonths, examTerms, annualSummary,
   } = useFees(studentId);
+
+  // Guard placed after every hook above has run, so this doesn't violate
+  // Rules of Hooks — activeChild can briefly be missing right after login,
+  // on a page refresh, or during a route transition.
+  if (!activeChild) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFF]">
+        <Loader2 size={28} className="animate-spin text-[#3525CD]" />
+      </div>
+    );
+  }
 
   const overdueList = pending.filter((f) => f.status === "overdue");
 

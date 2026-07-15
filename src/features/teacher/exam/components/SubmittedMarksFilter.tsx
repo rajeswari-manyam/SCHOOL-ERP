@@ -16,6 +16,9 @@ export interface SubmittedFilter {
   sectionName?: string;
   subjectName?: string;
   examName?: string;
+  // academic year of the selected exam — fallback source for publishing when
+  // a row's own record doesn't carry its academicYearId
+  academicYearId?: string;
 }
 
 interface Props {
@@ -49,15 +52,10 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
     return Array.from(options.entries()).map(([id, label]) => ({ id, label }));
   }, [examCatalog]);
 
-  // Use first academic year as default if none selected (for class fetch)
-  const activeAcademicYearId =
-    academicYearOptions.length === 1 ? academicYearOptions[0].id : "";
-
-  // ── Classes ───────────────────────────────────────────────────────────
+  // ── Classes (cascade on selected academic year) ────────────────────────
   const { data: classesRes, isLoading: classesLoading } = useQuery({
-    queryKey: ["teacher", "submitted-filter-classes", activeAcademicYearId],
-    queryFn: () => getAllClasses({ academicYearId: activeAcademicYearId || undefined }),
-    enabled: Boolean(activeAcademicYearId) || true, // try to load regardless
+    queryKey: ["teacher", "submitted-filter-classes", filter.academicYearId],
+    queryFn: () => getAllClasses({ academicYearId: filter.academicYearId || undefined }),
     staleTime: 5 * 60_000,
   });
 
@@ -77,13 +75,20 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
     staleTime: 5 * 60_000,
   });
 
-  // ── Exam options (cascade on subject) ─────────────────────────────────
+  // ── Exam options (cascade on selected academic year) ───────────────────
   const examOptions = useMemo(() => {
-    return (examCatalog ?? []).map((item) => ({
-      id: item.id,
-      label: item.exam_name || "Exam",
-    }));
-  }, [examCatalog]);
+    return (examCatalog ?? [])
+      .filter((item) => {
+        if (!filter.academicYearId) return true;
+        const yearId = item.academicYearId || item.academicYear?.id || "";
+        return yearId === filter.academicYearId;
+      })
+      .map((item) => ({
+        id: item.id,
+        label: item.exam_name || "Exam",
+        academicYearId: item.academicYearId || item.academicYear?.id || "",
+      }));
+  }, [examCatalog, filter.academicYearId]);
 
   const classOptions = (classesRes?.data ?? []).map((item) => ({
     id: item.id,
@@ -103,7 +108,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
   const canSearch = Boolean(filter.class_id && filter.section_id && filter.subject_id);
 
   const handleReset = () => {
-    onChange({ class_id: "", section_id: "", subject_id: "", exam_id: "" });
+    onChange({ class_id: "", section_id: "", subject_id: "", exam_id: "", academicYearId: "" });
   };
 
   return (
@@ -116,7 +121,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
             Filter Submitted Marks
           </p>
         </div>
-        {(filter.class_id || filter.section_id || filter.subject_id || filter.exam_id) && (
+        {(filter.class_id || filter.section_id || filter.subject_id || filter.exam_id || filter.academicYearId) && (
           <button
             type="button"
             onClick={handleReset}
@@ -129,7 +134,34 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
       </div>
 
       {/* Dropdowns grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+
+        {/* Academic Year */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-bold text-gray-500">Academic Year</label>
+          <select
+            value={filter.academicYearId ?? ""}
+            onChange={(e) => {
+              const selected = academicYearOptions.find((o) => o.id === e.target.value);
+              set({
+                academicYearId: selected?.id ?? "",
+                // cascade reset — classes/sections/subjects/exam depend on the year
+                class_id: "", className: "",
+                section_id: "", sectionName: "",
+                subject_id: "", subjectName: "",
+                exam_id: "", examName: "",
+              });
+            }}
+            className={selectCls}
+            disabled={examCatalogLoading}
+            title="Academic Year"
+          >
+            <option value="">All Years</option>
+            {academicYearOptions.map((o) => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Class */}
         <div className="flex flex-col gap-1.5">
@@ -222,7 +254,11 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
             value={filter.exam_id}
             onChange={(e) => {
               const selected = examOptions.find((o) => o.id === e.target.value);
-              set({ exam_id: e.target.value, examName: selected?.label ?? "" });
+              set({
+                exam_id: e.target.value,
+                examName: selected?.label ?? "",
+                academicYearId: selected?.academicYearId ?? "",
+              });
             }}
             className={selectCls}
             disabled={examCatalogLoading}

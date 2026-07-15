@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format, getDaysInMonth, startOfMonth } from "date-fns";
-import { Edit3, ClipboardCheck, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
+import { ClipboardCheck, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import {
   useTodayAttendanceSummary,
@@ -8,7 +8,6 @@ import {
   useStaffAttendanceByStaffId,
 } from "./hooks/useAttendance";
 import MyHistoryTab from "./components/MyHistoryTab";
-import CorrectionRequestModal from "./components/CorrectionRequestModal";
 import MarkStudentAttendanceModal from "./components/MarkStudentAttendaceModal";
 import type { StaffAttendanceRecord } from "@/services/attendance.api";
 
@@ -309,10 +308,6 @@ const MyAttendancePage = () => {
     isMarked: false, totalStudents: 0, classLabel: "—", date: todayStr, absentStudents: [],
   };
 
-  type CorrectionPrefill = { date: string; studentId: string; studentName: string; rollNo: string; currentMark: "P" | "A" | "H" };
-  const [correctionOpen,    setCorrectionOpen]    = useState(false);
-  const [correctionPrefill, setCorrectionPrefill] = useState<CorrectionPrefill | undefined>(undefined);
-
   if (todayLoading) {
     return (
       <div className="flex items-center justify-center h-48 text-sm text-gray-500">
@@ -341,13 +336,6 @@ const MyAttendancePage = () => {
             <ClipboardCheck size={13} />
             Mark Attendance
             {!today.isMarked && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />}
-          </button>
-          <button
-            onClick={() => { setCorrectionPrefill(undefined); setCorrectionOpen(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Edit3 size={13} />
-            Request Correction
           </button>
         </div>
       </div>
@@ -394,11 +382,6 @@ const MyAttendancePage = () => {
         onClose={() => setMarkAttendanceOpen(false)}
         defaultClassId={today.classId ?? ""}
         defaultSectionId={today.sectionId ?? ""}
-      />
-      <CorrectionRequestModal
-        open={correctionOpen}
-        onClose={() => { setCorrectionOpen(false); setCorrectionPrefill(undefined); }}
-        prefill={correctionPrefill}
       />
     </div>
   );

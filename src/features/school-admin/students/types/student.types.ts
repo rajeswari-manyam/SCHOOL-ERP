@@ -36,7 +36,8 @@ export interface Student {
   motherOccupation?: string;
   emergencyContact?: string;
   whatsappNumber?: string;
-  email?: string;
+  fatherEmail?: string;
+  motherEmail?: string;
 }
 
 export interface StudentAttendanceDay {
@@ -74,7 +75,6 @@ export interface UpdateStudentPayload {
   mother_name?: string;
   mother_phone?: string;
   emergency_contact?: string;
-  email?: string;
 }
 
 export interface UpdateParentPayload {
@@ -89,6 +89,10 @@ export interface UpdateParentPayload {
   address?: string;
   father_image?: File | null;
   mother_image?: File | null;
+  /** Student IDs to link to this parent. NOTE: unconfirmed with backend whether
+   * PUT /tenant/updateparentById/:id appends this to the existing students array
+   * or overwrites it — verify before relying on this in production. */
+  students?: string[];
 }
 
 export interface CreateStudentPayload {
@@ -145,5 +149,6 @@ export interface AddStudentFormData {
   emergencyContact: string;
   whatsappNumber: string;
   sameAsFather: boolean;
-  email: string;
+  fatherEmail: string;
+  motherEmail: string;
 }

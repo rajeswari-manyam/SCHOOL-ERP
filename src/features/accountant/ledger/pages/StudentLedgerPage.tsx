@@ -8,7 +8,7 @@ import { getModeBadgeClass } from "@/utils/payment";
 import typography from "@/styles/typography";
 import type { Student, Transaction } from "../../fees/types/fees.types";
 import { getAllPendingFees, getAllRecordFeePayments } from "@/services/fee.api";
-import { studentsApi } from "@/services/school-students.api";
+import { studentsApi } from "@/services/student.api";
 
 type PaymentStatus = "PAID" | "PARTIAL" | "PENDING";
 

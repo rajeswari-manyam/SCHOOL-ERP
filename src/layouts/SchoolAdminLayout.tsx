@@ -10,6 +10,7 @@ import {
   FaBullhorn,
   FaCog,
   FaBook,
+  FaClipboardList,
 } from "react-icons/fa";
 
 import Sidebar from "../components/common/Sidebar";
@@ -17,7 +18,7 @@ import Topbar from "../components/common/Topbar";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
-import { fetchSchoolProfile } from "@/services/school-settings.api";
+import { fetchSchoolProfile } from "@/services/settings.api";
 import { useSetupStatus } from "@/features/school-admin/dashboard/hooks/useSetupStatus";
 
 // ✅ Breadcrumb labels
@@ -31,6 +32,7 @@ const BreadcrumbLabels: Record<string, string> = {
   "/schooladmin/timetable": "Timetable",
   "/schooladmin/fees": "Fee Collection",
   "/schooladmin/reports": "Reports",
+  "/schooladmin/results": "Results",
   "/schooladmin/settings": "Settings",
 };
 
@@ -44,6 +46,7 @@ const NavItem = [
   { label: "Timetable",      to: "/schooladmin/timetable",  icon: <FaCalendarAlt /> },
   { label: "Fee Collection", to: "/schooladmin/fees",       icon: <FaMoneyBill /> },
   { label: "Reports",        to: "/schooladmin/reports",    icon: <FaBullhorn /> },
+  { label: "Results",        to: "/schooladmin/results",    icon: <FaClipboardList /> },
   { label: "Settings",       to: "/schooladmin/settings",   icon: <FaCog /> },
 ];
 

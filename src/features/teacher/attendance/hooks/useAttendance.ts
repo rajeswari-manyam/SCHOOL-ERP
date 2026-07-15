@@ -4,7 +4,6 @@ import { attendanceApi } from "@/services/teacher-attendance.api";
 import { getAllHolidays } from "../../../../services/holidays.api";
 import type {
   MarkAttendancePayload,
-  CorrectionRequestPayload,
 } from "../types/attendance.types";
 
 // ── Query keys ────────────────────────────────────────────────────────────────
@@ -14,7 +13,6 @@ export const ATTENDANCE_KEYS = {
   todaySummary:(teacherId: string) => [...ATTENDANCE_KEYS.all, "today-summary", teacherId] as const,
   students:    () => [...ATTENDANCE_KEYS.all, "students"] as const,
   myHistory:   () => [...ATTENDANCE_KEYS.all, "my-history"] as const,
-  corrections: () => [...ATTENDANCE_KEYS.all, "corrections"] as const,
   holidays:    () => [...ATTENDANCE_KEYS.all, "holidays"] as const,
 };
 
@@ -53,13 +51,6 @@ export const useMyAttendanceHistory = () =>
     staleTime: 1000 * 60 * 5,
   });
 
-export const useMyCorrectionRequests = () =>
-  useQuery({
-    queryKey: ATTENDANCE_KEYS.corrections(),
-    queryFn:  attendanceApi.getMyCorrectionRequests,
-    staleTime: 1000 * 60 * 5,
-  });
-
 // ── Holidays ───────────────────────────────────────────────────────────────────
 export const useAllHolidays = () =>
   useQuery({
@@ -87,11 +78,22 @@ export const useRetryWaAlert = () => {
   });
 };
 
-export const useSubmitCorrectionRequest = () => {
+// Corrects a single student's attendance for a given date. The backend has no
+// approval-queue endpoint — this looks up the real attendance record id for
+// (studentId, date) then updates it directly via PUT /tenant/updateattendanceById.
+export const useUpdateStudentAttendance = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CorrectionRequestPayload) => attendanceApi.submitCorrection(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.corrections() }),
+    mutationFn: async ({ studentId, date, status, remarks }: {
+      studentId: string; date: string; status: string; remarks?: string;
+    }) => {
+      const { getAllAttendance, updateAttendanceById } = await import("@/services/attendance.api");
+      const res = await getAllAttendance(studentId, date);
+      const record = res.data?.[0];
+      if (!record) throw new Error("No attendance record found for this student on this date.");
+      return updateAttendanceById(record.id, { status, remarks });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.all }),
   });
 };
 

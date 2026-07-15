@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Download, Users, CalendarCheck, Eye, Pencil, Trash2, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { ReportIcons } from "../utils/report-config";
 import type { RawReport, ReportType } from "../types/reports.types";
-import { reportsApi } from "@/services/school-reports.api";
+import { reportsApi } from "@/services/reports.api";
 import { downloadBlob } from "@/features/school-admin/attendance/utils/attendance.utils";
 import { useDeleteReport } from "../hooks/useReports";
 import ReportViewModal from "./ReportViewModal";

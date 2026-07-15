@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Trash2, X, Loader2, Pencil, Check, GitBranch } from "lucide-react";
-import { getCarryForwardStatus } from "@/services/academicYear.api";
+import { isCarryForwardCompleted } from "@/services/academicYear.api";
 import { getPreviousAcademicYear } from "@/components/common/hooks/useAcademicYears";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,12 +98,14 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [cfStatuses, setCfStatuses] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    getCarryForwardStatus()
-      .then((res) => {
-        if (res.yearStatuses) setCfStatuses(res.yearStatuses);
-      })
-      .catch(() => {});
-  }, []);
+    // No backend status endpoint — build the "already completed" map from
+    // the local completion flags set right after a successful carryForward().
+    const map: Record<string, boolean> = {};
+    academicYears.forEach((y) => {
+      map[y.id] = isCarryForwardCompleted(y.id);
+    });
+    setCfStatuses(map);
+  }, [academicYears]);
 
   const [yearModal, setYearModal] = useState<
     { mode: "create" } | { mode: "carryForward"; year: AcademicYear } | null

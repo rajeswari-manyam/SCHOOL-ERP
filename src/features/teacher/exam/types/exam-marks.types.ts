@@ -45,11 +45,15 @@ export interface ExamSummary {
 
 export interface SubmittedExam {
   id: string;
+  // The real exam UUID, when the backend supplies one distinct from `id` —
+  // see MarksRecordItem.examId for why this can't be assumed equal to `id`.
+  examId?: string;
   examType: string;
   examLabel: string;
   className: string;
   subject: string;
   academicYear: string;
+  academicYearId?: string;
   submittedOn: string;
   status: ExamStatus;
   totalStudents: number;
@@ -160,8 +164,13 @@ export interface GetAllMarksQuery {
  */
 export interface MarksRecordItem {
   id: string;
+  // The row's own id isn't guaranteed to be the exam's UUID (backend may
+  // return a summary-row id here instead) — examId is the field to trust
+  // when it's present, e.g. for the /tenant/markspublish exam_id param.
+  examId?: string;
   examName?: string;
   academicYear?: string;
+  academicYearId?: string;
   className?: string;
   subjectName?: string;
   examDate?: string;
@@ -170,6 +179,23 @@ export interface MarksRecordItem {
   averageMarks?: number;
   completionPercentage?: number;
   status?: string;
+}
+
+// ── /tenant/markspublish API types ─────────────────────────────────────────
+// Publishes the entire exam for a class/section — every subject and every
+// student with marks entered — in one call. No subject_id/student_id/school_code.
+
+export interface PublishMarksPayload {
+  class_id: string;
+  section_id: string;
+  exam_id: string;
+  academicYearId: string;
+}
+
+export interface PublishMarksResponse {
+  status: boolean;
+  message?: string;
+  data?: Record<string, unknown>;
 }
 
 export const CLASS_OPTIONS = ["Class 8-A", "Class 8-B", "Class 9-A", "Class 9-B","Class 10-A", "Class 10-B"];

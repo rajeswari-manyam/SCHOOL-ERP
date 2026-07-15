@@ -8,7 +8,16 @@ import { Label } from "@/components/ui/label";
 
 import { useComplaintsStore } from "../hooks/useComplaintsStore";
 import { useParentChildren } from "../hooks/useParentChildren";
-import { COMPLAINT_CATEGORIES } from "../data/complaimts.data";
+
+// Fixed category options (moved inline since data/complaimts.data.ts was removed)
+const COMPLAINT_CATEGORIES = [
+  "Academic",
+  "Fee",
+  "Transport",
+  "Staff",
+  "Facility",
+  "Other",
+] as const;
 
 interface Props {
   complainant_id: string;

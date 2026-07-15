@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { verifyOtp, sendOtp, getUserById } from "@/services/auth.api";
+import { initPushNotifications } from "@/utils/pushNotifications";
 import { useAuthStore, USER_TYPE_ROUTE_MAP } from "@/store/authStore";
 import type { UserType, AuthUser } from "../types/auth.types";
 
@@ -135,7 +136,11 @@ const OtpPage = () => {
 
     try {
       // ── Step 1: verify OTP ───────────────────────────────────────────────
-      const response = await verifyOtp({ schoolcode, phone, otp: otpToVerify });
+const response = await verifyOtp({
+  schoolcode,
+  phone,
+  otp: otpToVerify,
+});
 
       if (!response?.status) {
         setError(response?.message ?? "Invalid OTP");
@@ -167,6 +172,11 @@ const OtpPage = () => {
       };
       setAuth(initialUser, token);
       localStorage.setItem("userId", userId);
+
+      // ── Push notifications — request permission + register FCM token ─────
+      // Fire-and-forget: unsupported browsers, denied permission, or a
+      // missing backend endpoint must never block navigation after login.
+      initPushNotifications().catch(() => {});
 
       // ── Parent Portal — seed parent + students[], auto-select if only one ──
       let landingRoute = USER_TYPE_ROUTE_MAP[verifiedUserType] ?? "/login";

@@ -49,7 +49,8 @@ function SkeletonItem() {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) => {
-  const { announcements, isLoadingAnnouncements } = useDashboardStore()
+  const announcements = useDashboardStore((s) => s.announcements)
+  const isLoadingAnnouncements = useDashboardStore((s) => s.isLoadingAnnouncements)
   const [showAll, setShowAll] = useState(false)
 
   const latest = announcements[0]

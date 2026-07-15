@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchClassesList } from "@/services/school-students.api";
-import type { ClassOption } from "@/services/school-students.api";
+import { fetchClassesList } from "@/services/student.api";
+import type { ClassOption } from "@/services/student.api";
 
 const LOAD_TIMEOUT_MS = 30_000;
 

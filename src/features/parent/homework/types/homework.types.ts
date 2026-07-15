@@ -16,6 +16,7 @@ export interface Homework {
   submissionDate?: Date;
   status: HomeworkStatus;
   attachment?: { name: string; url?: string };
+  attachments?: { name: string; url: string }[];
   whatsappNotified?: string;
 }
 

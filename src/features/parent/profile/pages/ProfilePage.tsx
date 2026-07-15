@@ -5,6 +5,7 @@ import { useProfileStore } from "../hooks/useProfileStore";
 import { ProfileCard } from "../components/ProfileCard";
 import { ChildrenCard } from "../components/ChildrenCard";
 import { ContactInfoCard } from "../components/ContactInfoCard";
+import { ClassTeacherCard } from "../components/ClassTeacherCard";
 import { NotificationPreferences } from "../components/NotificationPreferance";
 import { Input } from "@/components/ui/input";
 import { Form, FormField } from "@/components/ui/form";
@@ -33,6 +34,7 @@ export default function ProfilePage() {
     parentOccupation,
     parentAddress,
     contact,
+    classTeacher,
     notifications,
     children,
     isLoading,
@@ -50,12 +52,14 @@ export default function ProfilePage() {
     authUser?.id ||
     "";
 
+  const activeStudentId = String(activeChild?.studentId ?? activeChild?.id ?? "");
+
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<ContactInfo>(contact);
 
   useEffect(() => {
-    if (parentId) fetchProfile(parentId);
-  }, [parentId]);
+    if (parentId) fetchProfile(parentId, activeStudentId);
+  }, [parentId, activeStudentId]);
 
   useEffect(() => {
     setForm(contact);
@@ -188,6 +192,7 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-5">
             {/* ✅ contact fields now populated from real API */}
             <ContactInfoCard contact={contact} />
+            <ClassTeacherCard teacher={classTeacher} />
             <NotificationPreferences
               notifications={notifications}
               onToggle={toggleNotification}

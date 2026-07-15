@@ -230,6 +230,10 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-store",
+      // Bump whenever the persisted Student/Parent shape changes (e.g. adding
+      // className/sectionName/academicYear) so stale cached sessions from
+      // before the change get discarded instead of showing incomplete data.
+      version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user:            state.user,

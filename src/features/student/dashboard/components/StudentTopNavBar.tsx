@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout as logoutApi } from "@/services/auth.api";
 import { useAuthStore } from "@/store/authStore";
@@ -16,6 +16,8 @@ import {
 
 import { useDashboard } from "../hooks/useDashboard";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationDropdownPanel } from "@/components/common/NotificationDropdownPanel";
 
 const navLinks = [
   { label: "Dashboard", path: "/student/dashboard", icon: LayoutDashboard },
@@ -32,9 +34,22 @@ const StudentTopNavBar = () => {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   const avatarImage = useAuthStore((s) => s.user?.image);
+  const { notifications, isLoading: isLoadingNotifications, unreadCount, refetch: refetchNotifications } = useNotifications();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifOpen]);
 
   // ✅ Correct hook usage
   const {
@@ -103,14 +118,35 @@ const StudentTopNavBar = () => {
           <div className="flex items-center gap-3">
 
             {/* NOTIFICATION */}
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
-              <Bell size={16} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => {
+                  const opening = !notifOpen;
+                  setNotifOpen(opening);
+                  setProfileOpen(false);
+                  if (opening) refetchNotifications();
+                }}
+                className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100"
+              >
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                )}
+              </button>
+
+              {notifOpen && (
+                <NotificationDropdownPanel
+                  className="absolute right-0 top-11"
+                  notifications={notifications}
+                  isLoading={isLoadingNotifications}
+                  unreadCount={unreadCount}
+                />
+              )}
+            </div>
 
             {/* PROFILE */}
             <button
-              onClick={() => setProfileOpen(!profileOpen)}
+              onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
               className="flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-gray-100"
             >
               {/* Avatar */}

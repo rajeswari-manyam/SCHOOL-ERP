@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, XCircle, Clock, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
-import { approveLeave, rejectLeave } from '@/services/school-staff.api';
+import { approveLeave, rejectLeave } from '@/services/staff.api';
 import { useQueryClient } from '@tanstack/react-query';
 import { DASHBOARD_QUERY_KEY } from '../hooks/index';
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { X, Plus, Trash2, Loader2, CheckCircle, ChevronDown, ChevronUp, Camera } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
-import { createStaff } from "@/services/school-staff.api";
+import { createStaff } from "@/services/staff.api";
 import { fetchDepartments } from "@/services/department.api";
 import { getAllAcademicYears } from "@/services/academicYear.api";
 import { useStaffStore } from "../store/usestore";
@@ -96,7 +96,8 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
   // Compute the next EMP number from existing staff once on mount
   const nextEmpBase = useState(() => {
     const nums = staffData
-      .map((s) => parseInt(s.employeeId?.replace(/\D/g, "") || "0", 10))
+      .map((s) => /^EMP-(\d+)$/i.exec(s.employeeId?.trim() ?? "")?.[1])
+      .map((n) => (n ? parseInt(n, 10) : NaN))
       .filter((n) => !isNaN(n) && n > 0);
     return nums.length > 0 ? Math.max(...nums) + 1 : 1;
   })[0];

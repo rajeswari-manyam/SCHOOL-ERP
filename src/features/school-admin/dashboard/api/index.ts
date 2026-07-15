@@ -14,7 +14,7 @@ const MOCK_DASHBOARD: DashboardData = {
     { id: 'attendance', label: 'STUDENTS PRESENT TODAY', value: '—', sub: 'Loading…', icon: 'users' },
     { id: 'classes', label: 'CLASSES MARKED TODAY', value: '—', sub: 'Loading…', icon: 'check' },
     { id: 'fees', label: 'COLLECTED THIS MONTH', value: '—', sub: 'Loading…', icon: 'rupee' },
-    { id: 'admissions', label: 'ADMISSIONS THIS WEEK', value: '—', sub: 'Loading…', icon: 'user-plus' },
+{ id: 'admissions', label: 'ADMISSIONS THIS WEEK', value: '—', sub: 'Loading…', icon: 'user-check' },
   ],
   attendanceClasses: [
     { id: '1', className: '10A', section: 'A', teacher: 'Mrs. Lakshmi Reddy', present: null, absent: null, status: 'not_marked' },

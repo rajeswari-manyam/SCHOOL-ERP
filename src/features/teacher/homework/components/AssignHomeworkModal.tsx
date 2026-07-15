@@ -424,6 +424,11 @@ const AssignHomeworkModal = ({
         </CardSection>
 
         {/* ── 4. Attachments ── */}
+        {/* Editing an existing homework can't attach files — the update endpoint
+            doesn't accept them (confirmed: it 500s on a multipart request). Only
+            show the upload UI when creating, so this section never looks like it
+            saved something it silently didn't. */}
+        {mode !== "edit" && (
         <CardSection
           icon={<Paperclip size={15} />}
           iconBg="bg-emerald-50"
@@ -496,6 +501,7 @@ const AssignHomeworkModal = ({
             </div>
           )}
         </CardSection>
+        )}
 
         {/* ── 5. Publish toggle ── */}
         <div className="flex items-center justify-between gap-3 py-3 px-4 bg-slate-50 rounded-xl border border-slate-100">

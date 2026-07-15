@@ -25,6 +25,7 @@ interface PromotionRow {
   action: PromotionAction;
   targetClassId: string;
   targetSectionId: string;
+  selected: boolean;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ export default function PromoteStudentsModal({ onClose }: Props) {
     setError(null);
     try {
       const list = await getStudentsByClassSection(classId, sectionId);
-      setRows(list.map((s) => ({ student: s, action: "PROMOTE" as PromotionAction, targetClassId: "", targetSectionId: "" })));
+      setRows(list.map((s) => ({ student: s, action: "PROMOTE" as PromotionAction, targetClassId: "", targetSectionId: "", selected: false })));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load students.");
     } finally {
@@ -140,17 +141,28 @@ export default function PromoteStudentsModal({ onClose }: Props) {
   const updateRow = (id: string, patch: Partial<PromotionRow>) =>
     setRows((prev) => prev.map((r) => (r.student.id === id ? { ...r, ...patch } : r)));
 
+  const toggleRowSelected = (id: string) =>
+    setRows((prev) => prev.map((r) => (r.student.id === id ? { ...r, selected: !r.selected } : r)));
+
+  const toggleSelectAll = (checked: boolean) =>
+    setRows((prev) => prev.map((r) => ({ ...r, selected: checked })));
+
+  // "Set all" quick actions only apply to the students the user has checked.
   const setAllAction = (action: PromotionAction) =>
-    setRows((prev) => prev.map((r) => ({ ...r, action, targetClassId: "", targetSectionId: "" })));
+    setRows((prev) =>
+      prev.map((r) => (r.selected ? { ...r, action, targetClassId: "", targetSectionId: "" } : r))
+    );
+
+  const selectedRows = rows.filter((r) => r.selected);
 
   // Rows marked PROMOTE must have an explicit destination class/section —
   // everything else (REPEAT/DROPOUT/TRANSFERRED/GRADUATED) keeps the source class/section.
-  const missingTarget = rows.some(
+  const missingTarget = selectedRows.some(
     (r) => needsClassSelect(r.action) && (!r.targetClassId || !r.targetSectionId)
   );
 
   const handleSave = async () => {
-    if (!sourceYearId || !targetYearId || rows.length === 0 || missingTarget) return;
+    if (!sourceYearId || !targetYearId || selectedRows.length === 0 || missingTarget) return;
     setConfirming(false);
     setSaving(true);
     setError(null);
@@ -158,7 +170,7 @@ export default function PromoteStudentsModal({ onClose }: Props) {
       await promoteStudents({
         sourceAcademicYearId: sourceYearId,
         targetAcademicYearId: targetYearId,
-        students: rows.map((r) => ({
+        students: selectedRows.map((r) => ({
           studentId: r.student.id,
           classId:   needsClassSelect(r.action) ? r.targetClassId   : classId,
           sectionId: needsClassSelect(r.action) ? r.targetSectionId : sectionId,
@@ -166,8 +178,9 @@ export default function PromoteStudentsModal({ onClose }: Props) {
         })),
       });
       setSavedCount((n) => n + 1);
-      setRows([]);
-      setSectionId("");
+      // Keep unselected students visible so the admin can continue assigning
+      // actions to the rest of the class without reloading.
+      setRows((prev) => prev.filter((r) => !r.selected));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save promotions.");
     } finally {
@@ -177,7 +190,7 @@ export default function PromoteStudentsModal({ onClose }: Props) {
 
   const currentClassName   = classes.find((c) => c.value === classId)?.label ?? "";
   const currentSectionName = sections.find((s) => s.value === sectionId)?.label ?? "";
-  const canSave = !!sourceYearId && !!targetYearId && sourceYearId !== targetYearId && rows.length > 0 && !missingTarget;
+  const canSave = !!sourceYearId && !!targetYearId && sourceYearId !== targetYearId && selectedRows.length > 0 && !missingTarget;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -312,11 +325,11 @@ export default function PromoteStudentsModal({ onClose }: Props) {
                 <div className="flex items-center gap-2">
                   <Users size={15} className="text-indigo-500" />
                   <span className="text-sm font-semibold text-gray-700">
-                    {rows.length} student{rows.length !== 1 ? "s" : ""} — {currentClassName} / {currentSectionName}
+                    {selectedRows.length}/{rows.length} selected — {currentClassName} / {currentSectionName}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs text-gray-400">Set all:</span>
+                  <span className="text-xs text-gray-400">Set action for selected:</span>
                   {ACTION_OPTIONS.map((a) => (
                     <button
                       key={a.value}
@@ -333,6 +346,17 @@ export default function PromoteStudentsModal({ onClose }: Props) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="px-4 py-2.5 text-left">
+                        <input
+                          type="checkbox"
+                          checked={rows.length > 0 && selectedRows.length === rows.length}
+                          ref={(el) => {
+                            if (el) el.indeterminate = selectedRows.length > 0 && selectedRows.length < rows.length;
+                          }}
+                          onChange={(e) => toggleSelectAll(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 cursor-pointer"
+                        />
+                      </th>
                       <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Adm. No</th>
                       <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Student Name</th>
                       <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 hidden sm:table-cell">Class</th>
@@ -344,7 +368,18 @@ export default function PromoteStudentsModal({ onClose }: Props) {
                   </thead>
                   <tbody>
                     {rows.map((row) => (
-                      <tr key={row.student.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition">
+                      <tr
+                        key={row.student.id}
+                        className={`border-t border-gray-50 hover:bg-gray-50/50 transition ${row.selected ? "" : "opacity-60"}`}
+                      >
+                        <td className="px-4 py-2.5">
+                          <input
+                            type="checkbox"
+                            checked={row.selected}
+                            onChange={() => toggleRowSelected(row.student.id)}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 cursor-pointer"
+                          />
+                        </td>
                         <td className="px-4 py-2.5 text-xs text-gray-500 font-mono">{row.student.admission_number || "—"}</td>
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
@@ -361,11 +396,12 @@ export default function PromoteStudentsModal({ onClose }: Props) {
                         <td className="px-4 py-2.5">
                           <select
                             value={row.action}
+                            disabled={!row.selected}
                             onChange={(e) => {
                               const action = e.target.value as PromotionAction;
                               updateRow(row.student.id, { action, targetClassId: "", targetSectionId: "" });
                             }}
-                            className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold outline-none cursor-pointer transition ${actionColor(row.action)}`}
+                            className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold outline-none cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed ${actionColor(row.action)}`}
                           >
                             {ACTION_OPTIONS.map((a) => (
                               <option key={a.value} value={a.value}>{a.label}</option>
@@ -376,12 +412,13 @@ export default function PromoteStudentsModal({ onClose }: Props) {
                           {needsClassSelect(row.action) ? (
                             <select
                               value={row.targetClassId}
+                              disabled={!row.selected}
                               onChange={(e) => {
                                 const cid = e.target.value;
                                 updateRow(row.student.id, { targetClassId: cid, targetSectionId: "" });
                                 ensureSectionsForClass(cid);
                               }}
-                              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-800 outline-none focus:border-indigo-400 min-w-[100px]"
+                              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-800 outline-none focus:border-indigo-400 min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <option value="">Select class</option>
                               {targetClasses.map((c) => (
@@ -431,11 +468,11 @@ export default function PromoteStudentsModal({ onClose }: Props) {
         {/* Footer */}
         <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
           <div className="flex flex-wrap gap-3 text-xs font-semibold">
-            <span className="text-green-700">{rows.filter(r => r.action === "PROMOTE").length} Promote</span>
-            <span className="text-amber-600">{rows.filter(r => r.action === "REPEAT").length} Repeat</span>
-            <span className="text-red-600">{rows.filter(r => r.action === "DROPOUT").length} Dropout</span>
-            <span className="text-blue-600">{rows.filter(r => r.action === "TRANSFERRED").length} Transferred</span>
-            <span className="text-purple-600">{rows.filter(r => r.action === "GRADUATED").length} Graduated</span>
+            <span className="text-green-700">{selectedRows.filter(r => r.action === "PROMOTE").length} Promote</span>
+            <span className="text-amber-600">{selectedRows.filter(r => r.action === "REPEAT").length} Repeat</span>
+            <span className="text-red-600">{selectedRows.filter(r => r.action === "DROPOUT").length} Dropout</span>
+            <span className="text-blue-600">{selectedRows.filter(r => r.action === "TRANSFERRED").length} Transferred</span>
+            <span className="text-purple-600">{selectedRows.filter(r => r.action === "GRADUATED").length} Graduated</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -462,21 +499,21 @@ export default function PromoteStudentsModal({ onClose }: Props) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <h3 className="text-lg font-bold text-gray-900">Confirm Promotions</h3>
             <p className="text-sm text-gray-600">
-              Save actions for <strong>{rows.length}</strong> student{rows.length !== 1 ? "s" : ""} in{" "}
+              Save actions for <strong>{selectedRows.length}</strong> student{selectedRows.length !== 1 ? "s" : ""} in{" "}
               <span className="font-semibold text-indigo-600">{currentClassName} / {currentSectionName}</span>?
             </p>
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div className="rounded-xl bg-green-50 border border-green-100 p-2">
-                <p className="text-lg font-bold text-green-600">{rows.filter(r => r.action === "PROMOTE").length}</p>
+                <p className="text-lg font-bold text-green-600">{selectedRows.filter(r => r.action === "PROMOTE").length}</p>
                 <p className="text-green-700">Promote</p>
               </div>
               <div className="rounded-xl bg-amber-50 border border-amber-100 p-2">
-                <p className="text-lg font-bold text-amber-600">{rows.filter(r => r.action === "REPEAT").length}</p>
+                <p className="text-lg font-bold text-amber-600">{selectedRows.filter(r => r.action === "REPEAT").length}</p>
                 <p className="text-amber-700">Repeat</p>
               </div>
               <div className="rounded-xl bg-red-50 border border-red-100 p-2">
                 <p className="text-lg font-bold text-red-600">
-                  {rows.filter(r => r.action === "DROPOUT" || r.action === "TRANSFERRED" || r.action === "GRADUATED").length}
+                  {selectedRows.filter(r => r.action === "DROPOUT" || r.action === "TRANSFERRED" || r.action === "GRADUATED").length}
                 </p>
                 <p className="text-red-700">Other</p>
               </div>

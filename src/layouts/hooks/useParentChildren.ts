@@ -120,7 +120,7 @@ export function useParentChildren() {
 
               academicYear: student.academicYear ?? null,
 
-              parentName: student.parentDetail?.[0]?.parent_name ?? "",
+              parentName: student.parentDetail?.[0]?.father_name || student.parentDetail?.[0]?.mother_name || "",
               parentDetail: student.parentDetail ?? [],
 
               createdAt: student.createdAt,

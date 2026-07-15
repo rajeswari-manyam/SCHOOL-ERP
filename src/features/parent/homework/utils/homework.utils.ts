@@ -19,7 +19,7 @@ function normaliseSubject(raw: string): string {
 }
 
 /** Map API homework shape → local UI shape */
-export function mapApiHomework(hw: ApiHomework): Homework {
+export function mapApiHomework(hw: ApiHomework, isSubmitted = false): Homework {
 const subjectRaw = normaliseSubject(
   hw.subject?.name ?? "ENGLISH"
 );
@@ -60,10 +60,14 @@ const subjectRaw = normaliseSubject(
     day:            dayNum,
     // Store the full submission date so DayFilter can match properly
     submissionDate: isNaN(dateObj.getTime()) ? undefined : dateObj,
-    status:         "NOT TRACKED",
+    status:         isSubmitted ? "SUBMITTED" : "PENDING",
     attachment:     hw.attachments?.length
-      ? { name: hw.attachments[0], url: hw.attachments[0] }
+      ? { name: hw.attachments[0].split("/").pop() ?? hw.attachments[0], url: hw.attachments[0] }
       : undefined,
+    attachments:    (hw.attachments ?? []).map((url) => ({
+      name: url.split("/").pop() ?? url,
+      url,
+    })),
   };
 }
 

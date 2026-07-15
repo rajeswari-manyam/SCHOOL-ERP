@@ -1,7 +1,8 @@
 // teacher/attendance/components/MyHistoryTab.tsx
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Calendar, ChevronDown, ChevronUp, Users, UserCheck, UserX } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, Users, UserCheck, UserX, Pencil } from "lucide-react";
+import EditAttendanceModal, { type EditAttendanceTarget } from "./EditAttendanceModal";
 
 // ── Types matching the API response ──────────────────────────────────────────
 
@@ -63,11 +64,16 @@ const STATUS_PILL: Record<string, string> = {
   present:  "bg-emerald-50 text-emerald-700 border border-emerald-200",
   absent:   "bg-red-50 text-red-600 border border-red-200",
   halfday:  "bg-amber-50 text-amber-700 border border-amber-200",
+  late:     "bg-orange-50 text-orange-700 border border-orange-200",
 };
 
 // ── Section card — expandable ─────────────────────────────────────────────────
 
-const SectionCard = ({ section, date }: { section: RawSection; date: string }) => {
+const SectionCard = ({
+  section, date, onEditRecord,
+}: {
+  section: RawSection; date: string; onEditRecord: (target: EditAttendanceTarget) => void;
+}) => {
   const [expanded, setExpanded] = useState(false);
   const { summary, students, class_name, section_name, marked_time } = section;
 
@@ -116,11 +122,13 @@ const SectionCard = ({ section, date }: { section: RawSection; date: string }) =
             <p className="px-4 py-3 text-sm text-gray-400 text-center">No student data.</p>
           ) : (
             students.map((s) => {
-              const statusKey = s.status === "absent" ? "absent" : "present";
+              const statusKey = s.status === "absent" ? "absent" : s.status === "late" ? "late" : "present";
+              const currentStatus: EditAttendanceTarget["currentStatus"] =
+                statusKey === "absent" ? "absent" : statusKey === "late" ? "late" : "present";
               return (
                 <div
                   key={s.student_id}
-                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50/60 transition-colors"
+                  className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50/60 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-500">
@@ -128,13 +136,28 @@ const SectionCard = ({ section, date }: { section: RawSection; date: string }) =
                     </span>
                     <span className="text-sm text-gray-800 font-medium">{s.student_name}</span>
                   </div>
-                  <span
-                    className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${
-                      STATUS_PILL[statusKey] ?? "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {s.status ?? "present"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${
+                        STATUS_PILL[statusKey] ?? "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {s.status ?? "present"}
+                    </span>
+                    <button
+                      onClick={() => onEditRecord({
+                        studentId: s.student_id,
+                        studentName: s.student_name,
+                        rollNo: s.roll_number,
+                        date,
+                        currentStatus,
+                      })}
+                      title="Correct this attendance record"
+                      className="p-1 rounded-lg text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  </div>
                 </div>
               );
             })
@@ -156,6 +179,7 @@ const MyHistoryTab = ({
   onToDateChange,
 }: MyHistoryTabProps) => {
   const today = new Date().toISOString().slice(0, 10);
+  const [editTarget, setEditTarget] = useState<EditAttendanceTarget | null>(null);
 
   const days: RawDay[] = useMemo(
     () => (Array.isArray(summaryData?.data) ? summaryData!.data : []),
@@ -259,6 +283,7 @@ const MyHistoryTab = ({
                     key={`${sec.class_id}-${sec.section_id}`}
                     section={sec}
                     date={day.attendance_date}
+                    onEditRecord={setEditTarget}
                   />
                 ))}
               </div>
@@ -266,6 +291,12 @@ const MyHistoryTab = ({
           ))}
         </div>
       )}
+
+      <EditAttendanceModal
+        key={editTarget ? `${editTarget.studentId}-${editTarget.date}` : "none"}
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
     </div>
   );
 };

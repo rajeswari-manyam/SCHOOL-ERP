@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getSetupStatus, type SetupStatusResponse } from '@/services/setup.api';
+import { getCarryForwardModules, type CarryForwardModule } from '@/services/academicYear.api';
+import { useUIStore } from '@/store/uiStore';
 
 export interface SetupSubItem {
   id: string;
@@ -35,7 +37,23 @@ export interface SetupStatusResult {
   totalSteps: number;
 }
 
-function buildItems(steps: SetupStatusResponse['steps']): SetupItem[] {
+// A step is satisfied via carry-forward only when EVERY module it depends on
+// was actually part of that carry-forward run — e.g. "Create Classes" covers
+// classes + sections + subjects, so carrying forward just "staff" must not
+// mark it done. "students" has no entry here: carry-forward never copies
+// enrollments, so that step always reflects the backend's real status.
+const STEP_REQUIRED_MODULES: Record<string, CarryForwardModule[]> = {
+  settings: ['departments'],
+  staff:    ['staff'],
+  classes:  ['classes', 'sections', 'subjects', 'subjectAssignments'],
+};
+
+function buildItems(steps: SetupStatusResponse['steps'], carriedModules: CarryForwardModule[]): SetupItem[] {
+  const coveredByCarryForward = (stepId: string): boolean => {
+    const required = STEP_REQUIRED_MODULES[stepId];
+    return required ? required.every((m) => carriedModules.includes(m)) : false;
+  };
+
   return [
     {
       id: 'settings',
@@ -43,7 +61,7 @@ function buildItems(steps: SetupStatusResponse['steps']): SetupItem[] {
       description: 'Set up your academic year, holidays, departments, and leave policies before anything else.',
       route: '/schooladmin/settings',
       routeState: { openTab: 'academicConfig', fromWizard: true },
-      done: steps.academicConfiguration,
+      done: steps.academicConfiguration || coveredByCarryForward('settings'),
       order: 1,
       subItems: [],
     },
@@ -52,7 +70,7 @@ function buildItems(steps: SetupStatusResponse['steps']): SetupItem[] {
       label: 'Add Staff',
       description: "Add your school's teaching and non-teaching staff members.",
       route: '/schooladmin/staff',
-      done: steps.staff,
+      done: steps.staff || coveredByCarryForward('staff'),
       order: 2,
       subItems: [],
     },
@@ -61,7 +79,7 @@ function buildItems(steps: SetupStatusResponse['steps']): SetupItem[] {
       label: 'Create Classes',
       description: 'Create classes, add sections under each class, and assign subjects.',
       route: '/schooladmin/classes',
-      done: steps.classes,
+      done: steps.classes || coveredByCarryForward('classes'),
       order: 3,
       subItems: [],
     },
@@ -78,16 +96,22 @@ function buildItems(steps: SetupStatusResponse['steps']): SetupItem[] {
 }
 
 export function useSetupStatus() {
+  const academicYearId = useUIStore((s) => s.academicYearId);
+
   return useQuery({
-    queryKey: ['setup-status'],
+    queryKey: ['setup-status', academicYearId],
     queryFn: async (): Promise<SetupStatusResult> => {
       const res = await getSetupStatus();
+      const carriedModules = academicYearId ? getCarryForwardModules(academicYearId) : [];
+      const items = buildItems(res.steps, carriedModules);
+      const doneCount = items.filter((i) => i.done).length;
+
       return {
-        items: buildItems(res.steps),
+        items,
         sidebar: res.sidebar,
-        progress: res.progress,
-        completedSteps: res.completedSteps,
-        totalSteps: res.totalSteps,
+        progress: items.length > 0 ? Math.round((doneCount / items.length) * 100) : res.progress,
+        completedSteps: doneCount,
+        totalSteps: items.length,
       };
     },
     staleTime: 30_000,

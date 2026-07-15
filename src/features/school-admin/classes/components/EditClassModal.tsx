@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getClassById } from "@/services/class.api";
-import type { UpdateClassPayload } from "@/services/school-classes.api";
+import type { UpdateClassPayload } from "@/services/class.api";
 
 interface Props {
   classId: string;

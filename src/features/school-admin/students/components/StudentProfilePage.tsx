@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Edit3, FileText, MoreVertical, MessageCircle, ArrowLeft } from "lucide-react";
-import { useStudentProfile } from "../hooks/useStudents";
+import { Edit3, FileText, MoreVertical, MessageCircle, ArrowLeft, UserPlus } from "lucide-react";
+import { useStudentProfile, useStudents } from "../hooks/useStudents";
 import { useStudentAttendance } from "../hooks/useStudentAttendance";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import StudentAttendanceTab from "./StudentAttendanceTab";
 import StudentFeeTab from "./StudentFeeTab";
 import { EditStudentModal } from "./EditStudentModal";
+import { AddParentModal } from "./AddParentModal";
 import StudentExamMarksTab from "./StudentExamMarksTab";
-import { studentsApi } from "@/services/school-students.api";
+import { studentsApi } from "@/services/student.api";
 import { useUIStore } from "@/store/uiStore";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
@@ -41,9 +42,11 @@ const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { student, loading, error, feeSummary, feePayments, retry } = useStudentProfile(id!);
+  const { students: allStudents } = useStudents();
   const attendanceHook = useStudentAttendance(student ?? null);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showEdit, setShowEdit] = useState(false);
+  const [showAddParent, setShowAddParent] = useState(false);
   const [showParentPhoto, setShowParentPhoto] = useState(false);
   const [showMotherPhoto, setShowMotherPhoto] = useState(false);
   const setPageTitle = useUIStore((s) => s.setPageTitle);
@@ -177,10 +180,17 @@ const StudentProfilePage = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm text-gray-700">Personal Information</h3>
-                <Button variant="link" size="sm" onClick={() => setShowEdit(true)} className="text-xs text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
-                  <Edit3 className="h-3 w-3" />
-                  Edit
-                </Button>
+                {student.parentId ? (
+                  <Button variant="link" size="sm" onClick={() => setShowEdit(true)} className="text-xs text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                    <Edit3 className="h-3 w-3" />
+                    Edit
+                  </Button>
+                ) : (
+                  <Button variant="link" size="sm" onClick={() => setShowAddParent(true)} className="text-xs text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                    <UserPlus className="h-3 w-3" />
+                    Add Parent
+                  </Button>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <InfoRow label="Admission No" value={student.admissionNo} />
@@ -335,6 +345,15 @@ const StudentProfilePage = () => {
             window.location.reload();
             return updated;
           }}
+        />
+      )}
+
+      {showAddParent && student && (
+        <AddParentModal
+          student={student}
+          students={allStudents}
+          onClose={() => setShowAddParent(false)}
+          onSaved={() => window.location.reload()}
         />
       )}
 

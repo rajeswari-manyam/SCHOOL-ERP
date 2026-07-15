@@ -4,6 +4,8 @@ import { Menu, Loader2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useUIStore } from "@/store/uiStore";
 import { useAcademicYears } from "./hooks/useAcademicYears";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationDropdownPanel } from "@/components/common/NotificationDropdownPanel";
 
 type Breadcrumb = { label: string; href?: string };
 
@@ -23,6 +25,9 @@ const Topbar = ({
   const { years, activeYear, loading, switching, error, switchYear, retry } = useAcademicYears();
   const [yearOpen, setYearOpen] = useState(false);
   const yearRef = useRef<HTMLDivElement>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const { notifications, isLoading: isLoadingNotifications, unreadCount, refetch: refetchNotifications } = useNotifications();
 
   let leftOffset = "left-0 md:left-[260px]";
   if (!sidebarOpen) leftOffset = "left-0 md:left-0";
@@ -45,6 +50,16 @@ const Topbar = ({
     if (yearOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [yearOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    if (notifOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifOpen]);
 
   return (
     <header
@@ -119,10 +134,31 @@ const Topbar = ({
             <span className="lg:hidden">Connected</span>
           </span>
 
-          <button className="relative rounded-lg bg-[#f4f7fd] p-1 text-[#6c7380] transition hover:bg-[#e9eef8] flex-shrink-0">
-            <FaBell className="text-xs sm:text-sm" />
-            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
-          </button>
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => {
+                const opening = !notifOpen;
+                setNotifOpen(opening);
+                setYearOpen(false);
+                if (opening) refetchNotifications();
+              }}
+              className="relative rounded-lg bg-[#f4f7fd] p-1 text-[#6c7380] transition hover:bg-[#e9eef8] flex-shrink-0"
+            >
+              <FaBell className="text-xs sm:text-sm" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+              )}
+            </button>
+
+            {notifOpen && (
+              <NotificationDropdownPanel
+                className="absolute right-0 top-full mt-2"
+                notifications={notifications}
+                isLoading={isLoadingNotifications}
+                unreadCount={unreadCount}
+              />
+            )}
+          </div>
 
           <div className="hidden md:block h-4 border-l border-[#e5e7eb]" />
 

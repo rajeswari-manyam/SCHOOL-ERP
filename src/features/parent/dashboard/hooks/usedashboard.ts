@@ -252,7 +252,6 @@ export function useDashboard() {
       studentId: string
       classId: string
       sectionId?: string
-      academicYear?: string
     }) => {
       useDashboardStore.getState().reset()
       try {

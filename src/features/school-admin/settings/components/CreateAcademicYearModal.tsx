@@ -6,11 +6,28 @@ import { getPreviousAcademicYear } from "@/components/common/hooks/useAcademicYe
 import {
   previewCarryForward,
   carryForward,
-  getCarryForwardStatus,
+  checkCarryForwardEligibility,
+  markCarryForwardCompleted,
   DEFAULT_CARRY_FORWARD_MODULES,
+  type CarryForwardModule,
   type CarryForwardPreviewItem,
 } from "@/services/academicYear.api";
 import type { AcademicYear, CreateAcademicYearPayload } from "../types/settings.types";
+
+// Keys must match CarryForwardModule exactly — these are the only modules the backend supports.
+const MODULES: { key: CarryForwardModule; label: string; desc: string }[] = [
+  { key: "classes",            label: "Classes",             desc: "Class names and structure" },
+  { key: "sections",           label: "Sections",            desc: "Sections and teacher assignments" },
+  { key: "subjects",           label: "Subjects",            desc: "Subject definitions" },
+  { key: "subjectAssignments", label: "Subject Assignments", desc: "Subject–section–teacher mappings" },
+  { key: "staff",              label: "Staff",               desc: "Staff records and assignments" },
+  { key: "departments",        label: "Departments",         desc: "Department structure" },
+];
+
+// All modules selected by default — admin can uncheck the ones they don't want copied.
+const DEFAULT_MODULES_SELECTED = Object.fromEntries(
+  DEFAULT_CARRY_FORWARD_MODULES.map((key) => [key, true]),
+) as Record<CarryForwardModule, boolean>;
 
 interface Props {
   onClose: () => void;
@@ -66,10 +83,13 @@ export const CreateAcademicYearModal = ({
   const [error, setError] = useState<string | null>(null);
 
   // ── Carry-forward step state ────────────────────────────────────────────
+  const [modules, setModules] = useState<Record<CarryForwardModule, boolean>>(DEFAULT_MODULES_SELECTED);
   const [preview, setPreview] = useState<CarryForwardPreviewItem[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [cfError, setCfError] = useState<string | null>(null);
+
+  const activeModuleKeys = (Object.keys(modules) as CarryForwardModule[]).filter((k) => modules[k]);
 
   const previousYear = useMemo(
     () => (targetYear ? getPreviousAcademicYear(baseYears, targetYear) : null),
@@ -88,13 +108,10 @@ export const CreateAcademicYearModal = ({
     try {
       const created = await onSubmit({ yearName: yearName.trim(), startDate, endDate });
       const prevForNew = getPreviousAcademicYear(baseYears, created);
-      // Never open the carry-forward step on the backend's say-so alone being
-      // absent — a previous year existing isn't enough; the backend must also
-      // confirm carry-forward is actually eligible for this new year.
-      const cfStatus = prevForNew
-        ? await getCarryForwardStatus().catch(() => ({ canCarryForward: false }))
-        : null;
-      if (prevForNew && cfStatus?.canCarryForward) {
+      // Never open the carry-forward step on a previous year existing alone —
+      // there also has to be something for it to actually copy.
+      const eligible = prevForNew ? await checkCarryForwardEligibility(prevForNew.id) : false;
+      if (prevForNew && eligible) {
         setTargetYear(created);
         setStep("carryForward");
       } else {
@@ -108,14 +125,14 @@ export const CreateAcademicYearModal = ({
   };
 
   const handlePreview = async () => {
-    if (!previousYear) return;
+    if (!previousYear || activeModuleKeys.length === 0) return;
     setPreviewing(true);
     setPreview(null);
     setCfError(null);
     try {
       const res = await previewCarryForward({
         sourceAcademicYearId: previousYear.id,
-        modules: DEFAULT_CARRY_FORWARD_MODULES,
+        modules: activeModuleKeys,
       });
       setPreview(res.data ?? []);
     } catch (err: any) {
@@ -127,16 +144,22 @@ export const CreateAcademicYearModal = ({
 
   const handleExecute = async () => {
     if (!previousYear || !targetYear) return;
+    // Admin unchecked every module — nothing to copy, so just close without calling the backend.
+    if (activeModuleKeys.length === 0) {
+      onClose();
+      return;
+    }
     setExecuting(true);
     setCfError(null);
     try {
       const res = await carryForward({
         sourceAcademicYearId: previousYear.id,
         targetAcademicYearId: targetYear.id,
-        modules: DEFAULT_CARRY_FORWARD_MODULES,
+        modules: activeModuleKeys,
       });
       if (res.status) {
         setDone(true);
+        markCarryForwardCompleted(targetYear.id, activeModuleKeys);
         onCarryForwardComplete?.(targetYear.id);
       } else {
         setCfError(res.message ?? "Carry forward failed.");
@@ -275,10 +298,48 @@ export const CreateAcademicYearModal = ({
                   )
                 )}
 
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Select Modules to Carry Forward</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {MODULES.map((m) => (
+                      <label
+                        key={m.key}
+                        className={`flex items-start gap-2.5 rounded-xl border p-3 cursor-pointer transition select-none ${
+                          modules[m.key]
+                            ? "border-indigo-300 bg-indigo-50"
+                            : "border-gray-200 bg-white hover:bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!modules[m.key]}
+                          onChange={(e) => {
+                            setModules((prev) => ({ ...prev, [m.key]: e.target.checked }));
+                            setPreview(null);
+                            setCfError(null);
+                          }}
+                          className="mt-0.5 h-4 w-4 accent-indigo-600 shrink-0"
+                        />
+                        <div>
+                          <p className={`text-xs font-semibold ${modules[m.key] ? "text-indigo-700" : "text-gray-700"}`}>
+                            {m.label}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{m.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {activeModuleKeys.length === 0 && (
+                    <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                      <AlertCircle size={12} /> No modules selected — nothing will be carried forward.
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={handlePreview}
-                    disabled={previewing}
+                    disabled={previewing || activeModuleKeys.length === 0}
                     variant="outline"
                     className="flex-1 flex items-center justify-center gap-1.5"
                   >
@@ -291,7 +352,11 @@ export const CreateAcademicYearModal = ({
                     className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 text-white"
                   >
                     <ChevronRight className="w-3.5 h-3.5" />
-                    {executing ? "Processing…" : "Execute Carry Forward"}
+                    {executing
+                      ? "Processing…"
+                      : activeModuleKeys.length === 0
+                      ? "Skip Carry Forward"
+                      : "Execute Carry Forward"}
                   </Button>
                 </div>
               </>

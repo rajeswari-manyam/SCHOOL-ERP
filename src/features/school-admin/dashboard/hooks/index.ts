@@ -1,9 +1,14 @@
 // ─── Dashboard Hooks (TanStack Query v5) ───────────────────────────────────
 
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dashboardApi } from '@/services/school-dashboard.api';
+import { dashboardApi } from '@/services/dashboard.api';
 import { useUIStore } from '@/store/uiStore';
 import api from '@/config/axios';
+import {
+  useStaffList,
+  useAllStaffAttendance,
+} from '../../attendance/hooks/useAttendance';
 
 export const DASHBOARD_QUERY_KEY = ['dashboard'] as const;
 
@@ -230,6 +235,44 @@ export function usePendingLeaves() {
     refetchInterval: 60_000,
     retry: 2,
   });
+}
+
+/**
+ * Teacher/staff attendance for today — derived from the existing staff list
+ * and all-staff-attendance data already used on the Staff Attendance page.
+ * No new endpoint needed.
+ */
+export function useStaffAttendanceToday() {
+  const { data: staffList, isLoading: isStaffLoading } = useStaffList();
+  const { data: allAttendance, isLoading: isAttendanceLoading } = useAllStaffAttendance();
+
+  const data = useMemo(() => {
+    if (!staffList) return undefined;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const totalStaff = staffList.length;
+
+    const todaysStatusByStaffId = new Map<string, string>();
+    for (const rec of allAttendance?.data ?? []) {
+      if (rec.date === todayStr) todaysStatusByStaffId.set(rec.staff_id, rec.status);
+    }
+
+    let present = 0;
+    let absent = 0;
+    let marked = 0;
+
+    for (const staff of staffList) {
+      const status = todaysStatusByStaffId.get(staff.id);
+      if (!status) continue;
+      marked += 1;
+      if (status === 'present' || status === 'late' || status === 'halfday') present += 1;
+      else if (status === 'absent') absent += 1;
+    }
+
+    return { present, absent, marked, total: totalStaff, notMarked: totalStaff - marked };
+  }, [staffList, allAttendance]);
+
+  return { data, isLoading: isStaffLoading || isAttendanceLoading };
 }
 
 /** Send WhatsApp reminders to unmarked classes */

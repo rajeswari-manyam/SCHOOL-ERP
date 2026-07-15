@@ -35,6 +35,19 @@ const StudentSelectPage = () => {
     navigate("/parent/dashboard", { replace: true });
   };
 
+  // Group students by academic year so a sibling appearing in multiple
+  // years (promotions, re-admissions, etc.) shows under the right year.
+  const groupedByYear: [string, Student[]][] = (() => {
+    const map = new Map<string, Student[]>();
+    for (const student of students) {
+      const label = student.academicYear?.yearName ?? "Other";
+      const list = map.get(label) ?? [];
+      list.push(student);
+      map.set(label, list);
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
+  })();
+
   if (students.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white px-4">
@@ -81,32 +94,47 @@ const StudentSelectPage = () => {
           </p>
         </div>
 
-        <div className="space-y-3">
-          {students.map((student) => (
-            <button
-              key={student.id}
-              type="button"
-              onClick={() => handleSelect(student)}
-              className="w-full flex items-center gap-4 p-4 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors text-left"
-            >
-              <div className="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                <span className="text-indigo-700 text-sm font-bold">
-                  {student.name
-                    .split(" ")
-                    .map((n) => n[0] ?? "")
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase() || "ST"}
-                </span>
+        <div className="space-y-6">
+          {groupedByYear.map(([yearLabel, yearStudents]) => (
+            <div key={yearLabel}>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 px-1">
+                {yearLabel}
+              </p>
+              <div className="space-y-3">
+                {yearStudents.map((student, idx) => (
+                  <button
+                    key={`${student.id}-${student.academicYearId ?? idx}`}
+                    type="button"
+                    onClick={() => handleSelect(student)}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors text-left"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                      <span className="text-indigo-700 text-sm font-bold">
+                        {student.name
+                          .split(" ")
+                          .map((n) => n[0] ?? "")
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase() || "ST"}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{student.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {[
+                          student.roll_number ? `Roll No: ${student.roll_number}` : "",
+                          student.className
+                            ? `Class ${student.className}${student.sectionName ? `-${student.sectionName}` : ""}`
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{student.name}</p>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {student.roll_number ? `Roll No: ${student.roll_number}` : ""}
-                  {student.class_id ? `${student.roll_number ? " · " : ""}Class ID: ${student.class_id}` : ""}
-                </p>
-              </div>
-            </button>
+            </div>
           ))}
         </div>
 

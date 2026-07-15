@@ -6,8 +6,8 @@ import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { getAllStaff, type StaffRecord } from "@/services/staff.api";
 import { getSectionById } from "@/services/section.api";
-import { fetchSubjectsBySectionId } from "@/services/school-classes.api";
-import type { UpdateSectionPayload } from "@/services/school-classes.api";
+import { fetchSubjectsBySectionId } from "@/services/class.api";
+import type { UpdateSectionPayload } from "@/services/class.api";
 import type { SubjectItem } from "../types/classes.types";
 
 interface Props {

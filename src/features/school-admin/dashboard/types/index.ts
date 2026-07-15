@@ -45,7 +45,7 @@ export interface StatsCard {
   sub: string;
   action?: { label: string };
   alert?: boolean;
-  icon: 'users' | 'check' | 'rupee' | 'user-plus';
+  icon: 'users' | 'check' | 'rupee' | 'user-check';
 }
 
 export interface DashboardData {

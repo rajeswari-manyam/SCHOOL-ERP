@@ -1,14 +1,12 @@
 // ExamPage.tsx
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { BookOpen, CalendarDays, FileText, AlertCircle, Mail, Loader2 } from "lucide-react";
+import { CalendarDays, AlertCircle, Loader2 } from "lucide-react";
 import { useExamsStore } from "../store/useExam.store";
-import { reportCard } from "../data/data";
 import { ExamBanner } from "../components/ExamBanner";
 import { ExamTable } from "../components/ExamTable";
 import { ResultSummaryCard } from "../components/ResultSummaryCard";
 import { ResultsTable } from "../components/ResultTable";
-import { ReportCardTable } from "../components/ReportCardTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUpcomingExams } from "../../../../services/examtimetable.api";
 import type { UpcomingExamItem } from "../../../../services/examtimetable.api";
@@ -38,7 +36,6 @@ type ParentLayoutContext = {
 const TABS = [
   { id: "upcoming" as const, label: "Upcoming Exams" },
   { id: "results" as const, label: "Results" },
-  { id: "reportcard" as const, label: "Report Card" },
 ];
 
 const CURRENT_ACADEMIC_YEAR = "2024-25";
@@ -247,7 +244,13 @@ export default function ExamsPage() {
         else setResultsError("Failed to load marks.");
       })
       .catch((err) => {
-        if (!cancelled) setResultsError(err?.message ?? "Something went wrong.");
+        if (cancelled) return;
+        // Backend returns 404 (not an empty array) when no marks exist yet for this exam.
+        if (err?.response?.status === 404) {
+          setResults([]);
+        } else {
+          setResultsError(err?.message ?? "Something went wrong.");
+        }
       })
       .finally(() => {
         if (!cancelled) setResultsLoading(false);
@@ -328,12 +331,8 @@ export default function ExamsPage() {
 
             <Card className="rounded-2xl shadow-sm overflow-hidden border-0 mb-6">
               <CardContent className="p-0">
-                <div className="px-5 pt-5 flex items-center justify-between">
+                <div className="px-5 pt-5">
                   <p className="text-[14px] font-semibold text-[#0B1C30]">{groupLabel}</p>
-                  <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#3525CD] hover:underline rounded-full bg-[#F4F6FB] px-2 py-1">
-                    <BookOpen size={13} />
-                    View Syllabus
-                  </button>
                 </div>
                 <div className="px-5 pt-4">
                   <ExamTable exams={mappedExams} />
@@ -349,41 +348,6 @@ export default function ExamsPage() {
                 </div>
               </CardContent>
             </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#EFF4FF] rounded-2xl p-5 flex gap-3 border border-[#E8EBF2] hover:shadow-md transition-shadow cursor-pointer">
-                <div className="w-9 h-9 rounded-xl bg-[#EEEDFE] flex items-center justify-center flex-shrink-0">
-                  <FileText size={18} color="#3525CD" strokeWidth={1.3} />
-                </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-[#0B1C30] mb-1">
-                    Preparation Guide
-                  </p>
-                  <p className="text-[12px] text-gray-400 leading-relaxed mb-2">
-                    Download the detailed syllabus and reference material for all subjects.
-                  </p>
-                  <button className="text-[12px] font-semibold text-[#3525CD] hover:underline">
-                    VIEW RESOURCES →
-                  </button>
-                </div>
-              </div>
-              <div className="bg-[#FFDDB8] rounded-2xl p-5 flex gap-3 border border-[#E8EBF2] hover:shadow-md transition-shadow cursor-pointer">
-                <div className="w-9 h-9 rounded-xl bg-[#FFF4ED] flex items-center justify-center flex-shrink-0">
-                  <AlertCircle size={18} color="#F97316" strokeWidth={1.3} />
-                </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-[#0B1C30] mb-1">
-                    Need Assistance?
-                  </p>
-                  <p className="text-[12px] text-gray-400 leading-relaxed mb-2">
-                    Questions regarding the exam schedule or venues? Contact the administration desk.
-                  </p>
-                  <button className="flex items-center gap-1 text-[12px] font-semibold text-[#3525CD] hover:underline">
-                    CONTACT ADMIN <Mail size={12} className="ml-0.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         )
       )}
@@ -421,22 +385,6 @@ export default function ExamsPage() {
               <ResultsTable results={resultSummary.results} />
             </>
           )}
-        </div>
-      )}
-
-      {/* ── REPORT CARD TAB ── */}
-      {tab === "reportcard" && (
-        <div>
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-[15px] font-semibold text-[#0B1C30]">
-              Annual Report Card — {reportCard.academicYear}
-            </span>
-            <select className="border border-[#E8EBF2] rounded-xl px-4 py-2 text-[13px] text-[#0B1C30] bg-white cursor-pointer">
-              <option>2024-25</option>
-              <option>2023-24</option>
-            </select>
-          </div>
-          <ReportCardTable data={reportCard} />
         </div>
       )}
 

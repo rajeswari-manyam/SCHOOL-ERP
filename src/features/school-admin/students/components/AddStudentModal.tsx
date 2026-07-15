@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, X, ArrowRight, MessageCircle, Camera, Trash2 } from "lucide-react";
@@ -9,7 +9,8 @@ import { useClassesList } from "../hooks/useClassesList";
 import { useSectionsList } from "../hooks/useSectionsList";
 
 import type { AddStudentFormData, Student } from "../types/student.types";
-import { parentsApi } from "@/services/school-parents.api";
+import { parentsApi, getParentById } from "@/services/parent.api";
+import { studentsApi } from "@/services/student.api";
 import type { CreateParentPayload } from "../types/parent.types";
 
 interface CreateStudentResponse {
@@ -38,7 +39,8 @@ const EMPTY_FORM: AddStudentFormData = {
   bloodGroup: "", rollNumber: "", photo: null, residentialAddress: "",
   fatherName: "", fatherPhone: "", fatherOccupation: "", fatherRelation: "Father",
   motherName: "", motherPhone: "", motherOccupation: "", motherRelation: "Mother",
-  emergencyContact: "", whatsappNumber: "", sameAsFather: false, email: "",
+  emergencyContact: "", whatsappNumber: "", sameAsFather: false,
+  fatherEmail: "", motherEmail: "",
 };
 
 const BLOOD_GROUPS = ["A+","A-","B+","B-","O+","O-","AB+","AB-"].map((b) => ({ value: b, label: b }));
@@ -135,6 +137,45 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
   const { sections, loading: sectionsLoading, error: sectionsError, retry: retrySections } = useSectionsList(selectedClassId);
 
   const [generatedAdmNo] = useState(() => genNextAdmissionNo(students));
+  const [selectedParentId, setSelectedParentId] = useState("");
+
+  // Siblings already enrolled share one parent — surface them here so a second
+  // (or third) child can reuse the parent's details instead of retyping them.
+  const existingParents = useMemo(() => {
+    const seen = new Set<string>();
+    const result: { parentId: string; label: string; student: Student }[] = [];
+    for (const s of students) {
+      if (!s.parentId || seen.has(s.parentId)) continue;
+      seen.add(s.parentId);
+      const name = s.fatherName || s.motherName || "Parent";
+      const phone = s.fatherPhone || s.motherPhone || "";
+      result.push({
+        parentId: s.parentId,
+        label: `${name}${phone ? ` — +91 ${phone}` : ""} (sibling of ${s.firstName} ${s.lastName})`,
+        student: s,
+      });
+    }
+    return result;
+  }, [students]);
+
+  const handleSelectExistingParent = (parentId: string) => {
+    setSelectedParentId(parentId);
+    if (!parentId) return;
+    const match = existingParents.find((p) => p.parentId === parentId)?.student;
+    if (!match) return;
+    setForm((prev) => ({
+      ...prev,
+      fatherName: match.fatherName ?? "",
+      fatherPhone: match.fatherPhone ?? "",
+      fatherOccupation: match.fatherOccupation ?? "",
+      fatherEmail: match.fatherEmail ?? "",
+      motherName: match.motherName ?? "",
+      motherPhone: match.motherPhone ?? "",
+      motherOccupation: match.motherOccupation ?? "",
+      motherEmail: match.motherEmail ?? "",
+      residentialAddress: prev.residentialAddress || (match.residentialAddress ?? ""),
+    }));
+  };
 
   useEffect(() => {
     if (autoGenerate) {
@@ -160,7 +201,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
     const lower = msg.toLowerCase();
     if (lower.includes("admission")) return { field: "admissionNo", text: msg };
     if (lower.includes("roll"))      return { field: "rollNumber",  text: msg };
-    if (lower.includes("email"))     return { field: "email",       text: msg };
+    if (lower.includes("email"))     return { field: "fatherEmail", text: msg };
     if (lower.includes("phone"))     return { field: "fatherPhone", text: msg };
     return { field: null, text: msg };
   };
@@ -295,11 +336,11 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
   const buildParentPayload = (): CreateParentPayload => ({
     father_name: form.fatherName.trim(),
     father_occupation: form.fatherOccupation || "Not specified",
-    father_email: form.email,
+    father_email: form.fatherEmail,
     father_phone: form.fatherPhone.trim(),
     mother_name: form.motherName.trim(),
     mother_occupation: form.motherOccupation || "Not specified",
-    mother_email: form.email,
+    mother_email: form.motherEmail,
     mother_phone: form.motherPhone.trim(),
     students: [studentData?.id ?? ""],
     address: form.residentialAddress,
@@ -308,16 +349,34 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
   });
 
   const handleSubmit = async () => {
-    if (!validateStep2()) return;
+    if (!validateStep2()) {
+      setFormError("Please fill in all required parent fields marked in red.");
+      return;
+    }
     setLoading(true);
     setFormError(null);
     try {
       if (!studentData?.id) { setFormError("Student data missing."); return; }
 
-      await parentsApi.createParent(buildParentPayload());
+      if (selectedParentId) {
+        // Sibling flow: /tenant/updateparentById REPLACES the parent's whole
+        // students list (it unlinks everyone, then relinks only what's sent)
+        // rather than appending — confirmed against the backend controller.
+        // So we must fetch the parent's current students and send the full
+        // merged list, not just the new student.
+        const existingParent = await getParentById(selectedParentId);
+        const existingIds = (existingParent.students ?? []).map((s: any) =>
+          typeof s === "string" ? s : s.id
+        );
+        const mergedIds = Array.from(new Set([...existingIds, studentData.id]));
+        await studentsApi.updateParent(selectedParentId, { students: mergedIds });
+      } else {
+        await parentsApi.createParent(buildParentPayload());
+      }
 
       setForm(EMPTY_FORM);
       setStudentData(null);
+      setSelectedParentId("");
       setPhotoPreview(null);
       setFatherPhoto(null);
       setFatherPhotoPreview(null);
@@ -506,6 +565,28 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
           {step === 2 && (
             <div className="space-y-5">
 
+              {existingParents.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Sibling Already Enrolled?</p>
+                  <Field label="Select Existing Parent">
+                    <Select
+                      options={[
+                        { label: "None — add a new parent", value: "" },
+                        ...existingParents.map((p) => ({ label: p.label, value: p.parentId })),
+                      ]}
+                      value={selectedParentId}
+                      onValueChange={handleSelectExistingParent}
+                      placeholder="None — add a new parent"
+                    />
+                  </Field>
+                  {selectedParentId && (
+                    <p className="text-[11px] text-indigo-600 mt-1.5">
+                      Parent details filled in from the sibling's record below — edit if anything's changed.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Father / Guardian Details</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -609,12 +690,15 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                     <PhoneInput value={form.emergencyContact} onChange={set("emergencyContact")} placeholder="98480 22338" />
                   </Field>
 
-                  <div className="sm:col-span-2">
-                    <Field label="Email (Common)">
-                      <input type="email" className={inputCls} placeholder="parent@email.com"
-                        value={form.email} onChange={(ev) => set("email")(ev.target.value)} />
-                    </Field>
-                  </div>
+                  <Field label="Father's Email">
+                    <input type="email" className={inputCls} placeholder="father@email.com"
+                      value={form.fatherEmail} onChange={(ev) => set("fatherEmail")(ev.target.value)} />
+                  </Field>
+
+                  <Field label="Mother's Email">
+                    <input type="email" className={inputCls} placeholder="mother@email.com"
+                      value={form.motherEmail} onChange={(ev) => set("motherEmail")(ev.target.value)} />
+                  </Field>
                 </div>
               </div>
 

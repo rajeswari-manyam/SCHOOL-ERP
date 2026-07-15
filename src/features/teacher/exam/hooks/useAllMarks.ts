@@ -49,11 +49,13 @@ export function marksToSubmittedExam(
 
     return {
       id:                   item.id,
+      examId:               item.examId ?? "",
       examType:             fallbackExamType ?? item.examName ?? "",
       examLabel:            item.examName    ?? "Exam",
       className:            item.className   ?? fallbackClassName ?? "",
       subject:              item.subjectName ?? fallbackSubject   ?? "",
       academicYear:         item.academicYear ?? "",
+      academicYearId:       item.academicYearId ?? "",
       submittedOn:          item.examDate    ?? "",
       status,
       totalStudents:        item.totalStudents        ?? 0,

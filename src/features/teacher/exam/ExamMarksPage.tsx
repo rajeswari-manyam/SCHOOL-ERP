@@ -7,13 +7,11 @@ import SummaryBar from "./components/SummaryBar";
 import SubmitMarksModal from "./components/SubmitMarksModal";
 import SubmittedMarksTab from "./components/SubmittedMarksTab";
 import SubmittedMarksFilter from "./components/SubmittedMarksFilter";
-import ResultsPublishedTab from "./components/ResultsPublishedTab";
 import type { ExamTab } from "./hooks/useExamMarks";
 
 const TABS: { key: ExamTab; label: string }[] = [
   { key: "enter",     label: "Enter Marks" },
   { key: "submitted", label: "Submitted Marks" },
-  // { key: "published", label: "Results Published" },
 ];
 
 const ExamMarksPage = () => {
@@ -25,10 +23,9 @@ const ExamMarksPage = () => {
     summary, selectorLabel,
     showSubmitModal, setShowSubmitModal,
     confirmChecked, setConfirmChecked,
-    draftMsg, submitMsg, dlMsg,
+    draftMsg, submitMsg,
     handleSaveDraft, handleOpenSubmit, handleConfirmSubmit,
-    handleDownloadReport,
-    submittedExams, publishedResults,
+    submittedExams,
     studentsError,
     marksLoading, marksError, refetchMarks,
     submitting, submitError,
@@ -61,12 +58,6 @@ const ExamMarksPage = () => {
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
               <Check size={14} className="text-current" strokeWidth={2.5} />
               Marks submitted for review!
-            </div>
-          )}
-          {dlMsg && (
-            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold px-4 py-2 rounded-xl animate-pulse">
-              <Check size={14} className="text-current" strokeWidth={2.5} />
-              Report downloading!
             </div>
           )}
           {submitError && (
@@ -182,11 +173,6 @@ const ExamMarksPage = () => {
             )}
           />
         </div>
-      )}
-
-      {/* ── Tab: Results Published ────────────────────────────────────── */}
-      {activeTab === "published" && (
-        <ResultsPublishedTab results={publishedResults} onDownload={handleDownloadReport} />
       )}
 
       {/* Submit Modal */}

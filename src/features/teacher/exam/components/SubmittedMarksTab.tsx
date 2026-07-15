@@ -25,9 +25,15 @@ interface Props {
   onRetry?: () => void;
   /** Whether the user has clicked Search at least once */
   hasSearched?: boolean;
+  /** Shows the Publish toggle column — used by the school-admin Results page, not the teacher view */
+  showPublish?: boolean;
+  /** Publishes a single exam row's results to students & parents */
+  onPublish?: (exam: SubmittedExam) => void;
+  /** id of the exam row currently being published, if any */
+  publishingId?: string | null;
 }
 
-const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Props) => {
+const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched, showPublish, onPublish, publishingId }: Props) => {
   // Idle state: no search triggered yet
   if (!hasSearched && !loading) {
     return (
@@ -159,12 +165,40 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched }: Prop
 
                   {/* Actions */}
                   <td className="px-5 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-4">
                       {ex.status === "SUBMITTED" && (
                         <button className="text-xs font-semibold text-amber-600 hover:text-amber-800 hover:underline transition-colors">
                           Approve
                         </button>
                       )}
+
+                      {/* Publish toggle — publishing has no undo, so once PUBLISHED it's a disabled on-state */}
+                      {showPublish && (
+                        ex.status === "PUBLISHED" ? (
+                          <span className="flex items-center gap-1.5" title="Results published to students & parents">
+                            <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-indigo-600">
+                              <span className="inline-block h-3 w-3 translate-x-3.5 rounded-full bg-white" />
+                            </span>
+                            <span className="text-[11px] font-bold text-indigo-600">Published</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onPublish?.(ex)}
+                            disabled={publishingId === ex.id}
+                            title="Publish results to students & parents"
+                            className="flex items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-gray-200 group-hover:bg-gray-300 transition-colors">
+                              <span className="inline-block h-3 w-3 translate-x-0.5 rounded-full bg-white shadow transition-transform" />
+                            </span>
+                            <span className="text-[11px] font-semibold text-gray-500 group-hover:text-gray-700">
+                              {publishingId === ex.id ? "Publishing…" : "Publish"}
+                            </span>
+                          </button>
+                        )
+                      )}
+
                       <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors">
                         View
                       </button>

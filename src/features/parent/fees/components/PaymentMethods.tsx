@@ -3,8 +3,10 @@ import { Card, CardContent } from "../../../../components/ui/card";
 import typography from "../../../../styles/typography";
 import { cn } from "../../../../utils/cn";
 
-import type { PaymentMethodsProps } from "../types/fee.types";
-import { paymentMethods } from "../data/fee.data";
+import type { PaymentMethodsProps, PaymentMethod } from "../types/fee.types";
+
+// TODO: replace with real payment methods from API
+const paymentMethods: PaymentMethod[] = [];
 
 export function PaymentMethods({
   defaultSelected = "upi",

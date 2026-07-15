@@ -13,6 +13,7 @@ import {
   getAllAcademicYears,
   previewCarryForward,
   carryForward,
+  markCarryForwardCompleted,
   type AcademicYearRecord,
   type CarryForwardPreviewItem,
   type CarryForwardModule,
@@ -98,6 +99,9 @@ export default function CarryForwardPage() {
         targetAcademicYearId: targetYearId,
         modules: modulesPayload(),
       });
+      if (res.status) {
+        markCarryForwardCompleted(targetYearId, modulesPayload());
+      }
       setDone({
         success: res.status,
         message:
