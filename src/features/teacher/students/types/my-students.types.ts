@@ -43,6 +43,5 @@ export interface Student {
 
 export interface MyStudentsFilters {
   search: string;
-  feeStatus: FeeStatus | "ALL";
   attendanceRange: "ALL" | "BELOW_75" | "75_TO_90" | "ABOVE_90";
 }

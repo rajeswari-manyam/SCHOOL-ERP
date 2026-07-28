@@ -176,6 +176,7 @@ export const ExamsPage = () => {
         {activeTab === "results" && (
           <div className="rounded-xl border border-transparent transition-all duration-200">
             <ResultsSection
+              studentId={studentId}
               examResult={examResult}
               resultsLoading={resultsLoading}
               resultsError={resultsError}

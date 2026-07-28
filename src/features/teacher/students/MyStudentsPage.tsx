@@ -1,25 +1,14 @@
-import { useState } from "react";
-import { Check, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useMyStudents } from "./hooks/useMyStudents";
 import ChronicAbsenteesAlert from "./components/ChronicAbsenteesAlert";
 import StudentFilterBar from "./components/StudentFilterBar";
 import StudentTable from "./components/StudentTable";
-import StudentQuickViewDrawer from "./components/StudentQuickViewDrawer";
 
 const MyStudentsPage = () => {
   const {
     students, filtered, chronicAbsentees, isLoading, isError, error,
     filters, setFilters,
-    selectedStudent, isDrawerOpen,
-    openDrawer, closeDrawer,
   } = useMyStudents();
-
-  const [exportMsg, setExportMsg] = useState(false);
-
-  const handleExport = () => {
-    setExportMsg(true);
-    setTimeout(() => setExportMsg(false), 3000);
-  };
 
   const first = students[0];
   const headerClass = first ? `${first.className}${first.section ? ` - ${first.section}` : ""}` : "—";
@@ -67,16 +56,10 @@ const MyStudentsPage = () => {
             {headerClass} · {students.length} student{students.length === 1 ? "" : "s"} enrolled
           </p>
         </div>
-        {exportMsg && (
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-4 py-2 rounded-lg">
-            <Check size={14} className="text-current" strokeWidth={2.5} />
-            Class list exported!
-          </div>
-        )}
       </div>
 
       {/* Chronic absentees alert */}
-      <ChronicAbsenteesAlert students={chronicAbsentees} onView={openDrawer} />
+      <ChronicAbsenteesAlert students={chronicAbsentees} />
 
       {/* Filter bar */}
       <StudentFilterBar
@@ -84,19 +67,10 @@ const MyStudentsPage = () => {
         onChange={setFilters}
         totalCount={students.length}
         filteredCount={filtered.length}
-        onExport={handleExport}
       />
 
       {/* Student table */}
-      <StudentTable students={filtered} onView={openDrawer} />
-
-      {/* Quick view drawer */}
-      <StudentQuickViewDrawer
-        student={selectedStudent}
-        open={isDrawerOpen}
-        onClose={closeDrawer}
-        studentIndex={selectedStudent ? students.findIndex((s) => s.id === selectedStudent.id) : 0}
-      />
+      <StudentTable students={filtered} />
     </div>
   );
 };

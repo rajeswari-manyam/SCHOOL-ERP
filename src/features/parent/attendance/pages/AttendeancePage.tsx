@@ -6,6 +6,7 @@ import AttendanceStats from "../components/AttendanceStat"
 import AttendanceCalendar from "../components/AttendanceCalendar"
 import AbsentList from "../components/AbsentList"
 import AbsentModal from "../components/AbsentModal"
+import HolidaysTab from "../components/HolidaysTab"
 
 import typography, { combineTypography } from "../../../../styles/typography"
 import { useAttendance } from "../hooks/useattedance"
@@ -33,6 +34,8 @@ type ParentLayoutContext = {
 // ─────────────────────────────────────────────────────────
 export default function AttendancePage() {
   const { activeChild } = useOutletContext<ParentLayoutContext>() || {}
+
+  const [activeTab, setActiveTab] = useState<"attendance" | "holidays">("attendance")
 
   // ✅ Resolve real class + section UUIDs from student detail
   const studentId = String(activeChild?.studentId ?? activeChild?.id ?? "")
@@ -81,8 +84,7 @@ export default function AttendancePage() {
     const month = currentDate.getMonth() + 1
     const year  = currentDate.getFullYear()
 
-    // Monthly doesn't need extra params
-    fetchMonthly(studentId, month, year)
+    fetchMonthly(studentId, month, year, academicYearId)
 
     // ✅ Only call yearly once class/section/academicYear UUIDs are available
     if (!classId || !sectionId || !academicYearId) return
@@ -143,8 +145,8 @@ export default function AttendancePage() {
           {/* Header with month nav */}
           <AttendanceHeader
             currentDate={currentDate}
-            onPrev={() => goToPrevMonth(studentId)}
-            onNext={() => goToNextMonth(studentId)}
+            onPrev={() => goToPrevMonth(studentId, academicYearId)}
+            onNext={() => goToNextMonth(studentId, academicYearId)}
             isLoading={isLoadingMonthly}
             child={{
               id: activeChild?.id ?? 0,
@@ -155,28 +157,58 @@ export default function AttendancePage() {
             }}
           />
 
-          {/* Stats row */}
-          <AttendanceStats
-            onAbsentCardClick={handleAbsentStatClick}
-            monthSummary={monthSummary}
-            yearlySummary={yearlySummary}
-            isLoadingMonthly={isLoadingMonthly}
-            isLoadingYearly={isLoadingYearly}
-          />
-
-          {/* Calendar + sidebar */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
-            <AttendanceCalendar
-              currentDate={currentDate}
-              onAbsentClick={handleCalendarAbsentClick}
-              isLoading={isLoadingMonthly}
-            />
-            <AbsentList
-              currentDate={currentDate}
-              onSelect={handleListSelect}
-              isLoading={isLoadingMonthly}
-            />
+          {/* Tabs */}
+          <div className="flex gap-1 border-b border-gray-200">
+            {[
+              { key: "attendance" as const, label: "Attendance" },
+              { key: "holidays" as const, label: "Holidays" },
+            ].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
+                  activeTab === t.key
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
+
+          {/* ── Attendance tab ──────────────────────────── */}
+          {activeTab === "attendance" && (
+            <>
+              {/* Stats row */}
+              <AttendanceStats
+                onAbsentCardClick={handleAbsentStatClick}
+                monthSummary={monthSummary}
+                yearlySummary={yearlySummary}
+                isLoadingMonthly={isLoadingMonthly}
+                isLoadingYearly={isLoadingYearly}
+              />
+
+              {/* Calendar + sidebar */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+                <AttendanceCalendar
+                  currentDate={currentDate}
+                  onAbsentClick={handleCalendarAbsentClick}
+                  isLoading={isLoadingMonthly}
+                />
+                <AbsentList
+                  currentDate={currentDate}
+                  onSelect={handleListSelect}
+                  isLoading={isLoadingMonthly}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ── Holidays tab ────────────────────────────── */}
+          {activeTab === "holidays" && (
+            <HolidaysTab />
+          )}
 
         </main>
       </div>

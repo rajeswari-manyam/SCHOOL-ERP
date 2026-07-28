@@ -122,6 +122,7 @@ function recordToTransaction(r: RecordFeePaymentRecord): Transaction {
   const remaining = r.amount - r.topay;
   return {
     id:              r.id,
+    studentId:       r.student_id,
     date:            r.payment_date,
     student:         r.studentName ?? "—",
     className:       r.sectionName ? `${r.className ?? ""} · ${r.sectionName}`.trim() : (r.className ?? "—"),
@@ -145,6 +146,7 @@ function pendingEntryToFeeRows(entry: AllPendingFeesEntry): FeeRow[] {
       : "—";
     return {
       id:              `${entry.student.id}-${d.feeHeadName ?? "fee"}-${i}`,
+      studentId:       entry.student.id,
       student:         entry.student.name,
       admissionNo:     "—",
       className:       "—",

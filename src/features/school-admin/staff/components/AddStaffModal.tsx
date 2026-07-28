@@ -285,12 +285,12 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* FULL NAME */}
             <Field label="Full Name" required error={errors.fullName}>
-              <input className={ic(errors.fullName)} placeholder="Priya Reddy" value={form.fullName} onChange={set("fullName")} />
+              <input className={ic(errors.fullName)} placeholder="Enter full name" value={form.fullName} onChange={set("fullName")} />
             </Field>
 
             {/* ROLE */}
             <Field label="Role" required error={errors.role}>
-              <input className={ic(errors.role)} placeholder="e.g. Class Teacher" value={form.role} onChange={set("role")} />
+              <input className={ic(errors.role)} placeholder="Enter role" value={form.role} onChange={set("role")} />
             </Field>
 
             {/* PHONE NUMBER */}
@@ -306,7 +306,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
                   type="tel"
                   value={form.phone}
                   onChange={(e) => { setForm((p) => ({ ...p, phone: e.target.value })); setErrors((p) => ({ ...p, phone: "" })); }}
-                  placeholder="98765 43210"
+                  placeholder="Enter phone number"
                   maxLength={10}
                   className="flex-1 h-full px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
                 />
@@ -319,7 +319,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* EMAIL */}
             <Field label="Email" error={errors.email}>
-              <input className={inputCls} type="email" placeholder="priya@school.edu.in" value={form.email} onChange={set("email")} />
+              <input className={inputCls} type="email" placeholder="Enter email" value={form.email} onChange={set("email")} />
             </Field>
 
             {/* EMPLOYEE ID */}
@@ -336,13 +336,13 @@ export const AddStaffModal = ({ onClose }: Props) => {
                 value={autoGenEmp ? generatedEmpId : form.empNumber}
                 onChange={(e) => !autoGenEmp && setForm((p) => ({ ...p, empNumber: e.target.value }))}
                 readOnly={autoGenEmp}
-                placeholder="EMP-001"
+                placeholder="Enter employee ID"
               />
             </div>
 
             {/* QUALIFICATION */}
             <Field label="Qualification">
-              <input className={inputCls} placeholder="B.Ed, M.Sc" value={form.qualification} onChange={set("qualification")} />
+              <input className={inputCls} placeholder="Enter qualification" value={form.qualification} onChange={set("qualification")} />
             </Field>
 
             {/* DATE OF BIRTH */}
@@ -362,14 +362,14 @@ export const AddStaffModal = ({ onClose }: Props) => {
 
             {/* BANK ACCOUNT NUMBER */}
             <Field label="Bank Account Number" error={errors.bankAccountNumber} hint="9–18 digits, numbers only">
-              <input className={ic(errors.bankAccountNumber)} placeholder="e.g. 012345678901" value={form.bankAccountNumber} onChange={set("bankAccountNumber")} maxLength={18} />
+              <input className={ic(errors.bankAccountNumber)} placeholder="Enter bank account number" value={form.bankAccountNumber} onChange={set("bankAccountNumber")} maxLength={18} />
             </Field>
 
             {/* IFSC CODE */}
             <Field label="IFSC Code" error={errors.ifscCode} hint="Format: SBIN0001234">
               <input
                 className={ic(errors.ifscCode)}
-                placeholder="SBIN0001234"
+                placeholder="Enter IFSC code"
                 value={form.ifscCode}
                 maxLength={11}
                 onChange={(e) => { setForm((p) => ({ ...p, ifscCode: e.target.value.toUpperCase() })); setErrors((p) => ({ ...p, ifscCode: "" })); }}

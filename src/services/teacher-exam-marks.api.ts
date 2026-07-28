@@ -13,6 +13,7 @@ import type {
   BulkMarksResponse,
   GetAllMarksQuery,
   MarksRecordItem,
+  EnteredStudentMark,
   PublishMarksPayload,
   PublishMarksResponse,
 } from "@/features/teacher/exam/types/exam-marks.types";
@@ -68,6 +69,16 @@ function hasApiError(raw: unknown): string | null {
  *   { id, examName, academicYear, className, subjectName, examDate,
  *     marksEntered, totalStudents, averageMarks, completionPercentage, status }
  */
+function mapEnteredStudent(item: Record<string, unknown>): EnteredStudentMark {
+  return {
+    studentId:     (item.studentId ?? item.student_id ?? "") as string,
+    admissionNo:   (item.admissionNo ?? item.admission_no ?? item.admissionNumber ?? "") as string,
+    studentName:   (item.studentName ?? item.student_name ?? "") as string,
+    marksObtained: item.marksObtained != null ? Number(item.marksObtained) : item.marks_obtained != null ? Number(item.marks_obtained) : 0,
+    isPublished:   item.isPublished === true || item.is_published === true,
+  };
+}
+
 function mapMarksRecordItem(item: Record<string, unknown>): MarksRecordItem {
   return {
     id:                   (item.id ?? item._id ?? "") as string,
@@ -83,6 +94,11 @@ function mapMarksRecordItem(item: Record<string, unknown>): MarksRecordItem {
     averageMarks:         item.averageMarks != null ? Number(item.averageMarks) : item.average_marks != null ? Number(item.average_marks) : undefined,
     completionPercentage: item.completionPercentage != null ? Number(item.completionPercentage) : undefined,
     status:               (item.status ?? "") as string,
+    enteredStudents:      Array.isArray(item.enteredStudents)
+      ? (item.enteredStudents as Record<string, unknown>[]).map(mapEnteredStudent)
+      : Array.isArray(item.entered_students)
+      ? (item.entered_students as Record<string, unknown>[]).map(mapEnteredStudent)
+      : undefined,
   };
 }
 

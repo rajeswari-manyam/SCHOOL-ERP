@@ -3,6 +3,7 @@ import { useAttendanceStore } from "../store";
 import { createHoliday } from "../../../../services/holidays.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { attendanceKeys } from "../hooks/useAttendance";
+import { useAcademicYears } from "../../../../components/common/hooks/useAcademicYears";
 import { Button } from "../../../../components/ui/button";
 import { Card } from "../../../../components/ui/card";
 import { Input } from "../../../../components/ui/input";
@@ -12,19 +13,19 @@ import { Label } from "../../../../components/ui/label";
 import { Switch } from "../../../../components/ui/switch";
 
 const holidayTypeOptions = [
-  { label: "National Holiday", value: "National Holiday" },
-  { label: "Public Holiday",   value: "Public Holiday"   },
-  { label: "School Event",     value: "School Event"     },
-  { label: "School Day",       value: "School Day"       },
+  { label: "Public",     value: "public"     },
+  { label: "Optional",   value: "optional"   },
+  { label: "Restricted", value: "restricted" },
 ];
 
 const AddHolidayModal = () => {
   const { showAddHolidayModal, closeAddHoliday } = useAttendanceStore();
   const queryClient = useQueryClient();
+  const { activeYear } = useAcademicYears();
   const [holidayName,     setHolidayName]     = useState("");
   const [fromDate,        setFromDate]        = useState("");
   const [toDate,          setToDate]          = useState("");
-  const [holidayType,     setHolidayType]     = useState("National Holiday");
+  const [holidayType,     setHolidayType]     = useState("public");
   const [repeatAnnually,  setRepeatAnnually]  = useState(true);
   const [notes,           setNotes]           = useState("");
   const [notifyTeachers,  setNotifyTeachers]  = useState(true);
@@ -41,16 +42,6 @@ const AddHolidayModal = () => {
 
   const isFormValid = holidayName.trim() && fromDate.trim() && toDate.trim() && holidayType.trim();
 
-  const holidayTypeToApi = (uiType: string): string => {
-    const map: Record<string, string> = {
-      "National Holiday": "public",
-      "Public Holiday":   "public",
-      "School Event":     "optional",
-      "School Day":       "optional",
-    };
-    return map[uiType] ?? "public";
-  };
-
   const handleSave = async () => {
     if (!isFormValid) return;
 
@@ -58,6 +49,10 @@ const AddHolidayModal = () => {
       import.meta.env.VITE_SCHOOL_CODE || localStorage.getItem("schoolcode");
     if (!schoolCode) {
       setError("School code not found. Please log in again.");
+      return;
+    }
+    if (!activeYear?.id) {
+      setError("Academic year not loaded. Please refresh the page.");
       return;
     }
 
@@ -70,10 +65,10 @@ const AddHolidayModal = () => {
         holidayname: holidayName.trim(),
         from_date:   fromDate,
         to_date:     toDate,
-        type:        holidayTypeToApi(holidayType),
+        type:        holidayType,
         note:        notes.trim() || holidayType,
         school_code: schoolCode,
-        academicYearId: localStorage.getItem("academicYearId") ?? "",
+        academicYearId: activeYear.id,
       };
 
       // ✅ Use the imported createHoliday directly (was incorrectly calling attendanceApi.createHolidayProduction)
@@ -84,7 +79,7 @@ const AddHolidayModal = () => {
       setHolidayName("");
       setFromDate("");
       setToDate("");
-      setHolidayType("National Holiday");
+      setHolidayType("public");
       setRepeatAnnually(true);
       setNotes("");
       setNotifyTeachers(true);

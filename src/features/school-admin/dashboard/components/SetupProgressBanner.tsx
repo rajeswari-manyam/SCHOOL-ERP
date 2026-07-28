@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, ArrowRight, X, ChevronRight } from 'lucide-react';
 import { useSetupStatus } from '../hooks/useSetupStatus';
@@ -20,15 +21,17 @@ export function SetupProgressBanner() {
 
   const { data: setupData, isLoading } = useSetupStatus();
 
-  if (isLoading || !setupData || wizardDismissed) return null;
+  const allDone = !!setupData && setupData.items.every((i) => i.done);
+
+  // Dismissing on "all done" updates a different component's (SchoolAdminLayout)
+  // state, so it must happen in an effect, not synchronously during render.
+  useEffect(() => {
+    if (allDone) setWizardDismissed(true);
+  }, [allDone, setWizardDismissed]);
+
+  if (isLoading || !setupData || wizardDismissed || allDone) return null;
 
   const { items } = setupData;
-  const allDone = items.every((i) => i.done);
-  if (allDone) {
-    setWizardDismissed(true);
-    return null;
-  }
-
   const stepId = ROUTE_TO_STEP[location.pathname];
   if (!stepId) return null;
 

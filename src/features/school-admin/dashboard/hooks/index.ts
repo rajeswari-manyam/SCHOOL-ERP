@@ -7,7 +7,7 @@ import { useUIStore } from '@/store/uiStore';
 import api from '@/config/axios';
 import {
   useStaffList,
-  useAllStaffAttendance,
+  useStaffAttendanceRange,
 } from '../../attendance/hooks/useAttendance';
 
 export const DASHBOARD_QUERY_KEY = ['dashboard'] as const;
@@ -239,22 +239,22 @@ export function usePendingLeaves() {
 
 /**
  * Teacher/staff attendance for today — derived from the existing staff list
- * and all-staff-attendance data already used on the Staff Attendance page.
+ * and today's staff attendance (date-range query scoped to today).
  * No new endpoint needed.
  */
 export function useStaffAttendanceToday() {
   const { data: staffList, isLoading: isStaffLoading } = useStaffList();
-  const { data: allAttendance, isLoading: isAttendanceLoading } = useAllStaffAttendance();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const { data: rangeData, isLoading: isAttendanceLoading } = useStaffAttendanceRange('', todayStr, todayStr, true);
 
   const data = useMemo(() => {
     if (!staffList) return undefined;
 
-    const todayStr = new Date().toISOString().slice(0, 10);
     const totalStaff = staffList.length;
 
     const todaysStatusByStaffId = new Map<string, string>();
-    for (const rec of allAttendance?.data ?? []) {
-      if (rec.date === todayStr) todaysStatusByStaffId.set(rec.staff_id, rec.status);
+    for (const rec of rangeData?.records ?? []) {
+      todaysStatusByStaffId.set(rec.staff_id, rec.status);
     }
 
     let present = 0;
@@ -270,7 +270,7 @@ export function useStaffAttendanceToday() {
     }
 
     return { present, absent, marked, total: totalStaff, notMarked: totalStaff - marked };
-  }, [staffList, allAttendance]);
+  }, [staffList, rangeData]);
 
   return { data, isLoading: isStaffLoading || isAttendanceLoading };
 }

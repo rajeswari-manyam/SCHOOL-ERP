@@ -286,6 +286,11 @@ export const LeaveRequestsTab = ({ leaves: _leaves }: Props) => {
                       {r.type} · {formatDate(r.from)} – {formatDate(r.to)}
                       {r.days ? ` · ${r.days} day${r.days > 1 ? "s" : ""}` : ""}
                     </p>
+                    {r.reason && (
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        Reason: {r.reason}
+                      </p>
+                    )}
                   </div>
                   <StatusBadge status={r.status} />
                 </div>

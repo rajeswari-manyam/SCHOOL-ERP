@@ -4,15 +4,20 @@ import api from "@/config/axios";
 
 export interface Parent {
   id: string;
-  parent_name: string;
-  relation: string;
-  occupation: string;
-  email: string;
-  phone: string;
+  father_name: string;
+  mother_name: string;
+  father_occupation: string;
+  mother_occupation: string;
+  father_email: string;
+  mother_email: string;
+  father_phone: string;
+  mother_phone: string;
+  father_image: string;
+  mother_image: string;
   address: string;
-  status: string;
   school_id: string;
-  students: string[];
+  students: { id: string; first_name: string; last_name: string | null }[];
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +25,11 @@ export interface Parent {
 
 
 /* ================= API ================= */
+
+export const getAllParents = async (params?: { status?: string; school_id?: string; relation?: string }): Promise<Parent[]> => {
+  const { data } = await api.get("/tenant/getallparents", { params });
+  return data.data ?? [];
+};
 
 export const getParentById = async (parentId: string): Promise<Parent> => {
   const { data } = await api.get(`/tenant/getparentById/${parentId}`);

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FeeTabs } from "../components/FeeTabs";
 import { FilterBar } from "../components/FilterBar";
@@ -11,10 +11,11 @@ import { AllTransactionsTable } from "../components/AllTransactionTable";
 import { FeeStructure } from "../components/FeeStructure";
 import { TransportFees } from "../components/TransportFee";
 import { deleteRecordFeePayment } from "@/services/fee.api";
+import { getStudentsByClassSection } from "@/services/attendance.api";
 import { toast } from "sonner";
 
 import { applyDueStatus, applySortBy } from "../utils/fee.utils";
-import type { FeeRow, FilterValues } from "../types/fees.types";
+import type { FeeRow, FilterValues, Transaction } from "../types/fees.types";
 
 export default function FeeManagementPage() {
   const [activeTab, setActiveTab] = useState("Pending Fees");
@@ -46,6 +47,29 @@ export default function FeeManagementPage() {
 
   const formattedMonth = currentDate.toLocaleString("default", { month: "long", year: "numeric" });
 
+  // When a class + section are both picked, resolve the actual roster via
+  // /tenant/studentsbyclasssection and filter fee/transaction rows down to
+  // those students' IDs — pending-fee rows don't carry class/section info at
+  // all, so matching by student id (not a guessed class-name string) is the
+  // only thing that works for both tabs.
+  const [classSectionStudentIds, setClassSectionStudentIds] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!activeFilters?.classId || !activeFilters?.sectionId) {
+      setClassSectionStudentIds(null);
+      return;
+    }
+    let cancelled = false;
+    getStudentsByClassSection(activeFilters.classId, activeFilters.sectionId)
+      .then((res) => {
+        if (cancelled) return;
+        const ids = new Set((res.data ?? []).map((s) => s.id).filter(Boolean));
+        setClassSectionStudentIds(ids);
+      })
+      .catch(() => { if (!cancelled) setClassSectionStudentIds(new Set()); });
+    return () => { cancelled = true; };
+  }, [activeFilters?.classId, activeFilters?.sectionId]);
+
   const filteredFees: FeeRow[] = (() => {
     if (!activeFilters) return fees;
 
@@ -55,9 +79,7 @@ export default function FeeManagementPage() {
         !q ||
         row.student.toLowerCase().includes(q) ||
         row.admissionNo.toLowerCase().includes(q);
-      const matchClass =
-        activeFilters.selectedClass === "All Classes" ||
-        row.className.replace("-", "") === activeFilters.selectedClass;
+      const matchClass = !classSectionStudentIds || classSectionStudentIds.has(row.studentId ?? "");
       return matchSearch && matchClass;
     });
 
@@ -67,6 +89,38 @@ export default function FeeManagementPage() {
   })();
 
   const totalPending = (filteredFees || []).reduce((s, r) => s + r.amount, 0);
+
+  const filteredTransactions: Transaction[] = (() => {
+    const all = transactions ?? [];
+    if (!activeFilters) return all;
+
+    let result = all.filter((row) => {
+      const q = activeFilters.search.toLowerCase();
+      const matchSearch =
+        !q ||
+        row.student.toLowerCase().includes(q) ||
+        (row.receiptNo ?? "").toLowerCase().includes(q);
+      const matchClass = !classSectionStudentIds || classSectionStudentIds.has(row.studentId ?? "");
+      const matchMode =
+        activeFilters.selectedMode === "All Modes" ||
+        row.mode === activeFilters.selectedMode;
+      const matchDate =
+        (!activeFilters.dateFrom || row.date >= activeFilters.dateFrom) &&
+        (!activeFilters.dateTo || row.date <= activeFilters.dateTo);
+      return matchSearch && matchClass && matchMode && matchDate;
+    });
+
+    if (activeFilters.sortBy === "Oldest First") {
+      result = [...result].sort((a, b) => a.date.localeCompare(b.date));
+    } else if (activeFilters.sortBy === "Amount (High to Low)") {
+      result = [...result].sort((a, b) => b.paidAmount - a.paidAmount);
+    } else if (activeFilters.sortBy === "Amount (Low to High)") {
+      result = [...result].sort((a, b) => a.paidAmount - b.paidAmount);
+    } else {
+      result = [...result].sort((a, b) => b.date.localeCompare(a.date));
+    }
+    return result;
+  })();
 
   return (
     <div className="flex flex-col w-full min-w-0 space-y-4 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 px-4 md:px-6 lg:px-8">
@@ -228,7 +282,7 @@ export default function FeeManagementPage() {
 
           {isAllTx && (
             <AllTransactionsTable
-              data={transactions ?? []}
+              data={filteredTransactions}
               onDelete={handleDeleteRecord}
             />
           )}

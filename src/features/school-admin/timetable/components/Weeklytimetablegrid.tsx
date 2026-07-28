@@ -12,6 +12,7 @@ import type { ClassTimetable, DayOfWeek } from "../types/timetable.types";
 import {
   DAY_ORDER,
   SLOT_KIND_STYLES,
+  normalizeDayAbbr,
 } from "../utils/Timetable.utils";
 
 interface Props {
@@ -31,9 +32,11 @@ const DAY_LONG: Record<DayOfWeek, string> = {
   SAT: "Saturday",
 };
 
-const API_TO_GRID: Record<string, DayOfWeek> = {
-  monday: "MON", tuesday: "TUE", wednesday: "WED",
-  thursday: "THU", friday: "FRI", saturday: "SAT",
+// Keyed by the first 3 letters (lowercase) so this matches whether the API
+// returns full day names ("Monday") or abbreviations ("Mon").
+const ABBR_TO_GRID: Record<string, DayOfWeek> = {
+  mon: "MON", tue: "TUE", wed: "WED",
+  thu: "THU", fri: "FRI", sat: "SAT",
 };
 
 const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPeriod, onDeletePeriod, workingDays }) => {
@@ -41,7 +44,7 @@ const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPer
 
   const hasConstraint = Array.isArray(workingDays) && workingDays.length > 0;
   const workingDaySet = new Set<DayOfWeek>(
-    hasConstraint ? workingDays!.map((d) => API_TO_GRID[d.toLowerCase()]).filter(Boolean) : [],
+    hasConstraint ? workingDays!.map((d) => ABBR_TO_GRID[normalizeDayAbbr(d)]).filter(Boolean) : [],
   );
 
   return (
@@ -96,7 +99,10 @@ const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPer
                     );
                   }
                 return (
-                  <TableHead key={idx} className="px-3 py-3 text-left text-[10px] sm:text-xs sm:px-4 whitespace-nowrap">
+                  <TableHead
+                    key={idx}
+                    className={`px-3 py-3 text-left text-[10px] sm:text-xs sm:px-4 whitespace-nowrap ${SLOT_KIND_STYLES.PERIOD}`}
+                  >
                     <span className="font-bold text-indigo-600">P{slot.periodNo}</span>
                     <span className="block text-[9px] text-gray-400 font-normal normal-case tracking-normal mt-0.5">
                       {slot.startTime}–{slot.endTime}

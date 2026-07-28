@@ -343,6 +343,7 @@ export interface CreateStaffAttendancePayload {
     status: "present" | "absent" | "late" | "leave";
     working_day: boolean;
     remarks?: string;
+    academicYearId?: string;
   }[];
 }
 
@@ -404,16 +405,18 @@ export interface MonthlyStaffAttendanceResponse {
 }
 
 export interface DateRangeStaffAttendanceParams {
-  staff_id: string;
-  start_date: string;
-  end_date: string;
+  // All optional — omitting staff_id returns every staff member's records for
+  // the range; omitting start_date/end_date returns that staff's full history.
+  staff_id?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface DateRangeStaffAttendanceResponse {
   status: boolean;
-  staff_id: string;
-  start_date: string;
-  end_date: string;
+  staff_id: string | null;
+  start_date: string | null;
+  end_date: string | null;
   summary: {
     totalDays: number;
     workingDays: number;

@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Fragment, useState } from "react";
+import { AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import type { Student, FeeStatus } from "../types/my-students.types";
+import StudentExpandedDetails from "./StudentExpandedDetails";
 
 const PAGE_SIZE = 5;
 
@@ -90,11 +91,11 @@ const AVATAR_COLORS = [
 
 interface Props {
   students: Student[];
-  onView: (s: Student) => void;
 }
 
-const StudentTable = ({ students, onView }: Props) => {
+const StudentTable = ({ students }: Props) => {
   const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (students.length === 0) {
     return (
@@ -121,53 +122,66 @@ const StudentTable = ({ students, onView }: Props) => {
               <th className="text-left text-xs text-gray-500 px-3 py-1.5 hidden sm:table-cell">Class</th>
               <th className="text-left text-xs text-gray-500 px-3 py-1.5">Attendance</th>
               <th className="text-left text-xs text-gray-500 px-3 py-1.5 hidden md:table-cell">Fee Status</th>
-              <th className="text-right text-xs text-gray-500 px-3 py-1.5">Action</th>
+              <th className="w-8 px-3 py-1.5" />
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((s, i) => (
-              <tr
-                key={s.id}
-                className={`border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors ${!s.isActive ? "opacity-60" : ""}`}
-              >
-                <td className="px-3 py-1.5">
-                  <span className="text-xs text-gray-500">#{s.rollNo}</span>
-                </td>
-                <td className="px-3 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 text-white"
-                      style={{ background: AVATAR_COLORS[(start + i) % AVATAR_COLORS.length] }}
+            {pageRows.map((s, i) => {
+              const isExpanded = expandedId === s.id;
+              return (
+              <Fragment key={s.id}>
+                <tr
+                  onClick={() => setExpandedId(isExpanded ? null : s.id)}
+                  className={`border-b border-gray-100 last:border-0 hover:bg-[#EFF4FF] transition-colors cursor-pointer ${!s.isActive ? "opacity-60" : ""} ${isExpanded ? "bg-[#EFF4FF]" : ""}`}
+                >
+                  <td className="px-3 py-1.5">
+                    <span className="text-xs text-gray-500">#{s.rollNo}</span>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 text-white"
+                        style={{ background: AVATAR_COLORS[(start + i) % AVATAR_COLORS.length] }}
+                      >
+                        {s.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-900">{s.name}</p>
+                        {!s.isActive && (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">Inactive</span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-1.5 hidden sm:table-cell">
+                    <span className="text-xs text-gray-600">{s.className}{s.section ? ` - ${s.section}` : ""}</span>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <AttCell pct={s.attendancePct} />
+                  </td>
+                  <td className="px-3 py-1.5 hidden md:table-cell">
+                    <FeeStatusBadge student={s} />
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : s.id); }}
+                      className="p-1 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                      aria-label={isExpanded ? "Collapse" : "Expand"}
                     >
-                      {s.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-900">{s.name}</p>
-                      {!s.isActive && (
-                        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">Inactive</span>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-3 py-1.5 hidden sm:table-cell">
-                  <span className="text-xs text-gray-600">{s.className}{s.section ? ` - ${s.section}` : ""}</span>
-                </td>
-                <td className="px-3 py-1.5">
-                  <AttCell pct={s.attendancePct} />
-                </td>
-                <td className="px-3 py-1.5 hidden md:table-cell">
-                  <FeeStatusBadge student={s} />
-                </td>
-                <td className="px-3 py-1.5 text-right">
-                  <button
-                    onClick={() => onView(s)}
-                    className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
+                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr className="border-b border-gray-100 last:border-0 bg-gray-50/60">
+                    <td colSpan={6} className="px-5">
+                      <StudentExpandedDetails studentId={s.id} classId={s.classId} sectionId={s.sectionId} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

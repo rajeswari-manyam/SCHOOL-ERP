@@ -148,29 +148,39 @@ export interface BulkCreateTimetableResponse {
   inserted: number;
   failed: number;
   skipped: number;
-  errors: Array<{ row: number; day: string; message: string }>;
+  errors: Array<{ row: number; teacher_id?: string; message: string }>;
   data: TimetableSlot[];
 }
 
 export const bulkCreateTimetable = async (
   payload: BulkCreateTimetablePayload,
 ): Promise<BulkCreateTimetableResponse> => {
-  const { data } = await api.post<BulkCreateTimetableResponse>(
-    "/tenant/timetable/bulk",
-    payload,
-  );
-  return data;
+  try {
+    const { data } = await api.post<BulkCreateTimetableResponse>(
+      "/tenant/timetable/bulk",
+      payload,
+    );
+    return data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to create timetable";
+    throw new Error(message);
+  }
 };
 
 // POST /tenant/createtimetable
 export const createTimetable = async (
   payload: TimetablePayload,
 ): Promise<CreateUpdateTimetableResponse> => {
-  const { data } = await api.post<CreateUpdateTimetableResponse>(
-    "/tenant/createtimetable",
-    payload,
-  );
-  return data;
+  try {
+    const { data } = await api.post<CreateUpdateTimetableResponse>(
+      "/tenant/createtimetable",
+      payload,
+    );
+    return data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to create timetable";
+    throw new Error(message);
+  }
 };
 
 // GET /tenant/getalltimetable?class_id=<UUID>&section_id=<UUID>
@@ -297,7 +307,7 @@ export const getTeacherTimetable = async (params: TeacherTimetableQuery) => {
     if (!gridDay) continue;
 
     const subject = slot.subject?.subject_name ?? slot.subjectname ?? "";
-    const cellClass = slot.class?.class_name ?? "";
+    const cellClass = [slot.class?.class_name, slot.section?.sectionName].filter(Boolean).join("‑") ?? "";
     const room = slot.room_no ?? "";
     const teacherName = slot.teacher?.name ?? slot.teachername ?? "";
 
@@ -373,7 +383,7 @@ export const getTeacherTimetable = async (params: TeacherTimetableQuery) => {
     periods,
     exams: [],
     // summary intentionally omitted — useTimetable fetches it via getTeacherStats
-    classLabel: className ? `Class ${className}` : "",
+    classLabel: className ?? "",
     section: sectionName,
     classTeacher,
     academicYear,
@@ -416,6 +426,7 @@ export interface UpcomingExam {
   date: string;
   time: string;
   venue: string;
+  syllabus?: string;
   hallTicketUrl?: string;
 }
 
@@ -438,6 +449,7 @@ export const getExamsTimetable = async (params: { teacher_id: string; academic_y
         date: item.exam_date ?? "",
         time: `${fmtTime(item.start_time ?? "")} – ${fmtTime(item.end_time ?? "")}`,
         venue: item.room_no ?? "",
+        syllabus: item.syllabus ?? "",
       }));
     }
   } catch {
@@ -454,6 +466,7 @@ export const getExamsTimetable = async (params: { teacher_id: string; academic_y
       date: item.exam_date ?? "",
       time: `${fmtTime(item.start_time ?? "")} – ${fmtTime(item.end_time ?? "")}`,
       venue: item.room_no ?? "",
+      syllabus: item.syllabus ?? "",
     }));
   } catch {
     return [];
@@ -593,3 +606,66 @@ export const timetableService = {
   getExamsTimetable,
   getTeacherStats,
 };
+
+/* =========================
+   FREE TEACHERS ENDPOINT
+========================= */
+
+export interface FreeTeacher {
+  id: string;
+  employee_id: string;
+  name: string;
+  designation: string | null;
+  department: string | null;
+}
+
+export interface GetFreeTeachersResponse {
+  status: boolean;
+  message: string;
+  current_day: string;
+  current_time: string;
+  count: number;
+  data: FreeTeacher[];
+}
+
+// GET /tenant/free-teachers
+export const getFreeTeachers = async (): Promise<GetFreeTeachersResponse> => {
+  const { data } = await api.get<GetFreeTeachersResponse>("/tenant/free-teachers");
+  return data;
+};
+
+// GET /tenant/downloadtimetable — fetches the PDF and triggers a browser download
+const fetchAndSaveTimetable = async (
+  params: Record<string, string>,
+  fallbackName: string
+): Promise<void> => {
+  const response = await api.get(`/tenant/downloadtimetable`, {
+    params,
+    responseType: "blob",
+  });
+  const blob: Blob = response.data;
+
+  const disposition = String(response.headers["content-disposition"] ?? "");
+  const nameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  const filename = nameMatch ? nameMatch[1].replace(/['"]/g, "").trim() : fallbackName;
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+// GET /tenant/downloadtimetable?teacher_id=
+export const downloadTeacherTimetable = (teacherId: string): Promise<void> =>
+  fetchAndSaveTimetable({ teacher_id: teacherId }, `timetable-${teacherId.slice(0, 8)}.pdf`);
+
+// GET /tenant/downloadtimetable?class_id=&section_id= — used by student/parent timetable views
+export const downloadClassTimetable = (classId: string, sectionId: string): Promise<void> =>
+  fetchAndSaveTimetable(
+    { class_id: classId, section_id: sectionId },
+    `timetable-${classId.slice(0, 8)}.pdf`
+  );

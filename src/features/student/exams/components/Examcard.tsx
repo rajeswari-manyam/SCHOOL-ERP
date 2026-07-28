@@ -28,6 +28,12 @@ export const ExamCard = ({ exam, daysLeft }: { exam: Exam; daysLeft: number }) =
           {exam.date}
         </div>
 
+        {exam.syllabus && (
+          <p className="mb-4 -mt-3 text-xs text-white/70">
+            Syllabus: {exam.syllabus}
+          </p>
+        )}
+
         <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white/60">
           Countdown
         </p>

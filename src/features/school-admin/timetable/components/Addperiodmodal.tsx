@@ -2,12 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Loader2, Plus, Trash2 } from "lucide-react";
+import { X, Loader2, Plus, Trash2, Users, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { getRemainingPeriods, type BulkCreateTimetablePayload, type RemainingPeriodsResponse } from "@/services/timetable.api";
+import { getRemainingPeriods, getFreeTeachers, type BulkCreateTimetablePayload, type RemainingPeriodsResponse, type FreeTeacher } from "@/services/timetable.api";
 
 // API imports
 import { getAllClasses, getSectionsByClassId, type GetAllClassesResponse, type GetSectionsByClassIdResponse } from "@/services/class.api";
@@ -17,6 +17,7 @@ import type { Department } from "@/features/school-admin/settings/types/settings
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 import { fetchAllWorkingDays } from "@/services/working-days.api";
 import type { WorkingDayRecord } from "@/services/working-days.api";
+import { normalizeDayAbbr } from "../utils/Timetable.utils";
 
 /* =========================================================
    CONSTANTS
@@ -54,10 +55,6 @@ const commonSchema = z.object({
   className: z.string().min(1, "Class name is required"),
   section_id: z.string().min(1, "Section is required"),
   sectionName: z.string().min(1, "Section name is required"),
-  subject_id: z.string().min(1, "Subject is required"),
-  subjectname: z.string().min(1, "Subject name is required"),
-  teacher_id: z.string().min(1, "Teacher is required"),
-  teachername: z.string().min(1, "Teacher name is required"),
   room_no: z.string().optional(),
   lunch_start: z.string().min(1, "Lunch start is required"),
   lunch_end: z.string().min(1, "Lunch end is required"),
@@ -79,6 +76,10 @@ interface TimetableEntry {
   period_no: string;
   time_sloat: string;
   room_no: string;
+  subject_id: string;
+  subjectname: string;
+  teacher_id: string;
+  teachername: string;
 }
 
 /* =========================================================
@@ -102,7 +103,15 @@ interface AddPeriodModalProps {
 }
 
 let _entryCounter = 0;
-const createEntry = (day_of_week: string, period_no = "1", room_no = ""): TimetableEntry => {
+const createEntry = (
+  day_of_week: string,
+  period_no = "1",
+  room_no = "",
+  subject_id = "",
+  subjectname = "",
+  teacher_id = "",
+  teachername = "",
+): TimetableEntry => {
   const slot = TIME_SLOT_MAP[period_no] ?? TIME_SLOT_MAP["1"];
   return {
     id: `entry_${++_entryCounter}`,
@@ -110,6 +119,10 @@ const createEntry = (day_of_week: string, period_no = "1", room_no = ""): Timeta
     period_no,
     time_sloat: slot.time_sloat,
     room_no,
+    subject_id,
+    subjectname,
+    teacher_id,
+    teachername,
   };
 };
 
@@ -130,7 +143,6 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   const [classOptions, setClassOptions] = useState<DropdownOption[]>([]);
   const [sectionOptions, setSectionOptions] = useState<DropdownOption[]>([]);
   const [subjectOptions, setSubjectOptions] = useState<DropdownOption[]>([]);
-  const [teacherOptions, setTeacherOptions] = useState<DropdownOption[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [workingDays, setWorkingDays] = useState<WorkingDayRecord[]>([]);
 
@@ -138,17 +150,26 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   const [remainingMap, setRemainingMap] = useState<Record<string, number[]>>({});
   const [loadingRemaining, setLoadingRemaining] = useState(false);
 
+  // ── Free teachers ──────────────────────────────────────
+  const [freeTeachers, setFreeTeachers] = useState<FreeTeacher[]>([]);
+  const [freeTeachersDay, setFreeTeachersDay] = useState("");
+  const [freeTeachersTime, setFreeTeachersTime] = useState("");
+  const [loadingFreeTeachers, setLoadingFreeTeachers] = useState(false);
+  const [showFreeTeachers, setShowFreeTeachers] = useState(true);
+
   // ── Loading states ───────────────────────────────────────
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
-  const [loadingTeachers, setLoadingTeachers] = useState(false);
 
   // ── Academic years ────────────────────────────────────────
   const { years: academicYears, loading: loadingAcademicYears } = useAcademicYears();
 
   // ── Dynamic entries ───────────────────────────────────────
   const [entries, setEntries] = useState<TimetableEntry[]>([]);
+  // Per-entry teacher dropdown data, keyed by entry id (each row can pick its own subject/teacher)
+  const [entryTeacherOptions, setEntryTeacherOptions] = useState<Record<string, DropdownOption[]>>({});
+  const [entryTeacherLoading, setEntryTeacherLoading] = useState<Record<string, boolean>>({});
 
   // ── Form ─────────────────────────────────────────────────
   const {
@@ -165,10 +186,6 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       className: "",
       section_id: "",
       sectionName: "",
-      subject_id: "",
-      subjectname: "",
-      teacher_id: "",
-      teachername: "",
       room_no: "",
       lunch_start: defaultLunchStart,
       lunch_end: defaultLunchEnd,
@@ -182,15 +199,15 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
   const selectedClassId = watch("class_id");
   const selectedSectionId = watch("section_id");
-  const selectedSubjectId = watch("subject_id");
-  const selectedSubjectName = watch("subjectname");
   const selectedSWDId = watch("schoolWorkingDayId");
 
   // ── Compute active working days ────────────────────────────
-  // Normalize to lowercase — API stores "Monday" but DAYS values are "monday"
+  // Normalize to the first 3 letters — the API has been seen to return either
+  // full names ("Monday") or abbreviations ("Mon"), and DAYS values are full
+  // lowercase names ("monday").
   const activeDaySet = new Set<string>(
     (workingDays.find((wd) => wd.id === selectedSWDId)?.selected_days ?? DAYS_ORDER)
-      .map((d) => d.toLowerCase()),
+      .map(normalizeDayAbbr),
   );
 
   // ── Fetch classes on open ─────────────────────────────────
@@ -199,6 +216,17 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
     fetchAllWorkingDays().then(setWorkingDays).catch(() => {});
 
+    // Fetch free teachers
+    setLoadingFreeTeachers(true);
+    getFreeTeachers()
+      .then((res) => {
+        setFreeTeachers(res.data ?? []);
+        setFreeTeachersDay(res.current_day ?? "");
+        setFreeTeachersTime(res.current_time ?? "");
+      })
+      .catch(() => setFreeTeachers([]))
+      .finally(() => setLoadingFreeTeachers(false));
+
     const defaultAcYear = academicYears.find((y) => y.active)?.id ?? academicYears[0]?.id ?? "";
 
     reset({
@@ -206,10 +234,6 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       className:    defaultClass?.label  ?? "",
       section_id:   defaultSection?.id   ?? "",
       sectionName:  defaultSection?.label ?? "",
-      subject_id:   "",
-      subjectname:  "",
-      teacher_id:   "",
-      teachername:  "",
       room_no:      "",
       lunch_start:  defaultLunchStart,
       lunch_end:    defaultLunchEnd,
@@ -220,9 +244,11 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       schoolWorkingDayId: "",
     });
     setEntries([]);
+    setEntryTeacherOptions({});
+    setEntryTeacherLoading({});
     setSectionOptions([]);
     setSubjectOptions([]);
-    setTeacherOptions([]);
+    setFreeTeachers([]);
 
     // If section is pre-selected, load its subjects immediately
     if (defaultSection?.id) {
@@ -256,8 +282,6 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       setSubjectOptions([]);
       setValue("section_id", "");
       setValue("sectionName", "");
-      setValue("subject_id", "");
-      setValue("subjectname", "");
       return;
     }
 
@@ -267,13 +291,8 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     // Only clear section & subjects when user manually changes class (not on initial mount with pre-selected section)
     if (!defaultSection?.id) {
       setSubjectOptions([]);
-      setTeacherOptions([]);
       setValue("section_id", "");
       setValue("sectionName", "");
-      setValue("subject_id", "");
-      setValue("subjectname", "");
-      setValue("teacher_id", "");
-      setValue("teachername", "");
     }
 
     getSectionsByClassId(selectedClassId)
@@ -295,19 +314,15 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     }
   }, [selectedAcYear, workingDays, setValue]);
 
-  // ── Cascade: section → subjects ───────────────────────────
+  // ── Cascade: section → subjects (feeds each row's own Subject dropdown) ──
   useEffect(() => {
     if (!selectedSectionId) {
       setSubjectOptions([]);
-      setValue("subject_id", "");
-      setValue("subjectname", "");
       return;
     }
 
     setLoadingSubjects(true);
     setSubjectOptions([]);
-    setValue("subject_id", "");
-    setValue("subjectname", "");
 
     getSubjectsBySectionId(selectedSectionId)
       .then((res: GetSubjectsBySectionIdResponse) => {
@@ -315,41 +330,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       })
       .catch(console.error)
       .finally(() => setLoadingSubjects(false));
-  }, [selectedSectionId, setValue]);
-
-  // ── Cascade: subject → teachers ────────────────────────────
-  useEffect(() => {
-    if (!selectedSubjectId || !selectedSubjectName) {
-      setTeacherOptions([]);
-      setValue("teacher_id", "");
-      setValue("teachername", "");
-      return;
-    }
-
-    const trimmed = selectedSubjectName.trim().toLowerCase();
-    const matched = departments.find((d) => d.departmentName.toLowerCase() === trimmed);
-
-    if (!matched) {
-      setTeacherOptions([]);
-      setValue("teacher_id", "");
-      setValue("teachername", "");
-      return;
-    }
-
-    setLoadingTeachers(true);
-    setValue("teacher_id", "");
-    setValue("teachername", "");
-    getDepartmentById(matched.id)
-      .then((dept) => {
-        const opts = (dept?.staffs ?? []).map((s) => ({
-          value: s.id,
-          label: `${s.name} (${s.email || s.phone || s.role})`,
-        }));
-        setTeacherOptions(opts);
-      })
-      .catch(() => setTeacherOptions([]))
-      .finally(() => setLoadingTeachers(false));
-  }, [selectedSubjectId, selectedSubjectName, departments, setValue]);
+  }, [selectedSectionId]);
 
   // ── Fetch remaining periods when class + section selected ──
   useEffect(() => {
@@ -382,15 +363,65 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     const dayRemaining = remainingMap[nextDay];
     const defaultPeriod = dayRemaining && dayRemaining.length > 0 ? String(dayRemaining[0]) : "1";
     setEntries((prev) => [...prev, createEntry(nextDay, defaultPeriod, watch("room_no"))]);
-  }, [entries, watch, DAYS_ORDER, remainingMap]);
+  }, [entries, watch, remainingMap]);
 
   const removeEntry = useCallback((id: string) => {
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEntryTeacherOptions((prev) => {
+      const { [id]: _removed, ...rest } = prev;
+      return rest;
+    });
+    setEntryTeacherLoading((prev) => {
+      const { [id]: _removed, ...rest } = prev;
+      return rest;
+    });
   }, []);
 
   const updateEntry = useCallback((id: string, field: keyof TimetableEntry, value: string) => {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
   }, []);
+
+  // ── Per-row subject change → resolve that row's own teacher list ──
+  const handleEntrySubjectChange = useCallback((entryId: string, subjectId: string) => {
+    const subjectName = subjectOptions.find((s) => s.value === subjectId)?.label ?? "";
+    setEntries((prev) =>
+      prev.map((e) =>
+        e.id === entryId ? { ...e, subject_id: subjectId, subjectname: subjectName, teacher_id: "", teachername: "" } : e,
+      ),
+    );
+
+    if (!subjectId) {
+      setEntryTeacherOptions((prev) => ({ ...prev, [entryId]: [] }));
+      return;
+    }
+
+    const trimmed = subjectName.trim().toLowerCase();
+    const matched = departments.find((d) => d.departmentName.toLowerCase() === trimmed);
+    if (!matched) {
+      setEntryTeacherOptions((prev) => ({ ...prev, [entryId]: [] }));
+      return;
+    }
+
+    setEntryTeacherLoading((prev) => ({ ...prev, [entryId]: true }));
+    getDepartmentById(matched.id)
+      .then((dept) => {
+        const opts = (dept?.staffs ?? []).map((s) => ({
+          value: s.id,
+          label: `${s.name} (${s.email || s.phone || s.role})`,
+        }));
+        setEntryTeacherOptions((prev) => ({ ...prev, [entryId]: opts }));
+      })
+      .catch(() => setEntryTeacherOptions((prev) => ({ ...prev, [entryId]: [] }))
+      )
+      .finally(() => setEntryTeacherLoading((prev) => ({ ...prev, [entryId]: false })));
+  }, [subjectOptions, departments]);
+
+  const handleEntryTeacherChange = useCallback((entryId: string, teacherId: string) => {
+    const teacherName = (entryTeacherOptions[entryId] ?? []).find((t) => t.value === teacherId)?.label ?? "";
+    setEntries((prev) =>
+      prev.map((e) => (e.id === entryId ? { ...e, teacher_id: teacherId, teachername: teacherName } : e)),
+    );
+  }, [entryTeacherOptions]);
 
   // ── Helper: Format time to HH:MM ──────────────────────────
   const formatTimeToHHMM = (timeValue: string): string => {
@@ -421,12 +452,16 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
   // ── Submit ────────────────────────────────────────────────
   const handleFormSubmit = (data: CommonFormData) => {
-    if (!data.class_id || !data.section_id || !data.subject_id || !data.teacher_id) {
-      alert("Please fill in all required fields (Class, Section, Subject, Teacher)");
+    if (!data.class_id || !data.section_id) {
+      alert("Please fill in all required fields (Class, Section)");
       return;
     }
     if (entries.length === 0) {
       alert("Please add at least one period entry");
+      return;
+    }
+    if (entries.some((e) => !e.subject_id || !e.teacher_id)) {
+      alert("Please select a subject and teacher for every period entry");
       return;
     }
 
@@ -435,8 +470,8 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
       return {
         class_id:       data.class_id,
         section_id:     data.section_id,
-        subject_id:     data.subject_id,
-        teacher_id:     data.teacher_id,
+        subject_id:     entry.subject_id,
+        teacher_id:     entry.teacher_id,
         period_no:      Number(entry.period_no),
         time_sloat:     entry.time_sloat || slot.time_sloat,
         day_of_week:    entry.day_of_week,
@@ -498,14 +533,14 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
   /* ── Render ──────────────────────────────────────────────── */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-400/40">
-      <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[95vh] flex flex-col">
+      <div className="relative w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[95vh] flex flex-col">
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 flex-shrink-0">
           <div>
             <h6 className="text-xl font-black text-slate-700">Add Timetable Periods</h6>
             <p className="text-sm text-slate-500 mt-1">
-              Add multiple period entries at once for the selected class, section, and subject.
+              Add multiple period entries at once for the selected class and section — pick each period's own subject and teacher below.
             </p>
           </div>
           <button onClick={onClose} className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
@@ -544,8 +579,8 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
               </div>
             </div>
 
-            {/* ── Row 1: Class → Section → Subject ── */}
-            <div className="grid gap-4 md:grid-cols-3">
+            {/* ── Row 1: Class → Section ── */}
+            <div className="grid gap-4 md:grid-cols-2">
               {/* Class — locked when pre-filled from page */}
               {defaultClass?.id ? (
                 <div>
@@ -593,38 +628,10 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                   error={errors.section_id?.message}
                 />
               )}
-              <SelectWrapper
-                label="Subject" required loading={loadingSubjects}
-                value={watch("subject_id")} options={subjectOptions}
-                placeholder={selectedSectionId ? "Select subject" : "Pick section first"}
-                disabled={!selectedSectionId}
-                onValueChange={(value) => {
-                  setValue("subject_id", value);
-                  setValue("subjectname", subjectOptions.find((s) => s.value === value)?.label ?? "");
-                }}
-                error={errors.subject_id?.message}
-              />
             </div>
 
-            {/* ── Row 2: Teacher + Academic Year ── */}
+            {/* ── Row 2: Academic Year ── */}
             <div className="grid gap-4 md:grid-cols-2">
-              <SelectWrapper
-                label="Teacher" required loading={loadingTeachers}
-                value={watch("teacher_id")} options={teacherOptions}
-                placeholder={
-                  !selectedSubjectId
-                    ? "Pick subject first"
-                    : teacherOptions.length === 0 && !loadingTeachers
-                    ? "No teachers for this subject"
-                    : "Select teacher"
-                }
-                disabled={!selectedSubjectId || teacherOptions.length === 0}
-                onValueChange={(value) => {
-                  setValue("teacher_id", value);
-                  setValue("teachername", teacherOptions.find((t) => t.value === value)?.label ?? "");
-                }}
-                error={errors.teacher_id?.message}
-              />
               <SelectWrapper
                 label="Academic Year" required loading={loadingAcademicYears}
                 value={watch("academic_year")}
@@ -643,11 +650,14 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                   <span className="ml-2 text-xs font-normal text-slate-400">
                     {entries.length} entry(ies)
                   </span>
+                  {loadingSubjects && (
+                    <Loader2 size={12} className="ml-2 inline animate-spin text-indigo-400" />
+                  )}
                 </p>
                 <button
                   type="button"
                   onClick={addEntry}
-                  disabled={!selectedSubjectId}
+                  disabled={!selectedSectionId}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus size={14} /> Add Entry
@@ -658,9 +668,9 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                 <div className="flex flex-col items-center justify-center h-24 rounded-xl border border-dashed border-gray-200 bg-slate-50 gap-1">
                   <p className="text-xs text-slate-400">No entries yet.</p>
                   <p className="text-xs text-slate-400">
-                    {selectedSubjectId
+                    {selectedSectionId
                       ? "Click \u201cAdd Entry\u201d to start adding periods."
-                      : "Select a subject first, then add period entries."}
+                      : "Select a class and section first, then add period entries."}
                   </p>
                 </div>
               ) : (
@@ -672,6 +682,8 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                         <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Day</th>
                         <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Period</th>
                         <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Time Slot</th>
+                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Subject</th>
+                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Teacher</th>
                         <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Room</th>
                         <th className="px-3 py-2.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">Action</th>
                       </tr>
@@ -695,7 +707,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
                               >
                                 {DAYS.map((d) => {
-                                  const isWorking = activeDaySet.has(d.value);
+                                  const isWorking = activeDaySet.has(normalizeDayAbbr(d.value));
                                   return (
                                     <option
                                       key={d.value}
@@ -708,7 +720,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                   );
                                 })}
                               </select>
-                              {!activeDaySet.has(entry.day_of_week) && (
+                              {!activeDaySet.has(normalizeDayAbbr(entry.day_of_week)) && (
                                 <p className="mt-0.5 text-[10px] text-red-400">Holiday \u2014 not a working day</p>
                               )}
                             </td>
@@ -776,6 +788,39 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                               })()}
                             </td>
                             <td className="px-3 py-2">
+                              <select
+                                value={entry.subject_id}
+                                onChange={(e) => handleEntrySubjectChange(entry.id, e.target.value)}
+                                className="w-full min-w-[130px] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
+                              >
+                                <option value="">Select subject</option>
+                                {subjectOptions.map((s) => (
+                                  <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-3 py-2">
+                              {(() => {
+                                const opts = entryTeacherOptions[entry.id] ?? [];
+                                const loading = entryTeacherLoading[entry.id];
+                                return (
+                                  <select
+                                    value={entry.teacher_id}
+                                    onChange={(e) => handleEntryTeacherChange(entry.id, e.target.value)}
+                                    disabled={!entry.subject_id || loading}
+                                    className="w-full min-w-[150px] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    <option value="">
+                                      {loading ? "Loading…" : !entry.subject_id ? "Pick subject first" : opts.length === 0 ? "No teachers" : "Select teacher"}
+                                    </option>
+                                    {opts.map((t) => (
+                                      <option key={t.value} value={t.value}>{t.label}</option>
+                                    ))}
+                                  </select>
+                                );
+                              })()}
+                            </td>
+                            <td className="px-3 py-2">
                               <input
                                 type="text"
                                 value={entry.room_no}
@@ -802,11 +847,76 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
               )}
             </div>
 
+            {/* ── Free Teachers Section ── */}
+            <div className="rounded-xl border border-gray-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowFreeTeachers(!showFreeTeachers)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-emerald-50 hover:bg-emerald-100/60 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Users size={14} className="text-emerald-600" />
+                  <span className="text-sm font-bold text-emerald-800">
+                    Free Teachers Now
+                  </span>
+                  {freeTeachers.length > 0 && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+                      {freeTeachers.length}
+                    </span>
+                  )}
+                  {freeTeachersDay && freeTeachersTime && (
+                    <span className="text-[10px] text-emerald-600 font-medium hidden sm:inline">
+                      {freeTeachersDay.charAt(0).toUpperCase() + freeTeachersDay.slice(1)} · {freeTeachersTime}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown
+                  size={14}
+                  className={`text-emerald-600 transition-transform duration-200 ${showFreeTeachers ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showFreeTeachers && (
+                <div className="px-4 py-3 bg-white">
+                  {loadingFreeTeachers ? (
+                    <div className="flex items-center gap-2 py-4 justify-center text-xs text-gray-400">
+                      <Loader2 size={12} className="animate-spin" />
+                      Loading free teachers…
+                    </div>
+                  ) : freeTeachers.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-gray-400">
+                      No free teachers at the moment.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {freeTeachers.map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 hover:bg-emerald-50/40 hover:border-emerald-200 transition-colors"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                            <span className="text-[10px] font-bold text-emerald-700">
+                              {t.name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-gray-800 truncate">{t.name}</p>
+                            <p className="text-[10px] text-gray-400 truncate">
+                              {t.employee_id}
+                              {t.department ? ` · ${t.department}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Hidden fields */}
             <input type="hidden" {...register("className")} />
             <input type="hidden" {...register("sectionName")} />
-            <input type="hidden" {...register("subjectname")} />
-            <input type="hidden" {...register("teachername")} />
             <input type="hidden" {...register("school_code")} />
             <input type="hidden" {...register("schoolWorkingDayId")} />
           </div>

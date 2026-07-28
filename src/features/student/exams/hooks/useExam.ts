@@ -27,6 +27,7 @@ const mapTimetableToExam = (
   startTime: t.start_time,
   endTime: t.end_time,
   venue: t.room_no ?? "",
+  syllabus: t.syllabus ?? undefined,
 });
 
 /* ─────────────────────────────────────────────

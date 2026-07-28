@@ -8,6 +8,7 @@ export interface Exam {
   time: string;
   venue: string;
   examName: string;
+  syllabus?: string;
 }
 
 export interface ExamResult {
@@ -60,4 +61,5 @@ export interface ExamBannerProps {
   venue: string;
   daysLeft: number;
   hoursLeft: number;
+  syllabus?: string;
 }

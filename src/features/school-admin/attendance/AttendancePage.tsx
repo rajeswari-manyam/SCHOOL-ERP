@@ -1,3 +1,4 @@
+import { CalendarCheck } from "lucide-react";
 import { useAttendanceStore } from "./store";
 import { useAllClassesTodayAttendance } from "./hooks/useAttendance";
 import AttendanceToday from "./components/AttendanceToday";
@@ -8,7 +9,6 @@ import PendingLeavesTab from "./components/PendingLeavesTab";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import MarkStaffAttendanceModal from "./components/MarkStaffAttendanceModal";
 import AddHolidayModal from "./components/AddHolidayModal";
-import { Button } from "../../../components/ui/button";
 import type { AttendanceTab } from "./types/attendance.types";
 
 const TABS: { key: AttendanceTab; label: string }[] = [
@@ -44,20 +44,17 @@ const AttendancePage = () => {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {activeTab === "today" && (
-              <Button
-                onClick={() => openMarkAttendance()}
-                className="flex items-center gap-1.5 rounded-lg px-3 h-9 text-xs font-medium text-white"
-                style={{ background: 'linear-gradient(101.74deg, #3525CD 0%, #4F46E5 100%)' }}
-              >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Mark Attendance
-              </Button>
-            )}
-          </div>
+
+          {activeTab === "today" && (
+            <button
+              onClick={() => openMarkAttendance()}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700"
+            >
+              <CalendarCheck className="h-3.5 w-3.5" />
+              Mark Attendance
+            </button>
+          )}
+
         </div>
 
         {/* Tabs */}

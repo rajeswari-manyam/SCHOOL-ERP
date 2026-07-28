@@ -44,12 +44,17 @@ const MarkAttendanceModal = () => {
   // Student rows local state
   const [rows, setRows] = useState<StudentRow[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Sync selections when modal opens with a prefilled class/section (Edit button)
+  // Sync selections when modal opens — prefilled from the Edit button, or blank
+  // when opened via the page-level "Mark Attendance" button.
   useEffect(() => {
     if (showMarkAttendanceModal) {
-      if (prefilledClassId)   setSelectedClassId(prefilledClassId);
-      if (prefilledSectionId) setSelectedSectionId(prefilledSectionId);
+      setSelectedClassId(prefilledClassId);
+      setSelectedSectionId(prefilledSectionId);
+      setDate(new Date().toISOString().slice(0, 10));
+      setRows([]);
+      setSubmitError(null);
     }
   }, [showMarkAttendanceModal, prefilledClassId, prefilledSectionId]);
 
@@ -116,12 +121,14 @@ const MarkAttendanceModal = () => {
     setSelectedClassId(value);
     setSelectedSectionId("");
     setRows([]);
+    setSubmitError(null);
   }, []);
 
   // Reset rows when section changes
   const handleSectionChange = useCallback((value: string) => {
     setSelectedSectionId(value);
     setRows([]);
+    setSubmitError(null);
   }, []);
 
   const toggleStudent = useCallback((studentId: string) => {
@@ -158,8 +165,8 @@ const MarkAttendanceModal = () => {
         remarks: "",
       });
       toast.success(`Updated ${row.name} → ${row.isPresent ? "Present" : "Absent"}`);
-    } catch {
-      toast.error(`Failed to update ${row.name}`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? `Failed to update ${row.name}`);
     } finally {
       setSavingId(null);
     }
@@ -170,6 +177,7 @@ const MarkAttendanceModal = () => {
 
   const handleSubmit = useCallback(() => {
     if (!selectedClassId || !selectedSectionId || !rows.length) return;
+    setSubmitError(null);
 
     // teacher_id: from section's classTeacherId; academicYearId: from section or class
     const teacherId = (sectionsData?.data?.find((s) => s.id === selectedSectionId) as any)?.classTeacherId ?? "";
@@ -189,7 +197,8 @@ const MarkAttendanceModal = () => {
 
     submitMutation.mutate(payload, {
       onSuccess: () => toast.success("Attendance submitted successfully"),
-      onError: (err: any) => toast.error(err?.message ?? "Failed to submit attendance"),
+      onError: (err: any) =>
+        setSubmitError(err?.response?.data?.message ?? err?.message ?? "Failed to submit attendance"),
     });
   }, [selectedClassId, selectedSectionId, rows, sectionsData, submitMutation]);
 
@@ -274,6 +283,16 @@ const MarkAttendanceModal = () => {
             </div>
           </div>
         </CardContent>
+
+        {/* Submit error (e.g. holiday / non-working day) */}
+        {submitError && (
+          <div className="px-6 pt-4">
+            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
+              <span className="text-red-500 text-base leading-none">⚠</span>
+              <span>{submitError}</span>
+            </div>
+          </div>
+        )}
 
         {/* Student list */}
         <CardContent className="flex-1 overflow-y-auto min-h-[200px]">

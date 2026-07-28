@@ -284,16 +284,16 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                         {expanded && (
                           <div className="px-4 sm:px-6 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 bg-gray-50/30">
                             <Field label="Full Name *">
-                              <Input placeholder="Priya Reddy" value={row.name} onChange={(e) => updateRow(i, "name", e.target.value)} />
+                              <Input placeholder="Enter full name" value={row.name} onChange={(e) => updateRow(i, "name", e.target.value)} />
                             </Field>
                             <Field label="Role *">
-                              <Input placeholder="e.g. Class Teacher" value={row.role} onChange={(e) => updateRow(i, "role", e.target.value)} />
+                              <Input placeholder="Enter role" value={row.role} onChange={(e) => updateRow(i, "role", e.target.value)} />
                             </Field>
                             <Field label="Email *">
-                              <Input type="email" placeholder="priya@school.edu" value={row.email} onChange={(e) => updateRow(i, "email", e.target.value)} />
+                              <Input type="email" placeholder="Enter email" value={row.email} onChange={(e) => updateRow(i, "email", e.target.value)} />
                             </Field>
                             <Field label="Phone *">
-                              <Input type="tel" placeholder="9876543210" value={row.phone} maxLength={10} onChange={(e) => updateRow(i, "phone", e.target.value)} />
+                              <Input type="tel" placeholder="Enter phone number" value={row.phone} maxLength={10} onChange={(e) => updateRow(i, "phone", e.target.value)} />
                             </Field>
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center justify-between">
@@ -315,7 +315,7 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                               />
                             </div>
                             <Field label="Qualification">
-                              <Input placeholder="B.Ed, M.Sc" value={row.qualification} onChange={(e) => updateRow(i, "qualification", e.target.value)} />
+                              <Input placeholder="Enter qualification" value={row.qualification} onChange={(e) => updateRow(i, "qualification", e.target.value)} />
                             </Field>
                             <Field label="Date of Birth">
                               <Input type="date" value={row.dateOfBirth} onChange={(e) => updateRow(i, "dateOfBirth", e.target.value)} />
@@ -357,10 +357,10 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
                               <Input placeholder="Account holder name" value={row.bankAccountName} onChange={(e) => updateRow(i, "bankAccountName", e.target.value)} />
                             </Field>
                             <Field label="Bank Account Number">
-                              <Input placeholder="e.g. 012345678901" value={row.bankAccountNumber} maxLength={18} onChange={(e) => updateRow(i, "bankAccountNumber", e.target.value)} />
+                              <Input placeholder="Enter bank account number" value={row.bankAccountNumber} maxLength={18} onChange={(e) => updateRow(i, "bankAccountNumber", e.target.value)} />
                             </Field>
                             <Field label="IFSC Code">
-                              <Input placeholder="SBIN0001234" value={row.ifscCode} maxLength={11} onChange={(e) => updateRow(i, "ifscCode", e.target.value.toUpperCase())} />
+                              <Input placeholder="Enter IFSC code" value={row.ifscCode} maxLength={11} onChange={(e) => updateRow(i, "ifscCode", e.target.value.toUpperCase())} />
                             </Field>
                             <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Photo</label>

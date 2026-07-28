@@ -75,6 +75,7 @@ export const ExamTable = ({ exams }: { exams: Exam[] }) => {
               <th className="px-5 py-3 text-left">Date</th>
               <th className="px-5 py-3 text-left">Time</th>
               <th className="px-5 py-3 text-left">Venue</th>
+              <th className="px-5 py-3 text-left">Syllabus</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -106,6 +107,11 @@ export const ExamTable = ({ exams }: { exams: Exam[] }) => {
                   <td className="px-5 py-4">
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${venueStyle[e.venue] ?? "bg-gray-100 text-gray-600"}`}>
                       {e.venue}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-gray-500 max-w-[220px]">
+                    <span className="line-clamp-2" title={e.syllabus || undefined}>
+                      {e.syllabus || "—"}
                     </span>
                   </td>
                 </tr>
@@ -140,6 +146,9 @@ export const ExamTable = ({ exams }: { exams: Exam[] }) => {
                   <div>
                    <p className="text-sm sm:text-base font-semibold text-gray-900">{e.subject}</p>
                     <p className="text-xs text-gray-500">{e.date} · {e.startTime} – {e.endTime}</p>
+                    {e.syllabus && (
+                      <p className="text-xs text-gray-400 mt-0.5">Syllabus: {e.syllabus}</p>
+                    )}
                   </div>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-[11px] sm:text-xs font-medium whitespace-nowrap  ${venueStyle[e.venue] ?? "bg-gray-100 text-gray-600"}`}>

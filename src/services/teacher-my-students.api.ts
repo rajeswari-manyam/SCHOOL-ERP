@@ -91,22 +91,4 @@ export const myStudentsApi = {
       return null;
     }
   },
-
-  exportClassList: async (format: 'csv' | 'pdf'): Promise<void> => {
-    try {
-      const res = await api.get(`/tenant/teacher/students/export`, { params: { format }, responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `class-list.${format}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      console.error('exportClassList failed', { format, response: err?.response?.data ?? err?.message });
-      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? 'Failed to export class list';
-      throw new Error(message);
-    }
-  },
 };

@@ -1,4 +1,7 @@
+import { Fragment, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SubmittedExam, ExamStatus } from "../types/exam-marks.types";
+import StudentDownloadMenu from "./StudentDownloadMenu";
 
 const STATUS_CONFIG: Record<ExamStatus, { label: string; classes: string }> = {
   DRAFT:     { label: "Draft",     classes: "bg-gray-100 text-gray-500 border border-gray-200" },
@@ -31,9 +34,19 @@ interface Props {
   onPublish?: (exam: SubmittedExam) => void;
   /** id of the exam row currently being published, if any */
   publishingId?: string | null;
+  /** Filter context needed to look up a row's student roster for per-student PDF download */
+  classId?: string;
+  sectionId?: string;
+  subjectId?: string;
+  academicYearId?: string;
 }
 
-const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched, showPublish, onPublish, publishingId }: Props) => {
+const SubmittedMarksTab = ({
+  exams, loading, error, onRetry, hasSearched, showPublish, onPublish, publishingId,
+  classId, sectionId, subjectId, academicYearId,
+}: Props) => {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   // Idle state: no search triggered yet
   if (!hasSearched && !loading) {
     return (
@@ -112,8 +125,13 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched, showPu
             {exams.map((ex) => {
               const cfg = STATUS_CONFIG[ex.status] ?? STATUS_CONFIG.SUBMITTED;
               const completion = ex.completionPercentage ?? 0;
+              const isExpanded = expandedId === ex.id;
               return (
-                <tr key={ex.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
+                <Fragment key={ex.id}>
+                <tr
+                  onClick={() => setExpandedId(isExpanded ? null : ex.id)}
+                  className={`cursor-pointer border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors ${isExpanded ? "bg-indigo-50/40" : ""}`}
+                >
                   {/* Exam name */}
                   <td className="px-5 py-3.5">
                     <p className="text-sm font-semibold text-gray-900">{ex.examLabel}</p>
@@ -166,45 +184,101 @@ const SubmittedMarksTab = ({ exams, loading, error, onRetry, hasSearched, showPu
                   {/* Actions */}
                   <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-4">
-                      {ex.status === "SUBMITTED" && (
-                        <button className="text-xs font-semibold text-amber-600 hover:text-amber-800 hover:underline transition-colors">
-                          Approve
-                        </button>
-                      )}
-
-                      {/* Publish toggle — publishing has no undo, so once PUBLISHED it's a disabled on-state */}
-                      {showPublish && (
-                        ex.status === "PUBLISHED" ? (
-                          <span className="flex items-center gap-1.5" title="Results published to students & parents">
-                            <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-indigo-600">
-                              <span className="inline-block h-3 w-3 translate-x-3.5 rounded-full bg-white" />
-                            </span>
-                            <span className="text-[11px] font-bold text-indigo-600">Published</span>
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => onPublish?.(ex)}
-                            disabled={publishingId === ex.id}
-                            title="Publish results to students & parents"
-                            className="flex items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-gray-200 group-hover:bg-gray-300 transition-colors">
-                              <span className="inline-block h-3 w-3 translate-x-0.5 rounded-full bg-white shadow transition-transform" />
-                            </span>
-                            <span className="text-[11px] font-semibold text-gray-500 group-hover:text-gray-700">
-                              {publishingId === ex.id ? "Publishing…" : "Publish"}
-                            </span>
+                      <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                        {ex.status === "SUBMITTED" && (
+                          <button className="text-xs font-semibold text-amber-600 hover:text-amber-800 hover:underline transition-colors">
+                            Approve
                           </button>
-                        )
-                      )}
+                        )}
 
-                      <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors">
-                        View
-                      </button>
+                        {/* Publish toggle — publishing has no undo, so once PUBLISHED it's a disabled on-state */}
+                        {showPublish && (
+                          ex.status === "PUBLISHED" ? (
+                            <span className="flex items-center gap-1.5" title="Results published to students & parents">
+                              <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-indigo-600">
+                                <span className="inline-block h-3 w-3 translate-x-3.5 rounded-full bg-white" />
+                              </span>
+                              <span className="text-[11px] font-bold text-indigo-600">Published</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => onPublish?.(ex)}
+                              disabled={publishingId === ex.id}
+                              title="Publish results to students & parents"
+                              className="flex items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-gray-200 group-hover:bg-gray-300 transition-colors">
+                                <span className="inline-block h-3 w-3 translate-x-0.5 rounded-full bg-white shadow transition-transform" />
+                              </span>
+                              <span className="text-[11px] font-semibold text-gray-500 group-hover:text-gray-700">
+                                {publishingId === ex.id ? "Publishing…" : "Publish"}
+                              </span>
+                            </button>
+                          )
+                        )}
+
+                        {classId && sectionId && subjectId && ex.examId && (
+                          <StudentDownloadMenu
+                            classId={classId}
+                            sectionId={sectionId}
+                            subjectId={subjectId}
+                            academicYearId={academicYearId ?? ex.academicYearId ?? ""}
+                            examId={ex.examId}
+                          />
+                        )}
+                      </div>
+
+                      <span className="flex items-center gap-1 text-xs font-semibold text-indigo-600">
+                        {isExpanded ? "Close" : "View"}
+                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      </span>
                     </div>
                   </td>
                 </tr>
+
+                {isExpanded && (
+                  <tr className="border-b border-gray-50 last:border-0 bg-gray-50/60">
+                    <td colSpan={8} className="px-5 py-4">
+                      {!ex.enteredStudents || ex.enteredStudents.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-3">No student marks found for this exam.</p>
+                      ) : (
+                        <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-100 bg-gray-50/80">
+                                {["Admission No", "Student Name", "Marks Obtained", "Published"].map((h) => (
+                                  <th key={h} className="text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 px-4 py-2.5">
+                                    {h}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {ex.enteredStudents.map((s) => (
+                                <tr key={s.studentId} className="border-b border-gray-50 last:border-0">
+                                  <td className="px-4 py-2.5 text-sm text-gray-600">{s.admissionNo || "—"}</td>
+                                  <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{s.studentName}</td>
+                                  <td className="px-4 py-2.5 text-sm font-semibold text-indigo-600">{s.marksObtained}</td>
+                                  <td className="px-4 py-2.5">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      s.isPublished
+                                        ? "bg-indigo-50 text-indigo-700"
+                                        : "bg-gray-100 text-gray-500"
+                                    }`}>
+                                      {s.isPublished ? "Published" : "Not Published"}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
           </tbody>

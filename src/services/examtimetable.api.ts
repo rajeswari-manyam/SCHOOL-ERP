@@ -14,6 +14,7 @@ export interface ExamTimetablePayload {
   room_no: string;
   academicYearId: string;
   teacher_id: string;
+  syllabus?: string;
 }
 
 // GET LIST response structure
@@ -23,6 +24,7 @@ export interface ExamTimetableListItem {
   start_time: string;
   end_time: string;
   room_no: string;
+  syllabus?: string;
 
   class: {
     id: string;
@@ -59,10 +61,22 @@ export interface ExamTimetableDetail extends ExamTimetablePayload {
 
 /** ================= CREATE (single) ================= */
 
+// The backend can respond 200 OK with { status: false, message: "..." }
+// on a conflict (e.g. duplicate date/time) instead of an HTTP error status.
+// Normalize that into a real rejected promise so callers can just try/catch.
 export const createExamTimetable = async (
   data: Partial<ExamTimetablePayload>
 ) => {
   const res = await api.post("/tenant/createexams-timetable", data);
+
+  if (res.data?.status === false) {
+    const error: any = new Error(
+      res.data?.message || "Failed to save exam timetable."
+    );
+    error.response = { data: res.data };
+    throw error;
+  }
+
   return res.data.data;
 };
 
@@ -86,7 +100,22 @@ export const bulkCreateExamTimetable = async (
   payload: BulkExamTimetablePayload
 ): Promise<BulkExamTimetableResponse> => {
   const res = await api.post("/tenant/exams-timetable/bulk", payload);
-  return res.data;
+  const data = res.data as BulkExamTimetableResponse;
+
+  // Bulk endpoint returns 200 OK even when every row failed (status:false)
+  // or when some rows failed (failed > 0, e.g. "Time slot conflicts with an
+  // existing exam..."). Either case needs to surface to the caller as a
+  // rejection — axios won't throw on its own since the HTTP status is fine.
+  if (data?.status === false || (data?.failed ?? 0) > 0) {
+    const firstMessage = data?.errors?.[0]?.message;
+    const error: any = new Error(
+      firstMessage || data?.message || "Failed to save exam timetable."
+    );
+    error.response = { data };
+    throw error;
+  }
+
+  return data;
 };
 
 /** ================= GET ALL ================= */
@@ -122,6 +151,15 @@ export const updateExamTimetable = async (
     `/tenant/updateexams-timetableById/${id}`,
     data
   );
+
+  if (res.data?.status === false) {
+    const error: any = new Error(
+      res.data?.message || "Failed to update exam timetable."
+    );
+    error.response = { data: res.data };
+    throw error;
+  }
+
   return res.data.data;
 };
 
@@ -154,6 +192,7 @@ export interface ExamTimetableByTeacherItem {
   room_no: string;
   academicYearId: string;
   teacher_id: string;
+  syllabus?: string;
   createdAt: string;
   updatedAt: string;
   /** Optional populated nested objects */
@@ -189,6 +228,7 @@ export interface TodayExamItem {
   start_time: string;
   end_time: string;
   room_no: string;
+  syllabus?: string;
 }
 
 export interface TodayExamClass {
@@ -220,6 +260,7 @@ export interface UpcomingExamItem {
   start_time: string;
   end_time: string;
   room_no: string | null;
+  syllabus?: string | null;
   class: { id: string; class_name: string } | null;
   section: { id: string; sectionName: string } | null;
   subject: { id: string; subject_name: string } | null;
@@ -240,5 +281,40 @@ export const getUpcomingExams = async (params: {
   date?: string;
 }): Promise<UpcomingExamsResponse> => {
   const res = await api.get("/tenant/upcomingexams", { params });
+  return res.data;
+};
+
+/** ================= AVAILABLE TEACHERS FOR EXAM SLOT ================= */
+
+export interface AvailableTeacherForExam {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  role: string;
+}
+
+export interface AssignedTeacherForExam extends AvailableTeacherForExam {
+  room_no: string;
+}
+
+export interface AvailableTeachersForExamResponse {
+  status: boolean;
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+  total: number;
+  available_count: number;
+  assigned_count: number;
+  available_teachers: AvailableTeacherForExam[];
+  assigned_teachers: AssignedTeacherForExam[];
+}
+
+export const getAvailableTeachersForExam = async (params: {
+  exam_date: string;
+  start_time: string;
+  end_time: string;
+}): Promise<AvailableTeachersForExamResponse> => {
+  const res = await api.get("/tenant/availableteachersforexam", { params });
   return res.data;
 };

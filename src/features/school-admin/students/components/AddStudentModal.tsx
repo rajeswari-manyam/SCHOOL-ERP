@@ -447,12 +447,12 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
               </div>
 
               <Field label="First Name" required hasError={e("firstName")}>
-                <input className={inputCls} placeholder="e.g. Rahul"
-                  value={form.firstName} onChange={(ev) => set("firstName")(ev.target.value)} />
+             <input className={inputCls} placeholder="Enter first name"
+  value={form.firstName} onChange={(ev) => set("firstName")(ev.target.value)} />
               </Field>
 
               <Field label="Last Name">
-                <input className={inputCls} placeholder="e.g. Sharma"
+                <input className={inputCls} placeholder="Enter last name"
                   value={form.lastName} onChange={(ev) => set("lastName")(ev.target.value)} />
               </Field>
 
@@ -470,13 +470,13 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                     <Toggle checked={autoGenerate} onChange={() => { setAutoGenerate((v) => !v); clearError("admissionNo"); }} />
                   </div>
                 </div>
-                <input
-                  className={`${inputCls} ${autoGenerate ? "bg-indigo-50 text-indigo-700 font-semibold border-indigo-200" : ""} ${fieldErrors["admissionNo"] ? "border-red-400 ring-1 ring-red-300" : ""}`}
-                  placeholder="ADM-001"
-                  value={form.admissionNo}
-                  readOnly={autoGenerate}
-                  onChange={(ev) => !autoGenerate && set("admissionNo")(ev.target.value)}
-                />
+            <input
+  className={`${inputCls} ${autoGenerate ? "bg-indigo-50 text-indigo-700 font-semibold border-indigo-200" : ""} ${fieldErrors["admissionNo"] ? "border-red-400 ring-1 ring-red-300" : ""}`}
+  placeholder="Enter admission number"
+  value={form.admissionNo}
+  readOnly={autoGenerate}
+  onChange={(ev) => !autoGenerate && set("admissionNo")(ev.target.value)}
+/>
               </Field>
 
               {/* Gender pills */}
@@ -547,8 +547,8 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
               </Field>
 
               <Field label="Roll Number" errorText={fieldErrors["rollNumber"]}>
-                <input className={`${inputCls} ${fieldErrors["rollNumber"] ? "border-red-400 ring-1 ring-red-300" : ""}`} placeholder="e.g. 24"
-                  value={form.rollNumber} onChange={(ev) => set("rollNumber")(ev.target.value)} />
+              <input className={`${inputCls} ${fieldErrors["rollNumber"] ? "border-red-400 ring-1 ring-red-300" : ""}`} placeholder="Enter roll number"
+  value={form.rollNumber} onChange={(ev) => set("rollNumber")(ev.target.value)} />
               </Field>
 
               <div className="sm:col-span-2">
@@ -592,12 +592,12 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                   <Field label="Father's Name" required hasError={e("fatherName")}>
-                    <input className={inputCls} placeholder="e.g. Kumar Reddy"
+                    <input className={inputCls} placeholder="Enter father's name"
                       value={form.fatherName} onChange={(ev) => set("fatherName")(ev.target.value)} />
                   </Field>
 
                   <Field label="Mother's Name" required hasError={e("motherName")}>
-                    <input className={inputCls} placeholder="e.g. Lakshmi Reddy"
+                    <input className={inputCls} placeholder="Enter mother's name"
                       value={form.motherName} onChange={(ev) => set("motherName")(ev.target.value)} />
                   </Field>
 
@@ -664,7 +664,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                       </span>
                     </div>
                     <PhoneInput value={form.fatherPhone} onChange={set("fatherPhone")}
-                      placeholder="98765 43210" hasError={e("fatherPhone")} />
+                      placeholder="Enter father's phone number" hasError={e("fatherPhone")} />
                     {e("fatherPhone")
                       ? <p className="text-[10px] text-red-500 font-medium -mt-0.5">This field is required</p>
                       : <p className="text-[10px] text-gray-400 italic">Required for emergency alerts and attendance notifications.</p>
@@ -673,30 +673,30 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
 
                   <Field label="Mother's Phone" required hasError={e("motherPhone")}>
                     <PhoneInput value={form.motherPhone} onChange={set("motherPhone")}
-                      placeholder="00000 00000" hasError={e("motherPhone")} />
+                      placeholder="Enter mother's phone number" hasError={e("motherPhone")} />
                   </Field>
 
                   <Field label="Father's Occupation">
-                    <input className={inputCls} placeholder="e.g. Software Engineer"
+                    <input className={inputCls} placeholder="Enter father's occupation"
                       value={form.fatherOccupation} onChange={(ev) => set("fatherOccupation")(ev.target.value)} />
                   </Field>
 
                   <Field label="Mother's Occupation">
-                    <input className={inputCls} placeholder="e.g. Teacher"
+                    <input className={inputCls} placeholder="Enter mother's occupation"
                       value={form.motherOccupation} onChange={(ev) => set("motherOccupation")(ev.target.value)} />
                   </Field>
 
                   <Field label="Emergency Contact">
-                    <PhoneInput value={form.emergencyContact} onChange={set("emergencyContact")} placeholder="98480 22338" />
+                    <PhoneInput value={form.emergencyContact} onChange={set("emergencyContact")} placeholder="Enter emergency contact number" />
                   </Field>
 
                   <Field label="Father's Email">
-                    <input type="email" className={inputCls} placeholder="father@email.com"
+                    <input type="email" className={inputCls} placeholder="Enter father's email"
                       value={form.fatherEmail} onChange={(ev) => set("fatherEmail")(ev.target.value)} />
                   </Field>
 
                   <Field label="Mother's Email">
-                    <input type="email" className={inputCls} placeholder="mother@email.com"
+                    <input type="email" className={inputCls} placeholder="Enter mother's email"
                       value={form.motherEmail} onChange={(ev) => set("motherEmail")(ev.target.value)} />
                   </Field>
                 </div>
@@ -708,7 +708,7 @@ const AddStudentModal = ({ onClose, onSubmit, students = [] }: AddStudentModalPr
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <PhoneInput value={form.whatsappNumber} onChange={set("whatsappNumber")}
-                      placeholder="98765 43210" readOnly={!!form.sameAsFather} />
+                      placeholder="Enter WhatsApp alert number" readOnly={!!form.sameAsFather} />
                     <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
                       <input type="checkbox" checked={!!form.sameAsFather}
                         onChange={(ev) => set("sameAsFather")(ev.target.checked)}

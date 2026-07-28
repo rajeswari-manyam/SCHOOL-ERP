@@ -193,6 +193,11 @@ export const useHomework = (): HomeworkState => {
   // ── Invalidation helper ───────────────────────────────────────────────────
   const invalidateList = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.list(teacherId) });
+    // HomeworkPage also runs a second, independent query ("homework"/"byClass"/…)
+    // whenever a class filter is active — without this, a newly created/edited/
+    // deleted homework never shows up while that filter is selected, since only
+    // the unfiltered list query above gets refetched.
+    queryClient.invalidateQueries({ queryKey: ["homework", "byClass"] });
   }, [queryClient, teacherId]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────

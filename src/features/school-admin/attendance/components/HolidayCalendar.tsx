@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Download } from "lucide-react";
 import { useAttendanceStore } from "../store";
 import { useAllHolidays } from "../hooks/useAttendance";
+import { downloadHolidays } from "../../../../services/holidays.api";
 import BulkAddHolidayModal from "./BulkAddHolidayModal";
 import {
   Card,
@@ -147,8 +149,28 @@ const HolidayCalendar = () => {
   } = useAttendanceStore();
 
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const { data: rawData, isLoading, isError, error, refetch } = useAllHolidays();
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const blob = await downloadHolidays();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `holidays_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Download failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -216,6 +238,16 @@ const HolidayCalendar = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={handleDownload}
+              disabled={downloading}
+              size="sm"
+              variant="outline"
+              className="flex-1 sm:flex-none rounded-lg border-gray-200 bg-white text-gray-600 hover:bg-gray-50 sm:px-4"
+            >
+              <Download size={14} className={downloading ? "animate-bounce" : ""} />
+              {downloading ? "Downloading…" : "Download"}
+            </Button>
             <Button
               onClick={() => setShowBulkModal(true)}
               size="sm"

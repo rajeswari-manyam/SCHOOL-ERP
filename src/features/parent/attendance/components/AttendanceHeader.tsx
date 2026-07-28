@@ -12,7 +12,7 @@ export default function AttendanceHeader({ currentDate, onPrev, onNext, child }:
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">
+        <h1 className="text-sm font-semibold text-gray-900">
           Attendance — {child.name}
         </h1>
         {/* ✅ show resolved class, section, and academic year */}

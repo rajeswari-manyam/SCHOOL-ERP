@@ -266,15 +266,15 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           </Field>
 
           <Field label="Admission Number">
-            <Input value={form.admissionNo} onChange={(e) => set("admissionNo")(e.target.value)} placeholder="ADR-2025-343" />
+            <Input value={form.admissionNo} onChange={(e) => set("admissionNo")(e.target.value)} placeholder="Enter admission number" />
           </Field>
 
           <Field label="First Name">
-            <Input value={form.firstName} onChange={(e) => set("firstName")(e.target.value)} placeholder="Rahul" />
+            <Input value={form.firstName} onChange={(e) => set("firstName")(e.target.value)} placeholder="Enter first name" />
           </Field>
 
           <Field label="Last Name">
-            <Input value={form.lastName} onChange={(e) => set("lastName")(e.target.value)} placeholder="Sharma" />
+            <Input value={form.lastName} onChange={(e) => set("lastName")(e.target.value)} placeholder="Enter last name" />
           </Field>
 
           <Field label="Date of Birth">
@@ -314,7 +314,7 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           </Field>
 
           <Field label="Roll Number">
-            <Input value={form.rollNumber} onChange={(e) => set("rollNumber")(e.target.value)} placeholder="24" />
+            <Input value={form.rollNumber} onChange={(e) => set("rollNumber")(e.target.value)} placeholder="Enter roll number" />
           </Field>
 
           <div className="sm:col-span-2">
@@ -324,15 +324,15 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           </div>
 
           <Field label="Father's Name">
-            <Input value={form.fatherName} onChange={(e) => set("fatherName")(e.target.value)} placeholder="Father's name" />
+            <Input value={form.fatherName} onChange={(e) => set("fatherName")(e.target.value)} placeholder="Enter father's name" />
           </Field>
 
           <Field label="Father's Phone">
-            <Input value={form.fatherPhone} onChange={(e) => set("fatherPhone")(e.target.value)} placeholder="9876543210" />
+            <Input value={form.fatherPhone} onChange={(e) => set("fatherPhone")(e.target.value)} placeholder="Enter father's phone number" />
           </Field>
 
           <Field label="Father's Occupation">
-            <Input value={form.fatherOccupation} onChange={(e) => set("fatherOccupation")(e.target.value)} placeholder="e.g. Software Engineer" />
+            <Input value={form.fatherOccupation} onChange={(e) => set("fatherOccupation")(e.target.value)} placeholder="Enter father's occupation" />
           </Field>
 
           <div className="flex items-center gap-4">
@@ -360,15 +360,15 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           </div>
 
           <Field label="Mother's Name">
-            <Input value={form.motherName} onChange={(e) => set("motherName")(e.target.value)} placeholder="Mother's name" />
+            <Input value={form.motherName} onChange={(e) => set("motherName")(e.target.value)} placeholder="Enter mother's name" />
           </Field>
 
           <Field label="Mother's Phone">
-            <Input value={form.motherPhone} onChange={(e) => set("motherPhone")(e.target.value)} placeholder="9876543210" />
+            <Input value={form.motherPhone} onChange={(e) => set("motherPhone")(e.target.value)} placeholder="Enter mother's phone number" />
           </Field>
 
           <Field label="Mother's Occupation">
-            <Input value={form.motherOccupation} onChange={(e) => set("motherOccupation")(e.target.value)} placeholder="e.g. Teacher" />
+            <Input value={form.motherOccupation} onChange={(e) => set("motherOccupation")(e.target.value)} placeholder="Enter mother's occupation" />
           </Field>
 
           <div className="flex items-center gap-4">
@@ -396,15 +396,15 @@ export const EditStudentModal = ({ student, onClose, onSave }: Props) => {
           </div>
 
           <Field label="Emergency Contact">
-            <Input value={form.emergencyContact} onChange={(e) => set("emergencyContact")(e.target.value)} placeholder="9876543210" />
+            <Input value={form.emergencyContact} onChange={(e) => set("emergencyContact")(e.target.value)} placeholder="Enter emergency contact number" />
           </Field>
 
           <Field label="Father's Email">
-            <Input type="email" value={form.fatherEmail} onChange={(e) => set("fatherEmail")(e.target.value)} placeholder="father@example.com" />
+            <Input type="email" value={form.fatherEmail} onChange={(e) => set("fatherEmail")(e.target.value)} placeholder="Enter father's email" />
           </Field>
 
           <Field label="Mother's Email">
-            <Input type="email" value={form.motherEmail} onChange={(e) => set("motherEmail")(e.target.value)} placeholder="mother@example.com" />
+            <Input type="email" value={form.motherEmail} onChange={(e) => set("motherEmail")(e.target.value)} placeholder="Enter mother's email" />
           </Field>
 
           <div className="col-span-full flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 px-0 py-4 border-t border-gray-100 shrink-0">

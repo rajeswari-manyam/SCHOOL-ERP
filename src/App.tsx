@@ -3,6 +3,7 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { Toaster as SonnerToaster } from "sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./config/queryClient";
 
@@ -58,6 +59,8 @@ function App() {
             },
           }}
         />
+        {/* Many components call sonner's `toast(...)` — mount its Toaster too, or those calls render nothing */}
+        <SonnerToaster position="top-right" richColors closeButton />
 
         <Suspense fallback={<PageLoader />}>
           <Routes>

@@ -1,4 +1,5 @@
 import api from "@/config/axios";
+import { getAuthToken } from "@/store/authStore";
 
 /* ================= TYPES ================= */
 
@@ -73,10 +74,10 @@ export const getHolidayById = async (
 export const createHoliday = async (
   payload: CreateHolidayPayload
 ): Promise<BulkAddHolidaysResponse> => {
-  // The backend always expands from_date..to_date into one record per day and
-  // returns them as an array under `data` (with a `count`) — even for a
-  // single-day holiday — never a lone HolidayFromApi object.
   const { data } = await api.post(`/tenant/createholidays`, payload);
+  if (data?.status === false) {
+    throw new Error(data.message ?? "Failed to create holiday");
+  }
   return data;
 };
 
@@ -85,6 +86,9 @@ export const updateHolidayById = async (
   payload: UpdateHolidayPayload
 ): Promise<HolidayActionResponse> => {
   const { data } = await api.put(`/tenant/updateholidayById/${id}`, payload);
+  if (data?.status === false) {
+    throw new Error(data.message ?? "Failed to update holiday");
+  }
   return data;
 };
 
@@ -92,6 +96,9 @@ export const deleteHolidayById = async (
   id: string
 ): Promise<HolidayActionResponse> => {
   const { data } = await api.delete(`/tenant/deleteholidayById/${id}`);
+  if (data?.status === false) {
+    throw new Error(data.message ?? "Failed to delete holiday");
+  }
   return data;
 };
 
@@ -109,4 +116,13 @@ export const bulkAddHolidays = async (
     const message = err?.response?.data?.message ?? err?.message ?? "Bulk add failed";
     throw new Error(message);
   }
+};
+
+export const downloadHolidays = async (): Promise<Blob> => {
+  const token = getAuthToken();
+  const response = await api.get(`/tenant/holidaysdownload`, {
+    responseType: "blob",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return response.data;
 };

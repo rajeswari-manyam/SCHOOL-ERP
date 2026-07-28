@@ -88,3 +88,59 @@ export const createMark = async (
   );
   return data;
 };
+
+/* =========================================================
+   📘 DOWNLOAD MARKS / RESULT PDF
+   GET /tenant/marksdownload?student_id=&exam_id=
+========================================================= */
+
+export interface DownloadedMarksFile {
+  blob: Blob;
+  filename: string;
+}
+
+export const downloadMarksPdf = async (
+  studentId: string,
+  examId: string
+): Promise<DownloadedMarksFile> => {
+  const response = await api.get(`/tenant/marksdownload`, {
+    params: { student_id: studentId, exam_id: examId },
+    responseType: "blob",
+  });
+  const blob: Blob = response.data;
+
+  if (blob.type === "application/json" || blob.type === "text/plain") {
+    const text = await blob.text();
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json.message || json.error || "Server returned an error instead of a PDF.");
+    } catch (e) {
+      if (e instanceof SyntaxError) throw new Error(text || "Server returned an unexpected response.");
+      throw e;
+    }
+  }
+
+  const disposition = String(response.headers["content-disposition"] ?? "");
+  const nameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  if (nameMatch) {
+    return { blob, filename: nameMatch[1].replace(/['"]/g, "").trim() };
+  }
+
+  return { blob, filename: `result-${studentId.slice(0, 8)}.pdf` };
+};
+
+/** Fetches the result PDF and triggers a browser download. */
+export const triggerMarksDownload = async (
+  studentId: string,
+  examId: string
+): Promise<void> => {
+  const { blob, filename } = await downloadMarksPdf(studentId, examId);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => window.URL.revokeObjectURL(url), 100);
+};

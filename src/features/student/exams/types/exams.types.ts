@@ -17,6 +17,7 @@ export interface Exam {
   startTime: string;
   endTime: string;
   venue: Venue | string;
+  syllabus?: string;
 }
 
 export interface Result {

@@ -35,6 +35,7 @@ export interface UpcomingExam {
   date: string;       // ISO "YYYY-MM-DD"
   time: string;
   venue: string;
+  syllabus?: string;
   hallTicketUrl?: string;
 }
 

@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Download, Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { toast } from "sonner";
 
 // ── Timetable hooks ──────────────────────────────────────────────────────────
 import {
@@ -24,7 +23,7 @@ import {
 import { useExams, useCreateExam, useUpdateExam, useDeleteExam as useDeleteExamRecord } from "./hooks/useExam";
 
 // ── Types ────────────────────────────────────────────────────────────────────
-import type { BulkCreateTimetablePayload } from "@/services/timetable.api";
+import { downloadClassTimetable, type BulkCreateTimetablePayload } from "@/services/timetable.api";
 import type {
   ExamEntry,
   DayOfWeek,
@@ -35,6 +34,7 @@ import type { ExamRecord } from "@/services/exam.api";
 import WeeklyTimetableGrid from "./components/Weeklytimetablegrid";
 import AddPeriodModal from "./components/Addperiodmodal";
 import AddExamTimetableModal from "./components/AddExamtimetablemodal";
+import FreeTeachersPanel from "./components/FreeTeachersPanel";
 import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 import { fetchAllWorkingDays } from "@/services/working-days.api";
 import type { WorkingDayRecord } from "@/services/working-days.api";
@@ -354,7 +354,7 @@ const ExamTimetableFilteredTab: React.FC<{
 
   type DisplayRow = {
     id: string; subject: string; exam_name: string; exam_date: string;
-    start_time: string; end_time: string; room_no: string;
+    start_time: string; end_time: string; room_no: string; syllabus: string;
     teacher_name: string; teacher_id: string;
     section_id: string; subject_id: string; exam_id: string;
     class_id: string; section_name: string; class_name: string;
@@ -369,6 +369,7 @@ const ExamTimetableFilteredTab: React.FC<{
         start_time: r.start_time,
         end_time: r.end_time,
         room_no: r.room_no ?? "",
+        syllabus: r.syllabus ?? "",
         teacher_name: r.teacher?.name ?? "",
         teacher_id: r.teacher?.id ?? "",
         section_id: r.section?.id ?? "",
@@ -387,6 +388,7 @@ const ExamTimetableFilteredTab: React.FC<{
           start_time: e.start_time,
           end_time: e.end_time,
           room_no: e.room_no ?? "",
+          syllabus: e.syllabus ?? "",
           teacher_name: e.teacher_name ?? "",
           teacher_id: e.teacher_id ?? "",
           section_id: e.section_id,
@@ -503,8 +505,8 @@ const ExamTimetableFilteredTab: React.FC<{
             <table className="w-full text-sm" style={{ minWidth: 760 }}>
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  {["#", "Class / Sec", "Subject", "Exam", "Date", "Time", "Room", "Teacher", "Actions"].map((h, i) => (
-                    <th key={h} className={`px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-500 ${i === 8 ? "text-right" : "text-left"}`}>{h}</th>
+                  {["#", "Class / Sec", "Subject", "Exam", "Date", "Time", "Room", "Syllabus", "Invigilator", "Actions"].map((h, i) => (
+                    <th key={h} className={`px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-500 ${i === 9 ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -518,6 +520,7 @@ const ExamTimetableFilteredTab: React.FC<{
                     startTime: row.start_time,
                     endTime: row.end_time,
                     venue: row.room_no,
+                    syllabus: row.syllabus,
                     notifyStatus: "PENDING" as const,
                     teacher_id: row.teacher_id,
                     section_id: row.section_id,
@@ -537,6 +540,11 @@ const ExamTimetableFilteredTab: React.FC<{
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{fmtDate(row.exam_date)}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{fmt(row.start_time)} – {fmt(row.end_time)}</td>
                       <td className="px-4 py-3 text-gray-600">{row.room_no || "—"}</td>
+                      <td className="px-4 py-3 text-gray-500 text-xs max-w-[160px]">
+                        <span className="line-clamp-2" title={row.syllabus || undefined}>
+                          {row.syllabus || "—"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         {row.teacher_name ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700">
@@ -632,8 +640,8 @@ const TimetablePage: React.FC = () => {
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const { mutate: bulkCreateTimetable, isPending: isCreatingTimetable } = useBulkCreateTimetable();
-  const { mutate: bulkCreateExamTimetable, isPending: isCreatingExamTimetable } = useBulkCreateExamTimetable();
-  const { mutate: updateExamTimetable, isPending: isUpdatingExamTimetable } = useUpdateExamTimetable();
+  const { mutateAsync: bulkCreateExamTimetable, isPending: isCreatingExamTimetable } = useBulkCreateExamTimetable();
+  const { mutateAsync: updateExamTimetable, isPending: isUpdatingExamTimetable } = useUpdateExamTimetable();
   const { mutate: deleteExam } = useDeleteExam();
   const { mutate: deleteTimetable, isPending: isDeletingTimetable } = useDeleteTimetable();
 
@@ -645,7 +653,6 @@ const TimetablePage: React.FC = () => {
     id: string; day: DayOfWeek; periodNo: number; subject: string; teacherName: string;
   } | null>(null);
   const [downloadingTimetable, setDownloadingTimetable] = useState(false);
-  const timetableGridRef = useRef<HTMLDivElement>(null);
 
   const { classTabs = [], classTimetable } = data ?? {};
   const headingClass   = classTimetable?.classLabel ?? activeClass.label;
@@ -653,23 +660,12 @@ const TimetablePage: React.FC = () => {
   const selectedClassId = activeClass.id;
 
   const handleDownloadTimetable = async () => {
-    if (!timetableGridRef.current) return;
+    if (!activeClass.id || !activeSection.id) return;
     setDownloadingTimetable(true);
     try {
-      const canvas = await html2canvas(timetableGridRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "px",
-        format: [canvas.width / 2, canvas.height / 2],
-      });
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
-      pdf.save(`Timetable_${headingClass}_${headingSection}.pdf`);
+      await downloadClassTimetable(activeClass.id, activeSection.id);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? err?.message ?? "Failed to download timetable");
     } finally {
       setDownloadingTimetable(false);
     }
@@ -789,47 +785,53 @@ const TimetablePage: React.FC = () => {
               )}
             </div>
 
-            {/* Weekly grid */}
-            <div className="mb-5">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-52 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <svg className="w-4 h-4 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Loading timetable…
+            {/* Weekly grid + Free Teachers panel */}
+            <div className="mb-5 flex gap-5 items-start flex-col xl:flex-row">
+              {/* Grid */}
+              <div className="flex-1 min-w-0 w-full">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-52 rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <svg className="w-4 h-4 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Loading timetable…
+                    </div>
                   </div>
-                </div>
-              ) : !activeSection.id ? (
-                <div className="flex flex-col items-center justify-center h-52 rounded-2xl border border-dashed border-gray-200 bg-white shadow-sm gap-2">
-                  <p className="text-sm text-gray-400">Select a section to view the timetable.</p>
-                </div>
-              ) : !classTimetable || classTimetable.slots.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-52 rounded-2xl border border-dashed border-gray-200 bg-white shadow-sm gap-3">
-                  <p className="text-sm text-gray-400">No timetable found for {headingClass} – {headingSection}.</p>
-                  <button
-                    onClick={() => setAddPeriodOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
-                  >
-                    + Add the first period
-                  </button>
-                </div>
-              ) : (
-                <div ref={timetableGridRef} className="bg-white">
-                  <WeeklyTimetableGrid
-                    timetable={classTimetable}
-                    onEditCell={() => setAddPeriodOpen(true)}
-                    onEditPeriod={() => {
-                      setAddPeriodOpen(true);
-                    }}
-                    onDeletePeriod={(id, day, periodNo, subject, teacherName) =>
-                      setDeletePeriodTarget({ id, day, periodNo, subject, teacherName })
-                    }
-                    workingDays={activeWDSelectedDays}
-                  />
-                </div>
-              )}
+                ) : !activeSection.id ? (
+                  <div className="flex flex-col items-center justify-center h-52 rounded-2xl border border-dashed border-gray-200 bg-white shadow-sm gap-2">
+                    <p className="text-sm text-gray-400">Select a section to view the timetable.</p>
+                  </div>
+                ) : !classTimetable || classTimetable.slots.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-52 rounded-2xl border border-dashed border-gray-200 bg-white shadow-sm gap-3">
+                    <p className="text-sm text-gray-400">No timetable found for {headingClass} – {headingSection}.</p>
+                    <button
+                      onClick={() => setAddPeriodOpen(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+                    >
+                      + Add the first period
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-white">
+                    <WeeklyTimetableGrid
+                      timetable={classTimetable}
+                      onEditCell={() => setAddPeriodOpen(true)}
+                      onEditPeriod={() => setAddPeriodOpen(true)}
+                      onDeletePeriod={(id, day, periodNo, subject, teacherName) =>
+                        setDeletePeriodTarget({ id, day, periodNo, subject, teacherName })
+                      }
+                      workingDays={activeWDSelectedDays}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Free Teachers panel — sidebar on xl, stacked on smaller */}
+              <div className="w-full xl:w-72 xl:shrink-0">
+                <FreeTeachersPanel />
+              </div>
             </div>
           </>
         )}
@@ -894,14 +896,14 @@ const TimetablePage: React.FC = () => {
         isSaving={isCreatingExamTimetable || isUpdatingExamTimetable}
         editData={editExamEntry}
         onClose={() => { setAddExamTimetableOpen(false); setEditExamEntry(null); }}
-        onSave={(payload) => {
+        onSave={async (payload) => {
           if (editExamEntry) {
-            updateExamTimetable(
-              { id: editExamEntry.id, data: payload.examsTimetables[0] },
-              { onSuccess: () => { setAddExamTimetableOpen(false); setEditExamEntry(null); } }
-            );
+            await updateExamTimetable({ id: editExamEntry.id, data: payload.examsTimetables[0] });
+            setAddExamTimetableOpen(false);
+            setEditExamEntry(null);
           } else {
-            bulkCreateExamTimetable(payload, { onSuccess: () => setAddExamTimetableOpen(false) });
+            await bulkCreateExamTimetable(payload);
+            setAddExamTimetableOpen(false);
           }
         }}
       />

@@ -1,11 +1,13 @@
 // components/ResultsSection.tsx
 import { ResultTable } from "./Resultstable";
-import { Download, ChevronDown, CheckCircle2, AlertCircle } from "lucide-react";
+import { Download, ChevronDown, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { ExamResult } from "../types/exams.types";
 import type { ExamRecord } from "../../../../services/exam.api";
+import { triggerMarksDownload } from "../../../../services/marks.api";
 
 interface ResultsSectionProps {
+  studentId: string;
   examResult: ExamResult | null;
   resultsLoading: boolean;
   resultsError: string | null;
@@ -17,6 +19,7 @@ interface ResultsSectionProps {
 }
 
 export const ResultsSection = ({
+  studentId,
   examResult,
   resultsLoading,
   resultsError,
@@ -27,6 +30,22 @@ export const ResultsSection = ({
   onSelectExam,
 }: ResultsSectionProps) => {
   const [examDropdownOpen, setExamDropdownOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleDownload = async () => {
+    if (!studentId || !selectedResultExamId) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await triggerMarksDownload(studentId, selectedResultExamId);
+    } catch (err) {
+      console.error(err);
+      setDownloadError("Failed to download result PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const selectedExamName =
     examList.find((e) => e.id === selectedResultExamId)?.exam_name ??
@@ -85,10 +104,23 @@ export const ResultsSection = ({
           </div>
         </div>
 
-        <button className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg transition-all">
-          <Download className="w-3.5 h-3.5" />
-          Download Result PDF
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleDownload}
+            disabled={downloading || !examResult || !selectedResultExamId}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {downloading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            {downloading ? "Downloading…" : "Download Result PDF"}
+          </button>
+          {downloadError && (
+            <p className="text-[11px] text-red-500">{downloadError}</p>
+          )}
+        </div>
       </div>
 
       {/* Loading state */}

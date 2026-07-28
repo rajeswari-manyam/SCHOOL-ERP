@@ -123,6 +123,7 @@ export interface CreateStaffAttendancePayload {
     status: "present" | "absent" | "late" | "leave";
     working_day: boolean;
     remarks?: string;
+    academicYearId?: string;
   }[];
 }
 

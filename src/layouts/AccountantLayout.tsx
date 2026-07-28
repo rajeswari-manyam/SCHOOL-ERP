@@ -7,6 +7,8 @@ import {
   FaUsers,
   FaBook,
   FaChartBar,
+  FaCalendarCheck,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
 import Sidebar from "@/components/common/Sidebar";
@@ -21,6 +23,8 @@ const NavItem = [
   { label: "Fee Management", to: "/accountant/fees", icon: <FaMoneyBill /> },
   { label: "Receipts & Invoices", to: "/accountant/receipts", icon: <FaFileAlt /> },
   { label: "Payroll", to: "/accountant/payroll", icon: <FaUsers /> },
+  { label: "Attendance", to: "/accountant/attendance", icon: <FaCalendarCheck /> },
+  { label: "Leave", to: "/accountant/leave", icon: <FaSignOutAlt /> },
   { label: "Ledger", to: "/accountant/ledger", icon: <FaBook /> },
   { label: "Reports", to: "/accountant/reports", icon: <FaChartBar /> },
 ];

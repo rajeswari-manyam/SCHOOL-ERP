@@ -106,7 +106,7 @@ export default function ComplaintsPage() {
               {activeChild.name} ›
               <span className="text-gray-600 font-medium"> Complaints</span>
             </p>
-            <h1 className="text-[22px] font-bold text-[#0B1C30]">Complaints</h1>
+            <h1 className="text-sm font-semibold text-[#0B1C30]">Complaints</h1>
             <p className="text-[13px] text-gray-400 mt-1">
               Track and manage complaints for {activeChild.name}.
             </p>

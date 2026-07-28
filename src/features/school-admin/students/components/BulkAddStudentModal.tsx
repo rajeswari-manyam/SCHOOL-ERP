@@ -508,11 +508,11 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                           </div>
 
                           <Field label="First Name *">
-                            <input className={inputCls} placeholder="Rahul" value={row.firstName}
+                            <input className={inputCls} placeholder="Enter first name" value={row.firstName}
                               onChange={(e) => updatePersonalRow(i, "firstName", e.target.value)} />
                           </Field>
                           <Field label="Last Name">
-                            <input className={inputCls} placeholder="Sharma" value={row.lastName}
+                            <input className={inputCls} placeholder="Enter last name" value={row.lastName}
                               onChange={(e) => updatePersonalRow(i, "lastName", e.target.value)} />
                           </Field>
                           <Field label="Date of Birth">
@@ -530,7 +530,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                           <Field label="Roll Number">
                             <input
                               className={`${inputCls} ${rowErrors[i]?.toLowerCase().includes("roll") ? "border-red-400 ring-1 ring-red-300" : ""}`}
-                              placeholder="24" value={row.rollNumber}
+                              placeholder="Enter roll number" value={row.rollNumber}
                               onChange={(e) => { updatePersonalRow(i, "rollNumber", e.target.value); setRowErrors((p) => { const n = { ...p }; delete n[i]; return n; }); }}
                             />
                             {rowErrors[i]?.toLowerCase().includes("roll") && (
@@ -633,15 +633,15 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                             options={RELATION_OPTIONS} className={selectCls} />
                         </Field>
                         <Field label="Occupation">
-                          <input className={inputCls} placeholder="Occupation" value={row.fatherOccupation}
+                          <input className={inputCls} placeholder="Enter father's occupation" value={row.fatherOccupation}
                             onChange={(e) => updateParentRow(i, "fatherOccupation", e.target.value)} />
                         </Field>
                         <Field label="Phone">
-                          <input className={inputCls} placeholder="9876543210" value={row.fatherPhone}
+                          <input className={inputCls} placeholder="Enter father's phone number" value={row.fatherPhone}
                             onChange={(e) => updateParentRow(i, "fatherPhone", e.target.value)} />
                         </Field>
                         <Field label="Email">
-                          <input type="email" className={inputCls} placeholder="father@email.com" value={row.fatherEmail}
+                          <input type="email" className={inputCls} placeholder="Enter father's email" value={row.fatherEmail}
                             onChange={(e) => updateParentRow(i, "fatherEmail", e.target.value)} />
                         </Field>
                         <Field label="Photo">
@@ -669,7 +669,7 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                       <div className="space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Mother / Parent 2</p>
                         <Field label="Name">
-                          <input className={inputCls} placeholder="Mother's name" value={row.motherName}
+                          <input className={inputCls} placeholder="Enter mother's name" value={row.motherName}
                             onChange={(e) => updateParentRow(i, "motherName", e.target.value)} />
                         </Field>
                         <Field label="Relation">
@@ -677,15 +677,15 @@ const BulkAddStudentModal = ({ onClose }: Props) => {
                             options={RELATION_OPTIONS} className={selectCls} />
                         </Field>
                         <Field label="Occupation">
-                          <input className={inputCls} placeholder="Occupation" value={row.motherOccupation}
+                          <input className={inputCls} placeholder="Enter mother's occupation" value={row.motherOccupation}
                             onChange={(e) => updateParentRow(i, "motherOccupation", e.target.value)} />
                         </Field>
                         <Field label="Phone">
-                          <input className={inputCls} placeholder="9876543210" value={row.motherPhone}
+                          <input className={inputCls} placeholder="Enter mother's phone number" value={row.motherPhone}
                             onChange={(e) => updateParentRow(i, "motherPhone", e.target.value)} />
                         </Field>
                         <Field label="Email">
-                          <input type="email" className={inputCls} placeholder="mother@email.com" value={row.motherEmail}
+                          <input type="email" className={inputCls} placeholder="Enter mother's email" value={row.motherEmail}
                             onChange={(e) => updateParentRow(i, "motherEmail", e.target.value)} />
                         </Field>
                         <Field label="Photo">

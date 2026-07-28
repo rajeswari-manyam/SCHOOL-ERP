@@ -33,12 +33,12 @@ const UpcomingExamsTable = ({ exams }: Props) => (
         <table className="w-full" style={{ minWidth: 680 }}>
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/60">
-              {["Exam", "Subject", "Class", "Date", "Time", "Venue"].map((h) => (
+              {["Exam", "Subject", "Class", "Date", "Time", "Venue", "Syllabus"].map((h) => (
                 <th
                   key={h}
                   className={[
                     "px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap",
-                    ["Time", "Venue"].includes(h) ? "hidden sm:table-cell" : "",
+                    ["Time", "Venue", "Syllabus"].includes(h) ? "hidden sm:table-cell" : "",
                   ].join(" ")}
                 >
                   {h}
@@ -72,6 +72,11 @@ const UpcomingExamsTable = ({ exams }: Props) => (
                 </td>
                 <td className="px-5 py-3.5 hidden sm:table-cell">
                   <p className="text-[13px] text-gray-500">{exam.venue}</p>
+                </td>
+                <td className="px-5 py-3.5 hidden sm:table-cell max-w-[200px]">
+                  <p className="text-[12px] text-gray-500 line-clamp-2" title={exam.syllabus || undefined}>
+                    {exam.syllabus || "—"}
+                  </p>
                 </td>
 
               </tr>

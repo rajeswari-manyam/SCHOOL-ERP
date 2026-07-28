@@ -6,7 +6,11 @@ import {
   getAttendanceById,
 } from "../../../../services/attendance.api";
 import { getAllHolidays } from "../../../../services/holidays.api";
+import { fetchAllWorkingDays } from "../../../../services/working-days.api";
+import { isDayInSelectedDays } from "../../../school-admin/timetable/utils/Timetable.utils";
 import type { DayEntry, MonthSummary, YearlySummary } from "../store/attedance.store"
+
+const WEEKDAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 
 const SHORT_MONTHS = [
   "Jan","Feb","Mar","Apr","May","Jun",
@@ -50,13 +54,14 @@ export function useAttendance() {
 
   // ─── Fetch monthly attendance ────────────────────────────
   const fetchMonthly = useCallback(
-    async (studentId: string, month: number, year: number) => {
+    async (studentId: string, month: number, year: number, academicYearId?: string) => {
       setLoadingMonthly(true)
       setMonthlyError(null)
       try {
-        const [attRes, holidaysRes] = await Promise.all([
+        const [attRes, holidaysRes, workingDays] = await Promise.all([
           getMonthlyAttendance({ studentId, month, year }),
           getAllHolidays(),
+          fetchAllWorkingDays(),
         ]);
 
         const records: any[] = Array.isArray(attRes?.records)
@@ -98,8 +103,32 @@ export function useAttendance() {
               status: "holiday",
               reason: h.holidayname ?? h.name ?? "Holiday",
             });
+            existingDates.add(dateStr);
           }
         });
+
+        // Non-working weekdays (e.g. Sunday-only or Sat+Sun off) — from the
+        // school's configured working days, not a hardcoded weekend assumption.
+        const activeWD = workingDays.find((wd) => wd.academicYearId === academicYearId) ?? workingDays[0];
+        const selectedDays = activeWD?.selected_days ?? [];
+
+        if (selectedDays.length > 0) {
+          const daysInMonth = new Date(year, month, 0).getDate();
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${yearStr}-${monthStr}-${pad(d)}`;
+            if (existingDates.has(dateStr)) continue;
+            const weekday = WEEKDAY_NAMES[new Date(year, month - 1, d).getDay()];
+            if (!isDayInSelectedDays(selectedDays, weekday)) {
+              days.push({
+                id: `non-working-${dateStr}`,
+                date: dateStr,
+                status: "holiday",
+                reason: "Non-working day",
+              });
+              existingDates.add(dateStr);
+            }
+          }
+        }
 
         days.sort((a, b) => a.date.localeCompare(b.date));
 
@@ -203,19 +232,19 @@ export function useAttendance() {
 
   // ─── Month navigation helpers ────────────────────────────
   const goToPrevMonth = useCallback(
-    (studentId: string) => {
+    (studentId: string, academicYearId?: string) => {
       const prev = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
       setCurrentDate(prev)
-      fetchMonthly(studentId, prev.getMonth() + 1, prev.getFullYear())
+      fetchMonthly(studentId, prev.getMonth() + 1, prev.getFullYear(), academicYearId)
     },
     [currentDate, setCurrentDate, fetchMonthly]
   )
 
   const goToNextMonth = useCallback(
-    (studentId: string) => {
+    (studentId: string, academicYearId?: string) => {
       const next = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
       setCurrentDate(next)
-      fetchMonthly(studentId, next.getMonth() + 1, next.getFullYear())
+      fetchMonthly(studentId, next.getMonth() + 1, next.getFullYear(), academicYearId)
     },
     [currentDate, setCurrentDate, fetchMonthly]
   )

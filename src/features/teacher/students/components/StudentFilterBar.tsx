@@ -1,17 +1,16 @@
-import { Search, Download } from "lucide-react";
-import type { MyStudentsFilters, FeeStatus } from "../types/my-students.types";
+import { Search } from "lucide-react";
+import type { MyStudentsFilters } from "../types/my-students.types";
 
 interface Props {
   filters: MyStudentsFilters;
   onChange: (f: MyStudentsFilters) => void;
   totalCount: number;
   filteredCount: number;
-  onExport: () => void;
 }
 
-const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExport }: Props) => {
+const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount }: Props) => {
   const set = (patch: Partial<MyStudentsFilters>) => onChange({ ...filters, ...patch });
-  const isFiltered = filters.search || filters.feeStatus !== "ALL" || filters.attendanceRange !== "ALL";
+  const isFiltered = filters.search || filters.attendanceRange !== "ALL";
   const inputCls = "h-8 border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition";
 
   return (
@@ -27,19 +26,6 @@ const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExpo
           className={`w-full pl-9 pr-4 ${inputCls}`}
         />
       </div>
-
-      {/* Fee Status filter */}
-      <select
-        value={filters.feeStatus}
-        onChange={(e) => set({ feeStatus: e.target.value as FeeStatus | "ALL" })}
-        className={inputCls}
-      >
-        <option value="ALL">All Fees</option>
-        <option value="PAID">Paid</option>
-        <option value="PENDING">Pending</option>
-        <option value="PARTIAL">Partial</option>
-        <option value="OVERDUE">Overdue</option>
-      </select>
 
       {/* Attendance Range filter */}
       <select
@@ -57,15 +43,6 @@ const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount, onExpo
       <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
         {isFiltered ? `${filteredCount} of ${totalCount}` : `${totalCount} students`}
       </span>
-
-      {/* Export */}
-      <button
-        onClick={onExport}
-        className="flex items-center gap-2 h-8 px-3 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
-      >
-        <Download size={14} strokeWidth={2} />
-        Export
-      </button>
     </div>
   );
 };

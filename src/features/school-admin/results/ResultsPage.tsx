@@ -53,6 +53,10 @@ const ResultsPage = () => {
         showPublish
         onPublish={handlePublish}
         publishingId={publishingId}
+        classId={activeFilter.class_id}
+        sectionId={activeFilter.section_id}
+        subjectId={activeFilter.subject_id}
+        academicYearId={activeFilter.academicYearId}
       />
     </div>
   );

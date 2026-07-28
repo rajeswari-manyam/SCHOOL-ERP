@@ -171,6 +171,10 @@ const ExamMarksPage = () => {
             hasSearched={Boolean(
               activeFilter.class_id && activeFilter.section_id && activeFilter.subject_id
             )}
+            classId={activeFilter.class_id}
+            sectionId={activeFilter.section_id}
+            subjectId={activeFilter.subject_id}
+            academicYearId={activeFilter.academicYearId}
           />
         </div>
       )}

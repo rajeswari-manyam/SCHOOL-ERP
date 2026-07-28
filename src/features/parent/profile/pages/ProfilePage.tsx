@@ -166,7 +166,7 @@ export default function ProfilePage() {
           {activeChild.name} › <span className="text-gray-600 font-medium">Profile</span>
         </p>
         <div className="mb-6">
-          <h1 className="text-[22px] font-bold text-[#0B1C30]">My Profile</h1>
+          <h1 className="text-sm font-semibold text-[#0B1C30]">My Profile</h1>
           <p className="text-[13px] text-gray-400 mt-1 max-w-[600px]">
             Manage your personal information and academic notification preferences.
           </p>

@@ -164,7 +164,7 @@ const DashboardPage = () => {
       {/* ── Welcome banner ──────────────────────────────────────────────────── */}
       <div className="rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-bold text-white leading-tight">
+          <h1 className="text-sm font-semibold text-white leading-tight">
             Welcome, {parentName || "…"}
           </h1>
           <p className="text-white/75 text-[13px] mt-1">

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   useClassTimetable,
   useUpcomingExaminations,
@@ -8,18 +9,32 @@ import TimetableGrid from "../components/Timetablegrid";
 import SubjectLegend from "../components/Subjectlegend";
 import ExaminationTable from "../components/Examinationtable";
 import { GraduationCap } from "lucide-react";
+import { downloadClassTimetable } from "@/services/timetable.api";
 
 const ClassTimetablePage = () => {
   const { data: timetable, meta, isLoading, isError } = useClassTimetable();
+  const [downloading, setDownloading] = useState(false);
 
-  // Pass real IDs to exam hook once timetable loads
-  // (class_id / section_id are encoded inside timetable rows — we get them from meta)
-  const { data: examinations } = useUpcomingExaminations(
-    timetable?.rows?.[0] ? (timetable as any)._classId : undefined,
-    timetable?.rows?.[0] ? (timetable as any)._sectionId : undefined,
-  );
+  // Real IDs, once timetable loads (class_id / section_id are encoded inside
+  // timetable rows — we get them from meta)
+  const classId = timetable?.rows?.[0] ? (timetable as any)._classId : undefined;
+  const sectionId = timetable?.rows?.[0] ? (timetable as any)._sectionId : undefined;
+
+  const { data: examinations } = useUpcomingExaminations(classId, sectionId);
 
   const { addAll } = useAddExamsToCalendar();
+
+  const handleDownload = async () => {
+    if (!classId || !sectionId) return;
+    setDownloading(true);
+    try {
+      await downloadClassTimetable(classId, sectionId);
+    } catch (err) {
+      console.error("Failed to download timetable", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -102,6 +117,8 @@ const ClassTimetablePage = () => {
           rows={timetable.rows}
           todayDay={timetable.todayDay}
           onPrint={() => window.print()}
+          onDownload={classId && sectionId ? handleDownload : undefined}
+          downloading={downloading}
         />
       </div>
 

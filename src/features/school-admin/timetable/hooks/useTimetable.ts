@@ -252,6 +252,7 @@ const toExamEntry = (r: unknown): ExamEntry => {
     startTime:     (raw["start_time"] ?? raw["startTime"] ?? "") as string,
     endTime:       (raw["end_time"]   ?? raw["endTime"]   ?? "") as string,
     venue:         (raw["room_no"]    ?? raw["room"]      ?? raw["venue"] ?? "") as string,
+    syllabus:      (raw["syllabus"] ?? "") as string,
     notifyStatus:  (raw["notify_status"] ?? raw["notifyStatus"] ?? "PENDING") as ExamEntry["notifyStatus"],
     // FK ids preserved so edit modal can pre-fill dropdowns
     class_id:      (classObj?.id    ?? raw["class_id"])   as string | undefined,
@@ -634,8 +635,12 @@ export const useBulkCreateTimetable = () => {
       }
       if (res.errors?.length > 0) {
         res.errors.forEach((e) => {
-          toast.error(`${e.day}: ${e.message}`);
+          toast.error(e.message);
         });
+      } else if (res.status === false && res.message) {
+        // Some conflicts (e.g. teacher double-booked) come back as a flat
+        // { status: false, message } with no per-row errors array — surface it directly.
+        toast.error(res.message);
       }
     },
     onError: (err: Error) => toast.error(err.message),

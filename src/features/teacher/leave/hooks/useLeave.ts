@@ -156,6 +156,7 @@ export const useLeave = () => {
   const [form, setForm] = useState<ApplyLeaveFormData>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Cancel confirm state
   const [cancelId, setCancelId] = useState<string | null>(null);
@@ -186,6 +187,7 @@ export const useLeave = () => {
   const openApplyModal = () => {
     setForm(EMPTY_FORM);
     setSubmitSuccess(false);
+    setSubmitError(null);
     setApplyModalOpen(true);
   };
   const closeApplyModal = () => setApplyModalOpen(false);
@@ -193,6 +195,7 @@ export const useLeave = () => {
   const submitLeave = useCallback(async () => {
     if (!formValid || !form.type) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const newApp = await leaveApi.applyLeave(form, staffId, totalDays, academicYearId ?? undefined);
       newApp.totalDays = totalDays;
@@ -202,6 +205,7 @@ export const useLeave = () => {
       loadData();
     } catch (err: any) {
       console.error("submitLeave failed", err);
+      setSubmitError(err?.response?.data?.message ?? err?.message ?? "Failed to submit leave application");
     } finally {
       setSubmitting(false);
     }
@@ -277,7 +281,7 @@ export const useLeave = () => {
     applyModalOpen, openApplyModal, closeApplyModal,
     form, patchForm,
     totalDays, needsMedicalCert, formValid,
-    submitting, submitSuccess, submitLeave,
+    submitting, submitSuccess, submitError, submitLeave,
     // cancel
     cancelId, confirmCancel, closeCancel, doCancel,
     // calendar

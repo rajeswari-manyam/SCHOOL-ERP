@@ -167,7 +167,7 @@ export default function HomeworkPage() {
 
       {/* PAGE HEADER */}
       <div className="mb-5">
-        <h1 className={combineTypography(typography.heading.h4, "text-[#0B1C30]")}>
+        <h1 className="text-sm font-semibold text-[#0B1C30]">
           Homework &amp; Study Materials
         </h1>
         <p className={combineTypography(typography.body.small, "text-gray-400 mt-0.5")}>

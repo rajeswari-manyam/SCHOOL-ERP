@@ -75,6 +75,7 @@ export interface ExamEntry {
   startTime: string;        // "09:00"
   endTime: string;          // "12:00"
   venue: string;            // "Room 10A"
+  syllabus?: string;
   notifyStatus: ExamNotifyStatus;
 }
 
@@ -136,6 +137,7 @@ export interface GetAllExamsTimetableRawItem {
   room_no?: string;
   room?: string;
   venue?: string;
+  syllabus?: string;
   notify_status?: string;
   notifyStatus?: string;
 }
@@ -162,6 +164,7 @@ export interface CreateExamTimetablePayload {
   academicYearId: string;
   teacher_id: string;
   schoolWorkingDayId?: string;
+  syllabus?: string;
 }
 
 export interface CreateExamTimetableResponse {

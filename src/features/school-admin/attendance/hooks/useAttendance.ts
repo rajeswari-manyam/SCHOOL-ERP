@@ -10,7 +10,7 @@ import {
   updateStaffAttendanceById,
   deleteStaffAttendanceById,
   createStaffAttendance,
-  getAllStaffAttendance,
+  getDateRangeStaffAttendance,
   getAbsentMoreThan5Days,
   type CreateAttendancePayload,
   type UpdateAttendancePayload,
@@ -226,12 +226,20 @@ export const useSubmitStaffAttendance = () => {
   });
 };
 
-// ─── All Staff Attendance Records ────────────────────────────────────────────
-export const useAllStaffAttendance = () => {
+// ─── Staff Attendance over a Date Range (lazy) ────────────────────────────────
+// staffId/startDate/endDate are all optional on the backend: omitting staffId
+// returns every staff member's records for the range; omitting the dates
+// returns that staff's full history.
+export const useStaffAttendanceRange = (staffId: string, startDate: string, endDate: string, enabled: boolean) => {
   return useQuery({
-    queryKey: [...attendanceKeys.all, "allStaffAttendance"] as const,
-    queryFn: () => getAllStaffAttendance(),
-    staleTime: 60_000,
+    queryKey: [...attendanceKeys.all, "staffDateRange", staffId, startDate, endDate] as const,
+    queryFn: () => getDateRangeStaffAttendance({
+      staff_id: staffId || undefined,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+    }),
+    enabled,
+    staleTime: 30_000,
   });
 };
 
@@ -293,10 +301,16 @@ export const useClassAttendanceByDate = (
   sectionId: string,
   date: string
 ) => {
+  // getClassAttendanceByDate always hits /tenant/getclasstodayattendance, which
+  // ignores its date param and returns *today's* records regardless — only
+  // trust it when the selected date is actually today, otherwise a past/future
+  // date would wrongly look "already marked" using today's unrelated records.
+  const isToday = date === new Date().toISOString().slice(0, 10);
+
   return useQuery({
     queryKey: [...attendanceKeys.all, "byDate", classId, sectionId, date] as const,
     queryFn:  () => getClassAttendanceByDate(classId, sectionId, date),
-    enabled:  !!classId && !!sectionId && !!date,
+    enabled:  !!classId && !!sectionId && !!date && isToday,
     staleTime: 30_000,
     retry: 1,
   });

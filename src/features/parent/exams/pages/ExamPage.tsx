@@ -1,7 +1,7 @@
 // ExamPage.tsx
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { CalendarDays, AlertCircle, Loader2 } from "lucide-react";
+import { CalendarDays, AlertCircle, Loader2, Download } from "lucide-react";
 import { useExamsStore } from "../store/useExam.store";
 import { ExamBanner } from "../components/ExamBanner";
 import { ExamTable } from "../components/ExamTable";
@@ -10,7 +10,7 @@ import { ResultsTable } from "../components/ResultTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUpcomingExams } from "../../../../services/examtimetable.api";
 import type { UpcomingExamItem } from "../../../../services/examtimetable.api";
-import { getMarksByStudentId } from "../../../../services/marks.api";
+import { getMarksByStudentId, triggerMarksDownload } from "../../../../services/marks.api";
 import type { Mark } from "../../../../services/marks.api";
 import { getAllExams } from "../../../../services/exam.api";
 import type { ExamRecord } from "../../../../services/exam.api";
@@ -69,6 +69,7 @@ function mapApiExam(e: UpcomingExamItem): Exam {
     time: `${e.start_time} – ${e.end_time}`,
     venue: e.room_no ? `Room ${e.room_no}` : "—",
     examName: e.exam?.exam_name ?? "—",
+    syllabus: e.syllabus ?? undefined,
   };
 }
 
@@ -87,6 +88,7 @@ function buildBannerProps(e: UpcomingExamItem): ExamBannerProps {
     venue: e.room_no ? `Room ${e.room_no}` : "—",
     daysLeft,
     hoursLeft,
+    syllabus: e.syllabus ?? undefined,
   };
 }
 
@@ -178,6 +180,22 @@ export default function ExamsPage() {
   const [examList, setExamList] = useState<ExamRecord[]>([]);
   const [selectedExamId, setSelectedExamId] = useState<string>("");
   const [examListLoading, setExamListLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleDownloadResult = async () => {
+    if (!studentId || !selectedExamId) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await triggerMarksDownload(studentId, selectedExamId);
+    } catch (err) {
+      console.error(err);
+      setDownloadError("Failed to download result PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const {
     tab, setTab,
@@ -285,7 +303,7 @@ export default function ExamsPage() {
 
       {/* PAGE HEADER */}
       <div className="mb-6">
-        <h1 className="text-[22px] font-bold text-[#0B1C30]">
+        <h1 className="text-sm font-semibold text-[#0B1C30]">
           Exams &amp; Results — {activeChild.name}
         </h1>
         <p className="text-[13px] text-gray-400 mt-1">
@@ -355,7 +373,7 @@ export default function ExamsPage() {
       {/* ── RESULTS TAB ── */}
       {tab === "results" && (
         <div>
-          <div className="mb-5">
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <select
               value={selectedExamId}
               onChange={(e) => setSelectedExamId(e.target.value)}
@@ -372,6 +390,24 @@ export default function ExamsPage() {
                 </option>
               ))}
             </select>
+
+            <div className="flex flex-col items-start sm:items-end gap-1">
+              <button
+                onClick={handleDownloadResult}
+                disabled={downloading || !resultSummary || !selectedExamId}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#3525CD] text-white text-[13px] font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {downloading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                {downloading ? "Downloading…" : "Download Result PDF"}
+              </button>
+              {downloadError && (
+                <p className="text-[11px] text-red-500">{downloadError}</p>
+              )}
+            </div>
           </div>
           {resultsLoading ? (
             <LoadingState />

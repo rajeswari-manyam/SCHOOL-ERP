@@ -165,7 +165,7 @@ export const getSectionsByClassId = async (
 // Import staff-related things from `@/services/staff.api` instead.
 /* ===== Merged from school-classes.api.ts ===== */
 import { getAllStaff } from "@/services/staff.api";
-import { getSectionsByClassIdFromApi, getSectionById } from "@/services/section.api";
+import { getSectionsByClassIdFromApi, getSectionById, getSectionStrength } from "@/services/section.api";
 import { getSubjectsBySectionId, getAllSubjects, type SubjectRecord } from "@/services/subject.api";
 import type { ClassItem, SectionItem, SubjectItem, ClassApiResponse, BulkAddClassesResponse, BulkAddSectionsResponse, BulkAddSubjectsResponse, AddSectionPayload, AddSubjectPayload, CreateSectionResponse } from "@/features/school-admin/classes/types/classes.types";
 // NOTE: CreateClassPayload is defined locally above (identical shape to the one in classes.types.ts)
@@ -204,6 +204,18 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
       ]) as [{ data?: unknown } | null, { data?: unknown; count?: number } | null];
       const sectionRecords = asArray<Record<string, unknown>>(sectionRes?.data) ?? [];
       const subjectRecords = asArray<SubjectRecord>(subjectsRes?.data) ?? [];
+
+      // getSectionsByClassIdFromApi only returns each section's capacity
+      // (totalStrength) — the number of seats, not how many students are
+      // actually enrolled. Fetch the real enrolled count per section.
+      const sectionStrengths = await Promise.all(
+        sectionRecords.map((r) => getSectionStrength(String(r.id ?? "")).catch(() => null))
+      );
+      const enrolledBySection = new Map<string, number>();
+      sectionRecords.forEach((r, i) => {
+        const strength = sectionStrengths[i];
+        if (strength) enrolledBySection.set(String(r.id ?? ""), strength.currentStrength);
+      });
       const subjectCount = subjectsRes?.count ?? subjectRecords.length;
       const subjectCountBySection = new Map<string, number>();
       const subjectsBySection = new Map<string, SubjectItem[]>();
@@ -219,13 +231,17 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
           teacher: String(subject.teacher_name ?? ""),
         });
       }
-      const sectionStudentTotal = sectionRecords.reduce((sum, item) => sum + getStudentCount(item), 0);
+      const sectionStudentTotal = sectionRecords.reduce(
+        (sum, item) => sum + (enrolledBySection.get(String(item.id ?? "")) ?? getStudentCount(item)),
+        0
+      );
       return {
         className,
         first,
         records,
         sectionRecords,
         sectionStudentTotal,
+        enrolledBySection,
         subjectCount,
         subjectCountBySection,
         subjectsBySection,
@@ -234,7 +250,7 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
   );
 
   const classes: ClassItem[] = [];
-  for (const { className, first, records, sectionRecords, sectionStudentTotal, subjectCount, subjectCountBySection, subjectsBySection } of classSectionTotals) {
+  for (const { className, first, records, sectionRecords, sectionStudentTotal, enrolledBySection, subjectCount, subjectCountBySection, subjectsBySection } of classSectionTotals) {
     const derivedTotalStudents = sectionStudentTotal || records.reduce((sum, r) => sum + getStudentCount(r as unknown as Record<string, unknown>), 0);
 
     const sectionsCount = Number(first.sections_count) || sectionRecords.length;
@@ -245,7 +261,7 @@ export const fetchClasses = async (academicYearId?: string | null): Promise<Clas
         id: String(r.id ?? ""),
         name: String(r.sectionName ?? r.section_name ?? ""),
         classTeacher: String(r.classTeacherName ?? r.class_teacher_name ?? r.classTeacherId ?? r.class_teacher_id ?? ""),
-        totalStudents: getStudentCount(r),
+        totalStudents: enrolledBySection.get(String(r.id ?? "")) ?? getStudentCount(r),
         subjectCount: subjectCountBySection.get(String(r.id)) ?? 0,
         subjects: subjectsBySection.get(String(r.id)) ?? [],
       })).concat(

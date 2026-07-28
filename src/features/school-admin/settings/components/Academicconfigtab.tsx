@@ -20,6 +20,9 @@ interface BulkDeptRow { id: number; departmentName: string; academicYearId: stri
 let _bulkRowId = 0;
 const newRow = (yearId = ""): BulkDeptRow => ({ id: ++_bulkRowId, departmentName: "", academicYearId: yearId });
 
+let _hRowId = 1;
+const newHRow = () => ({ id: ++_hRowId, holidayname: "", from_date: "", to_date: "", type: "public", note: "" });
+
 const ALL_WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 interface Props {
@@ -139,6 +142,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [viewingDeptId, setViewingDeptId] = useState<string | null>(null);
   const [viewingDeptDetail, setViewingDeptDetail] = useState<DepartmentDetail | null>(null);
   const [viewingDeptLoading, setViewingDeptLoading] = useState(false);
+  const [deptError, setDeptError] = useState("");
 
   // Bulk add state
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -153,8 +157,6 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const [bulkHolidaySaving, setBulkHolidaySaving] = useState(false);
   const [bulkHolidayError, setBulkHolidayError] = useState("");
   const [bulkHolidaySuccess, setBulkHolidaySuccess] = useState("");
-  let _hRowId = 1;
-  const newHRow = () => ({ id: ++_hRowId, holidayname: "", from_date: "", to_date: "", type: "public", note: "" });
 
   // Leave allocation state
   const [leaveYearId, setLeaveYearId] = useState("");
@@ -204,9 +206,16 @@ export const AcademicConfigTab: React.FC<Props> = ({
 
   const handleAddDept = async () => {
     if (!deptName.trim() || !deptYearId) return;
-    await onAddDepartment({ departmentName: deptName.trim(), academicYearId: deptYearId });
-    setDeptName("");
-    setDeptYearId("");
+    setDeptError("");
+    try {
+      await onAddDepartment({ departmentName: deptName.trim(), academicYearId: deptYearId });
+      setDeptName("");
+      setDeptYearId("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to add department";
+      setDeptError(msg);
+      setTimeout(() => setDeptError(""), 5000);
+    }
   };
 
   const openBulkModal = () => {
@@ -585,6 +594,10 @@ export const AcademicConfigTab: React.FC<Props> = ({
           </div>
         </div>
 
+        {deptError && (
+          <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-xs text-red-600">{deptError}</div>
+        )}
+
         {departments.length > 0 && (
           <div className="border-t border-gray-100 pt-3">
             <Table>
@@ -940,10 +953,9 @@ export const AcademicConfigTab: React.FC<Props> = ({
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Type</label>
             <Select
               options={[
-                { label: "Public", value: "public" },
-                { label: "National", value: "national" },
-                { label: "School Event", value: "school_event" },
-                { label: "School Day", value: "school_day" },
+                { label: "Public",     value: "public"     },
+                { label: "Optional",   value: "optional"   },
+                { label: "Restricted", value: "restricted" },
               ]}
               value={holidayType}
               onValueChange={setHolidayType}
@@ -1251,10 +1263,9 @@ export const AcademicConfigTab: React.FC<Props> = ({
                   />
                   <Select
                     options={[
-                      { label: "National", value: "national" },
-                      { label: "Public",   value: "public"   },
-                      { label: "Optional", value: "optional" },
-                      { label: "School",   value: "school"   },
+                      { label: "Public",     value: "public"     },
+                      { label: "Optional",   value: "optional"   },
+                      { label: "Restricted", value: "restricted" },
                     ]}
                     value={row.type}
                     onValueChange={val => setBulkHolidayRows(prev => prev.map(r => r.id === row.id ? { ...r, type: val } : r))}
@@ -1281,7 +1292,7 @@ export const AcademicConfigTab: React.FC<Props> = ({
                 className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors mt-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add Department
+                Add Holiday
               </button>
             </div>
 

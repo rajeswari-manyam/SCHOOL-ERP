@@ -12,6 +12,18 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
 
 export const DAY_ORDER: DayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
+// ─── Working-day name matching ───────────────────────────────────────────────────
+// The backend has been observed to return "selected_days" as either full names
+// ("Monday") or 3-letter abbreviations ("Mon") depending on the record — normalize
+// both sides to the first 3 letters so comparisons work regardless of which form
+// a given working-days record happens to use.
+export const normalizeDayAbbr = (day: string): string => day.trim().toLowerCase().slice(0, 3);
+
+export const isDayInSelectedDays = (selectedDays: string[], dayName: string): boolean => {
+  const target = normalizeDayAbbr(dayName);
+  return selectedDays.some((d) => normalizeDayAbbr(d) === target);
+};
+
 // ─── Period label ───────────────────────────────────────────────────────────────
 export const getPeriodLabel = (slot: TimetableSlot): string => {
   if (slot.kind !== "PERIOD" || slot.periodNo == null) return "";
@@ -23,7 +35,7 @@ export const getTimeRange = (slot: TimetableSlot): string =>
 
 // ─── Slot kind styles ───────────────────────────────────────────────────────────
 export const SLOT_KIND_STYLES: Record<SlotKind, string> = {
-  PERIOD: "",
+  PERIOD: "bg-indigo-50/50",
   BREAK:  "bg-gray-50 text-gray-400 text-xs tracking-[0.2em] font-medium",
   LUNCH:  "bg-amber-50 text-amber-500 text-xs tracking-[0.2em] font-medium",
   FREE:   "bg-gray-50 text-gray-300 italic text-sm",

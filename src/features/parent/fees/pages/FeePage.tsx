@@ -144,12 +144,7 @@ export default function FeesPage() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1
-            className={cn(
-              typography.heading.h6,
-              "text-[18px] sm:text-[22px] font-bold text-[#0B1C30] leading-tight"
-            )}
-          >
+          <h1 className="text-sm font-semibold text-[#0B1C30] leading-tight">
             Fee Management — {activeChild.name}
           </h1>
           <p className={cn(typography.body.xs, "text-gray-400 mt-0.5")}>

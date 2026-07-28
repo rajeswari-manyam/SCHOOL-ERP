@@ -69,7 +69,7 @@ const parseTimeSlot = (timeSlot: string): { start: string; end: string } => {
   return { start: stripSeconds(timeSlot), end: "" };
 };
 
-const mapToClassTimetable = (
+export const mapToClassTimetable = (
   slots: TimetableSlot[],
   displayName: string,
   academicYearName: string
@@ -172,6 +172,7 @@ const mapToUpcomingExaminations = (
       timeFrom: stripSeconds(s.start_time),
       timeTo: stripSeconds(s.end_time),
       venue: s.room_no,
+      syllabus: s.syllabus ?? "",
     };
   });
 

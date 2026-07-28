@@ -9,22 +9,22 @@ import { Select } from "../../../../components/ui/select";
 import { Button } from "../../../../components/ui/button";
 
 const HOLIDAY_TYPES = [
-  { label: "National Holiday", value: "national" },
-  { label: "Public Holiday",   value: "public"   },
-  { label: "School Event",     value: "optional" },
-  { label: "Optional Holiday", value: "optional" },
+  { label: "Public",     value: "public"     },
+  { label: "Optional",   value: "optional"   },
+  { label: "Restricted", value: "restricted" },
 ];
 
 interface BulkRow {
   id: number;
   holidayname: string;
-  date: string;
+  from_date: string;
+  to_date: string;
   type: string;
   note: string;
 }
 
 let _rid = 0;
-const newRow = (): BulkRow => ({ id: ++_rid, holidayname: "", date: "", type: "public", note: "" });
+const newRow = (): BulkRow => ({ id: ++_rid, holidayname: "", from_date: "", to_date: "", type: "public", note: "" });
 
 interface Props {
   onClose: () => void;
@@ -46,10 +46,10 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
   const removeRow = (id: number) =>
     setRows(prev => prev.length > 1 ? prev.filter(r => r.id !== id) : prev);
 
-  const validRows = rows.filter(r => r.holidayname.trim() && r.date);
+  const validRows = rows.filter(r => r.holidayname.trim() && r.from_date && r.to_date);
 
   const handleSubmit = async () => {
-    if (validRows.length === 0) { setError("Fill at least one holiday name and date."); return; }
+    if (validRows.length === 0) { setError("Fill at least one holiday name and both dates."); return; }
     if (!schoolCode) { setError("School code not found. Please log in again."); return; }
     if (!activeYear?.id) { setError("Academic year not loaded. Please refresh the page."); return; }
     setError("");
@@ -57,8 +57,8 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
     try {
       const payload = validRows.map(r => ({
         holidayname: r.holidayname.trim(),
-        from_date: r.date,
-        to_date: r.date,
+        from_date: r.from_date,
+        to_date: r.to_date,
         type: r.type,
         note: r.note.trim() || r.type,
         school_code: schoolCode,
@@ -94,8 +94,8 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
         </div>
 
         {/* Column headers */}
-        <div className="px-5 pt-4 grid grid-cols-[2fr_1fr_1fr_1fr_32px] gap-2">
-          {["Holiday Name", "Date", "Type", "Note", ""].map(h => (
+        <div className="px-5 pt-4 grid grid-cols-[2fr_1fr_1fr_1fr_1fr_32px] gap-2">
+          {["Holiday Name", "From Date", "To Date", "Type", "Note", ""].map(h => (
             <span key={h} className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{h}</span>
           ))}
         </div>
@@ -103,7 +103,7 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
         {/* Rows */}
         <div className="px-5 py-3 space-y-2.5 overflow-y-auto flex-1">
           {rows.map((row, idx) => (
-            <div key={row.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_32px] gap-2 items-center">
+            <div key={row.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_32px] gap-2 items-center">
               <Input
                 placeholder={`e.g. Diwali`}
                 value={row.holidayname}
@@ -112,8 +112,15 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
               />
               <Input
                 type="date"
-                value={row.date}
-                onChange={e => updateRow(row.id, "date", e.target.value)}
+                value={row.from_date}
+                onChange={e => updateRow(row.id, "from_date", e.target.value)}
+                inputSize="sm"
+              />
+              <Input
+                type="date"
+                value={row.to_date}
+                min={row.from_date || undefined}
+                onChange={e => updateRow(row.id, "to_date", e.target.value)}
                 inputSize="sm"
               />
               <Select

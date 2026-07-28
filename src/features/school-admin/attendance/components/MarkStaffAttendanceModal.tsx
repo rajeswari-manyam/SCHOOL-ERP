@@ -1,14 +1,17 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { useUIStore } from "@/store/uiStore";
 import { useAttendanceStore } from "../store";
 import {
   useStaffList,
   useSubmitStaffAttendance,
   useCreateSingleStaffAttendance,
-  useAllStaffAttendance,
+  useStaffAttendanceRange,
   useUpdateStaffAttendance,
   useDeleteStaffAttendance,
+  attendanceKeys,
 } from "../hooks/useAttendance";
 import type { StaffAttendanceStatus, CreateStaffAttendancePayload } from "../types/attendance.types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../../../../components/ui/card";
@@ -50,13 +53,18 @@ interface StaffRow {
 
 const MarkStaffAttendanceModal = () => {
   const { showMarkStaffAttendanceModal, closeMarkStaffAttendance } = useAttendanceStore();
+  const queryClient = useQueryClient();
+  const academicYearId = useUIStore((s) => s.academicYearId);
 
   const [date, setDate]     = useState(new Date().toISOString().slice(0, 10));
   const [rows, setRows]     = useState<StaffRow[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { data: staffData, isLoading: staffLoading, error: staffError } = useStaffList();
-  const { data: allAttendanceData } = useAllStaffAttendance();
+  // Only the selected day, for all staff — server-side filtered, instead of
+  // pulling every staff member's entire attendance history just to find today's rows.
+  const { data: rangeData } = useStaffAttendanceRange("", date, date, true);
 
   const submitMutation     = useSubmitStaffAttendance();
   const singleMarkMutation = useCreateSingleStaffAttendance();
@@ -66,18 +74,16 @@ const MarkStaffAttendanceModal = () => {
   // Build attendance map for selected date: staffId → { recordId, status }
   const attendanceMap = useMemo(() => {
     const map = new Map<string, { recordId: string; status: StaffAttendanceStatus }>();
-    if (allAttendanceData?.data) {
-      for (const rec of allAttendanceData.data) {
-        if (rec.date === date) {
-          const s = rec.status as string;
-          if (["present", "absent", "late", "leave", "halfday"].includes(s)) {
-            map.set(rec.staff_id, { recordId: rec.id, status: s as StaffAttendanceStatus });
-          }
+    if (rangeData?.records) {
+      for (const rec of rangeData.records) {
+        const s = rec.status as string;
+        if (["present", "absent", "late", "leave", "halfday"].includes(s)) {
+          map.set(rec.staff_id, { recordId: rec.id, status: s as StaffAttendanceStatus });
         }
       }
     }
     return map;
-  }, [allAttendanceData, date]);
+  }, [rangeData]);
 
   // Rebuild rows whenever staff or attendance map changes
   useEffect(() => {
@@ -114,11 +120,12 @@ const MarkStaffAttendanceModal = () => {
   const handleUpdate = useCallback(async (row: StaffRow) => {
     if (!row.recordId) return;
     setSavingId(row.staffId);
+    setSubmitError(null);
     try {
       await updateMutation.mutateAsync({ id: row.recordId, payload: { status: row.selectedStatus } });
       toast.success(`Updated ${row.name}'s attendance to ${row.selectedStatus}`);
-    } catch {
-      toast.error(`Failed to update ${row.name}`);
+    } catch (err: any) {
+      setSubmitError(err?.response?.data?.message ?? `Failed to update ${row.name}`);
     } finally {
       setSavingId(null);
     }
@@ -128,11 +135,12 @@ const MarkStaffAttendanceModal = () => {
   const handleDelete = useCallback(async (row: StaffRow) => {
     if (!row.recordId) return;
     setSavingId(row.staffId);
+    setSubmitError(null);
     try {
       await deleteMutation.mutateAsync(row.recordId);
       toast.success(`Removed ${row.name}'s attendance record`);
-    } catch {
-      toast.error(`Failed to delete ${row.name}'s record`);
+    } catch (err: any) {
+      setSubmitError(err?.response?.data?.message ?? `Failed to delete ${row.name}'s record`);
     } finally {
       setSavingId(null);
     }
@@ -142,6 +150,7 @@ const MarkStaffAttendanceModal = () => {
   const handleMarkOne = useCallback((row: StaffRow) => {
     if (row.isMarked) return;
     setSavingId(row.staffId);
+    setSubmitError(null);
     const payload = {
       attendance_records: [{
         staff_id:    row.staffId,
@@ -149,19 +158,41 @@ const MarkStaffAttendanceModal = () => {
         status:      row.selectedStatus as "present" | "absent" | "late" | "leave",
         working_day: true as const,
         remarks:     row.selectedStatus === "late" ? "Late arrival" : row.selectedStatus === "present" ? "On Time" : undefined,
+        academicYearId: academicYearId ?? undefined,
       }],
     } satisfies CreateStaffAttendancePayload;
 
     singleMarkMutation.mutate(payload, {
-      onSuccess: () => { toast.success(`Marked ${row.name} as ${row.selectedStatus}`); setSavingId(null); },
-      onError:   (err: any) => { toast.error(err?.message ?? "Failed to mark"); setSavingId(null); },
+      onSuccess: (res) => {
+        // Backend auto-converts to "leave" if the staff already has an approved
+        // leave for this date — reflect what actually happened, not what was clicked.
+        const actualStatus = res?.data?.[0]?.status ?? row.selectedStatus;
+        const label = STATUS_OPTIONS.find((o) => o.value === actualStatus)?.label ?? actualStatus;
+        if (actualStatus !== row.selectedStatus) {
+          toast.info(`${row.name} already has an approved leave for this date — marked as ${label} instead.`);
+        } else {
+          toast.success(`Marked ${row.name} as ${label}`);
+        }
+        setSavingId(null);
+      },
+      onError:   (err: any) => {
+        const backendMessage = err?.response?.data?.message ?? err?.message ?? "Failed to mark attendance";
+        setSubmitError(`${row.name}: ${backendMessage}`);
+        setSavingId(null);
+        // "Already marked" means our local view is stale (e.g. marked elsewhere
+        // since this modal opened) — refetch so the row switches to Update/Delete.
+        if (backendMessage.toLowerCase().includes("already marked")) {
+          queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+        }
+      },
     });
-  }, [date, singleMarkMutation]);
+  }, [date, singleMarkMutation, queryClient, academicYearId]);
 
   // Submit all not-yet-marked rows
   const handleSubmitNew = useCallback(() => {
     const unmarked = rows.filter((r) => !r.isMarked);
     if (!unmarked.length) { toast.info("All staff are already marked for this date"); return; }
+    setSubmitError(null);
 
     const payload = {
       attendance_records: unmarked.map((r) => ({
@@ -170,14 +201,37 @@ const MarkStaffAttendanceModal = () => {
         status:      r.selectedStatus as "present" | "absent" | "late" | "leave",
         working_day: true as const,
         remarks:     r.selectedStatus === "late" ? "Late arrival" : r.selectedStatus === "present" ? "On Time" : undefined,
+        academicYearId: academicYearId ?? undefined,
       })),
     } satisfies CreateStaffAttendancePayload;
 
     submitMutation.mutate(payload, {
-      onSuccess: () => toast.success("Staff attendance submitted successfully"),
-      onError:   (err: any) => toast.error(err?.message ?? "Failed to submit"),
+      onSuccess: (res) => {
+        // Backend auto-converts to "leave" for staff who already have an approved
+        // leave for this date — surface that instead of a blanket success message.
+        const requestedById = new Map(unmarked.map((r) => [r.staffId, r.selectedStatus]));
+        const autoConverted = (res?.data ?? []).filter(
+          (d) => requestedById.has(d.staff_id) && d.status !== requestedById.get(d.staff_id)
+        );
+        if (autoConverted.length > 0) {
+          toast.info(
+            `${autoConverted.length} of ${unmarked.length} staff already had an approved leave — marked as On Leave instead.`
+          );
+        } else {
+          toast.success("Staff attendance submitted successfully");
+        }
+      },
+      onError:   (err: any) => {
+        const backendMessage = err?.response?.data?.message ?? err?.message ?? "Failed to submit attendance";
+        setSubmitError(backendMessage);
+        // "Already marked" means our local view is stale for at least one row —
+        // refetch so already-marked staff switch to Update/Delete on retry.
+        if (backendMessage.toLowerCase().includes("already marked")) {
+          queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+        }
+      },
     });
-  }, [date, rows, submitMutation]);
+  }, [date, rows, submitMutation, queryClient, academicYearId]);
 
   const summary = useMemo(() => ({
     total:      rows.length,
@@ -215,7 +269,7 @@ const MarkStaffAttendanceModal = () => {
                 type="date"
                 value={date}
                 max={new Date().toISOString().split("T")[0]}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => { setDate(e.target.value); setSubmitError(null); }}
                 className="mt-2 w-48"
               />
             </div>
@@ -230,6 +284,16 @@ const MarkStaffAttendanceModal = () => {
             </div>
           </div>
         </CardContent>
+
+        {/* Submit error (e.g. holiday / non-working day) */}
+        {submitError && (
+          <div className="px-6 pt-4">
+            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
+              <span className="text-red-500 text-base leading-none">⚠</span>
+              <span>{submitError}</span>
+            </div>
+          </div>
+        )}
 
         {/* Staff list */}
         <CardContent className="flex-1 overflow-y-auto min-h-[300px] p-0">

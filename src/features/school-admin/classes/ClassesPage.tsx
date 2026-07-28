@@ -687,7 +687,13 @@ const ClassesPage = () => {
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className="text-sm text-gray-700 font-semibold">{cls.totalStudents}</span>
+                    {cls.sections.length > 1 ? (
+                      <span className="text-sm text-gray-700 font-semibold">
+                        {cls.sections.map((s) => s.totalStudents).join(" / ")}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-700 font-semibold">{cls.totalStudents}</span>
+                    )}
                   </td>
                   <td className="px-5 py-3.5">
                     <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${

@@ -1,13 +1,11 @@
 import { AlertTriangle } from "lucide-react";
 import type { Student } from "../types/my-students.types";
-import { Button } from "@/components/ui/button";
 
 interface Props {
   students: Student[];
-  onView: (s: Student) => void;
 }
 
-const ChronicAbsenteesAlert = ({ students, onView }: Props) => {
+const ChronicAbsenteesAlert = ({ students }: Props) => {
   if (students.length === 0) return null;
 
   return (
@@ -25,19 +23,18 @@ const ChronicAbsenteesAlert = ({ students, onView }: Props) => {
       </div>
       <div className="flex flex-wrap gap-2">
         {students.map((s) => (
-          <Button
+          <div
             key={s.id}
-            onClick={() => onView(s)}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-red-200 rounded-xl hover:bg-red-50 transition-colors group"
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-red-200 rounded-xl"
           >
             <div className="w-7 h-7 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
               {s.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
             </div>
             <div className="text-left">
-              <p className="text-xs font-semibold text-gray-900 leading-tight group-hover:text-red-700 transition-colors">{s.name}</p>
+              <p className="text-xs font-semibold text-gray-900 leading-tight">{s.name}</p>
               <p className="text-[10px] text-gray-400">Roll {s.rollNo} · <span className="text-red-500 font-bold">{s.attendancePct}%</span></p>
             </div>
-          </Button>
+          </div>
         ))}
       </div>
     </div>

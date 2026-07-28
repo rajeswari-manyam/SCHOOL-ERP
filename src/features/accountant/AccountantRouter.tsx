@@ -8,6 +8,8 @@ import PayrollPage from "./payroll/pages/PayrollPage";
 import LedgerPage from "./ledger/pages/LedgerPage";
 import StudentLedgerPage from "./ledger/pages/StudentLedgerPage";
 import ReportsPage from "./reports/pages/ReportsPage";
+import AttendancePage from "./attendance/pages/AttendancePage";
+import LeavePage from "./leave/LeavePage";
 
 export default function AccountantRouter() {
   return (
@@ -23,8 +25,9 @@ export default function AccountantRouter() {
         <Route path="payroll" element={<PayrollPage />} />
         <Route path="ledger" element={<LedgerPage />} />
         <Route path="student-ledger" element={<StudentLedgerPage />} />
-<Route path="reports" element={<ReportsPage />} />
-
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="attendance" element={<AttendancePage />} />
+        <Route path="leave" element={<LeavePage />} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />

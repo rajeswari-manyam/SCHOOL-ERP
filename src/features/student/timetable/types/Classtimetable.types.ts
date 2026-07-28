@@ -62,6 +62,7 @@ export interface ExamEntry {
   timeFrom: string;
   timeTo: string;
   venue: string;
+  syllabus?: string;
 }
 
 export interface UpcomingExaminations {

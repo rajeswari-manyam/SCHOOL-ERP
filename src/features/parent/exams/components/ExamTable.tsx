@@ -207,6 +207,13 @@ export function ExamTable({ exams }: { exams: Exam[] }) {
               </span>
             </div>
 
+            {selectedExam.syllabus && (
+              <p className="text-[12px] text-[#6B7280] mb-4">
+                <span className="font-semibold text-[#374151]">Syllabus: </span>
+                {selectedExam.syllabus}
+              </p>
+            )}
+
             {/* REACT-BIG-CALENDAR */}
             <div className="h-[420px]">
               <Calendar

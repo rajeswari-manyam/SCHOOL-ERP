@@ -26,6 +26,7 @@ export function ExamBanner({
   venue,
   daysLeft,
   hoursLeft,
+  syllabus,
 }: ExamBannerProps) {
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -71,6 +72,12 @@ export function ExamBanner({
                   {venue}
                 </span>
               </div>
+
+              {syllabus && (
+                <p className="text-white/70 text-[11px] sm:text-xs mt-2">
+                  Syllabus: {syllabus}
+                </p>
+              )}
             </div>
 
             {/* RIGHT */}

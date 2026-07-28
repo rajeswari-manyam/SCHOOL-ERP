@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Camera, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
-import { parentsApi, getParentById } from "@/services/parent.api";
+import { parentsApi, getParentById, getAllParents } from "@/services/parent.api";
 import { studentsApi } from "@/services/student.api";
 import type { Student } from "../types/student.types";
 
 interface Props {
   student: Student;
-  /** Full roster, used to offer "link to an already-enrolled sibling's parent" instead of creating a duplicate parent record. */
   students: Student[];
   onClose: () => void;
   onSaved: () => void;
@@ -46,41 +45,36 @@ export const AddParentModal = ({ student, students, onClose, onSaved }: Props) =
   const [motherPhotoPreview, setMotherPhotoPreview] = useState<string | null>(null);
   const motherPhotoInputRef = useRef<HTMLInputElement>(null);
 
-  // Siblings already enrolled share one parent — offer to link this student
-  // to that existing parent instead of creating a duplicate parent record.
-  const existingParents = useMemo(() => {
-    const seen = new Set<string>();
-    const result: { parentId: string; label: string; sibling: Student }[] = [];
-    for (const s of students) {
-      if (s.id === student.id || !s.parentId || seen.has(s.parentId)) continue;
-      seen.add(s.parentId);
-      const name = s.fatherName || s.motherName || "Parent";
-      const phone = s.fatherPhone || s.motherPhone || "";
-      result.push({
-        parentId: s.parentId,
-        label: `${name}${phone ? ` — +91 ${phone}` : ""} (sibling of ${s.firstName} ${s.lastName})`,
-        sibling: s,
-      });
-    }
-    return result;
-  }, [students, student.id]);
+  const [allParents, setAllParents] = useState<{ id: string; father_name: string; mother_name: string; father_phone: string; mother_phone: string }[]>([]);
+  const [parentsLoading, setParentsLoading] = useState(false);
 
-  const handleSelectExistingParent = (parentId: string) => {
+  useEffect(() => {
+    setParentsLoading(true);
+    getAllParents()
+      .then((parents) => setAllParents(parents))
+      .catch(() => {})
+      .finally(() => setParentsLoading(false));
+  }, []);
+
+  const handleSelectExistingParent = async (parentId: string) => {
     setSelectedParentId(parentId);
     if (!parentId) return;
-    const sibling = existingParents.find((p) => p.parentId === parentId)?.sibling;
-    if (!sibling) return;
-    setForm({
-      fatherName: sibling.fatherName ?? "",
-      fatherPhone: sibling.fatherPhone ?? "",
-      fatherOccupation: sibling.fatherOccupation ?? "",
-      fatherEmail: sibling.fatherEmail ?? "",
-      motherName: sibling.motherName ?? "",
-      motherPhone: sibling.motherPhone ?? "",
-      motherOccupation: sibling.motherOccupation ?? "",
-      motherEmail: sibling.motherEmail ?? "",
-    });
-    setAddress((prev) => prev || (sibling.residentialAddress ?? ""));
+    try {
+      const parent = await getParentById(parentId);
+      setForm({
+        fatherName: parent.father_name ?? "",
+        fatherPhone: parent.father_phone ?? "",
+        fatherOccupation: parent.father_occupation ?? "",
+        fatherEmail: parent.father_email ?? "",
+        motherName: parent.mother_name ?? "",
+        motherPhone: parent.mother_phone ?? "",
+        motherOccupation: parent.mother_occupation ?? "",
+        motherEmail: parent.mother_email ?? "",
+      });
+      setAddress(parent.address ?? "");
+    } catch {
+      toast.error("Failed to load parent details");
+    }
   };
 
   const set = (field: keyof typeof EMPTY_FORM) => (value: string) =>
@@ -196,14 +190,17 @@ export const AddParentModal = ({ student, students, onClose, onSaved }: Props) =
             </div>
           )}
 
-          {existingParents.length > 0 && (
+          {allParents.length > 0 && (
             <div className="sm:col-span-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Sibling Already Enrolled?</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Link Existing Parent?</p>
               <Field label="Select Existing Parent">
                 <Select
                   options={[
-                    { label: "None — add a new parent", value: "" },
-                    ...existingParents.map((p) => ({ label: p.label, value: p.parentId })),
+                    { label: parentsLoading ? "Loading parents..." : "None — add a new parent", value: "" },
+                    ...allParents.map((p) => ({
+                      label: `${p.father_name || "N/A"}${p.father_phone ? ` — +91 ${p.father_phone}` : ""}${p.mother_name ? ` / ${p.mother_name}` : ""}`,
+                      value: p.id,
+                    })),
                   ]}
                   value={selectedParentId}
                   onValueChange={handleSelectExistingParent}
@@ -212,26 +209,26 @@ export const AddParentModal = ({ student, students, onClose, onSaved }: Props) =
               </Field>
               {selectedParentId && (
                 <p className="text-[11px] text-indigo-600 mt-1.5">
-                  This student will be linked to the sibling's existing parent record shown below.
+                  This student will be linked to the selected parent record shown below.
                 </p>
               )}
             </div>
           )}
 
           <Field label="Father's Name" required>
-            <Input value={form.fatherName} onChange={(e) => set("fatherName")(e.target.value)} placeholder="Father's name" disabled={!!selectedParentId} />
+            <Input value={form.fatherName} onChange={(e) => set("fatherName")(e.target.value)} placeholder="Enter father's name" disabled={!!selectedParentId} />
           </Field>
 
           <Field label="Father's Phone" required>
-            <Input value={form.fatherPhone} onChange={(e) => set("fatherPhone")(e.target.value)} placeholder="9876543210" disabled={!!selectedParentId} />
+            <Input value={form.fatherPhone} onChange={(e) => set("fatherPhone")(e.target.value)} placeholder="Enter father's phone number" disabled={!!selectedParentId} />
           </Field>
 
           <Field label="Father's Occupation">
-            <Input value={form.fatherOccupation} onChange={(e) => set("fatherOccupation")(e.target.value)} placeholder="e.g. Software Engineer" disabled={!!selectedParentId} />
+            <Input value={form.fatherOccupation} onChange={(e) => set("fatherOccupation")(e.target.value)} placeholder="Enter father's occupation" disabled={!!selectedParentId} />
           </Field>
 
           <Field label="Father's Email">
-            <Input type="email" value={form.fatherEmail} onChange={(e) => set("fatherEmail")(e.target.value)} placeholder="father@example.com" disabled={!!selectedParentId} />
+            <Input type="email" value={form.fatherEmail} onChange={(e) => set("fatherEmail")(e.target.value)} placeholder="Enter father's email" disabled={!!selectedParentId} />
           </Field>
 
           <div className="sm:col-span-2 flex items-center gap-4">
@@ -259,19 +256,19 @@ export const AddParentModal = ({ student, students, onClose, onSaved }: Props) =
           </div>
 
           <Field label="Mother's Name">
-            <Input value={form.motherName} onChange={(e) => set("motherName")(e.target.value)} placeholder="Mother's name" disabled={!!selectedParentId} />
+            <Input value={form.motherName} onChange={(e) => set("motherName")(e.target.value)} placeholder="Enter mother's name" disabled={!!selectedParentId} />
           </Field>
 
           <Field label="Mother's Phone">
-            <Input value={form.motherPhone} onChange={(e) => set("motherPhone")(e.target.value)} placeholder="9876543210" disabled={!!selectedParentId} />
+            <Input value={form.motherPhone} onChange={(e) => set("motherPhone")(e.target.value)} placeholder="Enter mother's phone number" disabled={!!selectedParentId} />
           </Field>
 
           <Field label="Mother's Occupation">
-            <Input value={form.motherOccupation} onChange={(e) => set("motherOccupation")(e.target.value)} placeholder="e.g. Teacher" disabled={!!selectedParentId} />
+            <Input value={form.motherOccupation} onChange={(e) => set("motherOccupation")(e.target.value)} placeholder="Enter mother's occupation" disabled={!!selectedParentId} />
           </Field>
 
           <Field label="Mother's Email">
-            <Input type="email" value={form.motherEmail} onChange={(e) => set("motherEmail")(e.target.value)} placeholder="mother@example.com" disabled={!!selectedParentId} />
+            <Input type="email" value={form.motherEmail} onChange={(e) => set("motherEmail")(e.target.value)} placeholder="Enter mother's email" disabled={!!selectedParentId} />
           </Field>
 
           <div className="sm:col-span-2 flex items-center gap-4">

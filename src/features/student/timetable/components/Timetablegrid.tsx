@@ -10,12 +10,18 @@ interface TimetableGridProps {
   rows: TimetableRow[];
   todayDay: DayName;
   onPrint?: () => void;
+  onDownload?: () => void;
+  downloading?: boolean;
+  title?: string;
 }
 
 const TimetableGrid = ({
   rows,
   todayDay,
   onPrint,
+  onDownload,
+  downloading,
+  title = "My Class Timetable",
 }: TimetableGridProps) => (
   <div className="
     bg-white rounded-2xl border border-gray-100 shadow-sm
@@ -28,26 +34,46 @@ const TimetableGrid = ({
 
       <div>
         <h1 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight">
-          My Class Timetable
+          {title}
         </h1>
         <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
           Academic Year 2024-25
         </p>
       </div>
 
-      <button
-        onClick={onPrint}
-        className="
-          w-full sm:w-auto flex items-center justify-center gap-2
-          px-4 py-2 text-xs font-semibold
-          text-indigo-600 border border-indigo-200
-          rounded-xl transition-all duration-200
-          hover:bg-indigo-50 hover:border-indigo-300
-          active:scale-[0.98]
-        "
-      >
-        🖨 Print Timetable
-      </button>
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <button
+          onClick={onPrint}
+          className="
+            w-full sm:w-auto flex items-center justify-center gap-2
+            px-4 py-2 text-xs font-semibold
+            text-indigo-600 border border-indigo-200
+            rounded-xl transition-all duration-200
+            hover:bg-indigo-50 hover:border-indigo-300
+            active:scale-[0.98]
+          "
+        >
+          🖨 Print Timetable
+        </button>
+
+        {onDownload && (
+          <button
+            onClick={onDownload}
+            disabled={downloading}
+            className="
+              w-full sm:w-auto flex items-center justify-center gap-2
+              px-4 py-2 text-xs font-semibold
+              text-indigo-600 border border-indigo-200
+              rounded-xl transition-all duration-200
+              hover:bg-indigo-50 hover:border-indigo-300
+              active:scale-[0.98]
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
+          >
+            {downloading ? "Downloading…" : "⬇ Download Timetable"}
+          </button>
+        )}
+      </div>
 
     </div>
 

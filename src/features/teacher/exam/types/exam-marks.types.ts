@@ -61,6 +61,7 @@ export interface SubmittedExam {
   average: number;
   passRate: number;
   completionPercentage?: number;
+  enteredStudents?: EnteredStudentMark[];
 }
 
 export interface TopStudent {
@@ -162,6 +163,14 @@ export interface GetAllMarksQuery {
  * e.g. { id, examName, academicYear, className, subjectName, examDate,
  *         marksEntered, totalStudents, averageMarks, completionPercentage, status }
  */
+export interface EnteredStudentMark {
+  studentId: string;
+  admissionNo?: string;
+  studentName: string;
+  marksObtained: number;
+  isPublished: boolean;
+}
+
 export interface MarksRecordItem {
   id: string;
   // The row's own id isn't guaranteed to be the exam's UUID (backend may
@@ -179,6 +188,7 @@ export interface MarksRecordItem {
   averageMarks?: number;
   completionPercentage?: number;
   status?: string;
+  enteredStudents?: EnteredStudentMark[];
 }
 
 // ── /tenant/markspublish API types ─────────────────────────────────────────

@@ -48,7 +48,7 @@ const ExaminationTable = ({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 bg-gray-50">
-            {["Subject", "Date", "Day", "Time", "Venue"].map((h) => (
+            {["Subject", "Date", "Day", "Time", "Venue", "Syllabus"].map((h) => (
               <th
                 key={h}
                 className="py-3 px-6 text-left text-xs font-bold text-gray-400 uppercase tracking-wide"
@@ -94,6 +94,12 @@ const ExaminationTable = ({
 
               <td className="py-4 px-6 text-gray-500">
                 {exam.venue}
+              </td>
+
+              <td className="py-4 px-6 text-gray-500 max-w-[200px]">
+                <span className="line-clamp-2" title={exam.syllabus || undefined}>
+                  {exam.syllabus || "—"}
+                </span>
               </td>
             </tr>
           ))}
@@ -161,6 +167,17 @@ const ExaminationTable = ({
                 {exam.venue}
               </p>
             </div>
+
+            {exam.syllabus && (
+              <div className="col-span-2">
+                <p className="text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                  Syllabus
+                </p>
+                <p className="text-gray-500">
+                  {exam.syllabus}
+                </p>
+              </div>
+            )}
           </div>
 
         </div>

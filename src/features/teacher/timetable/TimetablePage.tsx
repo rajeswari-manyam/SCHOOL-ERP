@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Printer, RefreshCw, AlertCircle, Calendar, GraduationCap, User, School, BookOpen, GraduationCap as ExamIcon } from "lucide-react";
+import { Printer, Download, Loader2, RefreshCw, AlertCircle, Calendar, GraduationCap, User, School, BookOpen, GraduationCap as ExamIcon } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useTimetable, type DayName } from "./hooks/useTimetable";
 import { TimetableErrorBoundary } from "./components/ErrorBoundary";
@@ -7,6 +7,7 @@ import TimetableGrid from "./components/TimetableGrid";
 import TimetableSummaryCards from "./components/TimetableSummaryCards";
 import UpcomingExamsTable from "./components/UpcomingExamsTable";
 import { useReactToPrint } from "react-to-print";
+import { downloadTeacherTimetable } from "@/services/timetable.api";
 
 const formatAcademicYear = (raw: string): string => {
   if (/^[0-9a-f-]{20,}$/i.test(raw)) return "";
@@ -80,6 +81,19 @@ const TimetablePage = () => {
   const user = useAuthStore((s) => s.user);
   const teacherName = user?.name ?? "";
   const [activeTab, setActiveTab] = useState<Tab>("timetable");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!user?.id) return;
+    setDownloading(true);
+    try {
+      await downloadTeacherTimetable(user.id);
+    } catch (err) {
+      console.error("Failed to download timetable", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const {
     weekOffset, setWeekOffset,
@@ -131,14 +145,29 @@ const TimetablePage = () => {
             </div>
           </div>
           {activeTab === "timetable" && (
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium self-start transition-colors"
-              style={{ borderRadius: 10 }}
-            >
-              <Printer size={12} className="text-gray-500" strokeWidth={2} />
-              Print Timetable
-            </button>
+            <div className="flex items-center gap-2 self-start">
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium transition-colors"
+                style={{ borderRadius: 10 }}
+              >
+                <Printer size={12} className="text-gray-500" strokeWidth={2} />
+                Print Timetable
+              </button>
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ borderRadius: 10 }}
+              >
+                {downloading ? (
+                  <Loader2 size={12} className="text-gray-500 animate-spin" />
+                ) : (
+                  <Download size={12} className="text-gray-500" strokeWidth={2} />
+                )}
+                {downloading ? "Downloading…" : "Download Timetable"}
+              </button>
+            </div>
           )}
         </div>
 

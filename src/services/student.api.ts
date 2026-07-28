@@ -314,9 +314,16 @@ export const studentsApi = {
       formData.append(key, value instanceof File ? value : String(value));
     });
 
-    const { data: raw } = await api.post("/tenant/createstudents", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    let raw: unknown;
+    try {
+      const res = await api.post("/tenant/createstudents", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      raw = res.data;
+    } catch (err: any) {
+      const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to create student";
+      throw new Error(message);
+    }
     const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     if (obj?.status === false) {
       throw new Error((obj?.message as string) ?? "AdminStudentUI creation failed");
@@ -367,22 +374,35 @@ export const studentsApi = {
   },
 
   updateParent: async (parentId: string, payload: UpdateParentPayload): Promise<void> => {
-    const body = Object.entries(payload).reduce((fd, [key, value]) => {
-      if (value === undefined || value === null || value === "") return fd;
-      if (Array.isArray(value)) {
-        value.forEach((v) => fd.append(key, String(v)));
-      } else {
-        fd.append(key, value instanceof File ? value : String(value));
-      }
-      return fd;
-    }, new FormData());
+    const hasFiles = Object.values(payload).some((v) => v instanceof File);
 
-  const { data: raw } = await api.put(
-  `/tenant/updateparentById/${parentId}`,
-  body
-);
-    if (raw && typeof raw === "object" && (raw as Record<string, unknown>).status === false) {
-      throw new Error(((raw as Record<string, unknown>).message as string) ?? "Parent update failed");
+    if (hasFiles) {
+      const body = Object.entries(payload).reduce((fd, [key, value]) => {
+        if (value === undefined || value === null || value === "") return fd;
+        if (Array.isArray(value)) {
+          value.forEach((v) => fd.append(key, String(v)));
+        } else {
+          fd.append(key, value instanceof File ? value : String(value));
+        }
+        return fd;
+      }, new FormData());
+
+      const { data: raw } = await api.put(`/tenant/updateparentById/${parentId}`, body, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (raw && typeof raw === "object" && (raw as Record<string, unknown>).status === false) {
+        throw new Error(((raw as Record<string, unknown>).message as string) ?? "Parent update failed");
+      }
+    } else {
+      const cleaned: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(payload)) {
+        if (value === undefined || value === null || value === "") continue;
+        cleaned[key] = value;
+      }
+      const { data: raw } = await api.put(`/tenant/updateparentById/${parentId}`, cleaned);
+      if (raw && typeof raw === "object" && (raw as Record<string, unknown>).status === false) {
+        throw new Error(((raw as Record<string, unknown>).message as string) ?? "Parent update failed");
+      }
     }
   },
 

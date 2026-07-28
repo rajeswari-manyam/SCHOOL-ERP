@@ -8,6 +8,7 @@ import AttendancePage from "./attendance/pages/AttendeancePage";
 import FeesPage from "./fees/pages/FeePage";
 import HomeworkPage from "./homework/pages/HomeWorkPage";
 import ExamsPage from "./exams/pages/ExamPage";
+import ParentTimetablePage from "./timetable/pages/ParentTimetablePage";
 import ProfilePage from "./profile/pages/ProfilePage";
 import SettingsPage from "./SettingsPage";
 import ComplaintsPage from "./complaints/pages/ComplaintsPage";
@@ -29,6 +30,7 @@ export default function ParentRouter() {
         <Route path="fees" element={<FeesPage />} />
         <Route path="homework" element={<HomeworkPage />} />
         <Route path="exams" element={<ExamsPage />} />
+        <Route path="timetable" element={<ParentTimetablePage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="complaints" element={<ComplaintsPage />} />

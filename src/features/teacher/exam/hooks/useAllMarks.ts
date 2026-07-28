@@ -65,6 +65,7 @@ export function marksToSubmittedExam(
       // or 0 if absent. Override once the backend exposes it.
       passRate:             0,
       completionPercentage: item.completionPercentage ?? 0,
+      enteredStudents:      item.enteredStudents,
     };
   });
 }

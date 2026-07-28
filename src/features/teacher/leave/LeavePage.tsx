@@ -13,7 +13,7 @@ const LeavePage = () => {
     applyModalOpen, openApplyModal, closeApplyModal,
     form, patchForm,
     totalDays, needsMedicalCert, formValid,
-    submitting, submitSuccess, submitLeave,
+    submitting, submitSuccess, submitError, submitLeave,
     cancelId, confirmCancel, closeCancel, doCancel,
     calendarDays, calMonthLabel, prevMonth, nextMonth,
     previewDays, previewMonthLabel,
@@ -83,6 +83,7 @@ const LeavePage = () => {
         formValid={formValid}
         submitting={submitting}
         submitSuccess={submitSuccess}
+        submitError={submitError}
         onSubmit={submitLeave}
         previewDays={previewDays}
         previewMonthLabel={previewMonthLabel}

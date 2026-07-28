@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { StaffMember } from "../types/staff.types";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
@@ -69,6 +70,7 @@ interface Props {
 }
 
 export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) => {
+  const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null);
   const [previewStaff, setPreviewStaff] = useState<StaffMember | null>(null);
   const [page, setPage] = useState(1);
@@ -76,6 +78,9 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
   const totalPages = Math.max(1, Math.ceil(staff.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const pageRows = staff.slice(start, start + PAGE_SIZE);
+
+  // Clicking anywhere on a row goes to that staff member's profile page.
+  const goToProfile = (s: StaffMember) => navigate(`/schooladmin/staff/${s.id}`);
 
   if (staff.length === 0) {
     return (
@@ -104,7 +109,11 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
             {pageRows.map((s) => {
               const roleLabel = [s.role, s.classes?.[0]].filter(Boolean).join(" — ");
               return (
-                <tr key={s.id} className="bg-slate-50/50 hover:bg-[#EFF4FF] transition-colors">
+                <tr
+                  key={s.id}
+                  onClick={() => goToProfile(s)}
+                  className="bg-slate-50/50 hover:bg-[#EFF4FF] transition-colors cursor-pointer"
+                >
 
                   {/* Name & Contact */}
                   <td className="px-4 py-3.5">
@@ -165,16 +174,20 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
                   {/* Actions */}
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-3">
-                      <button onClick={() => onView?.(s)}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onView?.(s); }}
                         className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
                         View
                       </button>
-                      <button onClick={() => onEdit?.(s)}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onEdit?.(s); }}
                         className="text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors">
                         Edit
                       </button>
                       {onDelete && (
-                        <button onClick={() => setDeleteTarget(s)} title="Delete"
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}
+                          title="Delete"
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

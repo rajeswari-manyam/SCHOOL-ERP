@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, getDaysInMonth, startOfMonth } from "date-fns";
 import { ClipboardCheck, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -9,7 +9,14 @@ import {
 } from "./hooks/useAttendance";
 import MyHistoryTab from "./components/MyHistoryTab";
 import MarkStudentAttendanceModal from "./components/MarkStudentAttendaceModal";
+import TeacherHolidaysTab from "./components/TeacherHolidaysTab";
 import type { StaffAttendanceRecord } from "@/services/attendance.api";
+import { getAllHolidays } from "@/services/holidays.api";
+import { fetchAllWorkingDays } from "@/services/working-days.api";
+import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
+import { isDayInSelectedDays } from "@/features/school-admin/timetable/utils/Timetable.utils";
+
+const WEEKDAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_STYLE: Record<string, { label: string; bg: string; text: string; dot: string }> = {
@@ -32,9 +39,10 @@ const STATUS_CAL: Record<string, { bg: string; text: string; ring: string }> = {
 };
 
 const MonthCalendar = ({
-  year, month, records, todayStr,
+  year, month, records, todayStr, offDays,
 }: {
   year: number; month: number; records: StaffAttendanceRecord[]; todayStr: string;
+  offDays?: Map<string, string>;
 }) => {
   const recordMap = useMemo(() => {
     const m: Record<string, StaffAttendanceRecord> = {};
@@ -71,6 +79,7 @@ const MonthCalendar = ({
           const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const rec = recordMap[dateStr];
           const cal = rec ? STATUS_CAL[rec.status] : null;
+          const offDayLabel = !rec ? offDays?.get(dateStr) : undefined;
           const isToday = dateStr === todayStr;
           const isFuture = dateStr > todayStr;
 
@@ -78,17 +87,18 @@ const MonthCalendar = ({
             <div
               key={idx}
               className="bg-white h-14 flex flex-col items-center justify-center relative group"
+              title={offDayLabel}
             >
               {/* Colored circle for the day */}
               <div
                 className={`
                   w-9 h-9 rounded-full flex flex-col items-center justify-center transition-transform group-hover:scale-110
-                  ${cal ? `${cal.bg} shadow-sm` : ""}
+                  ${cal ? `${cal.bg} shadow-sm` : offDayLabel ? "bg-gray-200" : ""}
                   ${isToday && !cal ? "ring-2 ring-[#5B5CEB] ring-offset-1" : ""}
                   ${isToday && cal ? `ring-2 ${cal.ring} ring-offset-1` : ""}
                 `}
               >
-                <span className={`text-[12px] font-bold leading-none ${cal ? "text-white" : isFuture ? "text-gray-300" : "text-gray-500"}`}>
+                <span className={`text-[12px] font-bold leading-none ${cal ? "text-white" : offDayLabel ? "text-gray-500" : isFuture ? "text-gray-300" : "text-gray-500"}`}>
                   {day}
                 </span>
                 {isToday && (
@@ -109,6 +119,7 @@ const MonthCalendar = ({
           { label: "Absent",   cls: "bg-red-500"     },
           { label: "Leave",    cls: "bg-purple-500"  },
           { label: "Half Day", cls: "bg-amber-400"   },
+          { label: "Holiday",  cls: "bg-gray-300"    },
         ].map((l) => (
           <span key={l.label} className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium">
             <span className={`w-2 h-2 rounded-full ${l.cls}`} />
@@ -128,6 +139,24 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
   const [view,  setView]  = useState<"calendar" | "list">("calendar");
 
   const { data: apiData, isLoading } = useStaffAttendanceByStaffId(staffId);
+  const { activeYear } = useAcademicYears();
+
+  // Holidays + school working-days config — fetched once, filtered per visible month below
+  const [rawHolidays, setRawHolidays] = useState<any[]>([]);
+  const [workingDays, setWorkingDays] = useState<Awaited<ReturnType<typeof fetchAllWorkingDays>>>([]);
+
+  useEffect(() => {
+    getAllHolidays()
+      .then((res: any) => {
+        const list = Array.isArray(res?.data) ? res.data
+          : Array.isArray(res?.holidays) ? res.holidays
+          : Array.isArray(res?.data?.holidays) ? res.data.holidays
+          : [];
+        setRawHolidays(list);
+      })
+      .catch(() => {});
+    fetchAllWorkingDays().then(setWorkingDays).catch(() => {});
+  }, []);
 
   const prevMonth = () => {
     if (month === 1) { setMonth(12); setYear((y) => y - 1); }
@@ -155,6 +184,36 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
     [allRecords, month, year]
   );
 
+  // Holidays + non-working weekdays for the visible month — shown as "Holiday" on the calendar
+  const offDays = useMemo(() => {
+    const map = new Map<string, string>();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const monthStr = pad(month);
+    const yearStr = String(year);
+
+    rawHolidays.forEach((h: any) => {
+      const dateStr = h.date;
+      if (dateStr && dateStr.startsWith(`${yearStr}-${monthStr}`)) {
+        map.set(dateStr, h.holidayname ?? h.name ?? "Holiday");
+      }
+    });
+
+    const activeWD = workingDays.find((wd) => wd.academicYearId === activeYear?.id) ?? workingDays[0];
+    const selectedDays = activeWD?.selected_days ?? [];
+
+    if (selectedDays.length > 0) {
+      const daysInMonth = getDaysInMonth(new Date(year, month - 1, 1));
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${yearStr}-${monthStr}-${pad(d)}`;
+        if (map.has(dateStr)) continue;
+        const weekday = WEEKDAY_NAMES[new Date(year, month - 1, d).getDay()];
+        if (!isDayInSelectedDays(selectedDays, weekday)) map.set(dateStr, "Non-working day");
+      }
+    }
+
+    return map;
+  }, [rawHolidays, workingDays, activeYear, month, year]);
+
   // Compute summary from filtered records
   const summary = useMemo(() => ({
     present: records.filter((r) => r.status === "present").length,
@@ -180,10 +239,16 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
 
         <div className="text-center">
           <p className="text-sm font-bold text-gray-800">{monthLabel}</p>
-          {todayStyle && isCurrentMonth && (
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${todayStyle.bg} ${todayStyle.text}`}>
-              Today: {todayStyle.label}
-            </span>
+          {isCurrentMonth && (
+            todayStyle ? (
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${todayStyle.bg} ${todayStyle.text}`}>
+                Today: {todayStyle.label}
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                Today: Not Marked
+              </span>
+            )
           )}
         </div>
 
@@ -241,7 +306,7 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
       {isLoading ? (
         <div className="flex items-center justify-center h-36 text-sm text-gray-400 animate-pulse">Loading…</div>
       ) : view === "calendar" ? (
-        <MonthCalendar year={year} month={month} records={records} todayStr={todayStr} />
+        <MonthCalendar year={year} month={month} records={records} todayStr={todayStr} offDays={offDays} />
       ) : records.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-12 text-center">
           <p className="text-sm text-gray-400">No attendance records for this month.</p>
@@ -252,6 +317,24 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
             <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Attendance Records</p>
           </div>
           <div className="divide-y divide-gray-50">
+            {/* Show "Not Marked" for today if no record exists */}
+            {isCurrentMonth && !todayRecord && (
+              <div className="flex items-center justify-between px-5 py-3 bg-gray-50/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-gray-400" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {format(now, "EEE, d MMM yyyy")}
+                      <span className="ml-2 text-[10px] font-bold text-indigo-500">TODAY</span>
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Attendance not marked yet</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-gray-100 text-gray-500 border-gray-200">
+                  Not Marked
+                </span>
+              </div>
+            )}
             {records.map((rec) => {
               const style = STATUS_STYLE[rec.status] ?? { label: rec.status, bg: "bg-gray-50 border-gray-100", text: "text-gray-600", dot: "bg-gray-400" };
               const isToday = rec.date === todayStr;
@@ -285,10 +368,11 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 const TABS = [
-  { key: "class", label: "Class Attendance" },
-  { key: "mine",  label: "My Attendance"    },
+  { key: "class",    label: "Class Attendance" },
+  { key: "mine",     label: "My Attendance"    },
+  { key: "holidays", label: "Holidays"         },
 ];
-type TabKey = "class" | "mine";
+type TabKey = "class" | "mine" | "holidays";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const MyAttendancePage = () => {
@@ -375,6 +459,11 @@ const MyAttendancePage = () => {
       {/* ── My Attendance tab (teacher's own staff attendance) ────────────── */}
       {activeTab === "mine" && (
         <MyStaffAttendanceTab staffId={activeTeacherId} />
+      )}
+
+      {/* ── Holidays tab ──────────────────────────────────────────────────── */}
+      {activeTab === "holidays" && (
+        <TeacherHolidaysTab />
       )}
 
       <MarkStudentAttendanceModal

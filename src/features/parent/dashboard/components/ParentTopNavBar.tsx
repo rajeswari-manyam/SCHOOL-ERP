@@ -14,6 +14,7 @@ import {
     Wallet,
     BookOpen,
     ClipboardList,
+    Calendar,
     User,
     Settings,
     MessageSquareWarning,
@@ -30,6 +31,7 @@ const navLinks = [
     { label: "Fees", path: "/parent/fees", icon: Wallet },
     { label: "Homework", path: "/parent/homework", icon: BookOpen },
     { label: "Exams", path: "/parent/exams", icon: ClipboardList },
+    { label: "Timetable", path: "/parent/timetable", icon: Calendar },
     { label: "Profile", path: "/parent/profile", icon: User },
 ];
 

@@ -1,7 +1,7 @@
 // teacher/attendance/components/MarkStudentAttendanceModal.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, AlertTriangle } from "lucide-react";
 
 import { useAuthStore } from "@/store/authStore";
 import { Modal } from "@/components/ui/modal";
@@ -66,6 +66,7 @@ const MarkStudentAttendanceModal = ({
       setDate(new Date().toISOString().slice(0, 10));
       setRecords({});
       setAlreadyMarked([]);
+      setSubmitError(null);
     }
   }, [open, defaultClassId, defaultSectionId]);
 
@@ -108,6 +109,7 @@ const MarkStudentAttendanceModal = ({
   // ── Attendance records ───────────────────────────────────────────────────────
   const [records, setRecords] = useState<Record<string, AttStatus>>({});
   const [alreadyMarked, setAlreadyMarked] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Default all students to PRESENT when list loads
   useEffect(() => {
@@ -169,10 +171,14 @@ const MarkStudentAttendanceModal = ({
         onClose();
       }
     },
+    onError: (err: any) => {
+      setSubmitError(err?.response?.data?.message ?? err?.message ?? "Failed to submit attendance");
+    },
   });
 
   const handleSubmit = () => {
     if (!classId || !sectionId || !students.length) return;
+    setSubmitError(null);
     reset();
     mutate();
   };
@@ -267,6 +273,14 @@ const MarkStudentAttendanceModal = ({
           </label>
         </div>
       </div>
+
+      {/* ── Submit error (e.g. holiday / non-working day) ───────────────────── */}
+      {submitError && (
+        <div className="mb-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-medium text-red-700">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+          <span>{submitError}</span>
+        </div>
+      )}
 
       {/* ── Already-marked warning ───────────────────────────────────────────── */}
       {alreadyMarked.length > 0 && (

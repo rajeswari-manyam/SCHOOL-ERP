@@ -17,6 +17,7 @@ export type PaymentStatus = "PAID" | "PARTIAL" | "PENDING";
 
 export type Transaction = {
   id: string;
+  studentId?: string;
   date: string;
   student: string;
   className: string;
@@ -243,7 +244,9 @@ export type FilterValues = {
   search: string;
   dateFrom: string;
   dateTo: string;
-  selectedClass: string;
+  /** Class/section IDs from getAllClasses / getSectionsByClassId — "" means no filter */
+  classId: string;
+  sectionId: string;
   selectedMode: string;
   dueStatus: DueStatus;
   sortBy: string;
@@ -251,6 +254,7 @@ export type FilterValues = {
 
 export type FeeRow = {
   id: string;
+  studentId?: string;
   student: string;
   admissionNo: string;
   className: string;

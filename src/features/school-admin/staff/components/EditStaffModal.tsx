@@ -195,13 +195,13 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
           </FormField>
 
           <FormField label="Role" error={errors.role}>
-            <Input name="role" type="text" value={form.role} placeholder="e.g. Teacher" inputSize="sm"
+            <Input name="role" type="text" value={form.role} placeholder="Enter role" inputSize="sm"
               className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("role", e.target.value)} />
           </FormField>
 
           <FormField label="Phone *" error={errors.phone}>
-            <Input name="phone" type="tel" value={form.phone} inputSize="sm"
+            <Input name="phone" type="tel" value={form.phone} placeholder="Enter phone number" inputSize="sm"
               className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("phone", e.target.value)} />
           </FormField>
@@ -219,7 +219,7 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
           </FormField>
 
           <FormField label="Qualification">
-            <Input name="qualification" type="text" value={form.qualification} placeholder="B.Ed, M.Sc" inputSize="sm"
+            <Input name="qualification" type="text" value={form.qualification} placeholder="Enter qualification" inputSize="sm"
               className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("qualification", e.target.value)} />
           </FormField>
@@ -249,7 +249,7 @@ export const EditStaffModal = ({ staff, onClose }: Props) => {
           </FormField>
 
           <FormField label="IFSC Code">
-            <Input name="ifscCode" type="text" value={form.ifscCode} placeholder="SBIN0001234" inputSize="sm"
+            <Input name="ifscCode" type="text" value={form.ifscCode} placeholder="Enter IFSC code" inputSize="sm"
               className="border-slate-200 focus:ring-indigo-300 focus:border-indigo-400"
               onChange={(e) => handleChange("ifscCode", e.target.value)} />
           </FormField>

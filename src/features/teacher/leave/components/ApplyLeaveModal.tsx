@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Upload, Check, Clock, Loader2 } from "lucide-react";
+import { Upload, Check, Clock, Loader2, AlertCircle } from "lucide-react";
 // import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ interface Props {
   formValid: boolean;
   submitting: boolean;
   submitSuccess: boolean;
+  submitError?: string | null;
   onSubmit: () => void;
   previewDays: LeaveCalendarDay[];
   previewMonthLabel: string;
@@ -30,7 +31,7 @@ const ApplyLeaveModal = ({
   balances,
   form, patchForm,
   totalDays, needsMedicalCert, formValid,
-  submitting, submitSuccess,
+  submitting, submitSuccess, submitError,
   onSubmit,
   previewDays, previewMonthLabel,
 }: Props) => {
@@ -268,6 +269,12 @@ const ApplyLeaveModal = ({
           {/* Footer — stacked on mobile, inline on sm+ */}
           {!submitSuccess && (
             <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-gray-50/50 sm:px-6">
+              {submitError && (
+                <div className="mb-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-500" />
+                  <span>{submitError}</span>
+                </div>
+              )}
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                 <Button
                   type="button"
