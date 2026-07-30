@@ -7,6 +7,7 @@ import type {
   OtpVerifyResponse,
   LogoutResponse,
   GetUserByIdResponse,
+  Permission,
 } from "@/features/auth/types/auth.types";
 
 // ── POST /tenant/userlogin ─────────────────────────────────────────────────────
@@ -36,4 +37,36 @@ export const getUserById = async (userId: string): Promise<GetUserByIdResponse> 
     { _skipLogoutOn401: true } as object
   );
   return data;
+};
+
+// ── POST /organization/superadminlogin ───────────────────────────────────────
+export interface SuperAdminLoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface SuperAdminLoginResponse {
+  status: boolean;
+  message: string;
+  token: string;
+  user: {
+    email: string;
+    role: string;
+    permissions?: Permission[];
+  };
+}
+
+export const superAdminLogin = async (
+  payload: SuperAdminLoginPayload
+): Promise<SuperAdminLoginResponse> => {
+  try {
+    const { data } = await api.post<SuperAdminLoginResponse>(
+      "/organization/superadminlogin",
+      payload
+    );
+    return data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.message ?? "Login failed";
+    throw new Error(message);
+  }
 };

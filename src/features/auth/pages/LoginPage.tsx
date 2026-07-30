@@ -11,14 +11,18 @@ import {
   Loader2,
   Phone,
   School,
-  Shield,
+  ShieldCheck,
   GraduationCap,
   UserSquare2,
   ChevronDown,
-  MessageCircle,
+  ChevronRight,
+  Mail,
+  Lock,
+  Headphones,
+  MessageSquareText,
 } from "lucide-react";
 
-import { sendOtp } from "@/services/auth.api";
+import { sendOtp, superAdminLogin } from "@/services/auth.api";
 import { useAuthStore } from "@/store/authStore";
 import { axiosInstance } from "@/config/axios";
 
@@ -37,9 +41,15 @@ const studentLoginSchema = z.object({
   admissionNumber:  z.string().min(3, "Admission number is required").max(30, "Too long"),
 });
 
-type StaffLoginValues   = z.infer<typeof staffLoginSchema>;
-type StudentLoginValues = z.infer<typeof studentLoginSchema>;
-type LoginMode          = "staff" | "student";
+const superAdminLoginSchema = z.object({
+  email:    z.string().min(1, "Email is required").email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type StaffLoginValues      = z.infer<typeof staffLoginSchema>;
+type StudentLoginValues    = z.infer<typeof studentLoginSchema>;
+type SuperAdminLoginValues = z.infer<typeof superAdminLoginSchema>;
+type LoginMode             = "staff" | "student" | "superadmin";
 type SchoolItem = {
   school_name: string;
   school_code: string;
@@ -50,6 +60,64 @@ type SchoolItem = {
 // ── Feature pills (branding panel) ────────────────────────────────────────────
 const FEATURE_PILLS = ["Attendance Alerts", "Fee Reminders", "Broadcast Messages"];
 
+// ── Mode metadata (icon/copy for the header + the alternate-login rows) ──────
+const MODE_META: Record<LoginMode, { label: string; description: string; icon: typeof School }> = {
+  staff: {
+    label: "Staff Login",
+    description: "Teachers and staff can login using their phone number.",
+    icon: Phone,
+  },
+  student: {
+    label: "Student Login",
+    description: "Students can login using their registration number.",
+    icon: GraduationCap,
+  },
+  superadmin: {
+    label: "Super Admin Login",
+    description: "System administrators can login using their email and password.",
+    icon: ShieldCheck,
+  },
+};
+
+// ── Dashboard-mockup card for the left branding panel ─────────────────────────
+const MockupCard = ({ school, showLogoImage, onLogoError }: {
+  school: SchoolItem | null;
+  showLogoImage: boolean;
+  onLogoError: () => void;
+}) => (
+  <div className="w-full max-w-sm mx-auto rounded-[28px] bg-[#1E2A2E] p-6 shadow-2xl">
+    <div className="flex flex-col items-center text-center py-4">
+      <div className="w-24 h-24 rounded-full bg-[#2C3B3F] border border-white/10 flex items-center justify-center mb-4 overflow-hidden p-3">
+        {school && showLogoImage ? (
+          <img
+            src={(school.logo || school.image) as string}
+            alt={school.school_name}
+            className="w-full h-full object-contain"
+            onError={onLogoError}
+          />
+        ) : (
+          <GraduationCap size={32} className="text-white" />
+        )}
+      </div>
+      <p className="text-white font-extrabold text-lg leading-tight tracking-tight uppercase">
+        {school ? school.school_name : "School Management"}
+      </p>
+      <p className="text-white/40 text-[10px] uppercase tracking-widest mt-1">
+        {school ? `Code: ${school.school_code}` : "Complete Management Suite"}
+      </p>
+    </div>
+    <div className="space-y-2 mt-3">
+      {["Attendance", "Fee Collection", "Communication"].map((label) => (
+        <div key={label} className="flex items-center gap-3 bg-white/5 rounded-xl px-3 py-2.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+          <span className="text-white/50 text-[11px] flex-1 text-left">{label}</span>
+          <span className="w-16 h-1.5 rounded-full bg-white/10" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const login    = useAuthStore((s) => s.login);
@@ -58,6 +126,9 @@ const LoginPage = () => {
   const [schoolsLoading, setSchoolsLoading] = useState(false);
   const [schools,        setSchools]        = useState<SchoolItem[]>([]);
   const [loginMode,      setLoginMode]      = useState<LoginMode>("staff");
+  // Tracks whether the currently-selected school's logo failed to load,
+  // so we can fall back to the generic School icon instead of a broken <img>.
+  const [logoFailed,     setLogoFailed]     = useState(false);
   const submittingRef = useRef(false);
 
   // ── Fetch schools ────────────────────────────────────────────────────────────
@@ -100,17 +171,29 @@ const LoginPage = () => {
     defaultValues: { schoolcode: "", admissionNumber: "" },
   });
 
+  // ── Super Admin form ──────────────────────────────────────────────────────────
+  const {
+    register: registerSuperAdmin,
+    handleSubmit: handleSuperAdminSubmit,
+    formState: { errors: superAdminErrors },
+  } = useForm<SuperAdminLoginValues>({
+    resolver: zodResolver(superAdminLoginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
   // ── Sync school dropdown across both forms ───────────────────────────────────
   const handleSchoolChange = (schoolCode: string) => {
     setStaffValue("schoolcode", schoolCode);
     setStudentValue("schoolcode", schoolCode);
+    // New school selected → reset the broken-image flag so its logo gets a fresh try.
+    setLogoFailed(false);
   };
 
-  // ── Selected school (for the right-panel logo) ────────────────────────────────
+  // ── Selected school (for the left-panel branding) ─────────────────────────────
   const selectedSchoolCode =
     loginMode === "staff" ? watchStaff("schoolcode") : watchStudent("schoolcode");
   const selectedSchool = schools.find((s) => s.school_code === selectedSchoolCode) ?? null;
-  const selectedSchoolLogo = selectedSchool?.logo || selectedSchool?.image || null;
+  const selectedSchoolImage = selectedSchool?.logo || selectedSchool?.image || null;
 
   // ── Staff login ──────────────────────────────────────────────────────────────
   const onStaffSubmit = async (values: StaffLoginValues) => {
@@ -209,180 +292,174 @@ const LoginPage = () => {
     }
   };
 
+  // ── Super Admin login ──────────────────────────────────────────────────────────
+  // Platform-level login — email/password, no school selection, no OTP step.
+  const onSuperAdminSubmit = async (values: SuperAdminLoginValues) => {
+    setLoading(true);
+    try {
+      const res = await superAdminLogin(values);
+      if (res.status && res.token) {
+        login(
+          res.token,
+          {
+            id: res.user.email,
+            name: res.user.email,
+            email: res.user.email,
+            phone: "",
+            schoolcode: "",
+            permissions: res.user.permissions,
+          },
+          "SuperAdmin"
+        );
+        toast.success(res.message ?? "Login successful");
+        navigate("/superadmin/dashboard", { replace: true });
+      } else {
+        toast.error(res.message ?? "Login failed");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────────
+  const ModeIcon = MODE_META[loginMode].icon;
+  const otherModes = (Object.keys(MODE_META) as LoginMode[]).filter((m) => m !== loginMode);
+  const showLogoImage = !!selectedSchoolImage && !logoFailed;
+
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#F5F6FF]">
 
       {/* ── Left panel (school branding) ── */}
-<div className="hidden lg:flex w-[600px] xl:w-[720px] 2xl:w-[820px] flex-col bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 relative overflow-hidden">
+      <div
+        className={`hidden lg:flex lg:w-1/2 xl:w-[55%] flex-col justify-between relative overflow-hidden px-10 xl:px-16 py-12 ${
+          showLogoImage ? "bg-cover bg-center" : "bg-gradient-to-br from-[#4B3AE0] via-[#5B3FE0] to-[#3D2FC4]"
+        }`}
+        style={showLogoImage ? { backgroundImage: `url(${selectedSchoolImage})` } : undefined}
+      >
+        {showLogoImage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#3D2FC4]/90 via-[#4B3AE0]/85 to-[#3D2FC4]/90" />
+        )}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-violet-500/20 blur-3xl" />
+          <div className="absolute bottom-1/4 -left-16 w-64 h-64 rounded-full bg-violet-400/10 blur-3xl" />
         </div>
 
-        <div className="relative flex flex-col items-center justify-center px-10 h-full text-center">
-          {/* Mockup frame */}
-          <div className="relative w-full max-w-sm h-64 rounded-[2rem] bg-violet-600/90 border border-white/20 shadow-2xl overflow-hidden flex flex-col items-center justify-center mb-8">
-            {selectedSchoolLogo ? (
-              <>
-                <img
-                  src={selectedSchoolLogo}
-                  alt={selectedSchool?.school_name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                <div className="relative mt-auto mb-5 text-center">
-                  <p className="text-white font-bold text-sm tracking-wide uppercase">
-                    {selectedSchool?.school_name}
-                  </p>
-                  <p className="text-indigo-200 text-xs mt-1">Code: {selectedSchool?.school_code}</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/15 flex items-center justify-center">
-                  <GraduationCap size={32} className="text-white" />
-                </div>
-                <p className="mt-4 text-white font-bold text-sm tracking-wide uppercase">
-                  {selectedSchool ? selectedSchool.school_name : "School Management"}
-                </p>
-                {selectedSchool && (
-                  <p className="text-indigo-200 text-xs mt-1">Code: {selectedSchool.school_code}</p>
-                )}
-              </>
-            )}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg shrink-0">
+              <GraduationCap size={24} className="text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-lg leading-tight">VidyaTracker</p>
+              <p className="text-indigo-200 text-xs">School Management System</p>
+            </div>
           </div>
 
-          {/* Quote */}
-          <h2 className="text-2xl xl:text-[28px] font-bold text-white leading-snug max-w-sm">
-            "Complete school management,<br />automated on WhatsApp."
-          </h2>
+        </div>
 
-          {/* Feature pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-7 max-w-sm">
-            {FEATURE_PILLS.map((label) => (
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-start pt-2 gap-6">
+          <MockupCard
+            school={selectedSchool}
+            showLogoImage={showLogoImage}
+            onLogoError={() => setLogoFailed(true)}
+          />
+
+          <h1 className="text-xl xl:text-2xl font-bold text-white leading-snug text-center max-w-md">
+            "Complete school management,
+            <br />
+            automated on WhatsApp."
+          </h1>
+
+          <div className="flex flex-wrap justify-center gap-2 max-w-sm">
+            {FEATURE_PILLS.map((f) => (
               <span
-                key={label}
-                className="px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-medium"
+                key={f}
+                className="px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white text-[11px] font-medium"
               >
-                {label}
+                {f}
               </span>
             ))}
           </div>
 
-          {/* Trust caption */}
-          <p className="mt-7 text-indigo-200/80 text-[11px] font-semibold uppercase tracking-widest">
-            Trusted by 200+ schools across India
+          <p className="text-indigo-200/70 text-[10px] font-semibold uppercase tracking-widest text-center">
+            Trusted by 47+ schools across Telangana
           </p>
-
-          <div className="mt-8 flex items-center gap-2 text-indigo-300/70 text-xs">
-            <Shield size={12} />
-            <span>256-bit encrypted · ISO 27001 certified</span>
-          </div>
         </div>
 
-        {/* Floating help button */}
-        <a
-          href="#"
-          className="absolute bottom-6 right-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-lg transition-colors"
+        <button
+          type="button"
+          className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-lg hover:bg-emerald-600 transition-colors"
         >
-          <MessageCircle size={15} />
+          <MessageSquareText size={16} />
           Get Help
-        </a>
+        </button>
       </div>
 
       {/* ── Right panel (login form) ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 xs:px-6 py-8 sm:py-12 sm:px-10 bg-[#F8F9FF]">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-indigo-100 border border-slate-100 p-6 sm:p-8">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 xs:px-6 py-8 sm:py-12 sm:px-10">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-indigo-100 border border-slate-100 p-6 sm:p-9">
 
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-8 h-8 overflow-hidden rounded-lg bg-white/5 flex items-center justify-center shadow-md shadow-indigo-200">
-                <img
-                  src="/favicon.png"
-                  alt="VidyaTracker logo"
-                  className="h-full w-full object-cover"
+          {/* Compact brand mark — desktop already has it on the left panel */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <GraduationCap size={16} className="text-white" />
+            </div>
+            <span className="text-base font-bold text-slate-900">VidyaTracker</span>
+          </div>
+
+          {/* Header */}
+          <div className="flex flex-col items-center text-center mb-7">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+              <ModeIcon size={28} className="text-indigo-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Welcome back!</h1>
+            <p className="text-sm text-slate-500 mt-1">Login to continue to your account</p>
+            <div className="w-10 h-1 rounded-full bg-indigo-600 mt-3" />
+          </div>
+
+          {/* School dropdown — not applicable to the platform-level Super Admin login */}
+          {loginMode !== "superadmin" && (
+            <div className="mb-5">
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                School
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 z-10">
+                  <School size={16} />
+                </span>
+                <select
+                  value={
+                    loginMode === "staff"
+                      ? watchStaff("schoolcode")
+                      : watchStudent("schoolcode")
+                  }
+                  onChange={(e) => handleSchoolChange(e.target.value)}
+                  className="w-full h-12 pl-10 pr-10 rounded-xl border border-slate-200 bg-white text-sm outline-none appearance-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500"
+                >
+                  <option value="">
+                    {schoolsLoading ? "Loading schools..." : "Select your school"}
+                  </option>
+                  {schools.map((school) => (
+                    <option key={school.school_code} value={school.school_code}>
+                      {school.school_name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                 />
               </div>
-              <span className="text-lg font-bold text-slate-900 tracking-tight">
-                Vidya<span className="text-indigo-600">Tracker</span>
-              </span>
+              {loginMode === "staff"   && staffErrors.schoolcode   && (
+                <p className="text-xs text-red-500 mt-1">{staffErrors.schoolcode.message}</p>
+              )}
+              {loginMode === "student" && studentErrors.schoolcode && (
+                <p className="text-xs text-red-500 mt-1">{studentErrors.schoolcode.message}</p>
+              )}
             </div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest ml-10">
-              Manyam Technologies
-            </p>
-          </div>
-
-          {/* Header + toggle */}
-          <div className="flex items-start justify-between gap-3 mb-6 sm:mb-8">
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Welcome back</h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Login to continue</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider hidden xs:inline">
-                {loginMode === "staff" ? "Staff" : "Student"}
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  setLoginMode(loginMode === "staff" ? "student" : "staff")
-                }
-                className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
-                  loginMode === "staff" ? "bg-indigo-600" : "bg-emerald-600"
-                }`}
-              >
-                <div
-                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ${
-                    loginMode === "staff"
-                      ? "left-0.5"
-                      : "left-[calc(100%-22px)]"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* School dropdown */}
-          <div className="mb-5">
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-              School Name
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 z-10">
-                <School size={16} />
-              </span>
-              <select
-                value={
-                  loginMode === "staff"
-                    ? watchStaff("schoolcode")
-                    : watchStudent("schoolcode")
-                }
-                onChange={(e) => handleSchoolChange(e.target.value)}
-                className="w-full h-12 pl-10 pr-10 rounded-xl border border-slate-200 bg-white text-sm outline-none appearance-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500"
-              >
-                <option value="">
-                  {schoolsLoading ? "Loading schools..." : "Select School"}
-                </option>
-                {schools.map((school) => (
-                  <option key={school.school_code} value={school.school_code}>
-                    {school.school_name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={16}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              />
-            </div>
-            {loginMode === "staff"   && staffErrors.schoolcode   && (
-              <p className="text-xs text-red-500 mt-1">{staffErrors.schoolcode.message}</p>
-            )}
-            {loginMode === "student" && studentErrors.schoolcode && (
-              <p className="text-xs text-red-500 mt-1">{studentErrors.schoolcode.message}</p>
-            )}
-          </div>
+          )}
 
           {/* Staff login form */}
           {loginMode === "staff" && (
@@ -406,7 +483,7 @@ const LoginPage = () => {
                   <input
                     type="tel"
                     maxLength={10}
-                    placeholder="9876543210"
+                    placeholder="Enter your phone number"
                     className={`w-full h-12 pl-[4.5rem] pr-4 rounded-xl border text-sm outline-none transition-all ${
                       staffErrors.phone
                         ? "border-red-400 bg-red-50"
@@ -492,13 +569,127 @@ const LoginPage = () => {
             </form>
           )}
 
-          <p className="text-center text-xs text-slate-400 mt-8">
-            Need access?{" "}
-            <a href="#" className="text-indigo-600 hover:underline">
+          {/* Super Admin login form — email/password, no school, no OTP */}
+          {loginMode === "superadmin" && (
+            <form
+              onSubmit={handleSuperAdminSubmit(onSuperAdminSubmit)}
+              className="space-y-5"
+              noValidate
+            >
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-slate-700">
+                  Email
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Mail size={16} />
+                  </span>
+                  <input
+                    type="email"
+                    placeholder="admin@vidyatrack.com"
+                    autoComplete="username"
+                    className={`w-full h-12 pl-10 pr-4 rounded-xl border text-sm outline-none transition-all ${
+                      superAdminErrors.email
+                        ? "border-red-400 bg-red-50"
+                        : "border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    }`}
+                    {...registerSuperAdmin("email")}
+                  />
+                </div>
+                {superAdminErrors.email && (
+                  <p className="text-xs text-red-500">{superAdminErrors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-semibold text-slate-700">
+                  Password
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Lock size={16} />
+                  </span>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className={`w-full h-12 pl-10 pr-4 rounded-xl border text-sm outline-none transition-all ${
+                      superAdminErrors.password
+                        ? "border-red-400 bg-red-50"
+                        : "border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    }`}
+                    {...registerSuperAdmin("password")}
+                  />
+                </div>
+                {superAdminErrors.password && (
+                  <p className="text-xs text-red-500">{superAdminErrors.password.message}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all disabled:opacity-60"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck size={16} />
+                    Sign In
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* "or" divider */}
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-100" />
+            <span className="text-[11px] text-slate-400">or</span>
+            <div className="h-px flex-1 bg-slate-100" />
+          </div>
+
+          {/* Alternate login rows — switch to whichever mode isn't currently active */}
+          <div className="space-y-2.5">
+            {otherModes.map((mode) => {
+              const meta = MODE_META[mode];
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setLoginMode(mode)}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-indigo-100 bg-indigo-50/40 hover:bg-indigo-50 transition-colors text-left group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+                    <meta.icon size={18} className="text-indigo-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-indigo-700">{meta.label}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{meta.description}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-indigo-300 group-hover:text-indigo-500 transition-colors shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="flex items-center justify-center gap-1.5 text-xs text-slate-400 mt-7">
+            <Headphones size={13} />
+            Need help?{" "}
+            <a href="#" className="text-indigo-600 font-medium hover:underline">
               Contact your school administrator
             </a>
           </p>
         </div>
+
+        <p className="flex items-center gap-1.5 text-xs text-slate-400 mt-6">
+          <ShieldCheck size={13} className="text-emerald-500" />
+          Your data is 100% secure and encrypted
+        </p>
       </div>
 
     </div>

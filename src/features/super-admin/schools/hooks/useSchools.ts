@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { schoolsApi } from "@/services/super-admin-schools.api";
-import type { SchoolFilters, SchoolFormValues, School } from "../types/school.types";
+import type { SchoolFilters, SchoolFormValues, School, SchoolUpdatePayload } from "../types/school.types";
 
 export const SCHOOLS_KEYS = {
   all: ["super-admin", "schools"] as const,
@@ -41,6 +41,14 @@ export const useSchool = (id: string) => {
   });
 };
 
+export const useSchoolDetail = (id: string) => {
+  return useQuery({
+    queryKey: [...SCHOOLS_KEYS.detail(id), "raw"] as const,
+    queryFn: () => schoolsApi.getSchoolDetail(id),
+    enabled: !!id,
+  });
+};
+
 export const useSchoolMutations = () => {
   const qc = useQueryClient();
 
@@ -58,7 +66,7 @@ export const useSchoolMutations = () => {
   });
 
   const updateSchool = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<SchoolFormValues> }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: SchoolUpdatePayload }) =>
       schoolsApi.updateSchool(id, payload),
     onSuccess: invalidate,
   });

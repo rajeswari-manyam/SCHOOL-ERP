@@ -87,7 +87,7 @@ export default function PayrollPage() {
   return (
     <div className="min-h-screen bg-[#EFF4FF] -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
       {/* ── Page Header ── */}
-  <div className="bg-white border-b border-slate-200 mx-4 sm:mx-6 mt-4 sm:mt-6 rounded-2xl px-4 sm:px-6 py-3"> 
+  <div className="bg-white border-b border-slate-200 mx-4 sm:mx-6 mt-2 sm:mt-3 rounded-2xl px-4 sm:px-6 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2.5">

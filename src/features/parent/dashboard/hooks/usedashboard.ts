@@ -11,7 +11,7 @@ import { getHomeworkThisWeek } from "../../../../services/homework.api";
 
 import { getUpcomingExams } from "../../../../services/examtimetable.api";
 
-import { getAnnouncementsByType } from "../../../../services/announcements.api";
+import { schoolAnnouncementApi } from "../../../../services/school-announcement.api";
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -226,16 +226,7 @@ export function useDashboard() {
     setLoadingAnnouncements(true)
 
     try {
-      const res = await getAnnouncementsByType("All")
-
-      console.log("Announcements API:", res)
-
-      const list = Array.isArray(res?.data)
-        ? res.data
-        : Array.isArray(res)
-        ? res
-        : []
-
+      const list = await schoolAnnouncementApi.getAllAnnouncements("parents")
       setAnnouncements(list)
     } catch (err) {
       console.error("fetchAnnouncements:", err)

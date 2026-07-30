@@ -54,6 +54,8 @@ function pendingEntryToRows(entry: AllPendingFeesEntry): PendingFee[] {
     section: "",
     feeHead: d.feeHeadName ?? "Fee",
     amount: d.dueAmount,
+    feeStructureId: d.feeHeadMappingId,
+    originalAmount: d.originalAmount,
     dueDate: d.dueDate ?? "",
     ...computeDueInfo(d.dueDate),
     reminders: { sent: 0, total: 0 },
@@ -460,6 +462,21 @@ export function useFeeCollection() {
     []
   );
 
+  // Re-fetch just the pending-fees rows (e.g. after applying a concession
+  // changes a row's amounts) without re-running the full page load.
+  const refreshPendingFees = useCallback(() => {
+    getAllPendingFees()
+      .then((res) => {
+        if (!res.status) return;
+        const rows: PendingFee[] = [];
+        for (const entry of res.data) {
+          rows.push(...pendingEntryToRows(entry));
+        }
+        setPendingFees(rows);
+      })
+      .catch(() => {});
+  }, []);
+
   return {
     // Tab
     activeTab,
@@ -516,5 +533,6 @@ export function useFeeCollection() {
 
     // Actions
     sendReminders,
+    refreshPendingFees,
   };
 }

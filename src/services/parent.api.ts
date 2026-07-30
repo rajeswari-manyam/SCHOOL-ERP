@@ -28,7 +28,8 @@ export interface Parent {
 
 export const getAllParents = async (params?: { status?: string; school_id?: string; relation?: string }): Promise<Parent[]> => {
   const { data } = await api.get("/tenant/getallparents", { params });
-  return data.data ?? [];
+  const list = data?.data ?? data?.parents ?? data;
+  return Array.isArray(list) ? list : [];
 };
 
 export const getParentById = async (parentId: string): Promise<Parent> => {

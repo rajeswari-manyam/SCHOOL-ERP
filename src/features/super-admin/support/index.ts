@@ -4,8 +4,6 @@ export { default as TicketFilterBar } from "./components/TicketFilterBar";
 export { default as TicketDetailDrawer } from "./components/TicketDetailDrawer";
 export { default as TicketActionsMenu } from "./components/TicketActionsMenu";
 export { PriorityBadge, StatusBadge, StatPill } from "./components/TicketBadges";
-export { useTickets, useTicketStats, useTicketMutations } from "./hooks/useSupport";
-export type {
-  SupportTicket, TicketStats, TicketFilters,
-  TicketPriority, TicketStatus,
-} from "./types/support.types";
+export { useAllTicketsQuery, useTicketStats, useTicketFiltering, useTicketMutations } from "./hooks/useSupport";
+export type { TicketFilters, TicketStats } from "./types/support.types";
+export type { SupportTicketRecord, SupportTicketAttachment, SupportTicketPriority } from "@/services/support-ticket.api";

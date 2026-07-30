@@ -1,24 +1,29 @@
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { SchoolActivityRow, SchoolPlan, AttendanceStatus } from "../types/dashboard.types";
+import type { SchoolActivityRow } from "../types/dashboard.types";
 
-const planStyles: Record<SchoolPlan, string> = {
-  PRO:     "bg-gray-900 text-white",
-  GROWTH:  "bg-indigo-100 text-indigo-700",
-  STARTER: "bg-gray-100 text-gray-600",
-};
-
-const PlanBadge = ({ plan }: { plan: SchoolPlan }) => (
-  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide ${planStyles[plan]}`}>{plan}</span>
+const PlanBadge = ({ plan }: { plan: string }) => (
+  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide bg-indigo-100 text-indigo-700">{plan}</span>
 );
 
-const AttendanceDot = ({ status }: { status: AttendanceStatus }) => {
-  if (status === "OK") return <CheckCircle size={20} className="text-emerald-500" />;
-  if (status === "PENDING") return <Clock size={20} className="text-gray-400" />;
-  return <span className="text-gray-300 text-xs">—</span>;
+const AttendanceDot = ({ marked }: { marked: boolean }) =>
+  marked ? <CheckCircle size={16} className="text-emerald-500" /> : <Clock size={16} className="text-gray-400" />;
+
+const FeeAlertDot = ({ alert }: { alert: boolean }) =>
+  alert ? <AlertTriangle size={16} className="text-amber-500" /> : <span className="text-gray-300 text-xs">—</span>;
+
+const timeAgo = (iso: string) => {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
 };
 
-const COL = "text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-3 py-2.5 text-left";
+const COL = "text-[10px] font-semibold uppercase tracking-widest text-gray-400 px-3 py-2 text-left";
 
 interface SchoolActivityTableProps {
   rows: SchoolActivityRow[];
@@ -28,9 +33,9 @@ interface SchoolActivityTableProps {
 
 const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTableProps) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="flex flex-col gap-3 px-4 py-4 border-b border-gray-50 sm:flex-row sm:items-center sm:justify-between">
-      <h2 className="text-sm font-extrabold text-gray-900">Schools Activity Today</h2>
-      <Button onClick={onViewAll} variant="link" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+    <div className="flex flex-col gap-3 px-4 py-3 border-b border-gray-50 sm:flex-row sm:items-center sm:justify-between">
+      <h2 className="text-[13px] font-extrabold text-gray-900">Schools Activity Today</h2>
+      <Button onClick={onViewAll} variant="link" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
         View Detailed Stats
       </Button>
     </div>
@@ -43,11 +48,13 @@ const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTable
           <div className="w-16 h-3 rounded bg-gray-100"/>
         </div>
       ))}</div>
+    ) : rows.length === 0 ? (
+      <div className="py-10 text-center text-sm text-gray-400">No school activity recorded today.</div>
     ) : (
       <div className="overflow-x-auto">
         <table className="w-full min-w-full table-auto">
         <thead>
-          <tr className="bg-gray-50/60 border-b border-gray-50">
+          <tr className="bg-[#EFF4FF] border-b border-gray-50">
             <th className={COL}>School Name</th>
             <th className={COL}>Plan</th>
             <th className={COL}>Attendance</th>
@@ -58,13 +65,11 @@ const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTable
         <tbody className="divide-y divide-gray-50">
           {rows.map((row) => (
             <tr key={row.id} className="hover:bg-gray-50/40 transition-colors">
-              <td className="px-3 py-3 text-sm font-semibold text-gray-900">{row.name}</td>
-              <td className="px-3 py-3"><PlanBadge plan={row.plan} /></td>
-              <td className="px-3 py-3"><AttendanceDot status={row.attendanceStatus} /></td>
-              <td className="px-3 py-3 text-sm text-gray-600">
-                {row.feeAlerts != null ? row.feeAlerts.toLocaleString() : <span className="text-gray-300">—</span>}
-              </td>
-              <td className="px-3 py-3 text-sm text-gray-400 whitespace-nowrap">{row.lastActive}</td>
+              <td className="px-3 py-2.5 text-xs font-semibold text-gray-900">{row.name}</td>
+              <td className="px-3 py-2.5"><PlanBadge plan={row.plan} /></td>
+              <td className="px-3 py-2.5"><AttendanceDot marked={row.attendanceMarked} /></td>
+              <td className="px-3 py-2.5"><FeeAlertDot alert={row.feeAlerts} /></td>
+              <td className="px-3 py-2.5 text-xs text-gray-400 whitespace-nowrap">{timeAgo(row.lastActive)}</td>
             </tr>
           ))}
         </tbody>

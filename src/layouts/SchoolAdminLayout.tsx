@@ -11,6 +11,8 @@ import {
   FaCog,
   FaBook,
   FaClipboardList,
+  FaTicketAlt,
+  FaChartBar,
 } from "react-icons/fa";
 
 import Sidebar from "../components/common/Sidebar";
@@ -34,20 +36,24 @@ const BreadcrumbLabels: Record<string, string> = {
   "/schooladmin/reports": "Reports",
   "/schooladmin/results": "Results",
   "/schooladmin/settings": "Settings",
+  "/schooladmin/support": "Support Ticket",
+  "/schooladmin/announcements": "Announcements",
 };
 
 const NavItem = [
-  { label: "Dashboard",      to: "/schooladmin/dashboard",  icon: <FaThLarge /> },
-  { label: "Admissions",     to: "/schooladmin/admissions", icon: <FaUserFriends /> },
-  { label: "Attendance",     to: "/schooladmin/attendance", icon: <FaUserCheck /> },
-  { label: "Students",       to: "/schooladmin/students",   icon: <FaUserFriends /> },
-  { label: "Staff",          to: "/schooladmin/staff",      icon: <FaUserTie /> },
-  { label: "Classes",        to: "/schooladmin/classes",    icon: <FaBook /> },
-  { label: "Timetable",      to: "/schooladmin/timetable",  icon: <FaCalendarAlt /> },
-  { label: "Fee Collection", to: "/schooladmin/fees",       icon: <FaMoneyBill /> },
-  { label: "Reports",        to: "/schooladmin/reports",    icon: <FaBullhorn /> },
-  { label: "Results",        to: "/schooladmin/results",    icon: <FaClipboardList /> },
-  { label: "Settings",       to: "/schooladmin/settings",   icon: <FaCog /> },
+  { label: "Dashboard",      to: "/schooladmin/dashboard",  icon: <FaThLarge />,      group: "Main" },
+  { label: "Attendance",     to: "/schooladmin/attendance", icon: <FaUserCheck />,    group: "Academics" },
+  { label: "Students",       to: "/schooladmin/students",   icon: <FaUserFriends />,  group: "Academics" },
+  { label: "Staff",          to: "/schooladmin/staff",      icon: <FaUserTie />,      group: "Academics" },
+  { label: "Classes",        to: "/schooladmin/classes",    icon: <FaBook />,         group: "Academics" },
+  { label: "Timetable",      to: "/schooladmin/timetable",  icon: <FaCalendarAlt />,  group: "Academics" },
+  { label: "Results",        to: "/schooladmin/results",    icon: <FaClipboardList />, group: "Academics" },
+  { label: "Fee Collection", to: "/schooladmin/fees",       icon: <FaMoneyBill />,    group: "Finance" },
+  { label: "Admissions",     to: "/schooladmin/admissions", icon: <FaUserFriends />,  group: "Communication" },
+  { label: "Announcements",  to: "/schooladmin/announcements", icon: <FaBullhorn />,  group: "Communication" },
+  { label: "Support Ticket", to: "/schooladmin/support",    icon: <FaTicketAlt />,    group: "Communication" },
+  { label: "Reports",        to: "/schooladmin/reports",    icon: <FaChartBar />,     group: "Reports & Settings" },
+  { label: "Settings",       to: "/schooladmin/settings",   icon: <FaCog />,          group: "Reports & Settings" },
 ];
 
 

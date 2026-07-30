@@ -6,6 +6,7 @@ import GenerateReportModal from "./components/Generatereportmodal";
 import AttendanceReportForm from "./components/AttendanceReportForm";
 import StudentReportForm from "./components/StudentReportForm";
 import FeeCollectionReportForm from "./components/FeeCollectionReportForm";
+import StaffReportForm from "./components/StaffReportForm";
 import { useReports } from "./hooks/useReports";
 import { useAcademicYears } from "../../../components/common/hooks/useAcademicYears";
 import type { ReportType } from "./types/reports.types";
@@ -16,6 +17,7 @@ const ReportsPage = () => {
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
   const [studentModalOpen, setStudentModalOpen]           = useState(false);
   const [feeCollectionModalOpen, setFeeCollectionModalOpen] = useState(false);
+  const [staffModalOpen, setStaffModalOpen] = useState(false);
   const { years, activeYear, switchYear } = useAcademicYears();
   const yearIdx = years.findIndex((y) => y.id === activeYear?.id);
 
@@ -28,6 +30,8 @@ const ReportsPage = () => {
       setStudentModalOpen(true);
     } else if (type === "FEE_COLLECTION") {
       setFeeCollectionModalOpen(true);
+    } else if (type === "STAFF") {
+      setStaffModalOpen(true);
     } else {
       setPreselectedType(type);
       setModalOpen(true);
@@ -101,6 +105,12 @@ const ReportsPage = () => {
       <FeeCollectionReportForm
         open={feeCollectionModalOpen}
         onClose={() => setFeeCollectionModalOpen(false)}
+      />
+
+      {/* Staff report form */}
+      <StaffReportForm
+        open={staffModalOpen}
+        onClose={() => setStaffModalOpen(false)}
       />
     </div>
   );

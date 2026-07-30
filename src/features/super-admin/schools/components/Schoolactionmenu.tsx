@@ -1,37 +1,69 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { CheckCircle, Edit3, Eye, MoreVertical, PauseCircle, Trash2 } from "lucide-react";
 import type { School } from "../types/school.types";
 import { useSchoolMutations } from "../hooks/useSchools";
 
 interface SchoolActionsMenuProps {
   school: School;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
-const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
+const MENU_WIDTH = 176; // w-44
+
+const SchoolActionsMenu = ({ school, onView, onEdit }: SchoolActionsMenuProps) => {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { suspendSchool, reactivateSchool, deleteSchool } = useSchoolMutations();
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+  const updatePosition = useCallback(() => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPosition({
+      top: rect.bottom + 4,
+      left: Math.max(8, rect.right - MENU_WIDTH),
+    });
   }, []);
+
+  useLayoutEffect(() => {
+    if (open) updatePosition();
+  }, [open, updatePosition]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        buttonRef.current && !buttonRef.current.contains(e.target as Node) &&
+        menuRef.current && !menuRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const handleReposition = () => updatePosition();
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("resize", handleReposition);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [open, updatePosition]);
 
   const actions = [
     {
       label: "View Details",
       icon: <Eye className="w-4 h-4" />,
-      onClick: () => navigate(`/super-admin/schools/${school.id}`),
+      onClick: () => { onView(school.id); setOpen(false); },
     },
     {
       label: "Edit School",
       icon: <Edit3 className="w-4 h-4" />,
-      onClick: () => navigate(`/super-admin/schools/${school.id}/edit`),
+      onClick: () => { onEdit(school.id); setOpen(false); },
     },
     {
       label: school.status === "SUSPENDED" ? "Reactivate" : "Suspend",
@@ -52,7 +84,10 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
       className: "text-red-600",
       onClick: () => {
         if (confirm(`Delete ${school.name}? This cannot be undone.`)) {
-          deleteSchool.mutate(school.id);
+          deleteSchool.mutate(school.id, {
+            onSuccess: () => toast.success(`${school.name} has been deleted`),
+            onError: (error) => toast.error(error instanceof Error ? error.message : "Failed to delete school"),
+          });
         }
         setOpen(false);
       },
@@ -60,16 +95,21 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
   ];
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((p) => !p)}
         className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
       >
         <MoreVertical className="w-5 h-5" />
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-9 z-50 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
+          className="z-50 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden"
+        >
           {actions.map((a) => (
             <button
               key={a.label}
@@ -80,9 +120,10 @@ const SchoolActionsMenu = ({ school }: SchoolActionsMenuProps) => {
               {a.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 

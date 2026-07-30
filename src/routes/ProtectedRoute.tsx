@@ -16,11 +16,13 @@ const ProtectedRoute = ({ role, children }: Props) => {
   const selectedStudent = useAuthStore((s) => s.selectedStudent);
   const location = useLocation();
 
+  const loginPath = role === "superadmin" ? "/superadmin/login" : "/login";
+
   // Not authenticated
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to={loginPath} replace />;
 
   // Role mismatch
-  if (role && storeRole !== role) return <Navigate to="/login" replace />;
+  if (role && storeRole !== role) return <Navigate to={loginPath} replace />;
 
   // Parent Portal — requires a parent profile, and a student selected once
   // more than one is linked to the account.

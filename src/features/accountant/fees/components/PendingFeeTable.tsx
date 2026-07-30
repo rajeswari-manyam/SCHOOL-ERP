@@ -13,12 +13,13 @@ import {
 } from "@tanstack/react-table";
 import {
   ArrowUpDown, ArrowUp, ArrowDown,
-  CheckCircle2, BellRing, Clock, AlertCircle,
+  CheckCircle2, BellRing, Clock, AlertCircle, BadgePercent,
 } from "lucide-react";
 import type { FeeRow, PendingFeesTableProps } from "../types/fees.types";
 import { formatINR as formatCurrency } from "../../../../utils/formatters";
 import { Button } from "@/components/ui/button";
 import { SendFeeReminderModal } from "./SendRemainderModal";
+import { AddFeeConcessionModal } from "./AddFeeConcessionModal";
 import {
   getAvatarSoftColor,
   getInitials,
@@ -52,14 +53,15 @@ function SortIcon({ isSorted }: { isSorted: false | "asc" | "desc" }) {
 const columnHelper = createColumnHelper<FeeRow>();
 
 
-type Props = PendingFeesTableProps & { isLoading?: boolean };
+type Props = PendingFeesTableProps & { isLoading?: boolean; onConcessionApplied?: () => void };
 
-export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
+export const PendingFeesTable = ({ data = [], isLoading, onConcessionApplied }: Props) => {
   const [sorting, setSorting]           = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection]  = useState<RowSelectionState>({});
   const [selectedRow, setSelectedRow]    = useState<FeeRow | null>(null);
   const [showReminder, setShowReminder]  = useState(false);
+  const [concessionRow, setConcessionRow] = useState<FeeRow | null>(null);
 
   const columns = useMemo(
     () => [
@@ -238,18 +240,31 @@ export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
         id: "actions",
         header: () => <span className="font-medium text-xs text-gray-600">Actions</span>,
         cell: ({ row }) => (
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-[10px] sm:text-xs h-7 px-2.5 border-blue-200 text-blue-600 hover:bg-blue-50 gap-1"
-            onClick={() => {
-              setSelectedRow(row.original);
-              setShowReminder(true);
-            }}
-          >
-            <CheckCircle2 className="w-3 h-3" />
-            Send Reminder
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] sm:text-xs h-7 px-2.5 border-blue-200 text-blue-600 hover:bg-blue-50 gap-1"
+              onClick={() => {
+                setSelectedRow(row.original);
+                setShowReminder(true);
+              }}
+            >
+              <CheckCircle2 className="w-3 h-3" />
+              Send Reminder
+            </Button>
+            {row.original.feeStructureId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[10px] sm:text-xs h-7 px-2.5 border-emerald-200 text-emerald-600 hover:bg-emerald-50 gap-1"
+                onClick={() => setConcessionRow(row.original)}
+              >
+                <BadgePercent className="w-3 h-3" />
+                Apply Concession
+              </Button>
+            )}
+          </div>
         ),
       }),
     ],
@@ -360,16 +375,28 @@ export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
           {row.original.reminders} Sent
         </span>
 
-        <Button
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => {
-            setSelectedRow(row.original);
-            setShowReminder(true);
-          }}
-        >
-          Send Reminder
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {row.original.feeStructureId && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+              onClick={() => setConcessionRow(row.original)}
+            >
+              Apply Concession
+            </Button>
+          )}
+          <Button
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => {
+              setSelectedRow(row.original);
+              setShowReminder(true);
+            }}
+          >
+            Send Reminder
+          </Button>
+        </div>
       </div>
     </div>
   ))}
@@ -447,6 +474,18 @@ export const PendingFeesTable = ({ data = [], isLoading }: Props) => {
           remindersSent={selectedRow.reminders}
           fatherPhone="+91 98765 43210"
           motherPhone="+91 87654 32109"
+        />
+      )}
+
+      {concessionRow && concessionRow.feeStructureId && (
+        <AddFeeConcessionModal
+          onClose={() => setConcessionRow(null)}
+          onSuccess={onConcessionApplied}
+          presetStudentId={concessionRow.studentId}
+          presetStudentName={concessionRow.student}
+          presetFeeStructureId={concessionRow.feeStructureId}
+          presetFeeStructureLabel={concessionRow.feeHead}
+          presetFeeAmount={concessionRow.originalAmount}
         />
       )}
     </div>

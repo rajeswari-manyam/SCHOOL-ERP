@@ -6,7 +6,7 @@ import { Outlet } from "react-router-dom";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
-import { FaThLarge, FaUserCheck, FaUserFriends, FaClipboard, FaCalendarAlt, FaGraduationCap, FaSignOutAlt, FaMoneyBill } from "react-icons/fa";
+import { FaThLarge, FaUserCheck, FaUserFriends, FaClipboard, FaCalendarAlt, FaGraduationCap, FaSignOutAlt, FaMoneyBill, FaBullhorn } from "react-icons/fa";
 
 const NavItem = [
   { label: "Dashboard", to: "/teacher/dashboard", icon: <FaThLarge /> },
@@ -17,6 +17,7 @@ const NavItem = [
   { label: "Exam & Marks", to: "/teacher/exams", icon: <FaGraduationCap /> },
   { label: "Leave", to: "/teacher/leave", icon: <FaSignOutAlt /> },
   { label: "Payslip", to: "/teacher/payslip", icon: <FaMoneyBill /> },
+  { label: "Announcements", to: "/teacher/announcements", icon: <FaBullhorn /> },
 ];
 
 

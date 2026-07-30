@@ -13,16 +13,3 @@ export const useDashboard = () =>
     staleTime: 1000 * 60,
     refetchInterval: 1000 * 60 * 2,
   });
-
-export const useExportDashboard = () => {
-  const handleExport = async () => {
-    const blob = await dashboardApi.exportReport();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `platform-overview-${new Date().toISOString().slice(0, 10)}.xlsx`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-  return { handleExport };
-};

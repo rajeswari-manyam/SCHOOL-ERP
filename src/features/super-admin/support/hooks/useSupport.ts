@@ -1,59 +1,65 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supportApi } from "@/services/support.api";
-import type { TicketFilters, TicketFormValues } from "../types/support.types";
+import { supportTicketApi } from "@/services/support-ticket.api";
+import type { SupportTicketRecord } from "@/services/support-ticket.api";
+import type { TicketFilters, TicketStats } from "../types/support.types";
 
 export const SUPPORT_KEYS = {
-  all:    ["super-admin", "support"] as const,
-  list:   (f: Partial<TicketFilters>) => [...SUPPORT_KEYS.all, "list", f] as const,
-  stats:  () => [...SUPPORT_KEYS.all, "stats"] as const,
-  detail: (id: string) => [...SUPPORT_KEYS.all, "detail", id] as const,
+  all:  ["super-admin", "support"] as const,
+  list: () => [...SUPPORT_KEYS.all, "list"] as const,
 };
 
-export const useTickets = (filters: Partial<TicketFilters>) =>
+export const useAllTicketsQuery = () =>
   useQuery({
-    queryKey: SUPPORT_KEYS.list(filters),
-    queryFn: () => supportApi.getTickets(filters),
-    staleTime: 1000 * 60,
-    placeholderData: (prev) => prev,
+    queryKey: SUPPORT_KEYS.list(),
+    queryFn: supportTicketApi.getAllTickets,
+    staleTime: 30_000,
   });
 
-export const useTicketStats = () =>
-  useQuery({
-    queryKey: SUPPORT_KEYS.stats(),
-    queryFn: supportApi.getStats,
-    staleTime: 1000 * 60 * 2,
-  });
+const isToday = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+};
+
+export const useTicketStats = (tickets: SupportTicketRecord[] | undefined): TicketStats =>
+  useMemo(() => {
+    const list = tickets ?? [];
+    return {
+      open: list.filter((t) => t.status === "open").length,
+      inProgress: list.filter((t) => t.status === "in_progress").length,
+      resolvedToday: list.filter((t) => t.status === "resolved" && !!t.resolvedAt && isToday(t.resolvedAt)).length,
+    };
+  }, [tickets]);
+
+export const useTicketFiltering = (
+  tickets: SupportTicketRecord[] | undefined,
+  filters: TicketFilters
+): { page: SupportTicketRecord[]; total: number } =>
+  useMemo(() => {
+    const list = tickets ?? [];
+    const search = filters.search.trim().toLowerCase();
+    const filtered = list.filter((t) => {
+      const matchesSearch =
+        !search ||
+        t.subject.toLowerCase().includes(search) ||
+        t.description.toLowerCase().includes(search) ||
+        (t.school?.school_name ?? "").toLowerCase().includes(search);
+      const matchesPriority = filters.priority === "ALL" || t.priority === filters.priority;
+      const matchesStatus = filters.status === "ALL" || t.status === filters.status;
+      const matchesSchool = !filters.school || t.school?.school_name === filters.school;
+      return matchesSearch && matchesPriority && matchesStatus && matchesSchool;
+    });
+    const total = filtered.length;
+    const start = (filters.page - 1) * filters.pageSize;
+    return { page: filtered.slice(start, start + filters.pageSize), total };
+  }, [tickets, filters]);
 
 export const useTicketMutations = () => {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: SUPPORT_KEYS.all });
-
-  const createTicket = useMutation({
-    mutationFn: (payload: TicketFormValues) => supportApi.createTicket(payload),
-    onSuccess: invalidate,
-  });
-
-  const updateStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) =>
-      supportApi.updateStatus(id, status),
-    onSuccess: invalidate,
-  });
-
-  const assignTicket = useMutation({
-    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) =>
-      supportApi.assignTicket(id, assignedTo),
-    onSuccess: invalidate,
-  });
-
-  const resolveTicket = useMutation({
-    mutationFn: (id: string) => supportApi.resolveTicket(id),
-    onSuccess: invalidate,
-  });
-
   const deleteTicket = useMutation({
-    mutationFn: (id: string) => supportApi.deleteTicket(id),
-    onSuccess: invalidate,
+    mutationFn: (id: string) => supportTicketApi.deleteTicket(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SUPPORT_KEYS.all }),
   });
-
-  return { createTicket, updateStatus, assignTicket, resolveTicket, deleteTicket };
+  return { deleteTicket };
 };

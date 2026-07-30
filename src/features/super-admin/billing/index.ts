@@ -3,6 +3,7 @@ export { BillingPage } from './BillingPage';
 
 // Components
 export { KPICards } from './components/KPICards';
+export { SubscriptionDialog } from './components/SubscriptionDialog';
 export { MRRChart } from './components/MRRChart';
 export { RevenuePlanChart } from './components/RevenuePlanChart';
 export { TopInstitutionsTable } from './components/TopInstitutionsTable';
@@ -15,13 +16,12 @@ export { PlanBadge, StatusBadge } from './components/BillingBadges';
 
 // Hooks
 export {
-  useBillingOverview,
-  useMRRHistory,
-  useRevenueByPlan,
-  useTopInstitutions,
+  useRevenueOverview,
   useInstitutions,
   useInstitution,
   useOrganizationSchools,
+  useAllSubscriptions,
+  useSubscriptionById,
   useBillingMutations,
   billingKeys,
 } from './hooks/useBilling';
@@ -35,19 +35,22 @@ export type {
   PaymentStatus,
   TabKey,
   Institution,
-  BillingOverview,
-  MRRDataPoint,
-  MRRHistoryResponse,
-  RevenueByPlanResponse,
-  TopInstitution,
-  TopInstitutionsResponse,
+  RevenueOverviewResponse,
+  RevenueOverviewKPI,
+  MRRGrowthPoint,
+  RevenueByPlanItem,
+  TopSchoolRevenue,
   InstitutionsListResponse,
   InstitutionFilters,
   RecordPaymentPayload,
   UpdatePlanPayload,
-  PlanRevenue,
   OrganizationBillingPayload,
   OrganizationBillingResponse,
   OrganizationSchool,
   OrganizationSchoolsResponse,
+  Subscription,
+  SubscriptionFeatures,
+  SubscriptionApiResponse,
+  CreateSubscriptionPayload,
+  UpdateSubscriptionPayload,
 } from './types/billing.types';

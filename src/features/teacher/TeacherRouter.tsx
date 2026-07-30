@@ -8,6 +8,7 @@ import TimetablePage from "./timetable/TimetablePage";
 import LeavePage from "./leave/LeavePage";
 import ExamsPage from "./exam/ExamMarksPage";
 import PayslipPage from "./payslips/PayslipPage";
+import AnnouncementsPage from "./announcements/AnnouncementsPage";
 export default function TeacherRouter() {
   return (
     <Routes>
@@ -25,6 +26,7 @@ export default function TeacherRouter() {
             <Route path="exams" element={<ExamsPage />} />
             <Route path="leave" element={<LeavePage />} />
             <Route path="payslip" element={<PayslipPage />} />
+            <Route path="announcements" element={<AnnouncementsPage />} />
     
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="dashboard" replace />} />

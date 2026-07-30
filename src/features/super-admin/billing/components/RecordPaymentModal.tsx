@@ -1,25 +1,32 @@
 import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 import { X, ChevronDown } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useBillingMutations, useOrganizationSchools } from '../hooks/useBilling';
-import type { Institution, OrganizationSchool } from '../types/billing.types';
+import { useBillingMutations } from '../hooks/useBilling';
+import { useAllSchools } from '@/features/super-admin/schools/hooks/useSchools';
+import type { SubscriptionPaymentMode } from '../types/billing.types';
 
-const PAYMENT_MODES = ['Razorpay', 'Bank Transfer', 'Cash', 'Cheque', 'UPI'] as const;
+const PAYMENT_MODES: { label: string; value: SubscriptionPaymentMode }[] = [
+  { label: 'Razorpay', value: 'RAZORPAY' },
+  { label: 'Bank Transfer', value: 'BANK_TRANSFER' },
+  { label: 'Cash', value: 'CASH' },
+  { label: 'Cheque', value: 'CHEQUE' },
+  { label: 'UPI', value: 'UPI' },
+];
 
 const schema = z.object({
-  schoolName: z.string().optional(),
-  institutionId: z.string().min(1, 'Select a school'),
+  schoolId: z.string().min(1, 'Select a school'),
   amount: z
     .string()
     .min(1, 'Amount is required')
     .refine((v) => !Number.isNaN(Number(v)) && Number(v) > 0, 'Amount must be a positive number'),
   paymentDate: z.string().min(1, 'Payment date is required'),
-  paymentMode: z.enum(PAYMENT_MODES),
-  orderId: z.string().optional(),
+  paymentMode: z.enum(['RAZORPAY', 'BANK_TRANSFER', 'CASH', 'CHEQUE', 'UPI']),
+  razorpayPaymentId: z.string().optional(),
   description: z.string().optional(),
-  markRenewed: z.boolean(),
+  renewed: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -27,8 +34,7 @@ type FormValues = z.infer<typeof schema>;
 interface RecordPaymentModalProps {
   open: boolean;
   onClose: () => void;
-  preselectedInstitution?: Institution;
-  institutions?: Pick<Institution, 'id' | 'name'>[];
+  preselectedSchoolId?: string;
 }
 
 const inputClass =
@@ -37,24 +43,9 @@ const inputClass =
 const labelClass =
   'mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400';
 
-export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
-  open,
-  onClose,
-  preselectedInstitution,
-  institutions: propInstitutions,
-}) => {
-  const { recordPayment, recordOrganizationBilling } = useBillingMutations();
-
-  const { data: orgSchools } = useOrganizationSchools();
-
-  const institutions: Pick<Institution, 'id' | 'name'>[] = (
-    propInstitutions?.length
-      ? propInstitutions
-      : (orgSchools ?? []).map((s: OrganizationSchool) => ({
-          id: s.school_code,
-          name: s.school_name,
-        }))
-  );
+export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, onClose, preselectedSchoolId }) => {
+  const { recordSubscriptionPayment } = useBillingMutations();
+  const { data: schools } = useAllSchools();
 
   const {
     register,
@@ -67,58 +58,46 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     resolver: zodResolver(schema),
     mode: 'onTouched',
     defaultValues: {
-      schoolName: '',
-      institutionId: preselectedInstitution?.id ?? '',
-      amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
+      schoolId: preselectedSchoolId ?? '',
+      amount: '',
       paymentDate: new Date().toISOString().slice(0, 10),
-      paymentMode: 'Razorpay',
-      orderId: '',
+      paymentMode: 'RAZORPAY',
+      razorpayPaymentId: '',
       description: '',
-      markRenewed: false,
+      renewed: false,
     },
   });
 
   useEffect(() => {
-    reset({
-      schoolName: '',
-      institutionId: preselectedInstitution?.id ?? '',
-      amount: preselectedInstitution?.outstandingAmount?.toString() ?? '',
-      paymentDate: new Date().toISOString().slice(0, 10),
-      paymentMode: 'Razorpay',
-      orderId: '',
-      description: '',
-      markRenewed: false,
-    });
-  }, [preselectedInstitution, reset, open]);
+    if (open) setValue('schoolId', preselectedSchoolId ?? '');
+  }, [open, preselectedSchoolId, setValue]);
 
-  const institutionId = useWatch({ control, name: 'institutionId' });
+  const schoolId = useWatch({ control, name: 'schoolId' });
   const paymentMode = useWatch({ control, name: 'paymentMode' });
-  const showOrderId = paymentMode === 'Razorpay';
-  const isUpi = paymentMode === 'UPI';
+  const showRazorpayId = paymentMode === 'RAZORPAY';
 
   const onSubmit = (values: FormValues) => {
-    if (isUpi) {
-      recordOrganizationBilling.mutate(
-        {
-          School: values.schoolName || values.institutionId,
-          Amount: Number(values.amount),
-          PaymentDate: values.paymentDate,
-          PaymentMode: values.paymentMode,
-          Description: values.description ?? '',
+    recordSubscriptionPayment.mutate(
+      {
+        schoolId: values.schoolId,
+        amount: Number(values.amount),
+        paymentDate: values.paymentDate,
+        paymentMode: values.paymentMode,
+        razorpayPaymentId: values.razorpayPaymentId || undefined,
+        description: values.description,
+        renewed: values.renewed,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Payment recorded successfully');
+          reset();
+          onClose();
         },
-        { onSuccess: onClose }
-      );
-    } else {
-      recordPayment.mutate(
-        {
-          institutionId: values.institutionId,
-          amount: Number(values.amount),
-          paymentDate: values.paymentDate,
-          notes: values.description,
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : 'Failed to record payment');
         },
-        { onSuccess: onClose }
-      );
-    }
+      }
+    );
   };
 
   if (!open) return null;
@@ -175,39 +154,23 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               <label className={labelClass}>
                 School <span className="text-red-500">*</span>
               </label>
-              {isUpi ? (
-                <input
-                  type="text"
-                  {...register('schoolName')}
-                  placeholder="Enter school name..."
-                  className={inputClass}
+              <div className="relative">
+                <select
+                  {...register('schoolId')}
+                  className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-sm text-gray-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                >
+                  <option value="" disabled>Select school...</option>
+                  {(schools ?? []).map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={15}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
-              ) : (
-                <div className="relative">
-                  <select
-                    {...register('institutionId')}
-                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-sm text-gray-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                  >
-                    <option value="" disabled>Select school...</option>
-                    {preselectedInstitution && (
-                      <option value={preselectedInstitution.id}>
-                        {preselectedInstitution.name}
-                      </option>
-                    )}
-                    {institutions
-                      .filter((i) => i.id !== preselectedInstitution?.id)
-                      .map((i) => (
-                        <option key={i.id} value={i.id}>{i.name}</option>
-                      ))}
-                  </select>
-                  <ChevronDown
-                    size={15}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                </div>
-              )}
-              {errors.institutionId && (
-                <p className="mt-1 text-xs text-red-500">{errors.institutionId.message}</p>
+              </div>
+              {errors.schoolId && (
+                <p className="mt-1 text-xs text-red-500">{errors.schoolId.message}</p>
               )}
             </div>
 
@@ -257,16 +220,16 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 <input type="hidden" {...register('paymentMode')} />
                 {PAYMENT_MODES.map((mode) => (
                   <button
-                    key={mode}
+                    key={mode.value}
                     type="button"
-                    onClick={() => setValue('paymentMode', mode, { shouldValidate: true })}
+                    onClick={() => setValue('paymentMode', mode.value, { shouldValidate: true })}
                     className={`sm:flex-1 rounded-lg py-2 px-1 text-[11px] sm:text-[12px] font-semibold transition-all ${
-                      paymentMode === mode
+                      paymentMode === mode.value
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                     }`}
                   >
-                    {mode}
+                    {mode.label}
                   </button>
                 ))}
               </div>
@@ -275,18 +238,18 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               )}
             </div>
 
-            {/* Razorpay Order ID */}
-            {showOrderId && (
+            {/* Razorpay Payment ID */}
+            {showRazorpayId && (
               <div>
-                <label className={labelClass}>Razorpay Order ID</label>
+                <label className={labelClass}>Razorpay Payment ID</label>
                 <input
                   type="text"
-                  {...register('orderId')}
-                  placeholder="order_XXXXXXXXXXXXX"
+                  {...register('razorpayPaymentId')}
+                  placeholder="pay_XXXXXXXXXXXXX"
                   className={inputClass}
                 />
-                {errors.orderId && (
-                  <p className="mt-1 text-xs text-red-500">{errors.orderId.message}</p>
+                {errors.razorpayPaymentId && (
+                  <p className="mt-1 text-xs text-red-500">{errors.razorpayPaymentId.message}</p>
                 )}
                 <p className="mt-1.5 text-[11px] text-gray-400">
                   Leave blank if payment was cash or bank transfer
@@ -309,7 +272,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             <label className="flex cursor-pointer items-start sm:items-center gap-3">
               <input
                 type="checkbox"
-                {...register('markRenewed')}
+                {...register('renewed')}
                 className="h-4 w-4 mt-0.5 sm:mt-0 rounded border-gray-300 accent-indigo-600 flex-shrink-0"
               />
               <span className="text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -329,10 +292,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={(isUpi ? recordOrganizationBilling.isPending : recordPayment.isPending) || (!isUpi && !institutionId)}
+              disabled={recordSubscriptionPayment.isPending || !schoolId}
               className="w-full sm:w-auto rounded-xl bg-indigo-600 px-6 py-2.5 text-[13px] font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             >
-              {(isUpi ? recordOrganizationBilling.isPending : recordPayment.isPending) ? 'Saving…' : 'Record Payment'}
+              {recordSubscriptionPayment.isPending ? 'Saving…' : 'Record Payment'}
             </button>
           </div>
         </form>

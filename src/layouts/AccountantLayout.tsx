@@ -6,7 +6,6 @@ import {
   FaFileAlt,
   FaUsers,
   FaBook,
-  FaChartBar,
   FaCalendarCheck,
   FaSignOutAlt,
 } from "react-icons/fa";
@@ -26,7 +25,6 @@ const NavItem = [
   { label: "Attendance", to: "/accountant/attendance", icon: <FaCalendarCheck /> },
   { label: "Leave", to: "/accountant/leave", icon: <FaSignOutAlt /> },
   { label: "Ledger", to: "/accountant/ledger", icon: <FaBook /> },
-  { label: "Reports", to: "/accountant/reports", icon: <FaChartBar /> },
 ];
 
 export const AccountantLayout = () => {
@@ -62,7 +60,7 @@ export const AccountantLayout = () => {
       />
       <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 mt-20">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 mt-12 sm:mt-14">
           <Outlet />
         </main>
       </div>

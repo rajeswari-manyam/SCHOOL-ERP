@@ -17,6 +17,16 @@ export const CONCESSION_TYPES = [
   "Other",
 ];
 
+// The backend's concessionType field is an upper_snake_case enum (e.g.
+// "SCHOLARSHIP", "SIBLING_DISCOUNT") — these maps convert between that and
+// the human-readable labels shown in the UI.
+export const CONCESSION_TYPE_TO_ENUM: Record<string, string> = Object.fromEntries(
+  CONCESSION_TYPES.map((label) => [label, label.toUpperCase().replace(/\s+/g, "_")])
+);
+export const CONCESSION_ENUM_TO_TYPE: Record<string, string> = Object.fromEntries(
+  CONCESSION_TYPES.map((label) => [label.toUpperCase().replace(/\s+/g, "_"), label])
+);
+
 export const FEE_TYPES = [
   { id: "tuition",     label: "Tuition fee" },
   { id: "examination", label: "Examination" },

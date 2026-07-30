@@ -1,38 +1,35 @@
-import type { TicketPriority, TicketStatus } from "../types/support.types";
+import type { SupportTicketPriority } from "@/services/support-ticket.api";
 
 // ── Priority Badge ─────────────────────────────────────────
-const priorityStyles: Record<TicketPriority, string> = {
-  URGENT: "border border-red-400 text-red-500 bg-white",
-  HIGH:   "border border-amber-400 text-amber-600 bg-white",
-  MEDIUM: "bg-indigo-50 text-indigo-500 border border-indigo-200",
-  LOW:    "bg-gray-100 text-gray-500 border border-gray-200",
+const priorityStyles: Record<SupportTicketPriority, string> = {
+  urgent: "border border-red-400 text-red-500 bg-white",
+  high:   "border border-amber-400 text-amber-600 bg-white",
+  medium: "bg-indigo-50 text-indigo-500 border border-indigo-200",
+  low:    "bg-gray-100 text-gray-500 border border-gray-200",
 };
 
-export const PriorityBadge = ({ priority }: { priority: TicketPriority }) => (
-  <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${priorityStyles[priority]}`}>
-    {priority}
-  </span>
-);
+export const PriorityBadge = ({ priority }: { priority: string }) => {
+  const key = priority.toLowerCase() as SupportTicketPriority;
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold tracking-wide capitalize ${priorityStyles[key] ?? priorityStyles.low}`}>
+      {priority}
+    </span>
+  );
+};
 
 // ── Status Badge ───────────────────────────────────────────
-const statusStyles: Record<TicketStatus, { dot: string; text: string; label: string }> = {
-  OPEN:        { dot: "bg-red-500",     text: "text-red-500",     label: "Open" },
-  IN_PROGRESS: { dot: "bg-amber-400",   text: "text-amber-500",   label: "In Progress" },
-  RESOLVED:    { dot: "bg-emerald-500", text: "text-emerald-600", label: "Resolved" },
-  CLOSED:      { dot: "bg-gray-400",    text: "text-gray-500",    label: "Closed" },
+const statusTextStyles: Record<string, string> = {
+  open: "text-red-500",
+  in_progress: "text-amber-500",
+  resolved: "text-emerald-600",
+  closed: "text-gray-500",
 };
 
-export const StatusBadge = ({ status }: { status: TicketStatus }) => {
-  const s = statusStyles[status];
+export const StatusBadge = ({ status }: { status: string }) => {
+  const label = status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
   return (
-    <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${s.text}`}>
-      {status === "IN_PROGRESS" ? (
-        <span className="text-amber-500 font-semibold leading-tight">
-          In<br />Progress
-        </span>
-      ) : (
-        s.label
-      )}
+    <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${statusTextStyles[status] ?? "text-gray-500"}`}>
+      {label}
     </span>
   );
 };

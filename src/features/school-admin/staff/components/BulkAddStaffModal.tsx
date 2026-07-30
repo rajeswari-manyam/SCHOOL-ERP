@@ -200,7 +200,9 @@ const BulkAddStaffModal = ({ onClose }: Props) => {
       const skipped = results.length - inserted;
       setResult({ inserted, skipped });
       setSuccess(true);
-      await loadStaff();
+      // Refresh the staff list in the background — don't keep the user
+      // waiting on the full list/stats/leaves refetch before unlocking the UI.
+      loadStaff();
     } catch (err: any) {
       setError(err?.message || "Failed to add staff members");
     } finally {

@@ -513,7 +513,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
     error?: string;
   }) => (
     <div>
-      <Label className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
+      <Label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700">
         {label}
         {required && <span className="text-red-500">*</span>}
         {loading && <Loader2 size={12} className="animate-spin text-indigo-400" />}
@@ -524,71 +524,71 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
         options={options}
         placeholder={loading ? "Loading\u2026" : placeholder}
         disabled={disabled || loading}
-        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50"
       />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
     </div>
   );
 
   /* ── Render ──────────────────────────────────────────────── */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-400/40">
-      <div className="relative w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[95vh] flex flex-col">
+      <div className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[95vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 flex-shrink-0">
           <div>
-            <h6 className="text-xl font-black text-slate-700">Add Timetable Periods</h6>
-            <p className="text-sm text-slate-500 mt-1">
+            <h6 className="text-base font-bold text-slate-700">Add Timetable Periods</h6>
+            <p className="text-xs text-slate-500 mt-0.5">
               Add multiple period entries at once for the selected class and section — pick each period's own subject and teacher below.
             </p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
-            <X size={20} />
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
+            <X size={18} />
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit(handleFormSubmit)} className="overflow-y-auto flex-1">
-          <div className="p-6 space-y-5">
+          <div className="p-5 space-y-4">
 
             {/* ── Row 0: Break & Lunch (at top) ── */}
-            <div className="bg-slate-50 rounded-xl p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Break &amp; Lunch Timing</p>
-              <div className="grid gap-4 md:grid-cols-4">
+            <div className="bg-slate-50 rounded-xl p-3 space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Break &amp; Lunch Timing</p>
+              <div className="grid gap-3 md:grid-cols-4">
                 <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Break Start</Label>
+                  <Label className="mb-1.5 block text-xs font-bold text-slate-700">Break Start</Label>
                   <Input type="time" defaultValue={defaultBreakStart} {...register("break_start")}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
                 </div>
                 <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Break End</Label>
+                  <Label className="mb-1.5 block text-xs font-bold text-slate-700">Break End</Label>
                   <Input type="time" defaultValue={defaultBreakEnd} {...register("break_end")}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
                 </div>
                 <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Lunch Start</Label>
+                  <Label className="mb-1.5 block text-xs font-bold text-slate-700">Lunch Start</Label>
                   <Input type="time" defaultValue={defaultLunchStart} {...register("lunch_start")}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
                 </div>
                 <div>
-                  <Label className="mb-2 block text-sm font-bold text-slate-700">Lunch End</Label>
+                  <Label className="mb-1.5 block text-xs font-bold text-slate-700">Lunch End</Label>
                   <Input type="time" defaultValue={defaultLunchEnd} {...register("lunch_end")}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" />
                 </div>
               </div>
             </div>
 
             {/* ── Row 1: Class → Section ── */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               {/* Class — locked when pre-filled from page */}
               {defaultClass?.id ? (
                 <div>
-                  <Label className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
+                  <Label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700">
                     Class <span className="text-red-500">*</span>
                   </Label>
-                  <div className="flex h-12 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4">
-                    <span className="text-sm font-semibold text-indigo-700">{defaultClass.label}</span>
+                  <div className="flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3">
+                    <span className="text-xs font-semibold text-indigo-700">{defaultClass.label}</span>
                     <span className="ml-auto text-[10px] font-medium text-indigo-400 uppercase tracking-wide">Pre-selected</span>
                   </div>
                 </div>
@@ -607,11 +607,11 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
               {/* Section — locked when pre-filled from page */}
               {defaultSection?.id ? (
                 <div>
-                  <Label className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
+                  <Label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700">
                     Section <span className="text-red-500">*</span>
                   </Label>
-                  <div className="flex h-12 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4">
-                    <span className="text-sm font-semibold text-indigo-700">Section {defaultSection.label}</span>
+                  <div className="flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3">
+                    <span className="text-xs font-semibold text-indigo-700">Section {defaultSection.label}</span>
                     <span className="ml-auto text-[10px] font-medium text-indigo-400 uppercase tracking-wide">Pre-selected</span>
                   </div>
                 </div>
@@ -631,7 +631,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
             </div>
 
             {/* ── Row 2: Academic Year ── */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               <SelectWrapper
                 label="Academic Year" required loading={loadingAcademicYears}
                 value={watch("academic_year")}
@@ -644,10 +644,10 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
 
             {/* ── Period Entries Table ── */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-bold text-slate-700">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-xs font-bold text-slate-700">
                   Period Entries <span className="text-red-500">*</span>
-                  <span className="ml-2 text-xs font-normal text-slate-400">
+                  <span className="ml-2 text-[11px] font-normal text-slate-400">
                     {entries.length} entry(ies)
                   </span>
                   {loadingSubjects && (
@@ -658,16 +658,16 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                   type="button"
                   onClick={addEntry}
                   disabled={!selectedSectionId}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Plus size={14} /> Add Entry
+                  <Plus size={13} /> Add Entry
                 </button>
               </div>
 
               {entries.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-24 rounded-xl border border-dashed border-gray-200 bg-slate-50 gap-1">
-                  <p className="text-xs text-slate-400">No entries yet.</p>
-                  <p className="text-xs text-slate-400">
+                <div className="flex flex-col items-center justify-center h-20 rounded-xl border border-dashed border-gray-200 bg-slate-50 gap-1">
+                  <p className="text-[11px] text-slate-400">No entries yet.</p>
+                  <p className="text-[11px] text-slate-400">
                     {selectedSectionId
                       ? "Click \u201cAdd Entry\u201d to start adding periods."
                       : "Select a class and section first, then add period entries."}
@@ -678,22 +678,22 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-slate-100 border-b border-gray-200">
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">#</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Day</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Period</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Time Slot</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Subject</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Teacher</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide">Room</th>
-                        <th className="px-3 py-2.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wide">Action</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">#</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">Day</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">Period</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">Time Slot</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">Subject</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">Teacher</th>
+                        <th className="px-2.5 py-2 text-left text-[10px] font-bold text-slate-600 uppercase tracking-wide">Room</th>
+                        <th className="px-2.5 py-2 text-right text-[10px] font-bold text-slate-600 uppercase tracking-wide">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {entries.map((entry, idx) => {
                         return (
                           <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-3 py-2 text-xs font-mono text-slate-400">{idx + 1}</td>
-                            <td className="px-3 py-2">
+                            <td className="px-2.5 py-1.5 text-xs font-mono text-slate-400">{idx + 1}</td>
+                            <td className="px-2.5 py-1.5">
                               <select
                                 value={entry.day_of_week}
                                 onChange={(e) => {
@@ -724,7 +724,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 <p className="mt-0.5 text-[10px] text-red-400">Holiday \u2014 not a working day</p>
                               )}
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-2.5 py-1.5">
                               {(() => {
                                 const dayRemaining = remainingMap[entry.day_of_week];
                                 const availableOpts = dayRemaining
@@ -755,7 +755,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 <Loader2 size={10} className="mt-0.5 animate-spin text-indigo-400" />
                               )}
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-2.5 py-1.5">
                               {(() => {
                                 const parts = entry.time_sloat ? entry.time_sloat.split(" - ") : [];
                                 const start24 = parts[0] ? to24h(parts[0]) : "";
@@ -787,7 +787,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 );
                               })()}
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-2.5 py-1.5">
                               <select
                                 value={entry.subject_id}
                                 onChange={(e) => handleEntrySubjectChange(entry.id, e.target.value)}
@@ -799,7 +799,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 ))}
                               </select>
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-2.5 py-1.5">
                               {(() => {
                                 const opts = entryTeacherOptions[entry.id] ?? [];
                                 const loading = entryTeacherLoading[entry.id];
@@ -820,7 +820,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 );
                               })()}
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-2.5 py-1.5">
                               <input
                                 type="text"
                                 value={entry.room_no}
@@ -829,7 +829,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                                 className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-indigo-500"
                               />
                             </td>
-                            <td className="px-3 py-2 text-right">
+                            <td className="px-2.5 py-1.5 text-right">
                               <button
                                 type="button"
                                 onClick={() => removeEntry(entry.id)}
@@ -852,11 +852,11 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowFreeTeachers(!showFreeTeachers)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-emerald-50 hover:bg-emerald-100/60 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100/60 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Users size={14} className="text-emerald-600" />
-                  <span className="text-sm font-bold text-emerald-800">
+                  <Users size={13} className="text-emerald-600" />
+                  <span className="text-xs font-bold text-emerald-800">
                     Free Teachers Now
                   </span>
                   {freeTeachers.length > 0 && (
@@ -877,14 +877,14 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
               </button>
 
               {showFreeTeachers && (
-                <div className="px-4 py-3 bg-white">
+                <div className="px-3 py-2.5 bg-white">
                   {loadingFreeTeachers ? (
-                    <div className="flex items-center gap-2 py-4 justify-center text-xs text-gray-400">
+                    <div className="flex items-center gap-2 py-3 justify-center text-[11px] text-gray-400">
                       <Loader2 size={12} className="animate-spin" />
                       Loading free teachers…
                     </div>
                   ) : freeTeachers.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-gray-400">
+                    <p className="py-3 text-center text-[11px] text-gray-400">
                       No free teachers at the moment.
                     </p>
                   ) : (
@@ -892,7 +892,7 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
                       {freeTeachers.map((t) => (
                         <div
                           key={t.id}
-                          className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 hover:bg-emerald-50/40 hover:border-emerald-200 transition-colors"
+                          className="flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50/60 px-2.5 py-1.5 hover:bg-emerald-50/40 hover:border-emerald-200 transition-colors"
                         >
                           <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                             <span className="text-[10px] font-bold text-emerald-700">
@@ -922,19 +922,19 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-end gap-2.5 border-t border-slate-200 bg-slate-50 px-5 py-3 flex-shrink-0">
             <Button
               type="button"
               onClick={onClose}
               variant="outline"
-              className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition"
+              className="rounded-xl px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSaving || entries.length === 0}
-              className="rounded-xl bg-indigo-600 px-7 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+              className="rounded-xl bg-indigo-600 px-6 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50"
             >
               {isSaving ? "Saving\u2026" : `Create ${entries.length} Period(s)`}
             </Button>

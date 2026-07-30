@@ -1,149 +1,273 @@
 // src/store/authStore.ts
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Permission, Role, UserProfile, UserType } from "@/features/auth/types/auth.types";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { AuthUser, UserType, GetUserByIdResponse, Parent, Student } from "@/features/auth/types/auth.types";
 
-// ── Role → dashboard route map ─────────────────────────────────────────────────
+// ── API userType  →  dashboard route ─────────────────────────────────────────
 export const USER_TYPE_ROUTE_MAP: Record<string, string> = {
-  Teacher:    "/teacher/dashboard",
-  Parent:     "/parent/dashboard",
-  Student:    "/student/dashboard",
-  Accountant: "/accountant/dashboard",
-  Admin:      "/admin/dashboard",
-  SchoolAdmin:"/admin/dashboard",
-  SuperAdmin: "/superadmin/dashboard",
+  // PascalCase (from API)
+  SuperAdmin:       "/superadmin/dashboard",
+  Admin:            "/schooladmin/dashboard",
+  SchoolAdmin:      "/schooladmin/dashboard",
+  Teacher:          "/teacher/dashboard",
+  "Class Teacher":  "/teacher/dashboard",
+  Accountant:       "/accountant/dashboard",
+  Parent:           "/parent/dashboard",
+  Student:          "/student/dashboard",
+  // lowercase (safe fallbacks)
+  superadmin:       "/superadmin/dashboard",
+  admin:            "/schooladmin/dashboard",
+  schooladmin:      "/schooladmin/dashboard",
+  teacher:          "/teacher/dashboard",
+  "class teacher":  "/teacher/dashboard",
+  accountant:       "/accountant/dashboard",
+  parent:           "/parent/dashboard",
+  student:          "/student/dashboard",
 };
 
-// ── State shape ────────────────────────────────────────────────────────────────
+// ── API userType  →  lowercase role key (used in ProtectedRoute) ─────────────
+export const USER_TYPE_ROLE_MAP: Record<string, string> = {
+  SuperAdmin:       "superadmin",
+  Admin:            "schooladmin",
+  SchoolAdmin:      "schooladmin",
+  Teacher:          "teacher",
+  "Class Teacher":  "teacher",
+  Accountant:       "accountant",
+  Parent:           "parent",
+  Student:          "student",
+  // already lowercase — pass through
+  superadmin:       "superadmin",
+  admin:            "schooladmin",
+  schooladmin:      "schooladmin",
+  teacher:          "teacher",
+  "class teacher":  "teacher",
+  accountant:       "accountant",
+  parent:           "parent",
+  student:          "student",
+};
+
+// ── Store interface ───────────────────────────────────────────────────────────
 interface AuthState {
+  user: AuthUser | null;
   token: string | null;
-  userType: string | null;
-  userId: string | null;
-  profile: UserProfile | null;
-  role: Role | null;
-  permissions: Permission[];
+  userType: UserType | null;
+  role: string | null;           // lowercase role key, e.g. "teacher"
 
-  /**
-   * Step 1 — called right after sendOtp succeeds.
-   * Saves phone / schoolcode / userType so OtpPage can read them.
-   */
-  setLoginMeta: (userType: string, phone: string, schoolcode: string) => void;
+  // ── Parent Portal — multi-student support ────────────────────────────────
+  parent: Parent | null;
+  students: Student[];
+  selectedStudent: Student | null;
 
-  /**
-   * Step 2 — called after getUserById resolves.
-   * Commits the full session (token, profile, role, permissions) to store + localStorage.
-   */
-  setAuth: (
-    token: string,
-    userId: string,
-    userType: string,
-    profile: UserProfile,
-    role: Role,
-    permissions: Permission[]
-  ) => void;
+  setLoginMeta: (userType: UserType, phone: string, schoolcode: string) => void;
 
-  /**
-   * Backward-compat shim — OtpPage & student login still call login().
-   * Stores a minimal session; you can migrate callers to setAuth over time.
-   */
-  login: (
-    token: string,
-    user: {
-      id: string;
-      name?: string;
-      email?: string;
-      phone?: string;
-      userType?: UserType;
-      schoolcode?: string;
-      class_id?: string;
-      section_id?: string;
-      students?: { id: string; name: string }[];
-    },
-    userType: string
-  ) => void;
+  setAuth: (user: AuthUser, token: string) => void;
+
+  login: (token: string, user: Partial<AuthUser>, rawRole: string) => void;
+
+  // Called after OTP verify for Parent userType — seeds parent + students,
+  // auto-selecting when there's exactly one student.
+  setParentSession: (parent: Parent, students: Student[]) => void;
+
+  setSelectedStudent: (student: Student | null) => void;
+
+  // Called after getUserById — merges full profile into user
+  setUserProfile: (profile: GetUserByIdResponse) => void;
+
+  // Called after fetching school details — stores principal name
+  setPrincipalName: (name: string) => void;
+
+  // Called after saving a new avatar/admin photo — refreshes it immediately
+  setUserImage: (image: string | null) => void;
 
   logout: () => void;
+  isAuthenticated: () => boolean;
+  getRoleRoute: () => string;
+  getRole: () => string | null;
+
+  // ── Hydration guard ────────────────────────────────────────────────────
+  // True once the persisted state has been read back from localStorage.
+  // Routes must not render until this is true — otherwise a login() call
+  // that happens before rehydration finishes gets silently overwritten by
+  // the (stale/empty) persisted state a moment later, which looks like
+  // "dashboard flashes then bounces back to login".
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
 }
 
-// ── Store ──────────────────────────────────────────────────────────────────────
+// ── Store ─────────────────────────────────────────────────────────────────────
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
-      token:       null,
-      userType:    null,
-      userId:      null,
-      profile:     null,
-      role:        null,
-      permissions: [],
+    (set, get) => ({
+      user:     null,
+      token:    null,
+      userType: null,
+      role:     null,
 
-      // ── setLoginMeta ──────────────────────────────────────────────────────────
+      parent:          null,
+      students:        [],
+      selectedStudent: null,
+
+      hasHydrated: false,
+      setHasHydrated: (value) => set({ hasHydrated: value }),
+
+      // ── After LOGIN API ───────────────────────────────────────────────────
       setLoginMeta: (userType, phone, schoolcode) => {
-        localStorage.setItem("userType",   userType);
-        localStorage.setItem("phone",      phone);
+        const role = USER_TYPE_ROLE_MAP[userType] ?? userType.toLowerCase();
+        set({ userType, role });
+        localStorage.setItem(
+          "__auth_meta__",
+          JSON.stringify({ userType, phone, schoolcode })
+        );
+        // Also write individual keys for old OtpPage code that reads them
+        localStorage.setItem("userType", userType);
+        localStorage.setItem("phone", phone);
         localStorage.setItem("schoolcode", schoolcode);
-        set({ userType });
       },
 
-      // ── setAuth ───────────────────────────────────────────────────────────────
-      setAuth: (token, userId, userType, profile, role, permissions) => {
-        // Keep raw localStorage keys so Axios interceptor can read token
-        localStorage.setItem("token",  token);
-        localStorage.setItem("userId", userId);
-        set({ token, userId, userType, profile, role, permissions });
+      // ── After OTP VERIFY ─────────────────────────────────────────────────
+      setAuth: (user, token) => {
+        const role = USER_TYPE_ROLE_MAP[user.userType] ?? user.userType.toLowerCase();
+        set({ user, token, userType: user.userType, role });
+        localStorage.removeItem("__auth_meta__");
+        localStorage.setItem("userId", user.id);
       },
 
-      // ── login (shim) ──────────────────────────────────────────────────────────
-      login: (token, user, userType) => {
-        localStorage.setItem("token",  token);
-        localStorage.setItem("userId", user.id ?? "");
+      // ── Backward-compatible login() for old OtpPage code ─────────────────
+      login: (token, partialUser, rawRole) => {
+        // rawRole may be "Teacher", "teacher", "SchoolAdmin", etc.
+        const role      = USER_TYPE_ROLE_MAP[rawRole] ?? rawRole.toLowerCase();
+        const userType  = (rawRole as UserType) ?? "Teacher";
+        const phone     = localStorage.getItem("phone") ?? "";
+        const schoolcode = localStorage.getItem("schoolcode") ?? "";
+
+        const user: AuthUser = {
+          id:         partialUser?.id         ?? `user-${phone}`,
+          name:       partialUser?.name        ?? "User",
+          phone:      partialUser?.phone       ?? phone,
+          userType:   partialUser?.userType    ?? userType,
+          schoolcode: partialUser?.schoolcode  ?? schoolcode,
+          class_id:   partialUser?.class_id,
+          section_id: partialUser?.section_id,
+        };
+
+        set({ user, token, userType: user.userType, role });
+        localStorage.removeItem("__auth_meta__");
+        localStorage.setItem("userId", user.id);
+      },
+
+      // ── After OTP VERIFY (Parent) ─────────────────────────────────────────
+      setParentSession: (parent, students) => {
+        const prevSelected = get().selectedStudent;
+        const restored = prevSelected
+          ? students.find((s) => s.id === prevSelected.id) ?? null
+          : null;
+        const selectedStudent =
+          students.length === 1 ? students[0] : restored;
+
+        set({ parent, students, selectedStudent });
+      },
+
+      setSelectedStudent: (student) => set({ selectedStudent: student }),
+
+      // ── After getUserById — merge full profile into existing user ─────────
+      setUserProfile: (profile) => {
+        const current = get().user;
+        if (!current || !profile.status) return;
+        const d = profile.data;
+        const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+        const displayName: string =
+          str(d.parent_name) ?? str(d.teacher_name) ?? str(d.student_name) ??
+          str(d.admin_name)  ?? str(d.accountant_name) ??
+          (str(d.first_name) ? `${str(d.first_name)} ${str(d.last_name) ?? ""}`.trim() : undefined) ??
+          str(d.name) ?? current.name;
         set({
-          token,
-          userType,
-          userId: user.id ?? null,
-          profile: {
-            id:         user.id,
-            name:       user.name ?? "",
-            email:      user.email,
-            phone:      user.phone,
-            schoolcode: user.schoolcode,
-            class_id:   user.class_id,
-            section_id: user.section_id,
-            students:   user.students,
+          user: {
+            ...current,
+            name:        displayName,
+            email:       d.email       ?? current.email,
+            phone:       d.phone       ?? current.phone,
+            address:     d.address     ?? current.address,
+            students:    d.students    ?? current.students,
+            role:        profile.role  ?? current.role,
+            permissions: profile.permissions ?? current.permissions,
+            schoolcode:  d.school_code ?? current.schoolcode,
+            // schoolImage (Admin's own photo, set via School Profile) takes
+            // priority over the staff record's own `image` field.
+            image:       profile.schoolImage ?? d.image ?? current.image,
+            principalName: profile.principalName ?? current.principalName,
           },
-          // permissions / role stay whatever they were (populated by setAuth)
         });
       },
 
-      // ── logout ────────────────────────────────────────────────────────────────
+      setPrincipalName: (name) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, principalName: name } });
+      },
+
+      setUserImage: (image) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, image } });
+      },
+
       logout: () => {
-        [
-          "token", "userId", "userType",
-          "phone", "schoolcode", "otp",
-          "parentId",
-        ].forEach((key) => localStorage.removeItem(key));
-
         set({
-          token:       null,
-          userType:    null,
-          userId:      null,
-          profile:     null,
-          role:        null,
-          permissions: [],
+          user: null, token: null, userType: null, role: null,
+          parent: null, students: [], selectedStudent: null,
         });
+        localStorage.removeItem("__auth_meta__");
+        localStorage.removeItem("userType");
+        localStorage.removeItem("phone");
+        localStorage.removeItem("schoolcode");
+        localStorage.removeItem("otp");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("activeChild");
+        localStorage.removeItem("schoolName");
+        localStorage.removeItem("schoolLogo");
       },
+
+      isAuthenticated: () => {
+        const { token, user } = get();
+        return !!(token && user);
+      },
+
+      getRoleRoute: () => {
+        const { userType } = get();
+        if (!userType) return "/login";
+        return USER_TYPE_ROUTE_MAP[userType] ?? "/login";
+      },
+
+      getRole: () => get().role,
     }),
     {
-      name: "auth-storage",
-      // Only persist the fields that are safe to rehydrate across page refreshes.
-      // Avoid persisting function references — zustand/persist handles that automatically.
-      partialize: (s) => ({
-        token:       s.token,
-        userType:    s.userType,
-        userId:      s.userId,
-        profile:     s.profile,
-        role:        s.role,
-        permissions: s.permissions,
+      name: "auth-store",
+      // Bump whenever the persisted Student/Parent shape changes (e.g. adding
+      // className/sectionName/academicYear) so stale cached sessions from
+      // before the change get discarded instead of showing incomplete data.
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      // Fires once (whether or not there was anything in localStorage to
+      // restore) — flips hasHydrated so the app knows it's now safe to
+      // render routes / accept a login() without risking the rehydration
+      // clobbering it afterwards.
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+      partialize: (state) => ({
+        user:            state.user,
+        token:           state.token,
+        userType:        state.userType,
+        role:            state.role,
+        parent:          state.parent,
+        students:        state.students,
+        selectedStudent: state.selectedStudent,
       }),
     }
   )
 );
+
+// ── Non-hook selectors (for axios interceptors etc.) ─────────────────────────
+export const getAuthToken = () => useAuthStore.getState().token;
+export const getTenantId  = () => useAuthStore.getState().user?.schoolcode ?? null;
+export const getAuthUser  = () => useAuthStore.getState().user;

@@ -484,8 +484,13 @@ export const getConcessionById = async (id: string) => {
 };
 
 export const addConcession = async (payload: CreateConcessionPayload) => {
-  const res = await api.post<ApiResponse<ConcessionRecord>>("/tenant/addconcession", payload);
-  return res.data;
+  try {
+    const res = await api.post<ApiResponse<ConcessionRecord>>("/tenant/addconcession", payload);
+    return res.data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to add concession";
+    throw new Error(message);
+  }
 };
 
 export const deleteConcession = async (id: string) => {
@@ -494,8 +499,13 @@ export const deleteConcession = async (id: string) => {
 };
 
 export const updateConcession = async (id: string, payload: Partial<CreateConcessionPayload>) => {
-  const res = await api.put<ApiResponse<ConcessionRecord>>(`/tenant/updateconcessionById/${id}`, payload);
-  return res.data;
+  try {
+    const res = await api.put<ApiResponse<ConcessionRecord>>(`/tenant/updateconcessionById/${id}`, payload);
+    return res.data;
+  } catch (err: any) {
+    const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to update concession";
+    throw new Error(message);
+  }
 };
 
 // ── Transport Fees ────────────────────────────────────────────────────────────

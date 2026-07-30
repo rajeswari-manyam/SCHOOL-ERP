@@ -5,8 +5,8 @@ export { default as PlatformHealthCard } from "./components/PlatformHealthCard";
 export { default as RevenueChart } from "./components/RevenueChart";
 export { default as RecentSchoolsCard } from "./components/RecentSchoolsCard";
 export { default as CriticalTicketsTable } from "./components/CriticalTicketsTable";
-export { useDashboard, useExportDashboard } from "./hooks/useDashboard";
+export { useDashboard } from "./hooks/useDashboard";
 export type {
-  PlatformStats, SchoolActivityRow, HealthItem, CronJob,
+  PlatformStats, SchoolActivityRow, PlatformHealthStatus, ScheduledJobStatus,
   RecentSchool, RevenuePoint, CriticalTicket, SuperAdminDashboardData,
 } from "./types/dashboard.types";

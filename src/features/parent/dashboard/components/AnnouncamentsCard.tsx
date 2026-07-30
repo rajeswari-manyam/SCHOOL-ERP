@@ -19,15 +19,19 @@ function timeAgo(iso: string) {
 }
 
 const TAG_STYLES: Record<string, string> = {
-  All:    "bg-indigo-50 text-indigo-600 border-indigo-100",
-  Parent: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  Class:  "bg-amber-50 text-amber-600 border-amber-100",
+  General:   "bg-indigo-50 text-indigo-600 border-indigo-100",
+  Academic:  "bg-blue-50 text-blue-600 border-blue-100",
+  Event:     "bg-amber-50 text-amber-600 border-amber-100",
+  Holiday:   "bg-emerald-50 text-emerald-600 border-emerald-100",
+  Emergency: "bg-red-50 text-red-600 border-red-100",
 }
 
 const DOT_STYLES: Record<string, string> = {
-  All:    "bg-indigo-500",
-  Parent: "bg-emerald-500",
-  Class:  "bg-amber-500",
+  General:   "bg-indigo-500",
+  Academic:  "bg-blue-500",
+  Event:     "bg-amber-500",
+  Holiday:   "bg-emerald-500",
+  Emergency: "bg-red-500",
 }
 
 function tagStyle(type: string) {
@@ -92,7 +96,7 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
                 <p className="text-[12px] text-gray-400 py-4 text-center">No announcements to show.</p>
               ) : (
                 preview.map((item) => {
-                  const type = item.visibility_scope?.type ?? "General"
+                  const type = item.category?.trim() || "General"
                   return (
                     <div key={item.id} className="py-3 flex gap-3 group cursor-default">
                       {/* Dot */}
@@ -104,10 +108,10 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide ${tagStyle(type)}`}>
                             {type}
                           </span>
-                          <span className="text-[10px] text-gray-400">{timeAgo(item.created_at)}</span>
+                          <span className="text-[10px] text-gray-400">{timeAgo(item.createdAt)}</span>
                         </div>
-                        <p className="text-[12px] font-semibold text-[#0B1C30] leading-tight truncate">{item.title}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{item.message}</p>
+                        <p className="text-[12px] font-semibold text-[#0B1C30] leading-tight truncate">{item.title.trim()}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{item.message.trim()}</p>
                       </div>
                     </div>
                   )
@@ -159,7 +163,7 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
               {/* Modal body */}
               <div className="overflow-y-auto flex-1 px-5 py-2 divide-y divide-gray-50">
                 {announcements.map((item) => {
-                  const type = item.visibility_scope?.type ?? "General"
+                  const type = item.category?.trim() || "General"
                   return (
                     <div key={item.id} className="py-4 flex gap-3">
                       <div className="mt-1 shrink-0">
@@ -170,10 +174,10 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide ${tagStyle(type)}`}>
                             {type}
                           </span>
-                          <span className="text-[10px] text-gray-400">{timeAgo(item.created_at)}</span>
+                          <span className="text-[10px] text-gray-400">{timeAgo(item.createdAt)}</span>
                         </div>
-                        <p className="text-[13px] font-semibold text-[#0B1C30] leading-snug mb-1">{item.title}</p>
-                        <p className="text-[12px] text-gray-500 leading-relaxed">{item.message}</p>
+                        <p className="text-[13px] font-semibold text-[#0B1C30] leading-snug mb-1">{item.title.trim()}</p>
+                        <p className="text-[12px] text-gray-500 leading-relaxed">{item.message.trim()}</p>
                       </div>
                     </div>
                   )
@@ -187,9 +191,9 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
   }
 
   // ─── DEFAULT (LATEST) VARIANT ─────────────────────────────────────────────
-  const title       = latest?.title   ?? "No announcements yet"
-  const description = latest?.message ?? "Check back later for updates from the school."
-  const type        = latest?.visibility_scope?.type ?? "General"
+  const title       = latest?.title.trim()   || "No announcements yet"
+  const description = latest?.message.trim() || "Check back later for updates from the school."
+  const type        = latest?.category?.trim() || "General"
 
   return (
     <>
@@ -248,7 +252,7 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
             </div>
             <div className="overflow-y-auto flex-1 px-5 py-2 divide-y divide-gray-50">
               {announcements.map((item) => {
-                const t = item.visibility_scope?.type ?? "General"
+                const t = item.category?.trim() || "General"
                 return (
                   <div key={item.id} className="py-4 flex gap-3">
                     <div className="mt-1 shrink-0">
@@ -257,10 +261,10 @@ export const AnnouncementCard = ({ variant = "latest" }: AnnouncementCardProps) 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide ${tagStyle(t)}`}>{t}</span>
-                        <span className="text-[10px] text-gray-400">{timeAgo(item.created_at)}</span>
+                        <span className="text-[10px] text-gray-400">{timeAgo(item.createdAt)}</span>
                       </div>
-                      <p className="text-[13px] font-semibold text-[#0B1C30] leading-snug mb-1">{item.title}</p>
-                      <p className="text-[12px] text-gray-500 leading-relaxed">{item.message}</p>
+                      <p className="text-[13px] font-semibold text-[#0B1C30] leading-snug mb-1">{item.title.trim()}</p>
+                      <p className="text-[12px] text-gray-500 leading-relaxed">{item.message.trim()}</p>
                     </div>
                   </div>
                 )

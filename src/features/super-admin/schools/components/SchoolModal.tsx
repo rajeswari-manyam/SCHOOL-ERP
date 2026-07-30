@@ -1,41 +1,61 @@
-import { useState, useEffect, useCallback, Fragment } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Check, ArrowRight, X, Plus } from "lucide-react";
+import { Check, ArrowRight, X, Plus, Camera, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { useAllSubscriptions } from "@/features/super-admin/billing/hooks/useBilling";
+import type { Subscription } from "@/features/super-admin/billing/types/billing.types";
 import type { SchoolFormValues } from "../types/school.types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface SchoolInfoData extends SchoolFormValues {
-  estYear: string;
-}
+type SchoolInfoData = SchoolFormValues;
 interface BillingData {
-  plan: "basic" | "pro" | "enterprise";
-  billingCycle: string; paymentMethod: string; gst: string;
+  billingCycle: "Annual" | "Monthly";
+  pilotFeeCollected: boolean;
+  razorpayOrderId: string;
 }
 interface AdminData {
-  adminName: string; adminEmail: string; adminPhone: string;
-  designation: string; tempPass: string; confirmPass: string;
+  adminEmail: string;
 }
 type FormErrors<T> = Partial<Record<keyof T, string>>;
+
+interface ExistingPhotos {
+  image?: string | null;
+  logo?: string | null;
+  principalPhoto?: string | null;
+}
 
 interface AddNewSchoolModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: (data: SchoolFormValues) => void;
+  onSubmit: (data: SchoolFormValues) => Promise<boolean>;
+  mode?: "create" | "edit";
+  initialValues?: Partial<SchoolFormValues>;
+  existingPhotos?: ExistingPhotos;
 }
+
+const FEATURE_LABELS: Record<string, string> = {
+  attendance: "Attendance",
+  feeManagement: "Fee Management",
+  reports: "Reports",
+  broadcast: "Broadcast",
+  admission: "Admission",
+  parentApp: "Parent App",
+  onlinePayment: "Online Payment",
+};
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const schoolInfoSchema = z.object({
   school_name: z.string().min(1, "School name is required"),
-  email: z.string().email("Valid email required"),
+  email: z.string().email("Valid email required").or(z.literal("")),
   phone: z.string().regex(/^[0-9]{10}$/, "Valid 10-digit phone required"),
+  schoolNumber: z.string().regex(/^[0-9]{10,12}$/, "Valid school contact number required"),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   board: z.string().min(1, "Board is required"),
@@ -44,26 +64,21 @@ const schoolInfoSchema = z.object({
   address: z.string().min(1, "Address is required"),
   whatsappNumber: z.string().regex(/^[0-9]{10}$/, "Valid 10-digit WhatsApp number required"),
   school_code: z.string().min(1, "School code is required"),
-  image: z.string().or(z.literal("")),
-  logo: z.string().or(z.literal("")),
-  estYear: z.union([z.literal(""), z.string().regex(/^(?:18|19|20)\d{2}$/, "Enter valid year")]),
+  PrincipalName: z.string().min(1, "Principal name is required"),
+  establishedYear: z.union([z.literal(""), z.string().regex(/^(?:18|19|20)\d{2}$/, "Enter valid year")]),
+  totalSchoolstrength: z.union([z.literal(""), z.string().regex(/^[0-9]+$/, "Enter a valid number")]),
+  subscriptionId: z.string().min(1, "Please select a plan"),
+  image: z.custom<File | null>().nullable(),
+  logo: z.custom<File | null>().nullable(),
+  principalPhoto: z.custom<File | null>().nullable(),
 });
 const billingSchema = z.object({
-  plan: z.enum(["basic", "pro", "enterprise"]),
-  billingCycle: z.string().min(1, "Billing cycle is required"),
-  paymentMethod: z.string().min(1, "Payment method is required"),
-  gst: z.string(),
+  billingCycle: z.enum(["Annual", "Monthly"]),
+  pilotFeeCollected: z.boolean(),
+  razorpayOrderId: z.string(),
 });
 const adminSchema = z.object({
-  adminName: z.string().min(1, "Admin name is required"),
   adminEmail: z.string().email("Valid email required"),
-  adminPhone: z.string().regex(/^[0-9]{10}$/, "Valid 10-digit phone required"),
-  designation: z.string().min(1, "Designation is required"),
-  tempPass: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPass: z.string().min(8, "Confirm password is required"),
-}).superRefine((data, ctx) => {
-  if (data.confirmPass !== data.tempPass)
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPass"], message: "Passwords do not match" });
 });
 const schoolModalSchema = z.object({
   schoolInfo: schoolInfoSchema,
@@ -79,13 +94,18 @@ const STEPS = [
   { label: "Admin Setup" },
 ] as const;
 
+// Field paths validated before moving past Step 1 — Admin Phone, Principal
+// Name/Photo, and the subscription plan are collected on later steps, so
+// they're checked there instead.
+const STEP1_FIELDS = [
+  "schoolInfo.school_name", "schoolInfo.school_code", "schoolInfo.schoolNumber",
+  "schoolInfo.email", "schoolInfo.city", "schoolInfo.state", "schoolInfo.board", "schoolInfo.pincode",
+  "schoolInfo.website", "schoolInfo.establishedYear", "schoolInfo.totalSchoolstrength",
+  "schoolInfo.address", "schoolInfo.whatsappNumber",
+] as const;
+
 const STATES = ["Telangana","Andhra Pradesh","Maharashtra","Karnataka","Tamil Nadu","Kerala","Gujarat","Rajasthan","Delhi","Uttar Pradesh","West Bengal"];
 const BOARDS = ["CBSE","ICSE","State Board","IB","IGCSE"];
-const PLANS = [
-  { id: "basic" as const, name: "Basic", price: "₹4,999", features: ["Up to 500 students","Core modules","Email support"] },
-  { id: "pro" as const, name: "Pro", price: "₹9,999", badge: "Most Popular", features: ["Up to 2000 students","All modules","WhatsApp support"] },
-  { id: "enterprise" as const, name: "Enterprise", price: "₹19,999", features: ["Unlimited students","Custom modules","Dedicated manager"] },
-];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -165,10 +185,59 @@ function Field({ label, required, children, hint, error }: {
   );
 }
 
+function FileUploadField({ label, hint, file, onChange, existingUrl, readOnly }: {
+  label: string; hint?: string; file: File | null; onChange: (file: File | null) => void;
+  existingUrl?: string | null; readOnly?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const displayUrl = preview ?? existingUrl ?? null;
+
+  if (readOnly) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-[11px] font-bold uppercase tracking-[0.07em] text-slate-500">{label}</Label>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+            {displayUrl ? <img src={displayUrl} alt={label} className="w-full h-full object-cover" /> : <Camera className="w-4 h-4 text-gray-300" />}
+          </div>
+          <p className="text-xs text-slate-400">{displayUrl ? "Current photo" : "No photo uploaded"}</p>
+        </div>
+        {hint && <p className="text-xs text-slate-400 leading-relaxed">{hint}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-[11px] font-bold uppercase tracking-[0.07em] text-slate-500">{label}</Label>
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+          {displayUrl ? <img src={displayUrl} alt={label} className="w-full h-full object-cover" /> : <Camera className="w-4 h-4 text-gray-300" />}
+        </div>
+        <button type="button" onClick={() => inputRef.current?.click()}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-gray-600 hover:bg-gray-50 transition-colors">
+          {file ? "Change" : "Upload"}
+        </button>
+        {file && (
+          <button type="button" onClick={() => { onChange(null); if (inputRef.current) inputRef.current.value = ""; }}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      </div>
+      {hint && <p className="text-xs text-slate-400 leading-relaxed">{hint}</p>}
+    </div>
+  );
+}
+
 // ─── Step 1 ───────────────────────────────────────────────────────────────────
-function StepSchoolInfo({ data, errors, onChange }: {
+function StepSchoolInfo({ data, errors, onChange, mode, existingPhotos }: {
   data: SchoolInfoData; errors: FormErrors<SchoolInfoData>;
-  onChange: (k: keyof SchoolInfoData, v: string) => void;
+  onChange: (k: keyof SchoolInfoData, v: string | File | null) => void;
+  mode: "create" | "edit"; existingPhotos?: ExistingPhotos;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
@@ -176,16 +245,23 @@ function StepSchoolInfo({ data, errors, onChange }: {
         <Input value={data.school_name} onChange={(e) => onChange("school_name", e.target.value)}
           placeholder="St. Mary's CBSE School" variant={errors.school_name ? "error" : "default"} />
       </Field>
-      <Field label="School Code" required error={errors.school_code}>
+      <Field label="School Code" required error={errors.school_code}
+        hint={mode === "edit" ? "School code cannot be changed" : undefined}>
         <Input value={data.school_code} onChange={(e) => onChange("school_code", e.target.value)}
-          placeholder="STMARYS001" variant={errors.school_code ? "error" : "default"} />
+          placeholder="STMARYS001" variant={errors.school_code ? "error" : "default"}
+          disabled={mode === "edit"} />
       </Field>
-      <Field label="Phone Number" required error={errors.phone}>
-        <PhoneInput id="phone" value={data.phone} onChange={(v) => onChange("phone", v)} placeholder="98765 43210" error={errors.phone} />
+      <Field label="School Phone Number" required error={errors.schoolNumber} hint="Landline or main contact number for the school">
+        <Input value={data.schoolNumber} onChange={(e) => onChange("schoolNumber", e.target.value)}
+          placeholder="7998877665" variant={errors.schoolNumber ? "error" : "default"} />
       </Field>
-      <Field label="Email" required error={errors.email}>
+      <Field label="Email" error={errors.email} hint="Optional: school contact email">
         <Input type="email" value={data.email} onChange={(e) => onChange("email", e.target.value)}
           placeholder="principal@school.com" variant={errors.email ? "error" : "default"} />
+      </Field>
+      <Field label="City" required error={errors.city}>
+        <Input value={data.city} onChange={(e) => onChange("city", e.target.value)}
+          placeholder="Hanamkonda" variant={errors.city ? "error" : "default"} />
       </Field>
       <Field label="State" required error={errors.state}>
         <Select value={data.state} onChange={(e) => onChange("state", e.target.value)}
@@ -197,26 +273,29 @@ function StepSchoolInfo({ data, errors, onChange }: {
           placeholder="Select board" options={BOARDS.map((b) => ({ value: b, label: b }))}
           className={errors.board ? "border-red-500" : undefined} />
       </Field>
-      <Field label="City" required error={errors.city}>
-        <Input value={data.city} onChange={(e) => onChange("city", e.target.value)}
-          placeholder="Hanamkonda" variant={errors.city ? "error" : "default"} />
-      </Field>
       <Field label="Pincode" required error={errors.pincode}>
         <Input value={data.pincode} maxLength={6} onChange={(e) => onChange("pincode", e.target.value)} placeholder="506001"
           variant={errors.pincode ? "error" : "default"} />
       </Field>
-      <Field label="Website" hint="Optional: add the school website"> 
+      <Field label="Website" hint="Optional: add the school website">
         <Input type="url" value={data.website} onChange={(e) => onChange("website", e.target.value)}
           placeholder="https://www.stmarys.edu" variant={errors.website ? "error" : "default"} />
       </Field>
-      <Field label="Logo URL" hint="Optional: public URL to the school logo">
-        <Input type="url" value={data.logo} onChange={(e) => onChange("logo", e.target.value)}
-          placeholder="https://example.com/logo.png" variant={errors.logo ? "error" : "default"} />
+      <Field label="Established Year" error={errors.establishedYear}>
+        <Input type="number" value={data.establishedYear} min={1800} max={2024}
+          onChange={(e) => onChange("establishedYear", e.target.value)} placeholder="2005" />
       </Field>
-      <Field label="Image URL" hint="Optional: public URL to a school image">
-        <Input type="url" value={data.image} onChange={(e) => onChange("image", e.target.value)}
-          placeholder="https://example.com/image.jpg" variant={errors.image ? "error" : "default"} />
+      <Field label="Total School Strength" error={errors.totalSchoolstrength} hint="Optional: total number of students">
+        <Input type="number" value={data.totalSchoolstrength} min={0}
+          onChange={(e) => onChange("totalSchoolstrength", e.target.value)} placeholder="500"
+          variant={errors.totalSchoolstrength ? "error" : "default"} />
       </Field>
+      <FileUploadField label="School Logo" hint={mode === "edit" ? "Managed separately" : "Optional: upload the school logo"}
+        file={data.logo} onChange={(file) => onChange("logo", file)}
+        existingUrl={existingPhotos?.logo} readOnly={mode === "edit"} />
+      <FileUploadField label="School Image" hint={mode === "edit" ? "Managed separately" : "Optional: upload a school photo"}
+        file={data.image} onChange={(file) => onChange("image", file)}
+        existingUrl={existingPhotos?.image} readOnly={mode === "edit"} />
       <div className="col-span-1 sm:col-span-2">
         <Field label="Address" required error={errors.address}>
           <textarea
@@ -232,162 +311,207 @@ function StepSchoolInfo({ data, errors, onChange }: {
             placeholder="90000 12345" error={errors.whatsappNumber} />
         </Field>
       </div>
-      <Field label="Established Year">
-        <Input type="number" value={data.estYear} min={1800} max={2024}
-          onChange={(e) => onChange("estYear", e.target.value)} placeholder="2005" />
-      </Field>
     </div>
   );
 }
 
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
-function StepPlanBilling({ data, onChange }: {
-  data: BillingData; onChange: (k: keyof BillingData, v: string) => void;
+function StepPlanBilling({ data, subscriptionId, subscriptionIdError, subscriptions, loading, onSubscriptionChange, onBillingChange }: {
+  data: BillingData;
+  subscriptionId: string;
+  subscriptionIdError?: string;
+  subscriptions: Subscription[];
+  loading: boolean;
+  onSubscriptionChange: (id: string) => void;
+  onBillingChange: (k: keyof BillingData, v: string | boolean) => void;
 }) {
+  const selected = subscriptions.find((s) => s.id === subscriptionId);
+
   return (
     <div>
-      <p className="text-sm font-semibold text-slate-700 mb-3">Choose a plan</p>
-      {/* Plan cards — 1 col mobile, 3 col sm+ */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        {PLANS.map((plan) => (
-          <div key={plan.id} onClick={() => onChange("plan", plan.id)}
-            className={cn(
-              "relative border-2 rounded-2xl p-4 cursor-pointer transition-all duration-150",
-              data.plan === plan.id ? "border-[#5b52f5] bg-[#f5f4ff]" : "border-slate-200 hover:border-purple-300"
-            )}>
-            {plan.badge && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#5b52f5] text-white text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap">
-                {plan.badge}
-              </span>
-            )}
-            {/* Mobile: horizontal layout inside card */}
-            <div className="flex sm:flex-col items-start sm:items-start gap-3 sm:gap-0">
-              <div className="flex-1 sm:flex-none">
-                <p className="font-bold text-slate-800 text-sm mb-0.5 sm:mb-1">{plan.name}</p>
-                <p className="text-[#5b52f5] font-extrabold text-base sm:text-lg sm:mb-2">
-                  {plan.price}<span className="text-xs font-normal text-slate-400">/mo</span>
-                </p>
-              </div>
-              <div className="hidden sm:block">
-                {plan.features.map((f) => (
-                  <p key={f} className="text-[11px] text-slate-500 leading-relaxed">{f}</p>
-                ))}
-              </div>
-              {/* Mobile: feature count pill */}
-              <span className="sm:hidden text-[10px] text-slate-400 self-center">
-                {plan.features.length} features
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 mb-5">
-        <Field label="Billing Cycle" required>
-          <Select value={data.billingCycle} onChange={(e) => onChange("billingCycle", e.target.value)}
-            options={[
-              { value: "Monthly", label: "Monthly" },
-              { value: "Quarterly", label: "Quarterly" },
-              { value: "Annually (save 20%)", label: "Annually (save 20%)" },
-            ]} />
-        </Field>
-        <Field label="Payment Method" required>
-          <Select value={data.paymentMethod} onChange={(e) => onChange("paymentMethod", e.target.value)}
-            options={[
-              { value: "UPI", label: "UPI" },
-              { value: "Bank Transfer", label: "Bank Transfer" },
-              { value: "Credit Card", label: "Credit Card" },
-            ]} />
-        </Field>
-        <div className="col-span-1 sm:col-span-2">
-          <Field label="GST Number" hint="Optional — enter to receive GST invoices">
-            <Input value={data.gst} onChange={(e) => onChange("gst", e.target.value)} placeholder="22AAAAA0000A1Z5" />
-          </Field>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-slate-700">Choose a plan</p>
+        <div className="inline-flex rounded-lg border border-slate-200 p-0.5">
+          {(["Annual", "Monthly"] as const).map((cycle) => (
+            <button key={cycle} type="button" onClick={() => onBillingChange("billingCycle", cycle)}
+              className={cn(
+                "px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+                data.billingCycle === cycle ? "bg-[#5b52f5] text-white" : "text-slate-500 hover:text-slate-700"
+              )}>
+              {cycle}
+            </button>
+          ))}
         </div>
       </div>
+      {data.billingCycle === "Annual" && (
+        <p className="text-xs text-emerald-600 font-semibold mb-3">Save with annual billing</p>
+      )}
 
-      <div className="bg-slate-50 rounded-xl p-4">
-        <p className="text-xs font-semibold text-slate-700 mb-3">Included modules</p>
-        {["Student & Teacher Management","Attendance & Timetable","Fee Management & Receipts","WhatsApp Parent Notifications"].map((m) => (
-          <div key={m} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-none">
-            <div className="w-5 h-5 rounded-[5px] bg-[#5b52f5] flex items-center justify-center flex-shrink-0">
-              <Check className="w-2.5 h-2.5 text-white" />
-            </div>
-            <span className="text-xs text-slate-500">{m}</span>
+      {loading ? (
+        <p className="text-sm text-slate-400 mb-5">Loading plans…</p>
+      ) : subscriptions.length === 0 ? (
+        <p className="text-sm text-slate-400 mb-5">No subscription plans available yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2">
+          {subscriptions.map((sub) => {
+            const price = data.billingCycle === "Annual" ? sub.annualPrice : sub.monthlyPrice;
+            const activeFeatures = Object.entries(sub.featureFlags ?? {})
+              .filter(([, v]) => v)
+              .map(([k]) => FEATURE_LABELS[k] ?? k);
+            return (
+              <div key={sub.id} onClick={() => onSubscriptionChange(sub.id)}
+                className={cn(
+                  "relative border-2 rounded-2xl p-4 cursor-pointer transition-all duration-150",
+                  subscriptionId === sub.id ? "border-[#5b52f5] bg-[#f5f4ff]" : "border-slate-200 hover:border-purple-300"
+                )}>
+                <p className="font-bold text-slate-800 text-sm mb-0.5">{sub.name}</p>
+                <p className="text-[#5b52f5] font-extrabold text-base sm:text-lg mb-1">
+                  ₹{price.toLocaleString()}
+                  <span className="text-xs font-normal text-slate-400">/{data.billingCycle === "Annual" ? "yr" : "mo"}</span>
+                </p>
+                <p className="text-[11px] text-slate-400 mb-2">Up to {sub.studentLimit.toLocaleString()} students</p>
+                <div className="space-y-1">
+                  {activeFeatures.slice(0, 4).map((f) => (
+                    <div key={f} className="flex items-center gap-1.5">
+                      <Check className="w-3 h-3 flex-shrink-0 text-emerald-500" />
+                      <span className="text-[11px] text-slate-500">{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {subscriptionIdError && <p className="text-xs text-red-500 mb-3">{subscriptionIdError}</p>}
+
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-3">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-amber-800">30-Day Pilot</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              {selected ? `₹${selected.pilotFee.toLocaleString()}` : "A refundable amount"} collected as security deposit for training &amp; setup period.
+            </p>
           </div>
-        ))}
+        </div>
+        <label className="flex items-center gap-2 mt-3 cursor-pointer">
+          <input type="checkbox" checked={data.pilotFeeCollected}
+            onChange={(e) => onBillingChange("pilotFeeCollected", e.target.checked)}
+            className="w-4 h-4 rounded border-amber-300 accent-amber-500" />
+          <span className="text-xs font-medium text-amber-800">Pilot fee collected via Razorpay</span>
+        </label>
+        <div className="mt-3">
+          <Label className="text-[11px] font-bold uppercase tracking-[0.07em] text-amber-700">Razorpay Order ID</Label>
+          <Input value={data.razorpayOrderId} onChange={(e) => onBillingChange("razorpayOrderId", e.target.value)}
+            placeholder="RZP_ORD_XXXXXX" className="mt-1 bg-white" />
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── Step 3 ───────────────────────────────────────────────────────────────────
-function StepAdminSetup({ data, errors, onChange }: {
+function StepAdminSetup({
+  data, errors, principalName, principalNameError, onPrincipalNameChange,
+  adminPhone, adminPhoneError, onAdminPhoneChange,
+  principalPhoto, onPrincipalPhotoChange, onChange, school, billing, planLabel, mode, existingPhotos,
+}: {
   data: AdminData; errors: FormErrors<AdminData>;
+  principalName: string; principalNameError?: string;
+  onPrincipalNameChange: (v: string) => void;
+  adminPhone: string; adminPhoneError?: string;
+  onAdminPhoneChange: (v: string) => void;
+  principalPhoto: File | null; onPrincipalPhotoChange: (file: File | null) => void;
   onChange: (k: keyof AdminData, v: string) => void;
+  school: SchoolInfoData; billing: BillingData; planLabel: string;
+  mode: "create" | "edit"; existingPhotos?: ExistingPhotos;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-      <Field label="Admin Name" required error={errors.adminName}>
-        <Input value={data.adminName} onChange={(e) => onChange("adminName", e.target.value)}
-          placeholder="Ramesh Kumar" variant={errors.adminName ? "error" : "default"} />
-      </Field>
-      <Field label="Admin Email" required error={errors.adminEmail}>
-        <Input type="email" value={data.adminEmail} onChange={(e) => onChange("adminEmail", e.target.value)}
-          placeholder="admin@school.com" variant={errors.adminEmail ? "error" : "default"} />
-      </Field>
-      <Field label="Admin Phone" required error={errors.adminPhone}>
-        <PhoneInput id="adminPhone" value={data.adminPhone} onChange={(v) => onChange("adminPhone", v)}
-          placeholder="98765 43210" error={errors.adminPhone} />
-      </Field>
-      <Field label="Designation">
-        <Select value={data.designation} onChange={(e) => onChange("designation", e.target.value)}
-          options={[
-            { value: "Principal", label: "Principal" },
-            { value: "Vice Principal", label: "Vice Principal" },
-            { value: "Administrator", label: "Administrator" },
-            { value: "IT Manager", label: "IT Manager" },
-          ]} />
-      </Field>
-      <div className="col-span-1 sm:col-span-2">
-        <Field label="Temporary Password" required error={errors.tempPass}
-          hint="Admin will be prompted to change this on first login">
-          <Input type="password" value={data.tempPass} onChange={(e) => onChange("tempPass", e.target.value)}
-            placeholder="Min 8 characters" variant={errors.tempPass ? "error" : "default"} />
+    <div>
+      <p className="text-[11px] font-bold uppercase tracking-[0.07em] text-slate-400 mb-3">Principal / Admin Details</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+        <Field label="Principal Name" required error={principalNameError}>
+          <Input value={principalName} onChange={(e) => onPrincipalNameChange(e.target.value)}
+            placeholder="Mr. Ramesh Kumar" variant={principalNameError ? "error" : "default"} />
         </Field>
+        <Field label="Admin Phone Number" required error={adminPhoneError}>
+          <PhoneInput id="adminPhone" value={adminPhone} onChange={onAdminPhoneChange}
+            placeholder="98765 43210" error={adminPhoneError} />
+        </Field>
+        <Field label="Admin Email" required error={errors.adminEmail}>
+          <Input type="email" value={data.adminEmail} onChange={(e) => onChange("adminEmail", e.target.value)}
+            placeholder="admin@school.com" variant={errors.adminEmail ? "error" : "default"} />
+        </Field>
+        <FileUploadField label="Principal Photo" hint={mode === "edit" ? "Managed separately" : "Optional: upload the principal's photo"}
+          file={principalPhoto} onChange={onPrincipalPhotoChange}
+          existingUrl={existingPhotos?.principalPhoto} readOnly={mode === "edit"} />
       </div>
-      <div className="col-span-1 sm:col-span-2">
-        <Field label="Confirm Password" required error={errors.confirmPass}>
-          <Input type="password" value={data.confirmPass} onChange={(e) => onChange("confirmPass", e.target.value)}
-            placeholder="Re-enter password" variant={errors.confirmPass ? "error" : "default"} />
-        </Field>
+
+      <p className="text-xs font-bold text-slate-600 mb-2 mt-5">Setup Summary</p>
+      <div className="bg-slate-50 rounded-xl p-4 grid grid-cols-2 gap-y-3 gap-x-4">
+        <div>
+          <p className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">School</p>
+          <p className="text-slate-700 font-medium text-xs mt-0.5">{school.school_name || "—"}</p>
+        </div>
+        <div>
+          <p className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">Plan</p>
+          <p className="text-slate-700 font-medium text-xs mt-0.5">{planLabel}</p>
+        </div>
+        <div>
+          <p className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">City</p>
+          <p className="text-slate-700 font-medium text-xs mt-0.5">
+            {[school.city, school.state].filter(Boolean).join(", ") || "—"}
+          </p>
+        </div>
+        <div>
+          <p className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">Billing</p>
+          <p className="text-slate-700 font-medium text-xs mt-0.5">{billing.billingCycle}</p>
+        </div>
+        <div>
+          <p className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">WhatsApp</p>
+          <p className="text-slate-700 font-medium text-xs mt-0.5">
+            {school.whatsappNumber ? `+91 ${school.whatsappNumber}` : "—"}
+          </p>
+        </div>
+        <div>
+          <p className="text-slate-400 font-semibold uppercase tracking-wide text-[10px]">Pilot Fee</p>
+          <p className={cn("font-medium text-xs mt-0.5", billing.pilotFeeCollected ? "text-emerald-600" : "text-slate-700")}>
+            {billing.pilotFeeCollected ? "Collected" : "Pending"}
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── Success Screen ───────────────────────────────────────────────────────────
-function SuccessScreen({ schoolName, onAddAnother, onClose }: {
-  schoolName: string; onAddAnother: () => void; onClose: () => void;
+function SuccessScreen({ schoolName, onAddAnother, onClose, mode }: {
+  schoolName: string; onAddAnother: () => void; onClose: () => void; mode: "create" | "edit";
 }) {
   return (
     <div className="text-center py-8 sm:py-10 px-4 sm:px-6">
       <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
         <Check className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
       </div>
-      <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-2">School Created Successfully!</h3>
-      <p className="text-sm text-slate-500 mb-1">{schoolName} has been added to the platform.</p>
-      <p className="text-sm text-slate-500 mb-8">Login credentials sent to the admin's email.</p>
+      <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-2">
+        {mode === "edit" ? "School Updated Successfully!" : "School Created Successfully!"}
+      </h3>
+      <p className="text-sm text-slate-500 mb-8">
+        {mode === "edit" ? `${schoolName} has been updated.` : `${schoolName} has been added to the platform.`}
+      </p>
       <div className="flex flex-col-reverse sm:flex-row gap-3 justify-center">
         <Button type="button" variant="outline" onClick={onClose}
           className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
           Close
         </Button>
-        <Button type="button" variant="default" onClick={onAddAnother}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-          <Plus width={14} height={14} strokeWidth={2.5} />
-          Add Another School
-        </Button>
+        {mode === "create" && (
+          <Button type="button" variant="default" onClick={onAddAnother}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+            <Plus width={14} height={14} strokeWidth={2.5} />
+            Add Another School
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -398,6 +522,7 @@ const INITIAL_SCHOOL: SchoolInfoData = {
   school_name: "",
   email: "",
   phone: "",
+  schoolNumber: "",
   city: "",
   state: "",
   board: "",
@@ -406,27 +531,45 @@ const INITIAL_SCHOOL: SchoolInfoData = {
   address: "",
   whatsappNumber: "",
   school_code: "",
-  image: "",
-  logo: "",
-  estYear: "",
+  PrincipalName: "",
+  establishedYear: "",
+  totalSchoolstrength: "",
+  subscriptionId: "",
+  image: null,
+  logo: null,
+  principalPhoto: null,
 };
-const INITIAL_BILLING: BillingData = { plan:"pro", billingCycle:"Annually (save 20%)", paymentMethod:"Bank Transfer", gst:"" };
-const INITIAL_ADMIN: AdminData = { adminName:"", adminEmail:"", adminPhone:"", designation:"Administrator", tempPass:"", confirmPass:"" };
+const INITIAL_BILLING: BillingData = { billingCycle: "Annual", pilotFeeCollected: true, razorpayOrderId: "" };
+const INITIAL_ADMIN: AdminData = { adminEmail: "" };
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
-export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSchoolModalProps) {
+export default function AddNewSchoolModal({ open, onClose, onSubmit, mode = "create", initialValues, existingPhotos }: AddNewSchoolModalProps) {
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const { data: subsData, isLoading: subsLoading } = useAllSubscriptions();
+  const subscriptions: Subscription[] = Array.isArray(subsData?.data)
+    ? subsData.data
+    : subsData?.data
+    ? [subsData.data]
+    : [];
 
   const { control, setValue, trigger, reset: resetForm, formState: { errors } } = useForm<SchoolModalFormValues>({
     resolver: zodResolver(schoolModalSchema),
     mode: "onChange",
-    defaultValues: { schoolInfo: INITIAL_SCHOOL, billing: INITIAL_BILLING, admin: INITIAL_ADMIN },
+    defaultValues: {
+      schoolInfo: { ...INITIAL_SCHOOL, ...initialValues },
+      billing: INITIAL_BILLING,
+      admin: INITIAL_ADMIN,
+    },
   });
 
   const school = (useWatch({ control, name: "schoolInfo" }) ?? INITIAL_SCHOOL) as SchoolInfoData;
-  const billing = useWatch({ control, name: "billing" }) ?? INITIAL_BILLING;
-  const admin = useWatch({ control, name: "admin" }) ?? INITIAL_ADMIN;
+  const billing = (useWatch({ control, name: "billing" }) ?? INITIAL_BILLING) as BillingData;
+  const admin = (useWatch({ control, name: "admin" }) ?? INITIAL_ADMIN) as AdminData;
+
+  const planLabel = subscriptions.find((s) => s.id === school.subscriptionId)?.name ?? "—";
 
   const schoolErrors = (Object.keys(errors.schoolInfo ?? {}) as Array<keyof SchoolInfoData>).reduce(
     (acc, key) => {
@@ -456,25 +599,24 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
 
   const handleNext = async () => {
     if (step === 1) {
-      const ok = await trigger("schoolInfo");
+      const ok = await trigger(STEP1_FIELDS as any);
       if (!ok) return;
       setStep(2);
       return;
     }
     if (step === 2) {
-      const ok = await trigger("billing");
+      const ok = await trigger(["schoolInfo.subscriptionId", "billing"] as any);
       if (!ok) return;
       setStep(3);
       return;
     }
     if (step === 3) {
-      const ok = await trigger("admin");
+      const ok = await trigger(["schoolInfo.PrincipalName", "schoolInfo.phone", "admin"] as any);
       if (!ok) return;
-      setDone(true);
-      const { estYear, ...payload } = school;
-      void estYear;
-      console.log("School registration payload:", payload);
-      onSuccess?.(payload);
+      setSubmitting(true);
+      const success = await onSubmit(school);
+      setSubmitting(false);
+      if (success) setDone(true);
       return;
     }
   };
@@ -509,10 +651,14 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
         <div className="flex-shrink-0 flex items-start justify-between px-4 sm:px-7 pt-4 sm:pt-6 pb-4 sm:pb-5">
           <div className="min-w-0 pr-3">
             <h2 id="modal-title" className="text-base sm:text-xl font-bold text-slate-800">
-              {done ? "School Added" : "Add New School"}
+              {done ? (mode === "edit" ? "School Updated" : "School Added") : (mode === "edit" ? "Edit School" : "Add New School")}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              {done ? "Everything is set up and ready." : "Set up a new school on the platform"}
+              {done
+                ? "Everything is set up and ready."
+                : mode === "edit"
+                ? "Update this school's details"
+                : "Set up a new school on the platform"}
             </p>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Close"
@@ -535,20 +681,33 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
               schoolName={school.school_name || "The school"}
               onAddAnother={reset}
               onClose={onClose}
+              mode={mode}
             />
           ) : (
             <>
               {step === 1 && (
                 <StepSchoolInfo data={school} errors={schoolErrors}
-                  onChange={(k, v) => setValue(`schoolInfo.${k}`, v, { shouldValidate: true })} />
+                  onChange={(k, v) => setValue(`schoolInfo.${k}` as any, v as any, { shouldValidate: true })}
+                  mode={mode} existingPhotos={existingPhotos} />
               )}
               {step === 2 && (
                 <StepPlanBilling data={billing}
-                  onChange={(k, v) => setValue(`billing.${k}`, v, { shouldValidate: true })} />
+                  subscriptionId={school.subscriptionId} subscriptionIdError={schoolErrors.subscriptionId}
+                  subscriptions={subscriptions} loading={subsLoading}
+                  onSubscriptionChange={(id) => setValue("schoolInfo.subscriptionId", id, { shouldValidate: true })}
+                  onBillingChange={(k, v) => setValue(`billing.${k}` as any, v as any, { shouldValidate: true })} />
               )}
               {step === 3 && (
                 <StepAdminSetup data={admin} errors={adminErrors}
-                  onChange={(k, v) => setValue(`admin.${k}`, v, { shouldValidate: true })} />
+                  principalName={school.PrincipalName} principalNameError={schoolErrors.PrincipalName}
+                  onPrincipalNameChange={(v) => setValue("schoolInfo.PrincipalName", v, { shouldValidate: true })}
+                  adminPhone={school.phone} adminPhoneError={schoolErrors.phone}
+                  onAdminPhoneChange={(v) => setValue("schoolInfo.phone", v, { shouldValidate: true })}
+                  principalPhoto={school.principalPhoto}
+                  onPrincipalPhotoChange={(file) => setValue("schoolInfo.principalPhoto", file, { shouldValidate: true })}
+                  onChange={(k, v) => setValue(`admin.${k}` as any, v as any, { shouldValidate: true })}
+                  school={school} billing={billing} planLabel={planLabel}
+                  mode={mode} existingPhotos={existingPhotos} />
               )}
             </>
           )}
@@ -557,17 +716,21 @@ export default function AddNewSchoolModal({ open, onClose, onSuccess }: AddNewSc
         {/* ── Footer ── */}
         {!done && (
           <CardFooter className="flex-shrink-0 flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-2 sm:gap-0 px-4 sm:px-7 py-4 border-t border-slate-100">
-            <Button type="button" variant="ghost"
+            <Button type="button" variant="ghost" disabled={submitting}
               onClick={() => step === 1 ? onClose() : setStep((s) => s - 1)}
-              className="w-full sm:w-auto px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-50 transition-all">
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-50 transition-all disabled:opacity-50">
               {step === 1 ? "Cancel" : "← Back"}
             </Button>
-            <Button type="button" variant="default" onClick={handleNext}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+            <Button type="button" variant="default" onClick={handleNext} disabled={submitting}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60">
               {step === 1 && "Next: Plan & Billing"}
               {step === 2 && "Next: Admin Setup"}
-              {step === 3 && "Add School & Go Live"}
-              <ArrowRight className="w-4 h-4" />
+              {step === 3 && (
+                submitting
+                  ? (mode === "edit" ? "Saving…" : "Adding School…")
+                  : (mode === "edit" ? "Save Changes" : "Add School & Go Live")
+              )}
+              {!(step === 3 && submitting) && <ArrowRight className="w-4 h-4" />}
             </Button>
           </CardFooter>
         )}

@@ -1,9 +1,11 @@
 
+import { useState } from "react";
 import type { PendingFee } from "../types/fees.types";
 import { formatCurrency, getInitialsColor } from "../utils/Fee.utils";
 import { StatusBadge, ReminderDots } from "./Feebadges";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AddFeeConcessionModal } from "@/features/accountant/fees/components/AddFeeConcessionModal";
 import {
   Table,
   TableHeader,
@@ -21,6 +23,7 @@ interface PendingFeesTableProps {
   onMarkPaid: (fee: PendingFee) => void;
   onSendReminder: (fee: PendingFee) => void;
   totalRecords: number;
+  onConcessionApplied?: () => void;
 }
 
 export function PendingFeesTable({
@@ -31,8 +34,10 @@ export function PendingFeesTable({
   onMarkPaid,
   onSendReminder,
   totalRecords,
+  onConcessionApplied,
 }: PendingFeesTableProps) {
   const allSelected = fees.length > 0 && selectedIds.size === fees.length;
+  const [concessionFee, setConcessionFee] = useState<PendingFee | null>(null);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -118,6 +123,16 @@ export function PendingFeesTable({
                     <Button variant="default" size="sm" className="whitespace-nowrap" onClick={() => onMarkPaid(fee)}>
                       Mark Paid
                     </Button>
+                    {fee.feeStructureId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="whitespace-nowrap border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                        onClick={() => setConcessionFee(fee)}
+                      >
+                        Apply Concession
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
                       💬
                     </Button>
@@ -147,6 +162,18 @@ export function PendingFeesTable({
           ))}
         </div>
       </div>
+
+      {concessionFee && concessionFee.feeStructureId && (
+        <AddFeeConcessionModal
+          onClose={() => setConcessionFee(null)}
+          onSuccess={onConcessionApplied}
+          presetStudentId={concessionFee.studentId}
+          presetStudentName={concessionFee.studentName}
+          presetFeeStructureId={concessionFee.feeStructureId}
+          presetFeeStructureLabel={concessionFee.feeHead}
+          presetFeeAmount={concessionFee.originalAmount ?? concessionFee.amount}
+        />
+      )}
     </div>
   );
 }

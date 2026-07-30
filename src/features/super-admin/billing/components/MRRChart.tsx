@@ -9,32 +9,39 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { MoreHorizontal } from 'lucide-react';
-import type { MRRDataPoint } from '../types/billing.types';
+import type { MRRGrowthPoint } from '../types/billing.types';
 
 interface MRRChartProps {
-  data?: MRRDataPoint[];
+  data?: MRRGrowthPoint[];
   isLoading: boolean;
 }
 
+const monthLabel = (isoMonth: string) => {
+  const [year, month] = isoMonth.split('-').map(Number);
+  if (!year || !month) return isoMonth;
+  return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+};
+
 const CustomTooltip: React.FC<{
   active?: boolean;
-  payload?: Array<{ value: number }>;
-  label?: string;
-}> = ({ active, payload, label }) => {
+  payload?: Array<{ value: number; payload: MRRGrowthPoint }>;
+}> = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
   return (
     <div className="rounded-xl border border-gray-100 bg-white px-3 py-2 shadow-sm dark:border-white/10 dark:bg-gray-900">
-      <p className="text-[11px] text-gray-400">{label}</p>
+      <p className="text-[11px] text-gray-400">{monthLabel(point.month)}</p>
       <p className="text-sm font-semibold text-gray-900 dark:text-white">
         ₹{payload[0].value.toLocaleString('en-IN')}
       </p>
+      <p className="text-[11px] text-gray-400">{point.paymentCount} payment{point.paymentCount === 1 ? '' : 's'}</p>
     </div>
   );
 };
 
 export const MRRChart: React.FC<MRRChartProps> = ({ data, isLoading }) => {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-white/10 dark:bg-white/5">
       <div className="mb-1 flex items-start justify-between">
         <div>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">MRR Growth</h3>
@@ -46,9 +53,13 @@ export const MRRChart: React.FC<MRRChartProps> = ({ data, isLoading }) => {
       </div>
 
       {isLoading || !data ? (
-        <div className="mt-4 h-52 animate-pulse rounded-xl bg-gray-100 dark:bg-white/5" />
+        <div className="mt-3 h-36 animate-pulse rounded-xl bg-gray-100 dark:bg-white/5" />
+      ) : data.length === 0 ? (
+        <div className="mt-3 h-36 flex items-center justify-center text-sm text-gray-400">
+          No revenue recorded yet.
+        </div>
       ) : (
-        <div className="mt-4 h-52">
+        <div className="mt-3 h-36">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
               <defs>
@@ -60,6 +71,7 @@ export const MRRChart: React.FC<MRRChartProps> = ({ data, isLoading }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
               <XAxis
                 dataKey="month"
+                tickFormatter={monthLabel}
                 tick={{ fontSize: 11, fill: '#9ca3af' }}
                 axisLine={false}
                 tickLine={false}
@@ -74,7 +86,7 @@ export const MRRChart: React.FC<MRRChartProps> = ({ data, isLoading }) => {
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"
-                dataKey="mrr"
+                dataKey="revenue"
                 stroke="#4f46e5"
                 strokeWidth={2.5}
                 fill="url(#mrrGrad)"

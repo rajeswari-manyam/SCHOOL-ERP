@@ -19,7 +19,7 @@ import type { FeeRow, FilterValues, Transaction } from "../types/fees.types";
 
 export default function FeeManagementPage() {
   const [activeTab, setActiveTab] = useState("Pending Fees");
-  const { fees, feesLoading, transactions, refreshTransactions } = useFeeData();
+  const { fees, feesLoading, transactions, refreshTransactions, refreshFees } = useFeeData();
 
   const handleDeleteRecord = useCallback(async (id: string) => {
     await deleteRecordFeePayment(id);
@@ -278,7 +278,7 @@ export default function FeeManagementPage() {
               <p className="text-sm font-medium">No pending fees found</p>
               <p className="text-xs mt-1">All fees are up to date for this period</p>
             </div>
-          ) : isPendingFees && <PendingFeesTable data={filteredFees} isLoading={feesLoading} />}
+          ) : isPendingFees && <PendingFeesTable data={filteredFees} isLoading={feesLoading} onConcessionApplied={refreshFees} />}
 
           {isAllTx && (
             <AllTransactionsTable

@@ -255,6 +255,9 @@ export type FilterValues = {
 export type FeeRow = {
   id: string;
   studentId?: string;
+  /** The fee-head mapping this row is for — required to apply a concession.
+   *  Absent for transport-fee and already-concession rows. */
+  feeStructureId?: string;
   student: string;
   admissionNo: string;
   className: string;

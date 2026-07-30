@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import type { SupportTicket } from "../types/support.types";
+import type { SupportTicketRecord } from "@/services/support-ticket.api";
 import { useTicketMutations } from "../hooks/useSupport";
 
 interface TicketActionsMenuProps {
-  ticket: SupportTicket;
-  onView: (t: SupportTicket) => void;
+  ticket: SupportTicketRecord;
+  onView: (t: SupportTicketRecord) => void;
 }
 
 const TicketActionsMenu = ({ ticket, onView }: TicketActionsMenuProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { updateStatus, resolveTicket, deleteTicket } = useTicketMutations();
+  const { deleteTicket } = useTicketMutations();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -21,10 +21,8 @@ const TicketActionsMenu = ({ ticket, onView }: TicketActionsMenuProps) => {
   }, []);
 
   const actions = [
-    { label: "View Details",      onClick: () => { onView(ticket); setOpen(false); } },
-    { label: "Mark In Progress",  onClick: () => { updateStatus.mutate({ id: ticket.id, status: "IN_PROGRESS" }); setOpen(false); } },
-    { label: "Mark Resolved",     onClick: () => { resolveTicket.mutate(ticket.id); setOpen(false); } },
-    { label: "Delete Ticket",     onClick: () => { confirm("Delete this ticket?") && deleteTicket.mutate(ticket.id); setOpen(false); }, className: "text-red-500" },
+    { label: "View Details", onClick: () => { onView(ticket); setOpen(false); } },
+    { label: "Delete Ticket", onClick: () => { confirm("Delete this ticket?") && deleteTicket.mutate(ticket.id); setOpen(false); }, className: "text-red-500" },
   ];
 
   return (

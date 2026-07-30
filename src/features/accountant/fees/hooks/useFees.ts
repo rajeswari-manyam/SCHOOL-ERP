@@ -147,6 +147,7 @@ function pendingEntryToFeeRows(entry: AllPendingFeesEntry): FeeRow[] {
     return {
       id:              `${entry.student.id}-${d.feeHeadName ?? "fee"}-${i}`,
       studentId:       entry.student.id,
+      feeStructureId:  d.feeHeadMappingId,
       student:         entry.student.name,
       admissionNo:     "—",
       className:       "—",
@@ -177,6 +178,14 @@ export const useFeeData = () => {
       .catch(() => {});
   }, []);
 
+  const refreshFees = useCallback(() => {
+    setFeesLoading(true);
+    getAllPendingFees()
+      .then((res) => { if (res.status) setFees((res.data ?? []).flatMap(pendingEntryToFeeRows)); })
+      .catch(() => {})
+      .finally(() => setFeesLoading(false));
+  }, []);
+
   useEffect(() => {
     setFeesLoading(true);
     const p1 = getAllPendingFees()
@@ -188,5 +197,5 @@ export const useFeeData = () => {
     Promise.all([p1, p2]).finally(() => setFeesLoading(false));
   }, []);
 
-  return { fees, feesLoading, transactions, refreshTransactions };
+  return { fees, feesLoading, transactions, refreshTransactions, refreshFees };
 };

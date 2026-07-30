@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Download, Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
+import { Plus, Pencil as PencilIcon, Trash2, X, Loader2, BookOpen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,7 +23,7 @@ import {
 import { useExams, useCreateExam, useUpdateExam, useDeleteExam as useDeleteExamRecord } from "./hooks/useExam";
 
 // ── Types ────────────────────────────────────────────────────────────────────
-import { downloadClassTimetable, type BulkCreateTimetablePayload } from "@/services/timetable.api";
+import { type BulkCreateTimetablePayload } from "@/services/timetable.api";
 import type {
   ExamEntry,
   DayOfWeek,
@@ -652,24 +652,10 @@ const TimetablePage: React.FC = () => {
   const [deletePeriodTarget, setDeletePeriodTarget] = useState<{
     id: string; day: DayOfWeek; periodNo: number; subject: string; teacherName: string;
   } | null>(null);
-  const [downloadingTimetable, setDownloadingTimetable] = useState(false);
-
   const { classTabs = [], classTimetable } = data ?? {};
   const headingClass   = classTimetable?.classLabel ?? activeClass.label;
   const headingSection = classTimetable?.section    ?? activeSection.label;
   const selectedClassId = activeClass.id;
-
-  const handleDownloadTimetable = async () => {
-    if (!activeClass.id || !activeSection.id) return;
-    setDownloadingTimetable(true);
-    try {
-      await downloadClassTimetable(activeClass.id, activeSection.id);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message ?? err?.message ?? "Failed to download timetable");
-    } finally {
-      setDownloadingTimetable(false);
-    }
-  };
 
   // ── Tab definitions ──────────────────────────────────────────────────────────
   const mainTabs: { id: PageTab; label: string }[] = [
@@ -721,14 +707,6 @@ const TimetablePage: React.FC = () => {
                 className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
               >
                 <Plus size={13} /> Add Period
-              </button>
-              <button
-                onClick={handleDownloadTimetable}
-                disabled={downloadingTimetable || !classTimetable?.slots.length}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {downloadingTimetable ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-                {downloadingTimetable ? "Generating…" : "Download Timetable"}
               </button>
             </div>
           )}

@@ -9,8 +9,6 @@ const TeacherAttendance = lazy(() => import("../features/teacher/attendance/Myat
 const TeacherDashboard = lazy(() => import("../features/teacher/dashboard/TeacherDashboardPage"));
 const AccountantFees = lazy(() => import("../features/accountant/fees/pages/FeeManagementPage"));
 const AccountantDashboard = lazy(() => import("../features/accountant/dashboard/pages/DashboardPage"));
-const AccountantReports = lazy(() => import("../features/accountant/reports/pages/ReportsPage"));
-
 const AccountantReceipts = lazy(() => import("../features/accountant/receipts/pages/ReceiptsPage"));
 const AccountantPayroll = lazy(() => import("../features/accountant/payroll/pages/PayrollPage"));
 const SchoolAdminSettings = lazy(() => import("../features/school-admin/settings").then(m => ({ default: m.SettingsPage })));
@@ -73,11 +71,6 @@ export const ROUTES: RouteConfig[] = [
   {
     path: "/accountant/fees",
     element: <AccountantFees />,
-    roles: ["accountant"],
-  },
-  {
-    path: "/accountant/reports",
-    element: <AccountantReports />,
     roles: ["accountant"],
   },
   

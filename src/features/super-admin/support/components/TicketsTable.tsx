@@ -1,14 +1,17 @@
-import type { SupportTicket } from "../types/support.types";
+import type { SupportTicketRecord } from "@/services/support-ticket.api";
 import { PriorityBadge, StatusBadge } from "./TicketBadges";
 import TicketActionsMenu from "./TicketActionsMenu";
 
 interface TicketsTableProps {
-  tickets: SupportTicket[];
+  tickets: SupportTicketRecord[];
   isLoading: boolean;
-  onView: (t: SupportTicket) => void;
+  onView: (t: SupportTicketRecord) => void;
 }
 
 const COL = "text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-4 py-3 text-left";
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 const TicketsTable = ({ tickets, isLoading, onView }: TicketsTableProps) => {
   if (isLoading) {
@@ -62,18 +65,18 @@ const TicketsTable = ({ tickets, isLoading, onView }: TicketsTableProps) => {
                   onClick={() => onView(ticket)}
                   className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
                 >
-                  {ticket.ticketId}
+                  {ticket.id.slice(0, 8).toUpperCase()}
                 </button>
               </td>
 
               {/* School */}
               <td className="px-4 py-5">
-                <span className="text-sm font-bold text-gray-900">{ticket.school}</span>
+                <span className="text-sm font-bold text-gray-900">{ticket.school?.school_name ?? "—"}</span>
               </td>
 
               {/* Subject */}
               <td className="px-4 py-5 max-w-[200px]">
-                <span className="text-sm text-gray-600 leading-snug">{ticket.subject}</span>
+                <span className="text-sm text-gray-600 leading-snug">{ticket.subject.trim()}</span>
               </td>
 
               {/* Priority */}
@@ -88,7 +91,7 @@ const TicketsTable = ({ tickets, isLoading, onView }: TicketsTableProps) => {
 
               {/* Created */}
               <td className="px-4 py-5 text-sm text-gray-500 whitespace-nowrap">
-                {ticket.createdAt}
+                {fmtDate(ticket.createdAt)}
               </td>
 
               {/* Assigned */}

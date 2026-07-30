@@ -53,6 +53,11 @@ interface AuthState {
   userType: UserType | null;
   role: string | null;           // lowercase role key, e.g. "teacher"
 
+  // True once the persist middleware has finished reading localStorage on
+  // page load. Not persisted itself — always starts false on a fresh load.
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
+
   // ── Parent Portal — multi-student support ────────────────────────────────
   parent: Parent | null;
   students: Student[];
@@ -93,6 +98,9 @@ export const useAuthStore = create<AuthState>()(
       token:    null,
       userType: null,
       role:     null,
+
+      hasHydrated: false,
+      setHasHydrated: (value) => set({ hasHydrated: value }),
 
       parent:          null,
       students:        [],
@@ -244,6 +252,11 @@ export const useAuthStore = create<AuthState>()(
         students:        state.students,
         selectedStudent: state.selectedStudent,
       }),
+      // Flip hasHydrated once localStorage has been read (successfully or
+      // not) — App.tsx waits on this before rendering any routes/guards.
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

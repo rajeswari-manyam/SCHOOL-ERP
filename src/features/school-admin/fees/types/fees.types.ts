@@ -39,6 +39,11 @@ export interface PendingFee {
   section: string;
   feeHead: string;
   amount: number;
+  /** The fee-head mapping this row is for — required to apply a concession.
+   *  Absent for transport-fee and already-concession rows. */
+  feeStructureId?: string;
+  /** Original (pre-discount) fee amount, for the concession preview. */
+  originalAmount?: number;
   dueDate: string;
   daysOverdue: number | null;
   daysRemaining: number | null;

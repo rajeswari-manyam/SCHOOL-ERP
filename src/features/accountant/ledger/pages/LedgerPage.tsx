@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Download, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { IncomeExpenseCards } from "../components/IncomeExpenseCard";
 import { LedgerTable } from "../components/LedgerTable";
 import { AddExpenseModal } from "../components/AddExpenseModal";
 import { BalanceSheet } from "../components/BalanceSheet";
-import { ExportModal } from "../components/ExportModal";
 import { useLedger } from "../hooks/useledger";
 
 import type { LedgerEntry, ExpenseFormInput } from "../types/Ledger.types";
@@ -21,7 +20,6 @@ const TAB_ITEMS = [
 export default function LedgerPage() {
   const [activeTab,      setActiveTab]      = useState("income");
   const [showAddModal,   setShowAddModal]   = useState(false);
-  const [showExportModal,setShowExportModal]= useState(false);
   const [currentDate,    setCurrentDate]    = useState(new Date());
   const [editingEntry,   setEditingEntry]   = useState<LedgerEntry | null>(null);
 
@@ -113,18 +111,6 @@ export default function LedgerPage() {
           {/* Extra buttons — expenses tab only */}
           {activeTab === "expenses" && (
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button variant="outline" className="flex-1 sm:flex-none text-xs" onClick={() => setShowExportModal(true)}>
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm" className="text-xs flex items-center gap-1.5" onClick={() => setShowExportModal(true)}>
-                <Download className="w-3.5 h-3.5" />
-                PDF
-              </Button>
-              <Button variant="outline" size="sm" className="text-xs flex items-center gap-1.5" onClick={() => setShowExportModal(true)}>
-                <Download className="w-3.5 h-3.5" />
-                Excel
-              </Button>
               <Button className="flex-1 sm:flex-none bg-indigo-600 text-white text-xs" onClick={() => setShowAddModal(true)}>
                 <Plus className="w-4 h-4" />
                 Add Entry
@@ -213,10 +199,6 @@ export default function LedgerPage() {
           onClose={handleCloseModal}
           onSave={handleSave}
         />
-      )}
-
-      {showExportModal && (
-        <ExportModal onClose={() => setShowExportModal(false)} />
       )}
 
     </div>

@@ -213,8 +213,18 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
           `}</style>
 
           <ul className="m-0 list-none space-y-0.5 p-0">
-            {navItems.map((item) => (
+            {navItems.map((item, idx) => (
               <li key={item.to}>
+                {item.group && item.group !== navItems[idx - 1]?.group && (
+                  <div
+                    className={cn(
+                      "select-none overflow-hidden whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-slate-500",
+                      collapsed ? "h-0 opacity-0" : "px-4 pb-1.5 pt-4 first:pt-1",
+                    )}
+                  >
+                    {item.group}
+                  </div>
+                )}
                 {item.locked ? (
                   /* ── Locked item — not a link, grayed out with lock icon ── */
                   <div

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUIStore } from "@/store/uiStore";
+import { useAuthStore } from "@/store/authStore";
 import { getAllAcademicYears, selectAcademicYear, type AcademicYearRecord } from "@/services/academicYear.api";
 import { queryClient } from "@/config/queryClient";
 
@@ -31,6 +32,14 @@ export const useAcademicYears = () => {
   const [error,     setError]     = useState<string | null>(null);
 
   const load = useCallback(() => {
+    // Super Admin has no tenant/school context — this endpoint is tenant-only
+    // and would 401 with a superadmin token, forcing a logout via the axios
+    // interceptor. Skip the call entirely for that role.
+    if (useAuthStore.getState().role === "superadmin") {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

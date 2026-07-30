@@ -342,7 +342,7 @@ const StudentProfilePage = () => {
           onClose={() => setShowEdit(false)}
           onSave={async (_, payload) => {
             const updated = await studentsApi.updateStudent(student.id, payload);
-            window.location.reload();
+            retry();
             return updated;
           }}
         />
@@ -353,7 +353,7 @@ const StudentProfilePage = () => {
           student={student}
           students={allStudents}
           onClose={() => setShowAddParent(false)}
-          onSaved={() => window.location.reload()}
+          onSaved={() => { setShowAddParent(false); retry(); }}
         />
       )}
 

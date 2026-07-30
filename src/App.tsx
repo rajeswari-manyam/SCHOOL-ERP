@@ -8,10 +8,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./config/queryClient";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
+import { useAuthStore } from "./store/authStore";
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
 const OtpPage = lazy(() => import("./features/auth/pages/OtpPage"));
+const SuperAdminLoginPage = lazy(() => import("./features/auth/pages/SuperAdminLoginPage"));
 
 // Lazy-loaded routers
 const ParentRouter = lazy(() => import("./features/parent/ParentRouter"));
@@ -31,6 +33,13 @@ const PageLoader = () => (
 );
 
 function App() {
+
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
+
+  if (!hasHydrated) {
+    return <PageLoader />;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -68,6 +77,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/otp" element={<OtpPage />} />
+            <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
 
             {/* Teacher */}
             <Route

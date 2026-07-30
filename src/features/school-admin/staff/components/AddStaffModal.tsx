@@ -208,9 +208,11 @@ export const AddStaffModal = ({ onClose }: Props) => {
     try {
       setLoading(true);
       await createStaff(payload);
-      await loadStaff();
       toast.success("Staff member created successfully.");
       onClose();
+      // Refresh the staff list in the background — no need to keep the
+      // modal open (and the user waiting) for the list/stats/leaves refetch.
+      loadStaff();
     } catch (error: unknown) {
       let message = "Failed to create staff member. Please try again.";
       if (axios.isAxiosError(error)) {
@@ -366,7 +368,7 @@ export const AddStaffModal = ({ onClose }: Props) => {
             </Field>
 
             {/* IFSC CODE */}
-            <Field label="IFSC Code" error={errors.ifscCode} hint="Format: SBIN0001234">
+            <Field label="IFSC Code" error={errors.ifscCode}>
               <input
                 className={ic(errors.ifscCode)}
                 placeholder="Enter IFSC code"

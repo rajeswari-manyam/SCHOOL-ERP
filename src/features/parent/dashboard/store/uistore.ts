@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import type { Homework } from "../../../../services/homework.api";
 import type { UpcomingExamItem } from "../../../../services/examtimetable.api";
-import type { Announcement } from "../../../../services/announcements.api";
+import type { SchoolAnnouncementRecord } from "../../../../services/school-announcement.api";
 
 
 
@@ -24,7 +24,7 @@ interface DashboardState {
   exams: UpcomingExamItem[]
 
   // Announcements
-  announcements: Announcement[]
+  announcements: SchoolAnnouncementRecord[]
 
   // Loading flags
   isLoadingAttendance: boolean
@@ -38,7 +38,7 @@ interface DashboardState {
   setTodayStatus: (s: "present" | "absent" | "not_marked") => void
   setHomework: (hw: Homework[]) => void
   setExams: (exams: UpcomingExamItem[]) => void
-  setAnnouncements: (a: Announcement[]) => void
+  setAnnouncements: (a: SchoolAnnouncementRecord[]) => void
   setLoadingAttendance: (v: boolean) => void
   setLoadingHomework: (v: boolean) => void
   setLoadingExams: (v: boolean) => void

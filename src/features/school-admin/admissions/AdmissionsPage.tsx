@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Download, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PipelineStats } from './components/PipelineStats';
 import { PipelineBoard } from './components/PipelineBoard';
@@ -52,10 +52,6 @@ export function AdmissionsPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-              <Download size={13} />
-              Export Pipeline
-            </button>
             <button
               onClick={openAddEnquiry}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs transition-colors shadow-sm"

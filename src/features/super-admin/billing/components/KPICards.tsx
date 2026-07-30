@@ -1,9 +1,10 @@
 import React from 'react';
-import { TrendingUp } from 'lucide-react';
-import type { BillingOverview } from '../types/billing.types';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import type { RevenueOverviewKPI, MRRGrowthPoint } from '../types/billing.types';
 
 interface KPICardsProps {
-  data?: BillingOverview;
+  data?: RevenueOverviewKPI;
+  mrrGrowth?: MRRGrowthPoint[];
   isLoading: boolean;
 }
 
@@ -19,13 +20,22 @@ function SkeletonCard() {
   );
 }
 
-export const KPICards: React.FC<KPICardsProps> = ({ data, isLoading }) => {
-  if (isLoading || !data || data.totalMRR == null) {
+export const KPICards: React.FC<KPICardsProps> = ({ data, mrrGrowth, isLoading }) => {
+  if (isLoading || !data) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
       </div>
     );
+  }
+
+  // Real month-over-month growth, derived from the actual MRR series — only
+  // shown when there are at least two months to compare, never fabricated.
+  let growthPercent: number | null = null;
+  if (mrrGrowth && mrrGrowth.length >= 2) {
+    const prev = mrrGrowth[mrrGrowth.length - 2].revenue;
+    const latest = mrrGrowth[mrrGrowth.length - 1].revenue;
+    if (prev > 0) growthPercent = ((latest - prev) / prev) * 100;
   }
 
   return (
@@ -36,13 +46,19 @@ export const KPICards: React.FC<KPICardsProps> = ({ data, isLoading }) => {
           <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
             Total MRR
           </p>
-          <span className="flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-            <TrendingUp size={10} />
-            +{data.mrrGrowthPercent}%
-          </span>
+          {growthPercent != null && (
+            <span className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+              growthPercent >= 0
+                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {growthPercent >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+              {growthPercent >= 0 ? '+' : ''}{growthPercent.toFixed(0)}%
+            </span>
+          )}
         </div>
         <p className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-          {fmt(data.totalMRR)}
+          {fmt(data.totalMrr)}
         </p>
         <div className="mt-3 h-0.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
           <div className="h-full w-3/5 rounded-full bg-indigo-500" />
@@ -77,9 +93,13 @@ export const KPICards: React.FC<KPICardsProps> = ({ data, isLoading }) => {
           Overdue Payments
         </p>
         <p className="text-2xl font-bold tracking-tight text-red-500">
-          {data.overduePayments} Schools
+          {data.overduePayments.count} Schools
         </p>
-        <p className="mt-1 text-[11px] text-gray-400">Action required immediately</p>
+        <p className="mt-1 text-[11px] text-gray-400">
+          {data.overduePayments.totalAmount > 0
+            ? `${fmt(data.overduePayments.totalAmount)} outstanding`
+            : 'Action required immediately'}
+        </p>
       </div>
     </div>
   );

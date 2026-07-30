@@ -38,8 +38,8 @@ const AuditLogsPage = () => {
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Audit Logs</h1>
-            <p className="text-sm text-gray-500 mt-1">Complete record of all admin actions</p>
+            <h1 className="text-lg font-bold text-gray-900 tracking-tight">Audit Logs</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Complete record of all admin actions</p>
           </div>
           <Button
             onClick={() => handleExport(filters)}

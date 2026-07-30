@@ -34,10 +34,10 @@ const MarketingTeamPage = () => {
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h1 className="text-lg font-bold text-gray-900 tracking-tight">
               Marketing Team
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
               {displayStats.totalReps} field representatives across 4 districts
             </p>
           </div>

@@ -30,10 +30,10 @@ const PlatformConfigPage = () => {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-lg font-bold text-gray-900 tracking-tight">
             Platform Config
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
             Manage integrations, templates, and system settings
           </p>
         </div>

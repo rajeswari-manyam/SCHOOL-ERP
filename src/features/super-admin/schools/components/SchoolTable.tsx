@@ -1,19 +1,25 @@
 ﻿import { useState } from "react";
+import { toast } from "sonner";
+import { MessageCircle, RefreshCw, Ban, Download } from "lucide-react";
 import type { School } from "../types/school.types";
 import SchoolAvatar from "./Schoolavatar";
 import { PlanBadge, StatusBadge } from "./Schoolbadges";
 import SubscriptionEndCell from "./Subscriptionendcell";
 import SchoolActionsMenu from "./Schoolactionmenu";
+import { useSchoolMutations } from "../hooks/useSchools";
 
 interface SchoolTableProps {
   schools: School[];
   isLoading: boolean;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
 const COL_CLASS = "text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-4 py-3";
 
-const SchoolTable = ({ schools, isLoading }: SchoolTableProps) => {
+const SchoolTable = ({ schools, isLoading, onView, onEdit }: SchoolTableProps) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { suspendSchool } = useSchoolMutations();
 
   const allSelected = schools.length > 0 && selectedIds.size === schools.length;
 
@@ -31,6 +37,27 @@ const SchoolTable = ({ schools, isLoading }: SchoolTableProps) => {
       }
       return next;
     });
+  };
+
+  const selectedSchools = schools.filter((s) => selectedIds.has(s.id));
+
+  const handleSuspendSelected = () => {
+    selectedSchools.forEach((s) => suspendSchool.mutate(s.id));
+    toast.success(`Suspending ${selectedSchools.length} school(s)…`);
+    setSelectedIds(new Set());
+  };
+
+  const handleExportSelected = () => {
+    const header = ["School", "City", "Plan", "Status", "Students", "Subscription End"];
+    const rows = selectedSchools.map((s) => [s.name, s.city, s.plan, s.status, String(s.students), s.subscriptionEnd]);
+    const csv = [header, ...rows].map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `schools-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (isLoading) {
@@ -57,9 +84,51 @@ const SchoolTable = ({ schools, isLoading }: SchoolTableProps) => {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-indigo-50 border-b border-indigo-100 px-4 py-3">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              className="w-4 h-4 rounded border-gray-300 accent-indigo-600 cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-indigo-700">
+              {selectedIds.size} school{selectedIds.size > 1 ? "s" : ""} selected
+            </span>
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => toast.info("WhatsApp broadcast to selected schools — coming soon")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> Send WhatsApp
+            </button>
+            <button
+              onClick={() => toast.info("Bulk plan change — coming soon")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Change Plan
+            </button>
+            <button
+              onClick={handleSuspendSelected}
+              disabled={suspendSchool.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-white border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              <Ban className="w-3.5 h-3.5" /> Suspend Selected
+            </button>
+            <button
+              onClick={handleExportSelected}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> Export Selected
+            </button>
+          </div>
+        </div>
+      )}
       <table className="w-full min-w-[800px]">
         <thead>
-          <tr className="border-b border-gray-100">
+          <tr className="border-b border-gray-100 bg-[#EFF4FF]">
             <th className="px-4 py-3 w-10">
               <input
                 type="checkbox"
@@ -131,7 +200,7 @@ const SchoolTable = ({ schools, isLoading }: SchoolTableProps) => {
 
               {/* Actions */}
               <td className="px-4 py-4">
-                <SchoolActionsMenu school={school} />
+                <SchoolActionsMenu school={school} onView={onView} onEdit={onEdit} />
               </td>
             </tr>
           ))}

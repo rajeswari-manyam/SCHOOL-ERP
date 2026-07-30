@@ -16,6 +16,8 @@ import { SettingsPage }     from "./settings";
 import TimetablePage        from "../school-admin/timetable/TimetablePage";
 import ClassesPage          from "../school-admin/classes/ClassesPage";
 import ResultsPage          from "../school-admin/results/ResultsPage";
+import SupportTicketPage    from "../school-admin/support/SupportTicketPage";
+import AnnouncementsPage    from "../school-admin/announcements/AnnouncementsPage";
 import AcademicYearSetupWizard from "../school-admin/academic-year-setup/AcademicYearSetupWizard";
 
 import { useCarryForwardStore } from "@/store/carryForwardStore";
@@ -116,6 +118,8 @@ export default function SchoolAdminRouter() {
         <Route path="fees"        element={<FeeCollectionPage />} />
         <Route path="reports"     element={<ReportsPage />} />
         <Route path="results"    element={<ResultsPage />} />
+        <Route path="support"    element={<SupportTicketPage />} />
+        <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="settings"    element={<SettingsPage />} />
 
         {/* Catch-all */}

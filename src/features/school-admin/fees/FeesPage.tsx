@@ -43,6 +43,7 @@ const FeeCollectionPage = () => {
     openRecordPayment, closeRecordPayment, submitPayment,
     lastReceipt, showSuccessModal, setShowSuccessModal,
     sendReminders,
+    refreshPendingFees,
   } = useFeeCollection();
 
   if (loading || !stats) {
@@ -159,6 +160,7 @@ const FeeCollectionPage = () => {
           onMarkPaid={openRecordPayment}
           onSendReminder={() => {}}
           totalRecords={filteredFees.length}
+          onConcessionApplied={refreshPendingFees}
         />
 
         <CommunicationCenter

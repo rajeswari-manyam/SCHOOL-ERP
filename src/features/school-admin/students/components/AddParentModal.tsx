@@ -52,7 +52,7 @@ export const AddParentModal = ({ student, students, onClose, onSaved }: Props) =
     setParentsLoading(true);
     getAllParents()
       .then((parents) => setAllParents(parents))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to load parents", err))
       .finally(() => setParentsLoading(false));
   }, []);
 

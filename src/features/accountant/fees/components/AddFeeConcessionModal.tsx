@@ -6,7 +6,7 @@ import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import typography from "@/styles/typography";
 import { toast } from "sonner";
-import { CONCESSION_TYPES } from "../constants/fee.constants";
+import { CONCESSION_TYPES, CONCESSION_TYPE_TO_ENUM, CONCESSION_ENUM_TO_TYPE } from "../constants/fee.constants";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import type { ClassRecord, SectionRecord } from "@/services/class.api";
 import { getStudentsByClassSection, getFeeStructures, addConcession, updateConcession } from "@/services/fee.api";
@@ -66,10 +66,22 @@ interface Props {
   onClose: () => void;
   onSuccess?: () => void;
   editData?: ConcessionRecord;
+  /** "Quick apply" mode — pre-fills and locks the student + fee structure
+   *  (e.g. when opened from a specific row in a fee table) instead of
+   *  showing the class/section/student pickers. */
+  presetStudentId?: string;
+  presetStudentName?: string;
+  presetFeeStructureId?: string;
+  presetFeeStructureLabel?: string;
+  presetFeeAmount?: number;
 }
 
-export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
+export function AddFeeConcessionModal({
+  onClose, onSuccess, editData,
+  presetStudentId, presetStudentName, presetFeeStructureId, presetFeeStructureLabel, presetFeeAmount,
+}: Props) {
   const isEdit = !!editData;
+  const isQuickApply = !isEdit && !!presetStudentId && !!presetFeeStructureId;
 
   // ── Student cascade filters (not form fields) ──────────────────────────────
   const [classFilter, setClassFilter]     = useState("");
@@ -94,9 +106,11 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(isEdit ? editSchema : addSchema) as any,
     defaultValues: {
-      studentId:      "",
-      feeStructureId: "",
-      concessionType: editData?.concessionType ?? CONCESSION_TYPES[0],
+      studentId:      presetStudentId ?? "",
+      feeStructureId: presetFeeStructureId ?? "",
+      concessionType: editData?.concessionType
+        ? (CONCESSION_ENUM_TO_TYPE[editData.concessionType] ?? editData.concessionType)
+        : CONCESSION_TYPES[0],
       discountType:   (editData?.discountType === "PERCENTAGE" ? "percentage" : "fixed") as "percentage" | "fixed",
       discountValue:  editData?.discountValue != null ? String(editData.discountValue) : "",
       reason:         editData?.reason ?? "",
@@ -110,12 +124,12 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
   const watchDiscountType   = watch("discountType");
   const watchDiscountValue  = watch("discountValue");
 
-  // Load classes on mount (add mode)
+  // Load classes on mount (add mode, but not quick-apply — student/fee are already known)
   useEffect(() => {
-    if (!isEdit) {
+    if (!isEdit && !isQuickApply) {
       getAllClasses().then((r) => setClasses(r.data ?? [])).catch(() => {});
     }
-  }, [isEdit]);
+  }, [isEdit, isQuickApply]);
 
   // Load sections when class filter changes
   useEffect(() => {
@@ -171,15 +185,19 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
     setSelectedStructure(found);
   }, [watchFeeStructureId, feeStructures]);
 
+  // In quick-apply mode there's no fee-structure list to look the amount up
+  // in — it's passed straight from the row that opened this modal.
+  const effectiveAmount = isQuickApply ? presetFeeAmount : selectedStructure?.amount;
+
   // Calculate preview amount
   const previewAmount = (() => {
-    if (!selectedStructure || !watchDiscountValue) return null;
+    if (effectiveAmount == null || !watchDiscountValue) return null;
     const val = Number(watchDiscountValue);
     if (isNaN(val) || val <= 0) return null;
     if (watchDiscountType === "percentage") {
-      return Math.round((val / 100) * selectedStructure.amount);
+      return Math.round((val / 100) * effectiveAmount);
     }
-    return Math.min(val, selectedStructure.amount);
+    return Math.min(val, effectiveAmount);
   })();
 
   const onSubmit = async (data: FormValues) => {
@@ -188,7 +206,7 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
       const payload = {
         studentId: data.studentId,
         feeStructureId: data.feeStructureId,
-        concessionType: data.concessionType,
+        concessionType: CONCESSION_TYPE_TO_ENUM[data.concessionType] ?? data.concessionType.toUpperCase().replace(/\s+/g, "_"),
         discountType: (data.discountType === "percentage" ? "PERCENTAGE" : "FIXED") as "PERCENTAGE" | "FIXED",
         discountValue: Number(data.discountValue),
         reason: data.reason,
@@ -203,8 +221,8 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
       toast.success(isEdit ? "Concession updated successfully" : "Concession added successfully");
       onSuccess?.();
       onClose();
-    } catch {
-      toast.error("Failed to save concession");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save concession");
     } finally {
       setSubmitting(false);
     }
@@ -227,7 +245,7 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
           <h2 className={typography.heading.h6}>
-            {isEdit ? "Edit Concession" : "Add Fee Concession"}
+            {isEdit ? "Edit Concession" : isQuickApply ? "Apply Concession" : "Add Fee Concession"}
           </h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 mt-0.5">
             <X size={18} />
@@ -237,12 +255,18 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
         <div className="px-5 py-4 space-y-4">
 
           {/* ── Student Section ────────────────────────────────────────────── */}
-          {isEdit ? (
+          {isEdit || isQuickApply ? (
             <div>
               <label className={`${typography.form.label} text-gray-700`}>Student</label>
               <div className="mt-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-800">
-                {editData!.studentName}
+                {isEdit ? editData!.studentName : presetStudentName}
               </div>
+              {isQuickApply && (
+                <>
+                  <input type="hidden" {...register("studentId")} />
+                  <input type="hidden" {...register("feeStructureId")} />
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-3 rounded-xl border border-[#EFF4FF] bg-[#F8FAFF] p-4">
@@ -295,8 +319,21 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
             </div>
           )}
 
+          {/* ── Fee Structure (locked in quick-apply mode) ──────────────────── */}
+          {isQuickApply && (
+            <div>
+              <label className={`${typography.form.label} text-gray-700`}>Fee Structure</label>
+              <div className="mt-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-800">
+                {presetFeeStructureLabel}
+                {presetFeeAmount != null && (
+                  <span className="text-gray-500"> — ₹{presetFeeAmount.toLocaleString("en-IN")}</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ── Fee Structure (filtered by student) ──────────────────────── */}
-          {!isEdit && (
+          {!isEdit && !isQuickApply && (
             <div>
               <label className={`${typography.form.label} text-gray-700`}>
                 Fee Structure <span className="text-red-500">*</span>
@@ -384,12 +421,12 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
             {errors.discountValue && <p className={errorCls}>{errors.discountValue.message}</p>}
 
             {/* Balance summary card */}
-            {selectedStructure && (
+            {effectiveAmount != null && (
               <div className="mt-3 rounded-xl border border-indigo-100 bg-[#F8FAFF] overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-indigo-100">
                   <span className="text-xs text-gray-500">Original Amount</span>
                   <span className="text-sm font-semibold text-gray-800">
-                    ₹{selectedStructure.amount.toLocaleString("en-IN")}
+                    ₹{effectiveAmount.toLocaleString("en-IN")}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-indigo-100">
@@ -411,8 +448,8 @@ export function AddFeeConcessionModal({ onClose, onSuccess, editData }: Props) {
                   <span className="text-sm font-bold text-[#3525CD]">Remaining Balance</span>
                   <span className="text-base font-extrabold text-[#3525CD]">
                     {previewAmount != null
-                      ? `₹${(selectedStructure.amount - previewAmount).toLocaleString("en-IN")}`
-                      : `₹${selectedStructure.amount.toLocaleString("en-IN")}`}
+                      ? `₹${(effectiveAmount - previewAmount).toLocaleString("en-IN")}`
+                      : `₹${effectiveAmount.toLocaleString("en-IN")}`}
                   </span>
                 </div>
               </div>
