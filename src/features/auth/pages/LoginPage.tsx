@@ -348,8 +348,8 @@ const LoginPage = () => {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg shrink-0">
-              <GraduationCap size={24} className="text-indigo-600" />
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
+              <img src="/favicon.png" alt="VidyaTracker logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="text-white font-bold text-lg leading-tight">VidyaTracker</p>
@@ -383,9 +383,6 @@ const LoginPage = () => {
             ))}
           </div>
 
-          <p className="text-indigo-200/70 text-[10px] font-semibold uppercase tracking-widest text-center">
-            Trusted by 47+ schools across Telangana
-          </p>
         </div>
 
         <button
@@ -403,8 +400,8 @@ const LoginPage = () => {
 
           {/* Compact brand mark — desktop already has it on the left panel */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <GraduationCap size={16} className="text-white" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
+              <img src="/favicon.png" alt="VidyaTracker logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-base font-bold text-slate-900">VidyaTracker</span>
           </div>

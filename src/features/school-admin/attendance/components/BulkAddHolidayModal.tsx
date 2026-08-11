@@ -26,6 +26,12 @@ interface BulkRow {
 let _rid = 0;
 const newRow = (): BulkRow => ({ id: ++_rid, holidayname: "", from_date: "", to_date: "", type: "public", note: "" });
 
+// Native <input type="date"> only accepts min/max in exact "yyyy-mm-dd"
+// form — the API's startDate/endDate may come back as a full ISO timestamp
+// (e.g. "2025-06-01T00:00:00.000Z"), so slice down to the date portion.
+const toDateInputValue = (value?: string | null): string | undefined =>
+  value ? value.slice(0, 10) : undefined;
+
 interface Props {
   onClose: () => void;
 }
@@ -33,6 +39,8 @@ interface Props {
 const BulkAddHolidayModal = ({ onClose }: Props) => {
   const queryClient = useQueryClient();
   const { activeYear, loading: yearsLoading } = useAcademicYears();
+  const yearMin = toDateInputValue(activeYear?.startDate);
+  const yearMax = toDateInputValue(activeYear?.endDate);
   const [rows, setRows] = useState<BulkRow[]>([newRow(), newRow(), newRow()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -65,7 +73,7 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
         academicYearId: activeYear.id,
       }));
       const res = await bulkAddHolidays(payload);
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
       setSuccess(`${res.count} holiday(s) added successfully.`);
       setTimeout(() => { onClose(); }, 1400);
     } catch (err: unknown) {
@@ -113,13 +121,16 @@ const BulkAddHolidayModal = ({ onClose }: Props) => {
               <Input
                 type="date"
                 value={row.from_date}
+                min={yearMin}
+                max={yearMax}
                 onChange={e => updateRow(row.id, "from_date", e.target.value)}
                 inputSize="sm"
               />
               <Input
                 type="date"
                 value={row.to_date}
-                min={row.from_date || undefined}
+                min={row.from_date || yearMin}
+                max={yearMax}
                 onChange={e => updateRow(row.id, "to_date", e.target.value)}
                 inputSize="sm"
               />

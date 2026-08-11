@@ -30,7 +30,7 @@ export const useAttendance = (month: number, year: number) =>
 
 export const useMarketingMutations = () => {
   const qc = useQueryClient();
-  const inv = () => qc.invalidateQueries({ queryKey: MARKETING_KEYS.all });
+  const inv = () => qc.invalidateQueries({ queryKey: MARKETING_KEYS.all, refetchType: "all" });
 
   return {
     createRep:       useMutation({

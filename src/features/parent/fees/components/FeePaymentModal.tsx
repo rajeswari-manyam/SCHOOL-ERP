@@ -31,7 +31,8 @@ export function PaymentModal({
   const [paymentMethod, setPaymentMethod] = useState<string>("UPI");
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const { recordPayment, paying } = useFeeStore();
+  const recordPayment = useFeeStore((s) => s.recordPayment);
+  const paying = useFeeStore((s) => s.paying);
 
   // Derive initials from the real student name
   const initials = studentName

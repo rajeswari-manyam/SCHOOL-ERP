@@ -1,4 +1,10 @@
 export { SettingsPage } from "./SettingsPage";
+export { default as SchoolProfilePage } from "./pages/SchoolProfilePage";
+export { default as WhatsAppSettingsPage } from "./pages/WhatsAppSettingsPage";
+export { default as AcademicConfigPage } from "./pages/AcademicConfigPage";
+export { default as FeeConfigPage } from "./pages/FeeConfigPage";
+export { default as UserAccountsPage } from "./pages/UserAccountsPage";
+export { default as PermissionsPage } from "./pages/PermissionsPage";
 export { useSchoolProfile, useWhatsApp, useAcademicConfig, useFeeConfig, useUserAccounts, usePermissions } from "./hooks/useSettings";
 export type * from "./types/settings.types";
 export * from "./utils/Settings.utils";

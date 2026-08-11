@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   FaThLarge,
@@ -6,6 +6,9 @@ import {
   FaUserCheck,
   FaUserTie,
   FaCalendarAlt,
+  FaUmbrellaBeach,
+  FaGraduationCap,
+  FaUserClock,
   FaMoneyBill,
   FaBullhorn,
   FaCog,
@@ -17,10 +20,18 @@ import {
 
 import Sidebar from "../components/common/Sidebar";
 import Topbar from "../components/common/Topbar";
+import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
-import { fetchSchoolProfile } from "@/services/settings.api";
+// NOTE: intentionally NOT importing from "@/services/settings.api" — that
+// file's fetchSchoolProfile() hits /organization/getschooldetails/:id, an
+// org/super-admin-scoped endpoint. A school-admin's tenant token gets
+// rejected by it (401), and since that call wasn't marked
+// _skipLogoutOn401, the axios interceptor force-logged the user out on
+// every page refresh. This is the tenant-scoped implementation
+// (/tenant/school-profile) meant for this portal.
+import { fetchSchoolProfile } from "@/features/school-admin/settings/api/settings.api";
 import { useSetupStatus } from "@/features/school-admin/dashboard/hooks/useSetupStatus";
 
 // ✅ Breadcrumb labels
@@ -28,25 +39,33 @@ const BreadcrumbLabels: Record<string, string> = {
   "/schooladmin/dashboard": "Dashboard",
   "/schooladmin/admissions": "Admissions",
   "/schooladmin/attendance": "Attendance",
+  "/schooladmin/holidays": "Holidays",
   "/schooladmin/students": "Students",
   "/schooladmin/staff": "Staff",
+  "/schooladmin/staff/leaves": "Leaves",
   "/schooladmin/classes": "Classes",
   "/schooladmin/timetable": "Timetable",
+  "/schooladmin/timetable/exams": "Exam Timetable",
   "/schooladmin/fees": "Fee Collection",
   "/schooladmin/reports": "Reports",
   "/schooladmin/results": "Results",
   "/schooladmin/settings": "Settings",
   "/schooladmin/support": "Support Ticket",
+  "/schooladmin/support/new": "Raise Ticket",
   "/schooladmin/announcements": "Announcements",
+  "/schooladmin/announcements/new": "New Announcement",
 };
 
 const NavItem = [
   { label: "Dashboard",      to: "/schooladmin/dashboard",  icon: <FaThLarge />,      group: "Main" },
   { label: "Attendance",     to: "/schooladmin/attendance", icon: <FaUserCheck />,    group: "Academics" },
+  { label: "Holidays",       to: "/schooladmin/holidays",   icon: <FaUmbrellaBeach />, group: "Academics" },
   { label: "Students",       to: "/schooladmin/students",   icon: <FaUserFriends />,  group: "Academics" },
   { label: "Staff",          to: "/schooladmin/staff",      icon: <FaUserTie />,      group: "Academics" },
+  { label: "Leaves",         to: "/schooladmin/staff/leaves", icon: <FaUserClock />,  group: "Academics" },
   { label: "Classes",        to: "/schooladmin/classes",    icon: <FaBook />,         group: "Academics" },
   { label: "Timetable",      to: "/schooladmin/timetable",  icon: <FaCalendarAlt />,  group: "Academics" },
+  { label: "Exam Timetable", to: "/schooladmin/timetable/exams", icon: <FaGraduationCap />, group: "Academics" },
   { label: "Results",        to: "/schooladmin/results",    icon: <FaClipboardList />, group: "Academics" },
   { label: "Fee Collection", to: "/schooladmin/fees",       icon: <FaMoneyBill />,    group: "Finance" },
   { label: "Admissions",     to: "/schooladmin/admissions", icon: <FaUserFriends />,  group: "Communication" },
@@ -58,6 +77,14 @@ const NavItem = [
 
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Shown in the content area while a route's code chunk downloads — the
+// sidebar/topbar stay mounted so navigation doesn't flash a blank page.
+const PageContentLoader = () => (
+  <div className="flex items-center justify-center h-[60vh]">
+    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+  </div>
+);
 
 export const SchoolAdminLayout = () => {
   const location = useLocation();
@@ -169,7 +196,11 @@ export const SchoolAdminLayout = () => {
       <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />
         <main ref={mainRef} className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-4 md:px-6 lg:px-8 pt-3 md:pt-4 pb-8 mt-12 sm:mt-14">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Suspense fallback={<PageContentLoader />}>
+              <Outlet />
+            </Suspense>
+          </RouteErrorBoundary>
         </main>
       </div>
     </div>

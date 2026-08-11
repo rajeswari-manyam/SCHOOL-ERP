@@ -40,7 +40,10 @@ export function useSchoolProfile() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.fetchSchoolProfile().then(data => {
+    // settingsApi.fetchSchoolProfile (tenant-scoped: /tenant/school-profile) —
+    // NOT api.fetchSchoolProfile, which hits an org/super-admin-only endpoint
+    // that 401s for a school-admin token and force-logs-out the session.
+    settingsApi.fetchSchoolProfile().then(data => {
       setProfile(data);
       setLoading(false);
     });

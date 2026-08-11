@@ -87,11 +87,19 @@ export default function HomeworkPage() {
   const displayClass   = student?.classDetail?.class_name ?? activeChild?.classDetail?.className ?? activeChild?.class ?? "";
   const displaySection = student?.sectionDetail?.sectionName ?? activeChild?.sectionDetail?.sectionName ?? activeChild?.section ?? "";
 
-  const {
-    tab, setTab,
-    allHomeworks, allLoading, allError,
-    setAllHomeworks, setAllLoading, setAllError,
-  } = useHomeworkStore();
+  // ✅ Select each field individually — `useHomeworkStore()` with no
+  // selector subscribes to the entire store and returns a new object on
+  // every single update, which is the exact pattern already identified
+  // (and fixed) as the cause of the dashboard/attendance browser-freeze bug
+  // elsewhere in the app.
+  const tab            = useHomeworkStore((s) => s.tab);
+  const setTab         = useHomeworkStore((s) => s.setTab);
+  const allHomeworks   = useHomeworkStore((s) => s.allHomeworks);
+  const allLoading     = useHomeworkStore((s) => s.allLoading);
+  const allError       = useHomeworkStore((s) => s.allError);
+  const setAllHomeworks = useHomeworkStore((s) => s.setAllHomeworks);
+  const setAllLoading   = useHomeworkStore((s) => s.setAllLoading);
+  const setAllError     = useHomeworkStore((s) => s.setAllError);
 
   const {
     materials,

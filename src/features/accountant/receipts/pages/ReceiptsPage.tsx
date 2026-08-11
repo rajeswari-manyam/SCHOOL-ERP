@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Eye, FileText, Loader2, Trash2 } from "lucide-react";
+import { Download, Eye, Loader2, Trash2 } from "lucide-react";
 import { ReceiptFilters } from "../components/ReceiptFilters";
 import { ReceiptDetailModal } from "../components/ReceiptDetailModal";
-import { ExportModal } from "../components/ExportModal";
-import { GenerateReceiptModal } from "../components/GenerateReceiptModal";
-import { GenerateMonthlyReportModal } from "../components/GenerateMonthlyReportModal";
 import { useReceiptsManager } from "../hooks/useReceiptsManager";
 import { downloadRecordFeePayment } from "@/services/fee.api";
 
@@ -15,13 +11,10 @@ import type { Receipt, ReceiptDetail } from "../types/receipts.types";
 import Pagination from "../../../../components/ui/pagination";
 
 export default function ReceiptsPage() {
-  const { receipts, isLoadingReceipts, refetchReceipts, handleDelete } = useReceiptsManager();
+  const { receipts, isLoadingReceipts, handleDelete } = useReceiptsManager();
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptDetail | null>(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handleDownload = async (id: string) => {
@@ -56,51 +49,11 @@ export default function ReceiptsPage() {
     <div className="space-y-4 px-4 sm:px-6 pt-2 pb-6 bg-white/50 min-h-screen -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Receipts & Invoices</h2>
-          <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
-            All fee payment receipts and transactional logs
-          </p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 sm:flex-none h-9 sm:h-8 text-xs gap-2"
-            onClick={() => setShowExportModal(true)}
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export All</span>
-            <span className="sm:hidden">Export</span>
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 sm:flex-none h-9 sm:h-8 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white gap-2"
-            onClick={() => setShowGenerateModal(true)}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Generate Receipt</span>
-            <span className="sm:hidden">Generate</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-white p-1 rounded-lg border border-gray-200 w-full sm:w-fit overflow-x-auto no-scrollbar">
-        {["All Receipts", "Generate Receipt"].map((tab, idx) => (
-          <button
-            key={tab}
-            onClick={() => { if (idx === 1) setShowGenerateModal(true); }}
-            className={`px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium rounded-md transition-colors whitespace-nowrap flex-1 sm:flex-none ${
-              idx === 0
-                ? "bg-[#3525CD] text-white"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div>
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900">Receipts & Invoices</h2>
+        <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
+          All fee payment receipts and transactional logs
+        </p>
       </div>
 
       {/* Filters */}
@@ -291,34 +244,12 @@ export default function ReceiptsPage() {
         showPageNumbers={true}
       />
 
-      {/* Generate Report */}
-      <div className="flex justify-center">
-        <Button
-          variant="outline"
-          onClick={() => setShowReportModal(true)}
-          className="h-9 px-6 text-xs bg-white border-gray-200 text-[#3525CD] hover:bg-gray-50"
-        >
-          📊 Generate Report
-        </Button>
-      </div>
       </>
       )}
 
       {/* Modals */}
       {selectedReceipt && (
         <ReceiptDetailModal receipt={selectedReceipt} onClose={() => setSelectedReceipt(null)} />
-      )}
-      {showExportModal && (
-        <ExportModal onClose={() => setShowExportModal(false)} />
-      )}
-      {showGenerateModal && (
-        <GenerateReceiptModal
-          onClose={() => setShowGenerateModal(false)}
-          onSuccess={() => { setShowGenerateModal(false); refetchReceipts(); }}
-        />
-      )}
-      {showReportModal && (
-        <GenerateMonthlyReportModal onClose={() => setShowReportModal(false)} />
       )}
     </div>
   );

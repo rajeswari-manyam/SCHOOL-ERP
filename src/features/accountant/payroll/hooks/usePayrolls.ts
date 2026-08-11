@@ -8,6 +8,7 @@ import {
 } from "@/services/payroll.api";
 import { getAllStaff } from "@/services/staff.api";
 import { useUIStore } from "@/store/uiStore";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 import type { SalaryConfig, SalaryFormData, StaffPayroll, PayrollSummary, PayslipResult } from "../types/payroll.types";
 
 
@@ -110,8 +111,8 @@ export const useSalaryConfig = () => {
       });
 
       setSalaryData(configs);
-    } catch {
-      toast.error("Failed to load salary data");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to load salary data"));
     } finally {
       setIsLoading(false);
     }
@@ -142,8 +143,8 @@ export const useSalaryConfig = () => {
       });
       toast.success("Salary updated");
       loadData();
-    } catch {
-      toast.error("Failed to update salary");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to update salary"));
     }
   };
 
@@ -152,8 +153,8 @@ export const useSalaryConfig = () => {
       await deletePayrollById(id);
       toast.success("Payroll record deleted");
       loadData();
-    } catch {
-      toast.error("Failed to delete payroll record");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to delete payroll record"));
     }
   };
 
@@ -212,7 +213,7 @@ export const usePayrollHistory = () => {
         }
         setStaffCount(sRes.count ?? (sRes.data ?? []).length);
       })
-      .catch(() => toast.error("Failed to load payroll history"))
+      .catch((err) => toast.error(getErrorMessage(err, "Failed to load payroll history")))
       .finally(() => setIsLoading(false));
 
     // Phase 2 — trend chart in background (non-blocking)
@@ -274,8 +275,8 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
       setPayslipsList(payslipRes.data ?? []);
       setPayrollConfigs(payrollRes.data ?? []);
       setStaffList(staffRes.data ?? []);
-    } catch {
-      toast.error("Failed to load payroll data");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to load payroll data"));
     } finally {
       setIsLoading(false);
     }
@@ -401,8 +402,8 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
       } else {
         toast.error(res.message || "Failed to generate payslip");
       }
-    } catch {
-      toast.error("Failed to generate payslip");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to generate payslip"));
     }
     if (!result) throw new Error();
     return result;
@@ -421,8 +422,8 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
         return;
       }
       loadData();
-    } catch {
-      toast.error("Failed to delete");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to delete"));
     }
   };
 

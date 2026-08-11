@@ -197,13 +197,24 @@ export default function ExamsPage() {
     }
   };
 
-  const {
-    tab, setTab,
-    upcomingExams, upcomingLoading, upcomingError,
-    setUpcomingExams, setUpcomingLoading, setUpcomingError,
-    results, resultsLoading, resultsError,
-    setResults, setResultsLoading, setResultsError,
-  } = useExamsStore();
+  // ✅ Select each field individually — `useExamsStore()` with no selector
+  // subscribes to the entire store and returns a new object on every single
+  // update, which is the exact pattern already identified (and fixed) as
+  // the cause of the dashboard/attendance browser-freeze bug elsewhere.
+  const tab             = useExamsStore((s) => s.tab);
+  const setTab          = useExamsStore((s) => s.setTab);
+  const upcomingExams   = useExamsStore((s) => s.upcomingExams);
+  const upcomingLoading = useExamsStore((s) => s.upcomingLoading);
+  const upcomingError   = useExamsStore((s) => s.upcomingError);
+  const setUpcomingExams   = useExamsStore((s) => s.setUpcomingExams);
+  const setUpcomingLoading = useExamsStore((s) => s.setUpcomingLoading);
+  const setUpcomingError   = useExamsStore((s) => s.setUpcomingError);
+  const results         = useExamsStore((s) => s.results);
+  const resultsLoading  = useExamsStore((s) => s.resultsLoading);
+  const resultsError    = useExamsStore((s) => s.resultsError);
+  const setResults        = useExamsStore((s) => s.setResults);
+  const setResultsLoading = useExamsStore((s) => s.setResultsLoading);
+  const setResultsError   = useExamsStore((s) => s.setResultsError);
 
   // ── Fetch: Upcoming exams ─────────────────────────────────────────────────
   useEffect(() => {

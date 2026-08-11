@@ -52,7 +52,15 @@ export const useSchoolDetail = (id: string) => {
 export const useSchoolMutations = () => {
   const qc = useQueryClient();
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: SCHOOLS_KEYS.all });
+  // refetchType: "all" (not the default "active") matters here — "Add School"
+  // lives on its own route, so by the time this mutation succeeds, the
+  // Schools list's query is inactive (unmounted). With refetchOnMount:false
+  // set globally, an inactive query that's merely marked stale won't refetch
+  // on its next mount either, so the new school wouldn't show up until a
+  // hard page refresh. Forcing the refetch here, at invalidation time,
+  // refreshes the cache immediately so the list is already current by the
+  // time the user navigates back to it.
+  const invalidate = () => qc.invalidateQueries({ queryKey: SCHOOLS_KEYS.all, refetchType: "all" });
 
   const createSchool = useMutation({
     mutationFn: (payload: SchoolFormValues) => schoolsApi.createSchool(payload),

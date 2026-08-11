@@ -2,6 +2,7 @@
 // Barrel exports — same pattern as teacher/dashboard/index.ts
 
 export { default as MyAttendancePage }        from "./Myattendancepage";
+export { default as HolidaysPage }             from "./HolidaysPage";
 export { default as WAMethodCard }             from "./components/WAMethodCard";
 export { default as TodayTab }                 from "./components/TodayTab";
 export { default as MyHistoryTab }             from "./components/MyHistoryTab";

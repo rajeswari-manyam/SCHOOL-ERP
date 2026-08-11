@@ -6,14 +6,12 @@ import {
 } from "../../../../services/studymaterial.api";
 
 export function useStudyMaterials(classId: string, sectionId: string) {
-  const {
-    studyMaterials,
-    materialsLoading,
-    materialsError,
-    setStudyMaterials,
-    setMaterialsLoading,
-    setMaterialsError,
-  } = useHomeworkStore();
+  const studyMaterials     = useHomeworkStore((s) => s.studyMaterials);
+  const materialsLoading   = useHomeworkStore((s) => s.materialsLoading);
+  const materialsError     = useHomeworkStore((s) => s.materialsError);
+  const setStudyMaterials  = useHomeworkStore((s) => s.setStudyMaterials);
+  const setMaterialsLoading = useHomeworkStore((s) => s.setMaterialsLoading);
+  const setMaterialsError   = useHomeworkStore((s) => s.setMaterialsError);
 
   useEffect(() => {
     if (!classId || !sectionId) return;

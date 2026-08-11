@@ -1,7 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { Eye } from "lucide-react";
 import type { RecentSchool } from "../types/dashboard.types";
-import { Button } from "@/components/ui/button";
 
 const Avatar = ({ initials }: { initials: string }) => (
   <div className="w-7 h-7 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
@@ -18,16 +15,36 @@ const joinedAgo = (iso: string) => {
   return `${months} month${months === 1 ? "" : "s"} ago`;
 };
 
-interface RecentSchoolsCardProps { schools: RecentSchool[]; }
+interface RecentSchoolsCardProps {
+  schools: RecentSchool[];
+  isLoading?: boolean;
+}
 
-const RecentSchoolsCard = ({ schools }: RecentSchoolsCardProps) => {
-  const navigate = useNavigate();
+const SkeletonRow = () => (
+  <div className="flex flex-col gap-3 px-4 py-2.5 sm:flex-row sm:items-center">
+    <div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+    <div className="flex-1 min-w-0 space-y-1.5">
+      <div className="h-3 w-24 rounded bg-gray-100 animate-pulse" />
+      <div className="h-2.5 w-32 rounded bg-gray-100 animate-pulse" />
+    </div>
+    <div className="h-4 w-14 rounded-md bg-gray-100 animate-pulse flex-shrink-0" />
+    <div className="h-3 w-14 rounded bg-gray-100 animate-pulse flex-shrink-0" />
+  </div>
+);
+
+const RecentSchoolsCard = ({ schools, isLoading = false }: RecentSchoolsCardProps) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-50">
         <h2 className="text-[13px] font-extrabold text-gray-900">Recent Schools Onboarded</h2>
       </div>
-      {schools.length === 0 ? (
+      {isLoading ? (
+        <div className="divide-y divide-gray-50">
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonRow key={i} />
+          ))}
+        </div>
+      ) : schools.length === 0 ? (
         <div className="py-10 text-center text-sm text-gray-400">No schools onboarded yet.</div>
       ) : (
         <div className="divide-y divide-gray-50">
@@ -42,12 +59,6 @@ const RecentSchoolsCard = ({ schools }: RecentSchoolsCardProps) => {
                 {s.plan}
               </span>
               <span className="text-[11px] text-gray-400 flex-shrink-0 min-w-[60px] text-right">{joinedAgo(s.createdAt)}</span>
-              <Button
-                onClick={() => navigate(`/super-admin/schools/${s.id}`)}
-                className="text-gray-400 hover:text-indigo-600 transition-colors flex-shrink-0"
-              >
-                <Eye size={14} />
-              </Button>
             </div>
           ))}
         </div>

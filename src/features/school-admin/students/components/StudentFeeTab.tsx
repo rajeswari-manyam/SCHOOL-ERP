@@ -70,7 +70,35 @@ const StudentFeeTab = ({ feeSummary, feePayments }: Props) => {
           <div className="px-5 py-4 border-b border-gray-100">
             <h4 className="font-bold text-gray-800">Fee Breakdown</h4>
           </div>
-          <div className="overflow-x-auto">
+          {/* Card list (mobile only) */}
+          <div className="sm:hidden divide-y divide-gray-50">
+            {details.map((d) => (
+              <div key={`${d.id}-card`} className="px-4 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-gray-800 text-sm">{d.feeHeadName ?? "—"}</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${STATUS_STYLES[d.status] ?? STATUS_STYLES.PENDING}`}>
+                    {d.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 mt-1 text-xs text-gray-600">
+                  <span>Final {fmt(d.finalAmount)}</span>
+                  <span className="text-emerald-700 font-semibold">Paid {fmt(d.paidAmount)}</span>
+                  {d.dueAmount > 0 ? (
+                    <span className="text-red-600 font-bold">Due {fmt(d.dueAmount)}</span>
+                  ) : (
+                    <span className="text-gray-400">Due —</span>
+                  )}
+                </div>
+                {d.dueDate && (
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Due date {new Date(d.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
@@ -129,7 +157,7 @@ const StudentFeeTab = ({ feeSummary, feePayments }: Props) => {
             {payments.map((p, i) => (
               <div
                 key={p.id}
-                className={`flex items-center gap-4 px-5 py-3.5 ${i < payments.length - 1 ? "border-b border-gray-50" : ""} hover:bg-gray-50/50 transition-colors`}
+                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3.5 ${i < payments.length - 1 ? "border-b border-gray-50" : ""} hover:bg-gray-50/50 transition-colors`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
@@ -139,7 +167,7 @@ const StudentFeeTab = ({ feeSummary, feePayments }: Props) => {
                     <span className="text-sm font-semibold text-gray-800">{p.feeName ?? "Fee Payment"}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-3 shrink-0 flex-wrap">
                   <span className="text-sm font-bold text-gray-900">{fmt(p.amount_received)}</span>
                   {p.payment_mode && <span className="text-xs text-gray-400 uppercase">{p.payment_mode}</span>}
                   {p.receipt_no && <span className="text-xs text-gray-400">{p.receipt_no}</span>}

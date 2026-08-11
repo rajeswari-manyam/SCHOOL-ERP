@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Edit3, FileText, MoreVertical, MessageCircle, ArrowLeft, UserPlus } from "lucide-react";
-import { useStudentProfile, useStudents } from "../hooks/useStudents";
+import { useStudentProfile } from "../hooks/useStudents";
 import { useStudentAttendance } from "../hooks/useStudentAttendance";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
 import StudentAttendanceTab from "./StudentAttendanceTab";
@@ -42,7 +42,6 @@ const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { student, loading, error, feeSummary, feePayments, retry } = useStudentProfile(id!);
-  const { students: allStudents } = useStudents();
   const attendanceHook = useStudentAttendance(student ?? null);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showEdit, setShowEdit] = useState(false);
@@ -154,13 +153,13 @@ const StudentProfilePage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-0 mt-5 border-b border-gray-100">
+        <div className="flex gap-0 mt-5 border-b border-gray-100 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
             <Button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               variant="ghost"
-              className={`px-4 py-2.5 text-xs uppercase tracking-wider border-b-2 transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2.5 text-xs uppercase tracking-wider border-b-2 transition-colors ${
                 activeTab === t.key
                   ? "border-indigo-600 text-indigo-600 hover:bg-transparent"
                   : "border-transparent text-gray-400 hover:text-gray-600 hover:bg-transparent"
@@ -174,9 +173,9 @@ const StudentProfilePage = () => {
 
       {/* Tab content */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left: Personal info */}
-          <div className="col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm text-gray-700">Personal Information</h3>
@@ -192,7 +191,7 @@ const StudentProfilePage = () => {
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-4">
                 <InfoRow label="Admission No" value={student.admissionNo} />
                 <InfoRow label="Class" value={`${student.class}-${student.section}`} />
                 <InfoRow label="Date of Birth" value={student.dob} />
@@ -245,7 +244,7 @@ const StudentProfilePage = () => {
                   <InfoRow label="Address" value={student.residentialAddress} />
                 </div>
               )}
-              <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-2 gap-x-8 gap-y-4">
+              <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-4">
                 <InfoRow label="Admitted On" value={student.admittedOn} />
                 <InfoRow label="Academic Year" value={student.academicYear} />
               </div>
@@ -351,7 +350,6 @@ const StudentProfilePage = () => {
       {showAddParent && student && (
         <AddParentModal
           student={student}
-          students={allStudents}
           onClose={() => setShowAddParent(false)}
           onSaved={() => { setShowAddParent(false); retry(); }}
         />

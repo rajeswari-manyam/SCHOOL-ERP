@@ -53,7 +53,7 @@ export function PendingLeavesCard({ leaves, isLoading }: Props) {
     try {
       await approveLeave(id);
       toast.success('Leave approved');
-      qc.invalidateQueries({ queryKey: [...DASHBOARD_QUERY_KEY, 'pending-leaves'] });
+      qc.invalidateQueries({ queryKey: [...DASHBOARD_QUERY_KEY, 'pending-leaves'], refetchType: "all" });
     } catch {
       toast.error('Failed to approve leave');
     } finally {
@@ -66,7 +66,7 @@ export function PendingLeavesCard({ leaves, isLoading }: Props) {
     try {
       await rejectLeave(id);
       toast.success('Leave rejected');
-      qc.invalidateQueries({ queryKey: [...DASHBOARD_QUERY_KEY, 'pending-leaves'] });
+      qc.invalidateQueries({ queryKey: [...DASHBOARD_QUERY_KEY, 'pending-leaves'], refetchType: "all" });
     } catch {
       toast.error('Failed to reject leave');
     } finally {
@@ -116,31 +116,33 @@ export function PendingLeavesCard({ leaves, isLoading }: Props) {
             const typeStyle = LEAVE_TYPE_STYLE[leave.leave_type?.toLowerCase()] ?? 'bg-gray-50 text-gray-600 border-gray-200';
             const busy = !!processing[leave.id];
             return (
-              <div key={leave.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/60 transition-colors">
-                {/* Avatar */}
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor(name)}`}>
-                  {name.slice(0, 2).toUpperCase()}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-xs font-semibold text-gray-900 truncate">{name}</p>
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase ${typeStyle}`}>
-                      {leave.leave_type}
-                    </span>
+              <div key={leave.id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3.5 hover:bg-gray-50/60 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Avatar */}
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor(name)}`}>
+                    {name.slice(0, 2).toUpperCase()}
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    {fmt(leave.start_date)} → {fmt(leave.end_date)}
-                    <span className="ml-1 font-semibold text-gray-500">· {leave.total_days}d</span>
-                  </p>
-                  {leave.reason && (
-                    <p className="text-[10px] text-gray-400 truncate mt-0.5">{leave.reason}</p>
-                  )}
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs font-semibold text-gray-900 truncate">{name}</p>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase ${typeStyle}`}>
+                        {leave.leave_type}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      {fmt(leave.start_date)} → {fmt(leave.end_date)}
+                      <span className="ml-1 font-semibold text-gray-500">· {leave.total_days}d</span>
+                    </p>
+                    {leave.reason && (
+                      <p className="text-[10px] text-gray-400 truncate mt-0.5">{leave.reason}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                   <button
                     disabled={busy}
                     onClick={() => handleApprove(leave.id)}

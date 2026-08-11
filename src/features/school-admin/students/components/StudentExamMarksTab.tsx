@@ -22,7 +22,39 @@ const MarksTable = ({ marks }: { marks: Mark[] }) => {
           <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
             <h4 className="text-sm font-bold text-gray-800">{examName}</h4>
           </div>
-          <div className="overflow-x-auto">
+          {/* Card list (mobile only) */}
+          <div className="sm:hidden divide-y divide-gray-50">
+            {subjects.map((m) => {
+              const passed = !m.is_absent && m.marks_obtained >= m.max_marks * 0.35;
+              return (
+                <div key={`${m.id}-card`} className="px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-gray-800 text-sm">{m.subject_name || m.subject_id}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${
+                      m.grade?.startsWith("A") ? "bg-green-100 text-green-700" :
+                      m.grade?.startsWith("B") ? "bg-blue-100 text-blue-700" :
+                      m.grade?.startsWith("C") ? "bg-yellow-100 text-yellow-700" :
+                      "bg-red-100 text-red-700"
+                    }`}>
+                      {m.grade || "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <span className="text-xs text-gray-500">
+                      {m.is_absent ? <span className="text-red-500 font-semibold">Absent</span> : `${m.marks_obtained} / ${m.max_marks}`}
+                    </span>
+                    {!m.is_absent && (
+                      <span className={`text-xs font-semibold ${passed ? "text-green-600" : "text-red-500"}`}>
+                        {passed ? "Pass" : "Fail"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">

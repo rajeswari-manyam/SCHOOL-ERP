@@ -12,7 +12,6 @@ import type { Student } from "../types/student.types";
 
 interface Props {
   student: Student;
-  students: Student[];
   onClose: () => void;
   onSaved: () => void;
 }
@@ -31,7 +30,7 @@ const EMPTY_FORM = {
   motherName: "", motherPhone: "", motherOccupation: "", motherEmail: "",
 };
 
-export const AddParentModal = ({ student, students, onClose, onSaved }: Props) => {
+export const AddParentModal = ({ student, onClose, onSaved }: Props) => {
   const [form, setForm] = useState(EMPTY_FORM);
   const [address, setAddress] = useState(student.residentialAddress ?? "");
   const [loading, setLoading] = useState(false);

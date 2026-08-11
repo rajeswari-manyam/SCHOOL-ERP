@@ -227,7 +227,7 @@ const MarkAttendanceModal = () => {
         </CardHeader>
 
         {/* Class / Section / Date row */}
-        <CardContent className="px-6 py-4 border-b border-gray-100">
+        <CardContent className="px-6 py-4 bg-slate-50/60">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Class */}
             <div>
@@ -240,7 +240,7 @@ const MarkAttendanceModal = () => {
                 placeholder={classesLoading ? "Loading…" : "Select class"}
                 value={selectedClassId}
                 onValueChange={handleClassChange}
-                className="mt-2"
+                className="mt-2 bg-slate-50 border-slate-200"
                 disabled={classesLoading}
               />
             </div>
@@ -262,7 +262,7 @@ const MarkAttendanceModal = () => {
                 }
                 value={selectedSectionId}
                 onValueChange={handleSectionChange}
-                className="mt-2"
+                className="mt-2 bg-slate-50 border-slate-200"
                 disabled={!selectedClassId || sectionsLoading}
               />
             </div>
@@ -278,7 +278,7 @@ const MarkAttendanceModal = () => {
                 value={date}
                 max={todayStr}
                 onChange={(e) => setDate(e.target.value)}
-                className="mt-2"
+                className="mt-2 bg-slate-50 border-slate-200"
               />
             </div>
           </div>

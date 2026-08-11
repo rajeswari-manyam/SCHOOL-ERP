@@ -1,4 +1,5 @@
 import api from "@/config/axios";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 // A student's parentDetail is a single combined father+mother record — the
 // backend no longer returns separate per-relation rows.
 export interface ParentDetail {
@@ -92,14 +93,15 @@ import type { CreateStudentPayload, UpdateStudentPayload, UpdateParentPayload, S
 import { getAllClasses } from "@/services/class.api";
 import { getSectionsByClassId, getAllSections } from "@/services/section.api";
 
-const toCamelCase = (obj: any): any => {
+const toCamelCase = (obj: unknown): unknown => {
   if (Array.isArray(obj)) return obj.map(toCamelCase);
   if (obj !== null && typeof obj === "object") {
-    return Object.keys(obj).reduce((acc, key) => {
+    const source = obj as Record<string, unknown>;
+    return Object.keys(source).reduce((acc, key) => {
       const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-      acc[camelKey] = toCamelCase(obj[key]);
+      acc[camelKey] = toCamelCase(source[key]);
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
   }
   return obj;
 };
@@ -186,23 +188,35 @@ export const resolveStudentNames = (
   classMap: Record<string, string>,
   sectionMap: Record<string, string>,
 ): AdminStudentUI[] =>
-  students.map((s) => ({
-    ...s,
-    class: classMap[s.class] ?? classMap[(s as any).class_id] ?? (s.class || ""),
-    section: sectionMap[s.section] ?? sectionMap[(s as any).sectionId] ?? (s.section || ""),
-  }));
+  students.map((s) => {
+    // class_id is a legacy/snake_case key that may still be present on the raw object
+    // even though it isn't part of the AdminStudentUI type — cast narrowly instead of
+    // `any` so the fallback lookup keeps working without widening the type.
+    const extra = s as unknown as { class_id?: string };
+    return {
+      ...s,
+      class: classMap[s.class] ?? classMap[extra.class_id ?? ""] ?? (s.class || ""),
+      section: sectionMap[s.section] ?? sectionMap[s.sectionId ?? ""] ?? (s.section || ""),
+    };
+  });
 
 export const studentsApi = {
   getAll: async (academicYearId?: string | null): Promise<AdminStudentUI[]> => {
     const params: Record<string, string> = {};
     if (academicYearId) params.academicYearId = academicYearId;
-    const { data } = await api.get("/tenant/getallstudents", { params });
-    let list: any[] = [];
-    if (Array.isArray(data)) list = data;
-    else if (data?.students && Array.isArray(data.students)) list = data.students;
-    else if (data?.data && Array.isArray(data.data)) list = data.data;
-    else return [];
-    return list.map((raw: any) => {
+    const { data } = await api.get<unknown>("/tenant/getallstudents", { params });
+    let list: unknown[] = [];
+    if (Array.isArray(data)) {
+      list = data;
+    } else if (data && typeof data === "object") {
+      const obj = data as Record<string, unknown>;
+      if (Array.isArray(obj.students)) list = obj.students;
+      else if (Array.isArray(obj.data)) list = obj.data;
+      else return [];
+    } else {
+      return [];
+    }
+    return list.map((raw: unknown) => {
       const s = toCamelCase(raw) as Record<string, unknown>;
       const classDetail = s.classDetail as Record<string, unknown> | undefined;
       const sectionDetail = s.sectionDetail as Record<string, unknown> | undefined;
@@ -240,9 +254,12 @@ export const studentsApi = {
     });
   },
   getById: async (id: string): Promise<AdminStudentUI | undefined> => {
-    const { data } = await api.get(`/tenant/getstudentsById/${id}`);
-    let raw: any = data;
-    if (raw?.data && typeof raw.data === "object") raw = raw.data;
+    const { data } = await api.get<unknown>(`/tenant/getstudentsById/${id}`);
+    let raw: unknown = data;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      const obj = raw as Record<string, unknown>;
+      if (obj.data && typeof obj.data === "object") raw = obj.data;
+    }
     const camel = toCamelCase(raw) as Record<string, unknown>;
     if (!camel.id) return undefined;
 
@@ -320,9 +337,8 @@ export const studentsApi = {
         headers: { "Content-Type": "multipart/form-data" },
       });
       raw = res.data;
-    } catch (err: any) {
-      const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to create student";
-      throw new Error(message);
+    } catch (err) {
+      throw new Error(getErrorMessage(err, "Failed to create student"));
     }
     const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     if (obj?.status === false) {

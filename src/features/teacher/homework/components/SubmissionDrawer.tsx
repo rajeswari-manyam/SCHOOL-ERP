@@ -79,7 +79,7 @@ const SubmissionDrawer = ({ open, onClose, hw }: Props) => {
       }),
     onMutate: (studentId) => setMarkingId(studentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["submissions", hw.id] });
+      queryClient.invalidateQueries({ queryKey: ["submissions", hw.id], refetchType: "all" });
       toast.success("Marked as submitted");
     },
     onError: () => toast.error("Failed to mark submission"),

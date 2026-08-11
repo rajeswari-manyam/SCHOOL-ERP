@@ -1,4 +1,5 @@
 import api from "@/config/axios";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 
 
@@ -117,7 +118,7 @@ interface RawLeaveRecord {
   updatedAt?: string;
 }
 
-const extractArray = (value: unknown): any[] => {
+const extractArray = (value: unknown): unknown[] => {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== "object") return [];
 
@@ -164,7 +165,7 @@ export const fetchLeaves = async (params?: { staff_id?: string; leave_type?: str
     if (params?.staff_id) query.staff_id = params.staff_id;
     if (params?.leave_type) query.leave_type = params.leave_type;
     if (params?.status) query.status = params.status;
-    const { data } = await api.get("/tenant/getallleaves", { params: query });
+    const { data } = await api.get<unknown>("/tenant/getallleaves", { params: query });
     const raw = extractArray(data);
     const records: LeaveRecord[] = [];
     for (const item of raw) {
@@ -181,11 +182,8 @@ export const fetchLeaves = async (params?: { staff_id?: string; leave_type?: str
       }
     }
     return records;
-  } catch (err: any) {
-    const status = err?.response?.status;
-    const body = err?.response?.data;
-    const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-    console.error(`[staff] GET /tenant/getallleaves FAILED (${status ?? 'network'})`, bodyStr || err?.message || '');
+  } catch (err) {
+    console.error(`[staff] GET /tenant/getallleaves FAILED`, getErrorMessage(err));
     return [];
   }
 };
@@ -219,14 +217,9 @@ export const approveLeave = async (
     );
     console.log(`[staff] approveLeave OK (${leaveId})`, data);
     return data;
-  } catch (err: any) {
-    const status = err?.response?.status;
-    const body = err?.response?.data;
-    const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-    console.error(`[staff] PUT /tenant/leaves/${leaveId}/approve FAILED (${status ?? 'network'})`, bodyStr || err?.message || '');
-    throw new Error(
-      err?.response?.data?.message ?? err?.message ?? 'Failed to approve leave',
-    );
+  } catch (err) {
+    console.error(`[staff] PUT /tenant/leaves/${leaveId}/approve FAILED`, getErrorMessage(err));
+    throw new Error(getErrorMessage(err, 'Failed to approve leave'));
   }
 };
 
@@ -246,28 +239,60 @@ export const rejectLeave = async (
     );
     console.log(`[staff] rejectLeave OK (${leaveId})`, data);
     return data;
-  } catch (err: any) {
-    const status = err?.response?.status;
-    const body = err?.response?.data;
-    const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-    console.error(`[staff] PUT /tenant/leaves/${leaveId}/reject FAILED (${status ?? 'network'})`, bodyStr || err?.message || '');
-    throw new Error(
-      err?.response?.data?.message ?? err?.message ?? 'Failed to reject leave',
-    );
+  } catch (err) {
+    console.error(`[staff] PUT /tenant/leaves/${leaveId}/reject FAILED`, getErrorMessage(err));
+    throw new Error(getErrorMessage(err, 'Failed to reject leave'));
   }
 };
 
-const toCamelCase = (obj: any): any => {
+const toCamelCase = (obj: unknown): unknown => {
   if (Array.isArray(obj)) return obj.map(toCamelCase);
   if (obj !== null && typeof obj === "object") {
-    return Object.keys(obj).reduce((acc, key) => {
+    const source = obj as Record<string, unknown>;
+    return Object.keys(source).reduce((acc, key) => {
       const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-      acc[camelKey] = toCamelCase(obj[key]);
+      acc[camelKey] = toCamelCase(source[key]);
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
   }
   return obj;
 };
+
+// Loosely-typed shape of a single staff record after camelCasing a raw API
+// response (from /tenant/getallstaff or similar) — fields are optional and
+// left as `unknown` where the raw value can vary, matching the duck-typed
+// access pattern already used for RawLeaveRecord above.
+interface RawStaffMemberRecord {
+  id?: string;
+  name?: string;
+  role?: string;
+  designation?: string;
+  position?: string;
+  status?: string;
+  isTeaching?: boolean;
+  classes?: unknown;
+  subjects?: unknown;
+  classTeacherOf?: unknown;
+  subjectTeacherOf?: unknown;
+  assignedClassesSubjects?: Array<{ subjectName?: string; className?: string; sectionName?: string }>;
+  empNumber?: string;
+  employeeId?: string;
+  phone?: string;
+  email?: string;
+  leaveBalance?: number;
+  leavesBalance?: number;
+  leaveRequest?: LeaveRequest;
+  departmentId?: string;
+  department?: { id?: string; departmentName?: string };
+  departmentName?: string;
+  qualification?: string;
+  salary?: number | string;
+  dateOfBirth?: string;
+  dateOfJoin?: string;
+  image?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const normalizeRole = (role?: string): StaffMember["role"] => {
   const value = (role ?? "").toLowerCase().trim();
@@ -297,8 +322,8 @@ const toArray = (value: unknown): string[] => {
   return [];
 };
 
-const normalizeStaffMember = (item: any): StaffMember => {
-  const camel = toCamelCase(item);
+const normalizeStaffMember = (item: unknown): StaffMember => {
+  const camel = toCamelCase(item) as RawStaffMemberRecord;
   const role = normalizeRole(camel.role ?? camel.designation ?? camel.position);
   const status = normalizeStatus(camel.status);
   const isTeaching = /teacher/i.test(camel.role ?? "") || Boolean(camel.isTeaching);
@@ -316,9 +341,9 @@ const normalizeStaffMember = (item: any): StaffMember => {
   // member can have more than one assignment row resolving to the same
   // class/subject label (e.g. duplicate rows from a re-run carry-forward),
   // so dedupe before rendering these as pills.
-  const assigned: any[] = Array.isArray(camel.assignedClassesSubjects) ? camel.assignedClassesSubjects : [];
-  const assignedSubjects = dedupe(assigned.map((a: any) => a.subjectName).filter(Boolean) as string[]);
-  const assignedClasses = dedupe(assigned.map((a: any) => `Class ${a.className}${a.sectionName ? ` - ${a.sectionName}` : ""}`).filter(Boolean) as string[]);
+  const assigned = Array.isArray(camel.assignedClassesSubjects) ? camel.assignedClassesSubjects : [];
+  const assignedSubjects = dedupe(assigned.map((a) => a.subjectName).filter(Boolean) as string[]);
+  const assignedClasses = dedupe(assigned.map((a) => `Class ${a.className}${a.sectionName ? ` - ${a.sectionName}` : ""}`).filter(Boolean) as string[]);
 
   return {
     id: camel.id ?? "",
@@ -376,8 +401,8 @@ export const getStaffLeaveBalance = async (
   try {
     const params: Record<string, string> = { staff_id: staffId };
     if (academicYearId) params.academic_year = academicYearId;
-    const { data } = await api.get("/tenant/leavebalance", { params });
-    if (data?.status) return data as LeaveBalanceResponse;
+    const { data } = await api.get<LeaveBalanceResponse>("/tenant/leavebalance", { params });
+    if (data?.status) return data;
     return null;
   } catch {
     return null;
@@ -390,7 +415,7 @@ export const getStaffLeaveSummary = async (
 ): Promise<LeaveSummaryEntry[]> => {
   const params: Record<string, string> = { staff_id: staffId };
   if (academicYearId) params.academic_year = academicYearId;
-  const { data } = await api.get("/tenant/leavebalance", { params });
+  const { data } = await api.get<LeaveBalanceResponse>("/tenant/leavebalance", { params });
   const list: LeaveSummaryEntry[] = Array.isArray(data?.balance_list) ? data.balance_list : [];
   return list;
 };
@@ -420,16 +445,20 @@ export const fetchStaff = async (academicYearId?: string | null): Promise<StaffM
   const params: Record<string, string> = {};
   if (academicYearId) params.academicYearId = academicYearId;
   const [staffRes, leaves] = await Promise.all([
-    api.get("/tenant/getallstaff", { params }).catch(() => ({ data: [] })),
+    api.get<unknown>("/tenant/getallstaff", { params }).catch(() => ({ data: [] as unknown })),
     fetchLeaves(),
   ]);
 
-  const rawStaff = staffRes?.data ?? staffRes;
-  let list: any[] = [];
-  if (Array.isArray(rawStaff)) list = rawStaff;
-  else if (rawStaff?.staff && Array.isArray(rawStaff.staff)) list = rawStaff.staff;
-  else if (rawStaff?.data && Array.isArray(rawStaff.data)) list = rawStaff.data;
-  else console.warn("fetchStaff: unexpected response shape", rawStaff);
+  const rawStaff: unknown = (staffRes as { data?: unknown })?.data ?? staffRes;
+  let list: unknown[] = [];
+  if (Array.isArray(rawStaff)) {
+    list = rawStaff;
+  } else if (rawStaff && typeof rawStaff === "object") {
+    const obj = rawStaff as Record<string, unknown>;
+    if (Array.isArray(obj.staff)) list = obj.staff;
+    else if (Array.isArray(obj.data)) list = obj.data;
+    else console.warn("fetchStaff: unexpected response shape", rawStaff);
+  }
 
   const leaveMap = new Map<string, LeaveRecord>();
   const leaveMapByName = new Map<string, LeaveRecord>();
@@ -487,22 +516,16 @@ export const createStaff = async (
     : input;
 
   try {
-    const { data } = await api.post(
+    const { data } = await api.post<StaffMember>(
       "/tenant/staff",
       body,
       hasImage ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
     );
     console.log("createStaff success", { url: "/tenant/staff", payload: input, response: data });
     return data;
-  } catch (err: any) {
-    console.error("createStaff failed", {
-      url: "/tenant/staff",
-      payload: input,
-      response: err?.response?.data ?? err?.message,
-    });
-
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to create staff";
-    throw new Error(message);
+  } catch (err) {
+    console.error("createStaff failed", { url: "/tenant/staff", payload: input, response: err });
+    throw new Error(getErrorMessage(err, "Failed to create staff"));
   }
 };
 
@@ -522,7 +545,7 @@ export const updateStaff = async (
   console.log("📤 updateStaff →", url, hasImage ? "[multipart with image]" : JSON.stringify(payload, null, 2));
 
   try {
-    const { data: raw, status: httpStatus } = await api.put(
+    const { data: raw, status: httpStatus } = await api.put<unknown>(
       url,
       body,
       hasImage ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
@@ -542,20 +565,9 @@ export const updateStaff = async (
     }
 
     throw new Error("Invalid response from server");
-  } catch (err: unknown) {
-    const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
-    console.error("❌ updateStaff failed", {
-      url,
-      status: error?.response?.status,
-      responseData: error?.response?.data,
-      message: error?.message,
-    });
-    const message =
-      error?.response?.data?.message ??
-      JSON.stringify(error?.response?.data) ??
-      error?.message ??
-      "Failed to update staff";
-    throw new Error(message);
+  } catch (err) {
+    console.error("❌ updateStaff failed", { url, response: err });
+    throw new Error(getErrorMessage(err, "Failed to update staff"));
   }
 };
 
@@ -588,11 +600,17 @@ export interface StaffDetails {
   assigned_classes_subjects: AssignedClassSubject[];
 }
 
+export interface GetStaffDetailsByIdResponse {
+  status: boolean;
+  message?: string;
+  data?: StaffDetails;
+}
+
 /** GET /tenant/getstaffById/:id — fetch detailed staff info */
 export const getStaffDetailsById = async (id: string): Promise<StaffDetails> => {
-  const { data } = await api.get(`/tenant/getstaffById/${id}`);
+  const { data } = await api.get<GetStaffDetailsByIdResponse>(`/tenant/getstaffById/${id}`);
   if (data?.status && data?.data) {
-    return data.data as StaffDetails;
+    return data.data;
   }
   throw new Error(data?.message || "Failed to fetch staff details");
 };
@@ -601,16 +619,9 @@ export const deleteStaff = async (id: string): Promise<void> => {
   try {
     await api.delete(`/tenant/deletestaffById/${id}`);
     console.log(`deleteStaff OK (${id})`);
-  } catch (err: any) {
-    console.error("deleteStaff failed", {
-      url: `/tenant/deletestaffById/${id}`,
-      response: err?.response?.data ?? err?.message,
-    });
-    const message =
-      err?.response?.data?.message ??
-      JSON.stringify(err?.response?.data) ??
-      err?.message ??
-      "Failed to delete staff";
+  } catch (err) {
+    console.error("deleteStaff failed", { url: `/tenant/deletestaffById/${id}`, response: err });
+    const message = getErrorMessage(err, "Failed to delete staff");
     throw new Error(message);
   }
 };

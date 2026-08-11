@@ -88,7 +88,7 @@ export const useSubmitAttendance = () => {
   return useMutation({
     mutationFn: (payload: CreateAttendancePayload) => createAttendance(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
       closeMarkAttendance();
     },
   });
@@ -163,7 +163,7 @@ export const useAddHoliday = () => {
   return useMutation({
     mutationFn: (payload: CreateHolidayPayload) => createHoliday(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.holidays() });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.holidays(), refetchType: "all" });
       closeAddHoliday();
     },
   });
@@ -220,7 +220,7 @@ export const useSubmitStaffAttendance = () => {
       return createStaffAttendance(apiPayload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
       closeMarkStaffAttendance();
     },
   });
@@ -257,7 +257,7 @@ export const useCreateSingleStaffAttendance = () => {
       return createStaffAttendance(apiPayload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
     },
   });
 };
@@ -269,7 +269,7 @@ export const useUpdateStaffAttendance = () => {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateStaffAttendancePayload }) =>
       updateStaffAttendanceById(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
     },
   });
 };
@@ -280,7 +280,7 @@ export const useDeleteStaffAttendance = () => {
   return useMutation({
     mutationFn: (id: string) => deleteStaffAttendanceById(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
     },
   });
 };
@@ -323,7 +323,7 @@ export const useUpdateStudentAttendance = () => {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateAttendancePayload }) =>
       updateAttendanceById(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
     },
   });
 };

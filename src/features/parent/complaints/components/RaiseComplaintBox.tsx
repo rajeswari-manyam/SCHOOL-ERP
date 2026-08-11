@@ -37,18 +37,16 @@ export function RaiseComplaintCard({
   token,
   onSubmitSuccess,
 }: Props) {
-  const {
-    current,
-    isSubmitting,
-    error,
-    setSubject,
-    setCategory,
-    setPriority,
-    setDescription,
-    toggleAttachee,
-    setPhoto,
-    submitComplaint,
-  } = useComplaintsStore();
+  const current         = useComplaintsStore((s) => s.current);
+  const isSubmitting    = useComplaintsStore((s) => s.isSubmitting);
+  const error           = useComplaintsStore((s) => s.error);
+  const setSubject      = useComplaintsStore((s) => s.setSubject);
+  const setCategory     = useComplaintsStore((s) => s.setCategory);
+  const setPriority     = useComplaintsStore((s) => s.setPriority);
+  const setDescription  = useComplaintsStore((s) => s.setDescription);
+  const toggleAttachee  = useComplaintsStore((s) => s.toggleAttachee);
+  const setPhoto        = useComplaintsStore((s) => s.setPhoto);
+  const submitComplaint = useComplaintsStore((s) => s.submitComplaint);
 
   // ── Fetch children from API (replaces mock COMPLAINT_ATTACHEES) ────
   const {

@@ -1,15 +1,15 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { IncomeExpenseCards } from "../components/IncomeExpenseCard";
 import { LedgerTable } from "../components/LedgerTable";
-import { AddExpenseModal } from "../components/AddExpenseModal";
 import { BalanceSheet } from "../components/BalanceSheet";
 import { useLedger } from "../hooks/useledger";
 
-import type { LedgerEntry, ExpenseFormInput } from "../types/Ledger.types";
+import type { LedgerEntry } from "../types/Ledger.types";
 
 const TAB_ITEMS = [
   { value: "income",   label: "Income" },
@@ -18,10 +18,14 @@ const TAB_ITEMS = [
 ];
 
 export default function LedgerPage() {
-  const [activeTab,      setActiveTab]      = useState("income");
-  const [showAddModal,   setShowAddModal]   = useState(false);
-  const [currentDate,    setCurrentDate]    = useState(new Date());
-  const [editingEntry,   setEditingEntry]   = useState<LedgerEntry | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as { activeTab?: string; month?: number; year?: number } | null;
+
+  const [activeTab,   setActiveTab]   = useState(navState?.activeTab ?? "income");
+  const [currentDate, setCurrentDate] = useState(() =>
+    navState?.month && navState?.year ? new Date(navState.year, navState.month - 1, 1) : new Date()
+  );
 
   const {
     expenseEntries,
@@ -35,35 +39,23 @@ export default function LedgerPage() {
     expense,
     payrollExpense,
     operatingExpenses,
-    createEntry,
-    updateEntry,
     deleteEntry,
   } = useLedger(currentDate.getMonth() + 1, currentDate.getFullYear());
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleSave = async (data: ExpenseFormInput, file?: File) => {
-    if (editingEntry) {
-      await updateEntry(editingEntry.id, data, file);
-    } else {
-      await createEntry(data, file);
-    }
-    setShowAddModal(false);
-    setEditingEntry(null);
-  };
+  const goToAddExpense = () =>
+    navigate("/accountant/ledger/expense/add", {
+      state: { month: currentDate.getMonth() + 1, year: currentDate.getFullYear() },
+    });
 
-  const handleEdit = (entry: LedgerEntry) => {
-    setEditingEntry(entry);
-    setShowAddModal(true);
-  };
+  const handleEdit = (entry: LedgerEntry) =>
+    navigate(`/accountant/ledger/expense/edit/${entry.id}`, {
+      state: { editData: entry, month: currentDate.getMonth() + 1, year: currentDate.getFullYear() },
+    });
 
   const handleDelete = (entry: LedgerEntry) => {
     deleteEntry(entry.id);
-  };
-
-  const handleCloseModal = () => {
-    setShowAddModal(false);
-    setEditingEntry(null);
   };
 
   const formatMonth = (date: Date) =>
@@ -111,7 +103,7 @@ export default function LedgerPage() {
           {/* Extra buttons — expenses tab only */}
           {activeTab === "expenses" && (
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button className="flex-1 sm:flex-none bg-indigo-600 text-white text-xs" onClick={() => setShowAddModal(true)}>
+              <Button className="flex-1 sm:flex-none bg-indigo-600 text-white text-xs" onClick={goToAddExpense}>
                 <Plus className="w-4 h-4" />
                 Add Entry
               </Button>
@@ -179,27 +171,6 @@ export default function LedgerPage() {
         )}
 
       </div>
-
-      {showAddModal && (
-        <AddExpenseModal
-          initialData={
-            editingEntry
-              ? {
-                  id:          editingEntry.id,
-                  category:    editingEntry.category,
-                  description: editingEntry.description,
-                  amount:      String(editingEntry.amount),
-                  reference:   editingEntry.reference,
-                  date:        editingEntry.date,
-                  paidVia:     editingEntry.paidVia ?? "Bank Transfer",
-                  notes:       editingEntry.notes,
-                }
-              : undefined
-          }
-          onClose={handleCloseModal}
-          onSave={handleSave}
-        />
-      )}
 
     </div>
   );

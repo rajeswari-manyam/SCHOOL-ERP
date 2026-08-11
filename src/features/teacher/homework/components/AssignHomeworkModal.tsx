@@ -309,7 +309,7 @@ const AssignHomeworkModal = ({
               />
             </FormField>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <FormField label="Class *" error={errors.class_id?.message}>
               <Select
                 options={classes.map((c) => ({ label: c.class_name, value: c.id }))}
@@ -369,7 +369,7 @@ const AssignHomeworkModal = ({
                 placeholder="Describe what students need to do, page numbers, format required…"
               />
             </FormField>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField label="Homework type">
                 <Select
                   options={[
@@ -402,7 +402,7 @@ const AssignHomeworkModal = ({
           iconColor="text-amber-500"
           title="Assignment settings"
         >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Assigned date">
               <Input type="date" />
             </FormField>

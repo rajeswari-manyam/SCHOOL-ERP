@@ -43,8 +43,8 @@ export function PendingFeesTable({
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center justify-between bg-indigo-50 border-b border-indigo-100 px-4 py-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-indigo-50 border-b border-indigo-100 px-4 py-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Checkbox checked={allSelected} onCheckedChange={onToggleSelectAll} />
             <span className="text-sm font-semibold text-indigo-700">
               {selectedIds.size} students selected
@@ -62,8 +62,72 @@ export function PendingFeesTable({
         </div>
       )}
 
+      {/* Mobile card list */}
+      <div className="sm:hidden divide-y divide-gray-50">
+        {fees.map((fee) => (
+          <div
+            key={`${fee.studentId}-${fee.feeHead}`}
+            className={`p-4 ${selectedIds.has(fee.studentId) ? "bg-indigo-50/30" : ""}`}
+          >
+            <div className="flex items-start gap-3">
+              <Checkbox
+                checked={selectedIds.has(fee.studentId)}
+                onCheckedChange={() => onToggleSelect(fee.studentId)}
+                className="mt-1 shrink-0"
+              />
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                style={{ backgroundColor: getInitialsColor(fee.initials) }}
+              >
+                {fee.initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{fee.studentName}</p>
+                    <p className="text-xs text-gray-400 truncate">ADM: {fee.admissionNo} · {fee.class}{fee.section}</p>
+                  </div>
+                  <div className="shrink-0">
+                    <StatusBadge fee={fee} />
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-600">
+                  <span className="truncate">{fee.feeHead}</span>
+                  <span className="font-semibold text-gray-900 shrink-0">{formatCurrency(fee.amount)}</span>
+                </div>
+
+                <div className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-400">
+                  <span>Due: {fee.dueDate}</span>
+                  <ReminderDots sent={fee.reminders.sent} total={fee.reminders.total} />
+                </div>
+
+                <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                  <Button variant="default" size="sm" className="whitespace-nowrap" onClick={() => onMarkPaid(fee)}>
+                    Mark Paid
+                  </Button>
+                  {fee.feeStructureId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="whitespace-nowrap border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                      onClick={() => setConcessionFee(fee)}
+                    >
+                      Apply Concession
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
+                    💬
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="hidden sm:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -145,7 +209,7 @@ export function PendingFeesTable({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-gray-100">
         <span className="text-xs text-gray-500">Showing {fees.length} of {totalRecords} records</span>
         <div className="flex gap-1">
           {[1, 2, 3].map((p) => (

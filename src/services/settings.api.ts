@@ -1,5 +1,6 @@
 import api from "@/config/axios";
 import { getAuthToken } from "@/store/authStore";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 import type {
   SchoolProfile,
   AcademicYear,
@@ -200,9 +201,8 @@ export const updateSchoolProfile = async (
     );
     const school = data?.school ?? data?.data ?? data;
     return mapApiToSchoolProfile(school as Record<string, unknown>);
-  } catch (err: any) {
-    const message = err?.response?.data?.message ?? err?.message ?? "Failed to update school profile";
-    throw new Error(message);
+  } catch (err) {
+    throw new Error(getErrorMessage(err, "Failed to update school profile"));
   }
 };
 
@@ -226,9 +226,8 @@ export const createAcademicYear = async (payload: CreateAcademicYearPayload): Pr
     if (data && !data.status) {
       throw new Error(data?.message || "Server returned unsuccessful status");
     }
-  } catch (err: any) {
-    const serverMsg = err?.response?.data?.message;
-    const msg = serverMsg || err?.message || "Failed to create academic year";
+  } catch (err) {
+    const msg = getErrorMessage(err, "Failed to create academic year");
     console.error("createAcademicYear failed", { url: "/tenant/academic-years", payload, error: msg });
     throw new Error(msg);
   }
@@ -266,10 +265,9 @@ export const addClass = async (payload: CreateClassPayload): Promise<ClassSectio
       totalStudents: payload.capacity,
       status: "ACTIVE",
     };
-  } catch (err: any) {
-    console.error("addClass failed", { url: "/tenant/class", payload, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to add class";
-    throw new Error(message);
+  } catch (err) {
+    console.error("addClass failed", { url: "/tenant/class", payload, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to add class"));
   }
 };
 
@@ -283,10 +281,9 @@ export const updateWorkingDays = async (data: Partial<WorkingDaysConfig>): Promi
   try {
     const { data: res } = await api.put<WorkingDaysConfig>("/tenant/working-days", data);
     return res;
-  } catch (err: any) {
-    console.error("updateWorkingDays failed", { url: "/tenant/working-days", payload: data, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to update working days";
-    throw new Error(message);
+  } catch (err) {
+    console.error("updateWorkingDays failed", { url: "/tenant/working-days", payload: data, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to update working days"));
   }
 };
 
@@ -305,10 +302,9 @@ export const fetchGradeFeeStructures = async (): Promise<GradeFeeStructure[]> =>
 export const saveFeeStructure = async (): Promise<void> => {
   try {
     await api.put("/tenant/fee-structures");
-  } catch (err: any) {
-    console.error("saveFeeStructure failed", { url: "/tenant/fee-structures", response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to save fee structure";
-    throw new Error(message);
+  } catch (err) {
+    console.error("saveFeeStructure failed", { url: "/tenant/fee-structures", response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to save fee structure"));
   }
 };
 
@@ -380,30 +376,27 @@ export const addUser = async (data: AddUserFormData): Promise<UserAccount> => {
   try {
     const { data: res } = await api.post<UserAccount>("/tenant/users", data);
     return res;
-  } catch (err: any) {
-    console.error("addUser failed", { url: "/tenant/users", payload: data, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to add user";
-    throw new Error(message);
+  } catch (err) {
+    console.error("addUser failed", { url: "/tenant/users", payload: data, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to add user"));
   }
 };
 
 export const deactivateUser = async (id: string): Promise<void> => {
   try {
     await api.put(`/tenant/users/${id}/deactivate`);
-  } catch (err: any) {
-    console.error("deactivateUser failed", { url: `/tenant/users/${id}/deactivate`, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to deactivate user";
-    throw new Error(message);
+  } catch (err) {
+    console.error("deactivateUser failed", { url: `/tenant/users/${id}/deactivate`, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to deactivate user"));
   }
 };
 
 export const updateUser = async (id: string, data: Partial<UserAccount>): Promise<void> => {
   try {
     await api.put(`/tenant/users/${id}`, data);
-  } catch (err: any) {
-    console.error("updateUser failed", { url: `/tenant/users/${id}`, payload: data, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to update user";
-    throw new Error(message);
+  } catch (err) {
+    console.error("updateUser failed", { url: `/tenant/users/${id}`, payload: data, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to update user"));
   }
 };
 
@@ -424,10 +417,9 @@ export const fetchRolePermissions = async (): Promise<RolePermission[]> => {
 export const saveRolePermissions = async (role: string, permissions: ModulePermission[]): Promise<void> => {
   try {
     await api.put("/tenant/roles/permissions", { role, permissions });
-  } catch (err: any) {
-    console.error("saveRolePermissions failed", { url: "/tenant/roles/permissions", role, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to save role permissions";
-    throw new Error(message);
+  } catch (err) {
+    console.error("saveRolePermissions failed", { url: "/tenant/roles/permissions", role, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to save role permissions"));
   }
 };
 
@@ -467,10 +459,9 @@ export const fetchNotificationSettings = async (): Promise<NotificationSettings>
 export const updateNotificationSettings = async (settings: NotificationSettings): Promise<void> => {
   try {
     await api.put("/tenant/notification-settings", settings);
-  } catch (err: any) {
-    console.error("updateNotificationSettings failed", { url: "/tenant/notification-settings", payload: settings, response: err?.response?.data ?? err?.message });
-    const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to update notification settings";
-    throw new Error(message);
+  } catch (err) {
+    console.error("updateNotificationSettings failed", { url: "/tenant/notification-settings", payload: settings, response: getErrorMessage(err) });
+    throw new Error(getErrorMessage(err, "Failed to update notification settings"));
   }
 };
 

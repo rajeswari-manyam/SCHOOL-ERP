@@ -153,7 +153,8 @@ export type MonthlyPayrollTabProps = {
   isLoading?: boolean;
   processedDate: string | null;
   processedBy: string | null;
-  onStartProcessing: () => void;
+  month: number;
+  year: number;
   onViewPayslip?: (staff: StaffPayroll) => void;
   onPaySalary: (staffId: string, data: PaySalaryFormData) => void;
   onPaySelected: (ids: string[], data: PaySalaryFormData) => void;

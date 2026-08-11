@@ -40,7 +40,7 @@ export function FeeProgressCard({
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
           <div>
             <p className="text-[10px] text-gray-400 uppercase">Total Paid</p>
             <p className="text-[20px] font-bold">{fmt(totalPaid)}</p>
@@ -125,7 +125,7 @@ export function FeeProgressCard({
 
       {/* PAY BAR — only show if there's a pending balance */}
       {totalPending > 0 && (
-        <div className="rounded-2xl bg-[#3525CD] px-5 py-4 flex justify-between items-center">
+        <div className="rounded-2xl bg-[#3525CD] px-5 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
             <p className="text-white font-bold">
               Outstanding Balance: {fmt(totalPending)}
@@ -136,7 +136,7 @@ export function FeeProgressCard({
           </div>
           <button
             onClick={onPayNow}
-            className="bg-white text-[#3525CD] px-6 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+            className="w-full sm:w-auto bg-white text-[#3525CD] px-6 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors"
           >
             Pay Now
           </button>

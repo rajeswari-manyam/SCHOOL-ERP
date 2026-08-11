@@ -12,7 +12,7 @@ export { useAdmissionsStore } from './hooks/useAdmissionsStore';
 export { PipelineStats } from './components/PipelineStats';
 export { PipelineBoard } from './components/PipelineBoard';
 export { EnquiryDetailDrawer } from './components/EnquiryDetailDrawer';
-export { AddEnquiryModal } from './components/AddEnquiryModal';
+export { AddEnquiryPage } from './components/AddEnquiryPage';
 export { ConfirmAdmissionModal } from './components/ConfirmAdmissionModal';
 
 // Page

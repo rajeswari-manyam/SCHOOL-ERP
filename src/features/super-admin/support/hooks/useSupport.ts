@@ -59,7 +59,7 @@ export const useTicketMutations = () => {
   const qc = useQueryClient();
   const deleteTicket = useMutation({
     mutationFn: (id: string) => supportTicketApi.deleteTicket(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: SUPPORT_KEYS.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SUPPORT_KEYS.all, refetchType: "all" }),
   });
   return { deleteTicket };
 };

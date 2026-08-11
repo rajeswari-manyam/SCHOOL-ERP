@@ -40,8 +40,8 @@ export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProp
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div className="overflow-x-auto flex-1">
+      {/* ── Table (sm and up) ── */}
+      <div className="overflow-x-auto flex-1 hidden sm:block">
         {classes.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
             <p className="text-xs text-gray-400">No attendance data for today</p>
@@ -95,6 +95,48 @@ export function AttendanceTable({ classes, onSendReminder }: AttendanceTableProp
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* ── Card list (mobile only) — avoids horizontal scroll on narrow screens ── */}
+      <div className="flex-1 sm:hidden">
+        {classes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+            <p className="text-xs text-gray-400">No attendance data for today</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {visible.map((cls, i) => (
+              <motion.div
+                key={cls.id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-indigo-700">
+                    {cls.className}{cls.section ? cls.section : ''}
+                  </span>
+                  {cls.status === 'marked' ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-medium shrink-0">
+                      <Check size={10} strokeWidth={2.5} /> MARKED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-red-500 text-[10px] font-medium shrink-0">
+                      <X size={10} strokeWidth={2.5} /> NOT MARKED
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <span className="text-[11px] text-gray-500 truncate">{cls.teacher}</span>
+                  <span className="text-[11px] text-gray-500 tabular-nums shrink-0">
+                    {cls.present ?? '--'} present · {cls.absent ?? '--'} absent
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
 

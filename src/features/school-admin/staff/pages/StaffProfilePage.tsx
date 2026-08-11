@@ -90,7 +90,7 @@ const StaffProfilePage = () => {
           {/* Left column */}
           <div className="lg:col-span-2 space-y-4">
             <SectionCard title="Personal Information">
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-4">
                 <InfoRow label="Name" value={staff.name} />
                 <InfoRow label="Employee ID" value={staff.employeeId} />
                 <InfoRow label="Role" value={staff.role} />

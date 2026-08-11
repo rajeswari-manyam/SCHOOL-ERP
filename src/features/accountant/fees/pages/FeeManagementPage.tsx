@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FeeTabs } from "../components/FeeTabs";
 import { FilterBar } from "../components/FilterBar";
 import { PendingFeesTable } from "../components/PendingFeeTable";
 import { useFeeData } from "../hooks/useFees";
-import { ChevronLeft, ChevronRight, Send, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import typography from "@/styles/typography";
-import { RecordFeePaymentModal } from "../components/RecordPaymentModal";
 import { AllTransactionsTable } from "../components/AllTransactionTable";
 import { FeeStructure } from "../components/FeeStructure";
 import { TransportFees } from "../components/TransportFee";
@@ -18,7 +18,11 @@ import { applyDueStatus, applySortBy } from "../utils/fee.utils";
 import type { FeeRow, FilterValues, Transaction } from "../types/fees.types";
 
 export default function FeeManagementPage() {
-  const [activeTab, setActiveTab] = useState("Pending Fees");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(
+    (location.state as { activeTab?: string } | null)?.activeTab ?? "Pending Fees"
+  );
   const { fees, feesLoading, transactions, refreshTransactions, refreshFees } = useFeeData();
 
   const handleDeleteRecord = useCallback(async (id: string) => {
@@ -27,7 +31,6 @@ export default function FeeManagementPage() {
     refreshTransactions();
   }, [refreshTransactions]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showFeeHeadModal, setShowFeeHeadModal] = useState(false);
   const [triggerAddSlab, setTriggerAddSlab] = useState(false);
   const [triggerEditSlabs, setTriggerEditSlabs] = useState(false);
@@ -124,10 +127,6 @@ export default function FeeManagementPage() {
 
   return (
     <div className="flex flex-col w-full min-w-0 space-y-4 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 px-4 md:px-6 lg:px-8">
-      {showPaymentModal && (
-        <RecordFeePaymentModal onClose={() => setShowPaymentModal(false)} />
-      )}
-
       {/* ── Main Card ── */}
       <div className="bg-white rounded-xl border border-gray-200 flex flex-col min-w-0 max-w-full overflow-hidden">
 
@@ -161,34 +160,10 @@ export default function FeeManagementPage() {
                     </button>
                   </div>
 
-                  <Button variant="outline" size="sm" className="text-xs h-8">
-                    Import Fee
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 flex items-center gap-1.5"
-                    onClick={() => console.log("Export CSV")}
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    CSV
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 flex items-center gap-1.5"
-                    onClick={() => console.log("Export PDF")}
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    PDF
-                  </Button>
-
                   <Button
                     size="sm"
                     className="h-8 text-xs bg-[#3525CD] text-white"
-                    onClick={() => setShowPaymentModal(true)}
+                    onClick={() => navigate("/accountant/fees/payment/add", { state: { returnTab: activeTab } })}
                   >
                     Record Payment
                   </Button>
@@ -306,42 +281,7 @@ export default function FeeManagementPage() {
 
         {/* ── Footer ── */}
         {isPendingFees && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 md:px-5 py-3 border-t border-gray-100 gap-3">
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                Overdue (29)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5" />
-                Due Today (12)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                CSV
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                PDF
-              </Button>
-            </div>
-
+          <div className="flex items-center justify-end px-4 md:px-5 py-3 border-t border-gray-100 gap-3">
             <div className="flex gap-1 items-center">
               {["‹", "1", "2", "3", "›"].map((p) => (
                 <button

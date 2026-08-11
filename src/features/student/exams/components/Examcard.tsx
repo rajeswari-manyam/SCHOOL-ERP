@@ -38,10 +38,10 @@ export const ExamCard = ({ exam, daysLeft }: { exam: Exam; daysLeft: number }) =
           Countdown
         </p>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <span className="text-3xl font-bold">{daysLeft} days to go</span>
 
-          <button className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-indigo-600 shadow-md transition hover:bg-gray-50 active:scale-95">
+          <button className="w-full sm:w-auto rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-indigo-600 shadow-md transition hover:bg-gray-50 active:scale-95">
             Add to Calendar
           </button>
         </div>

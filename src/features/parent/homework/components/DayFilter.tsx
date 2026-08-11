@@ -35,7 +35,8 @@ function isSameDay(a: Date, b: Date) {
 }
 
 export function DayFilter() {
-  const { selectedDate, setSelectedDate } = useHomeworkStore();
+  const selectedDate = useHomeworkStore((s) => s.selectedDate);
+  const setSelectedDate = useHomeworkStore((s) => s.setSelectedDate);
   const weekDays = getCurrentWeekDays();
 
   // Default: today if not yet set

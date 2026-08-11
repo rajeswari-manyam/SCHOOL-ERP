@@ -1,4 +1,6 @@
+import axios from "axios";
 import api from "@/config/axios";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 import type {
   DashboardData, AdmissionThisWeek, RawAdmissionsThisWeekResponse,
   SchoolTodayAttendance, RawTodayAttendanceResponse,
@@ -29,6 +31,17 @@ const MOCK_DASHBOARD: DashboardData = {
   feePaidPercent: 0,
   whatsappActivity: [],
   admissionPipeline: [],
+};
+
+export interface FeeSummary {
+  collected_today: number; month_collection: number; weekly_collection: number;
+  fee_collection: number; other_income: number; total_income: number;
+  total_expense: number; total_pending_fees: number; net_profit: number; net_loss: number;
+}
+
+const logDashboardError = (label: string, err: unknown): void => {
+  const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+  console.error(`[dashboard] ${label} FAILED (${status ?? 'network'})`, getErrorMessage(err));
 };
 
 // ─── Response extraction: /tenant/getadmissionsthisweek ────────────────────
@@ -510,10 +523,9 @@ export const dashboardApi = {
     try {
       const { data } = await api.post<{ success: boolean }>("/tenant/dashboard/whatsapp-reminder", { classes });
       return data;
-    } catch (err: any) {
-      console.error("sendWhatsAppReminder failed", { url: "/tenant/dashboard/whatsapp-reminder", classes, response: err?.response?.data ?? err?.message });
-      const message = err?.response?.data?.message ?? JSON.stringify(err?.response?.data) ?? err?.message ?? "Failed to send WhatsApp reminder";
-      throw new Error(message);
+    } catch (err) {
+      console.error("sendWhatsAppReminder failed", { url: "/tenant/dashboard/whatsapp-reminder", classes, response: err });
+      throw new Error(getErrorMessage(err, "Failed to send WhatsApp reminder"));
     }
   },
 
@@ -522,15 +534,12 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<RawAdmissionsThisWeekResponse>("/tenant/getadmissionsthisweek");
       return extractAdmissionsThisWeek(data);
-    } catch (err: any) {
-      const ctx = err?.response?.data ?? err?.message;
+    } catch (err) {
       console.error("[dashboard] getAdmissionsThisWeek failed", {
         url: "/tenant/getadmissionsthisweek",
-        response: ctx,
+        response: err,
       });
-      const message =
-        ctx?.message ?? ctx?.error ?? err?.message ?? "Failed to fetch admissions this week";
-      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+      throw new Error(getErrorMessage(err, "Failed to fetch admissions this week"));
     }
   },
 
@@ -542,12 +551,8 @@ export const dashboardApi = {
         console.log("[dashboard] GET /tenant/getschooltodayattendance response", JSON.stringify(data));
       }
       return extractSchoolTodayAttendance(data);
-    } catch (err: any) {
-      const status: number | undefined = err?.response?.status;
-      const body = err?.response?.data;
-      const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-      const msg = bodyStr || err?.message || '';
-      console.error(`[dashboard] GET /tenant/getschooltodayattendance FAILED (${status ?? 'network'})`, msg);
+    } catch (err) {
+      logDashboardError('GET /tenant/getschooltodayattendance', err);
       return null;
     }
   },
@@ -560,12 +565,8 @@ export const dashboardApi = {
         console.log("[dashboard] GET /tenant/class-attendance-status response", JSON.stringify(data));
       }
       return extractClassAttendanceStatus(data);
-    } catch (err: any) {
-      const status: number | undefined = err?.response?.status;
-      const body = err?.response?.data;
-      const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-      const msg = bodyStr || err?.message || '';
-      console.error(`[dashboard] GET /tenant/class-attendance-status FAILED (${status ?? 'network'})`, msg);
+    } catch (err) {
+      logDashboardError('GET /tenant/class-attendance-status', err);
       return null;
     }
   },
@@ -578,12 +579,8 @@ export const dashboardApi = {
         console.log("[dashboard] GET /tenant/getclasstodayattendance response", JSON.stringify(data));
       }
       return extractClassTodayAttendance(data);
-    } catch (err: any) {
-      const status: number | undefined = err?.response?.status;
-      const body = err?.response?.data;
-      const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-      const msg = err?.message ?? '';
-      console.error(`[dashboard] GET /tenant/getclasstodayattendance FAILED (${status ?? 'network'})`, bodyStr || msg);
+    } catch (err) {
+      logDashboardError('GET /tenant/getclasstodayattendance', err);
       return [];
     }
   },
@@ -607,12 +604,8 @@ export const dashboardApi = {
         console.log("[dashboard] GET /tenant/getenquiries response", JSON.stringify(data));
       }
       return extractEnquiriesPipeline(data);
-    } catch (err: any) {
-      const status: number | undefined = err?.response?.status;
-      const body = err?.response?.data;
-      const bodyStr = typeof body === 'object' ? JSON.stringify(body) : String(body ?? '');
-      const msg = err?.message ?? '';
-      console.error(`[dashboard] GET /tenant/getenquiries FAILED (${status ?? 'network'})`, bodyStr || msg);
+    } catch (err) {
+      logDashboardError('GET /tenant/getenquiries', err);
       return [];
     }
   },
@@ -624,8 +617,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearDashboardItem>>(`/tenant/getacademicyeardashboard/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getacademicyeardashboard FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getacademicyeardashboard FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -635,8 +628,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearStudentItem>>(`/tenant/getacademicyearstudents/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getacademicyearstudents FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getacademicyearstudents FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -646,8 +639,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearStaffItem>>(`/tenant/getacademicyearstaffs/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getacademicyearstaffs FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getacademicyearstaffs FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -657,8 +650,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearClassItem>>(`/tenant/getacademicyearclasses/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getacademicyearclasses FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getacademicyearclasses FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -668,8 +661,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearSubjectItem>>(`/tenant/getacademicyearsubjects/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getacademicyearsubjects FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getacademicyearsubjects FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -679,8 +672,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearAttendanceItem>>(`/tenant/getacademicyearattendance/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getacademicyearattendance FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getacademicyearattendance FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -690,8 +683,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearExamItem>>(`/tenant/getexamsbyacademicyear/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getexamsbyacademicyear FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getexamsbyacademicyear FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
@@ -701,23 +694,19 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearResultItem>>(`/tenant/getresultsbyacademicyear/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getresultsbyacademicyear FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getresultsbyacademicyear FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },
 
   /** GET /tenant/getdashboardsummary — collected today, month, weekly, etc. */
-  async getFeeSummary(): Promise<{
-    collected_today: number; month_collection: number; weekly_collection: number;
-    fee_collection: number; other_income: number; total_income: number;
-    total_expense: number; total_pending_fees: number; net_profit: number; net_loss: number;
-  } | null> {
+  async getFeeSummary(): Promise<FeeSummary | null> {
     try {
-      const { data } = await api.get<{ status: boolean; data: Record<string, number> }>("/tenant/getdashboardsummary");
-      return (data?.status && data?.data) ? data.data as any : null;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getdashboardsummary FAILED', err?.message);
+      const { data } = await api.get<{ status: boolean; data: FeeSummary }>("/tenant/getdashboardsummary");
+      return (data?.status && data?.data) ? data.data : null;
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getdashboardsummary FAILED', getErrorMessage(err));
       return null;
     }
   },
@@ -727,8 +716,8 @@ export const dashboardApi = {
     try {
       const { data } = await api.get<AcademicYearListResponse<AcademicYearFeeItem>>(`/tenant/getfeesbyacademicyear/${academicYearId}`);
       return data;
-    } catch (err: any) {
-      console.error('[dashboard] GET /tenant/getfeesbyacademicyear FAILED', err?.message);
+    } catch (err) {
+      console.error('[dashboard] GET /tenant/getfeesbyacademicyear FAILED', getErrorMessage(err));
       return { status: false, count: 0, totalPages: 0, currentPage: 0, data: [] };
     }
   },

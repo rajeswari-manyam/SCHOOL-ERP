@@ -1,13 +1,9 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import TeacherStatCards from "./components/TeacherStatCards";
 import TodayScheduleCard from "./components/TodayScheduleCard";
 import QuickActionsCard from "./components/QuickActionsCard";
 import HomeworkDueCard from "./components/HomeworkDueCard";
-import AssignHomeworkModal from "./components/AssignHomeworkModal";
-import MarkAttendanceModal from "./components/MarkAttendanceModal";
-import { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
 import { useTeacherDashboard, useTeacherLeaveBalance, usePendingHomeworkByTeacher, useTeacherMonthlyAttendance, useTeacherSections, useTeacherUpcomingExams } from "./hooks/useTeacherDashboard";
 import { useTodayAttendanceSummary } from "../attendance/hooks/useAttendance";
 import { useMyStudents } from "../students/hooks/useMyStudents";
@@ -39,11 +35,6 @@ const TeacherDashboardPage = () => {
     return Math.round((s.present / s.workingDays) * 100);
   })();
 
-  const [hwModal,         setHwModal]         = useState(false);
-  const [attendanceModal, setAttendanceModal] = useState(false);
-  const [leaveModal,      setLeaveModal]      = useState(false);
-  const [uploadModal,     setUploadModal]     = useState(false);
-
   const section        = sections[0];
   const leaveUsed      = leaveResponse?.totalUsed ?? 0;
   const leaveAllocated = leaveResponse?.totalAllocated ?? 0;
@@ -72,7 +63,7 @@ const TeacherDashboardPage = () => {
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
 
   return (
-    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
+    <div className="flex flex-col gap-4 min-h-full px-3 sm:px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
@@ -107,7 +98,7 @@ const TeacherDashboardPage = () => {
           </div>
           <button
             type="button"
-            onClick={() => setAttendanceModal(true)}
+            onClick={() => navigate("/teacher/attendance")}
             className="flex w-full items-center justify-center gap-2 sm:w-auto rounded-lg bg-red-600 hover:bg-red-700 px-4 py-2 text-sm font-medium text-white transition-colors"
           >
             Mark Attendance
@@ -133,19 +124,13 @@ const TeacherDashboardPage = () => {
         <TodayScheduleCard teacherId={teacherId} />
         <HomeworkDueCard teacherId={teacherId} />
         <QuickActionsCard
-          onMarkAttendance={() => setAttendanceModal(true)}
-          onAssignHomework={() => setHwModal(true)}
-          onUploadMaterial={() => setUploadModal(true)}
-          onApplyLeave={() => setLeaveModal(true)}
+          onMarkAttendance={() => navigate("/teacher/attendance")}
+          onAssignHomework={() => navigate("/teacher/homework")}
+          onUploadMaterial={() => navigate("/teacher/homework")}
+          onApplyLeave={() => navigate("/teacher/leave/apply")}
           onViewStudents={() => navigate("/teacher/students")}
         />
       </div>
-
-      {/* Modals */}
-      <MarkAttendanceModal open={attendanceModal} onClose={() => setAttendanceModal(false)} totalStudents={stats.totalStrength} />
-      <AssignHomeworkModal  open={hwModal}     onClose={() => setHwModal(false)} teacherId={teacherId} />
-      <ApplyLeaveModal      open={leaveModal}  onClose={() => setLeaveModal(false)} />
-      <UploadMaterialModal  open={uploadModal} onClose={() => setUploadModal(false)} />
     </div>
   );
 };

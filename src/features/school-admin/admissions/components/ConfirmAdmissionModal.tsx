@@ -12,7 +12,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAdmissionsStore } from '../hooks/useAdmissionsStore';
 import { useEnquiries, useConfirmAdmission } from '../hooks/useAdmissionsQueries';
-import { fetchSchoolProfile } from '@/services/settings.api';
+// Tenant-scoped (/tenant/school-profile) — NOT "@/services/settings.api",
+// whose fetchSchoolProfile hits an org/super-admin-only endpoint that 401s
+// for a school-admin token and force-logs-out the session.
+import { fetchSchoolProfile } from '@/features/school-admin/settings/api/settings.api';
+import { useAuthStore } from '@/store/authStore';
 import type { ConfirmAdmissionFormData } from '../types';
 
 const schema = z.object({
@@ -30,8 +34,8 @@ export function ConfirmAdmissionModal() {
   const { isConfirmAdmissionOpen, confirmTargetId, closeConfirmAdmission } = useAdmissionsStore();
   const { data: enquiries } = useEnquiries();
   const confirmAdmission = useConfirmAdmission();
-  const [schoolName, setSchoolName] = useState('Hanamkonda Public School');
-  const [principalName, setPrincipalName] = useState('Ramesh Kumar');
+  const [schoolName, setSchoolName] = useState(() => localStorage.getItem("schoolName")?.trim() || "");
+  const [principalName, setPrincipalName] = useState(() => useAuthStore.getState().user?.principalName?.trim() || "");
 
   useEffect(() => {
     if (isConfirmAdmissionOpen) {

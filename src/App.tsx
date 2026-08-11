@@ -9,6 +9,7 @@ import { queryClient } from "./config/queryClient";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
+import { RouteErrorBoundary } from "./components/common/RouteErrorBoundary";
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
@@ -71,7 +72,8 @@ function App() {
         {/* Many components call sonner's `toast(...)` — mount its Toaster too, or those calls render nothing */}
         <SonnerToaster position="top-right" richColors closeButton />
 
-        <Suspense fallback={<PageLoader />}>
+        <RouteErrorBoundary>
+        <Suspense fallback={ <div className="p-4 text-sm text-slate-500"> Loading module... </div> } >
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
@@ -143,6 +145,7 @@ function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Suspense>
+        </RouteErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>
   );

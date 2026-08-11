@@ -26,7 +26,7 @@ export const useTemplateStats = () =>
 
 export const useTemplateMutations = () => {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: TEMPLATE_KEYS.all });
+  const invalidate = () => qc.invalidateQueries({ queryKey: TEMPLATE_KEYS.all, refetchType: "all" });
 
   const createTemplate = useMutation({
     mutationFn: (payload: TemplateFormValues) => templatesApi.createTemplate(payload),

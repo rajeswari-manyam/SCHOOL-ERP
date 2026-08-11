@@ -1,23 +1,13 @@
-import { useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ReportCardGrid from "./components/Reportcardgrid";
 import RecentReportsTable from "./components/Recentreportstable";
-import GenerateReportModal from "./components/Generatereportmodal";
-import AttendanceReportForm from "./components/AttendanceReportForm";
-import StudentReportForm from "./components/StudentReportForm";
-import FeeCollectionReportForm from "./components/FeeCollectionReportForm";
-import StaffReportForm from "./components/StaffReportForm";
 import { useReports } from "./hooks/useReports";
 import { useAcademicYears } from "../../../components/common/hooks/useAcademicYears";
 import type { ReportType } from "./types/reports.types";
 
 const ReportsPage = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [preselectedType, setPreselectedType] = useState<ReportType | undefined>();
-  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
-  const [studentModalOpen, setStudentModalOpen]           = useState(false);
-  const [feeCollectionModalOpen, setFeeCollectionModalOpen] = useState(false);
-  const [staffModalOpen, setStaffModalOpen] = useState(false);
+  const navigate = useNavigate();
   const { years, activeYear, switchYear } = useAcademicYears();
   const yearIdx = years.findIndex((y) => y.id === activeYear?.id);
 
@@ -25,16 +15,15 @@ const ReportsPage = () => {
 
   const handleCardClick = (type: ReportType) => {
     if (type === "ATTENDANCE") {
-      setAttendanceModalOpen(true);
+      navigate("/schooladmin/reports/attendance");
     } else if (type === "STUDENT") {
-      setStudentModalOpen(true);
+      navigate("/schooladmin/reports/student");
     } else if (type === "FEE_COLLECTION") {
-      setFeeCollectionModalOpen(true);
+      navigate("/schooladmin/reports/fee-collection");
     } else if (type === "STAFF") {
-      setStaffModalOpen(true);
+      navigate("/schooladmin/reports/staff");
     } else {
-      setPreselectedType(type);
-      setModalOpen(true);
+      navigate(`/schooladmin/reports/generate?type=${type}`);
     }
   };
 
@@ -77,40 +66,6 @@ const ReportsPage = () => {
       <RecentReportsTable
         reports={recentData}
         loading={isLoading}
-      />
-
-      {/* Generate modal (non-attendance) */}
-      <GenerateReportModal
-        open={modalOpen}
-        preselectedType={preselectedType}
-        onClose={() => {
-          setModalOpen(false);
-          setPreselectedType(undefined);
-        }}
-      />
-
-      {/* Attendance report form */}
-      <AttendanceReportForm
-        open={attendanceModalOpen}
-        onClose={() => setAttendanceModalOpen(false)}
-      />
-
-      {/* Student report form */}
-      <StudentReportForm
-        open={studentModalOpen}
-        onClose={() => setStudentModalOpen(false)}
-      />
-
-      {/* Fee collection report form */}
-      <FeeCollectionReportForm
-        open={feeCollectionModalOpen}
-        onClose={() => setFeeCollectionModalOpen(false)}
-      />
-
-      {/* Staff report form */}
-      <StaffReportForm
-        open={staffModalOpen}
-        onClose={() => setStaffModalOpen(false)}
       />
     </div>
   );

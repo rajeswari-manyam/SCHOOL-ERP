@@ -1,15 +1,27 @@
+import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import StudentLayout from "../../layouts/StudentLayout";
 
-import {Dashboard} from "./dashboard/pages/DashboardPage";
-import AttendancePage from "./attendance/pages/AttendancePage";
-import { HomeworkPage } from "./homework/pages/HomeWorkPage";
-import {ExamsPage} from "./exams/pages/ExamPage";
-import ClassTimetable from "./timetable/pages/ClassTimetablePage";
-import ProfilePage from "./profile/pages/ProfilePage";
+// Each route is its own lazy chunk — otherwise the very first page a student
+// sees (the dashboard) has to wait for every other page's code (homework,
+// exams, timetable, profile, ...) to download too, since a static import
+// bundles its module into the same chunk as whatever imports it.
+const Dashboard      = lazy(() => import("./dashboard/pages/DashboardPage").then(m => ({ default: m.Dashboard })));
+const AttendancePage = lazy(() => import("./attendance/pages/AttendancePage"));
+const HomeworkPage   = lazy(() => import("./homework/pages/HomeWorkPage").then(m => ({ default: m.HomeworkPage })));
+const ExamsPage      = lazy(() => import("./exams/pages/ExamPage").then(m => ({ default: m.ExamsPage })));
+const ClassTimetable = lazy(() => import("./timetable/pages/ClassTimetablePage"));
+const ProfilePage    = lazy(() => import("./profile/pages/ProfilePage"));
+
+const RouteLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+  </div>
+);
 
 export default function StudentRouter() {
   return (
+    <Suspense fallback={<RouteLoader />}>
     <Routes>
       <Route element={<StudentLayout />}>
         
@@ -29,5 +41,6 @@ export default function StudentRouter() {
         
       </Route>
     </Routes>
+    </Suspense>
   );
 }

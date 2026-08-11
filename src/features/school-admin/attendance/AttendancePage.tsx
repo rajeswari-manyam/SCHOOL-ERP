@@ -3,18 +3,15 @@ import { useAttendanceStore } from "./store";
 import { useAllClassesTodayAttendance } from "./hooks/useAttendance";
 import AttendanceToday from "./components/AttendanceToday";
 import AttendanceHistory from "./components/AttendanceHistory";
-import HolidayCalendar from "./components/HolidayCalendar";
 import StaffAttendance from "./components/StaffAttendance";
 import PendingLeavesTab from "./components/PendingLeavesTab";
 import MarkAttendanceModal from "./components/MarkAttendanceModal";
 import MarkStaffAttendanceModal from "./components/MarkStaffAttendanceModal";
-import AddHolidayModal from "./components/AddHolidayModal";
 import type { AttendanceTab } from "./types/attendance.types";
 
 const TABS: { key: AttendanceTab; label: string }[] = [
   { key: "today",   label: "Today"            },
   { key: "history", label: "History"          },
-  { key: "holiday", label: "Holiday Calendar" },
   { key: "staff",   label: "Staff Attendance" },
 ];
 
@@ -58,14 +55,14 @@ const AttendancePage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <div className="flex items-center">
+        <div className="border-b border-gray-200 overflow-x-auto scrollbar-none">
+          <div className="flex items-center flex-nowrap min-w-max">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={[
-                  "relative flex items-center gap-2 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors",
+                  "relative flex items-center gap-2 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0",
                   activeTab === tab.key
                     ? "border-indigo-600 text-indigo-600"
                     : "border-transparent text-gray-700 hover:text-gray-900",
@@ -91,14 +88,12 @@ const AttendancePage = () => {
           />
         )}
         {activeTab === "history" && <AttendanceHistory />}
-        {activeTab === "holiday" && <HolidayCalendar />}
         {activeTab === "staff"   && <StaffAttendance />}
         {activeTab === "leaves"  && <PendingLeavesTab />}
       </div>
 
       <MarkAttendanceModal />
       <MarkStaffAttendanceModal />
-      <AddHolidayModal />
     </div>
   );
 };

@@ -8,7 +8,13 @@ declare module "axios" {
   }
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.17:4000";
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!BASE_URL) {
+  throw new Error(
+    "VITE_API_URL is not set. Define it in your .env file (see .env.example) before starting the app."
+  );
+}
 
 export const api = axios.create({
   baseURL: BASE_URL,

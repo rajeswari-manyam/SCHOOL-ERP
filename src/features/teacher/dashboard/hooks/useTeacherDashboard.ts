@@ -101,7 +101,7 @@ export const useMarkAttendance = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: teacherDashboardApi.markAttendanceViaWeb,
-    onSuccess: () => qc.invalidateQueries({ queryKey: TEACHER_KEYS.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TEACHER_KEYS.all, refetchType: "all" }),
   });
 };
 
@@ -122,8 +122,8 @@ export const useAssignHomework = (teacherId?: string) => {
   return useMutation({
     mutationFn: teacherDashboardApi.assignHomework,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TEACHER_KEYS.all });
-      if (teacherId) qc.invalidateQueries({ queryKey: TEACHER_KEYS.allHomework(teacherId) });
+      qc.invalidateQueries({ queryKey: TEACHER_KEYS.all, refetchType: "all" });
+      if (teacherId) qc.invalidateQueries({ queryKey: TEACHER_KEYS.allHomework(teacherId), refetchType: "all" });
     },
   });
 };
@@ -135,6 +135,6 @@ export const useApplyLeave = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: teacherDashboardApi.applyLeave,
-    onSuccess: () => qc.invalidateQueries({ queryKey: TEACHER_KEYS.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TEACHER_KEYS.all, refetchType: "all" }),
   });
 };

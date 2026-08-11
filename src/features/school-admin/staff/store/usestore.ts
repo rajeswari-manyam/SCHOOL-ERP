@@ -77,8 +77,6 @@ export const filterStaff = (staff: StaffMember[], activeTab: TabKey, search: str
     filtered = filtered.filter(s => s.isTeaching);
   } else if (activeTab === "non-teaching") {
     filtered = filtered.filter(s => !s.isTeaching);
-  } else if (activeTab === "leave-requests") {
-    filtered = filtered.filter(s => s.leaveRequest?.status === "PENDING");
   }
 
   // Filter by search

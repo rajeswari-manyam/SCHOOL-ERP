@@ -1,8 +1,17 @@
-import { memo, useEffect } from "react";
+import { memo, Suspense, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import StudentTopNavBar from "../features/student/dashboard/components/StudentTopNavBar";
+import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
+
+// Shown in the content area while a route's code chunk downloads — the
+// nav bar stays mounted so navigation doesn't flash a blank page.
+const PageContentLoader = () => (
+  <div className="flex items-center justify-center h-[60vh]">
+    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+  </div>
+);
 
 const StudentLayout = memo(() => {
   const user = useAuthStore((s) => s.user);
@@ -35,7 +44,11 @@ const StudentLayout = memo(() => {
           pt-1 sm:pt-2 pb-4 sm:pb-6 lg:pb-8
         "
       >
-        <Outlet />
+        <RouteErrorBoundary>
+          <Suspense fallback={<PageContentLoader />}>
+            <Outlet />
+          </Suspense>
+        </RouteErrorBoundary>
       </main>
 
     </div>

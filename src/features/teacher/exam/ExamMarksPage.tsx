@@ -37,7 +37,7 @@ const ExamMarksPage = () => {
   } = useExamMarks();
 
   return (
-    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
+    <div className="flex flex-col gap-4 min-h-full px-3 sm:px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -111,13 +111,13 @@ const ExamMarksPage = () => {
           <MarksEntryTable entries={entries} onUpdate={updateEntry} />
 
           {studentsLoaded && entries.length > 0 && (
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 type="button"
                 onClick={handleSaveDraft}
                 variant="outline"
                 size="md"
-                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold"
+                className="flex items-center justify-center gap-2 px-5 rounded-xl text-sm font-semibold w-full sm:w-auto"
               >
                 <Save size={14} className="text-current" />
                 Save Draft
@@ -129,7 +129,7 @@ const ExamMarksPage = () => {
                 variant="default"
                 size="md"
                 disabled={submitting}
-                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold disabled:opacity-50"
+                className="flex items-center justify-center gap-2 px-5 rounded-xl text-sm font-semibold disabled:opacity-50 w-full sm:w-auto"
               >
                 <Send size={14} className="text-current" />
                 {submitting ? "Submitting..." : "Submit for Review"}
@@ -140,7 +140,7 @@ const ExamMarksPage = () => {
                 onClick={() => setActiveTab("submitted")}
                 variant="outline"
                 size="md"
-                className="flex items-center gap-2 px-5 rounded-xl text-sm font-semibold ml-auto"
+                className="flex items-center justify-center gap-2 px-5 rounded-xl text-sm font-semibold w-full sm:w-auto sm:ml-auto"
               >
                 View Results
                 <ChevronRight size={14} className="text-current" />

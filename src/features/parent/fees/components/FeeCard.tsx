@@ -17,7 +17,7 @@ export function FeeCard({ fee, onPay }: FeeCardProps) {
     ">
 
       {/* TOP SECTION */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
 
         {/* LEFT */}
         <div className="flex items-start gap-3">
@@ -110,9 +110,9 @@ export function FeeCard({ fee, onPay }: FeeCardProps) {
       </div>
 
       {/* FOOTER */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
 
-        <div className="flex items-center gap-2 text-[14px] font-medium text-[#006C49]">
+        <div className="flex items-center gap-2 text-[14px] font-medium text-[#006C49] min-w-0">
           <MessageCircle size={16} color="#006C49" strokeWidth={1.5} />
 
           <span>

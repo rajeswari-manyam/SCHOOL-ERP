@@ -7,10 +7,7 @@ import { onNewNotification } from "@/utils/notificationBus";
 import { seedNotificationHistoryOnce, showSystemNotification } from "@/utils/pushNotifications";
 import { useAuthStore } from "@/store/authStore";
 
-// Not every notification type is pushed via FCM yet (only attendance is,
-// today) — polling is what surfaces the rest (homework, exams, fees, etc.)
-// as system notifications too, so every type reaches both the app's history
-// and the OS notification center.
+
 const POLL_INTERVAL_MS = 45_000;
 
 export function useNotifications() {
@@ -18,9 +15,7 @@ export function useNotifications() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
-    // Super Admin has no tenant/school context — this endpoint is tenant-only
-    // and would 401 with a superadmin token, forcing a logout via the axios
-    // interceptor. Skip the call entirely for that role.
+    
     if (useAuthStore.getState().role === "superadmin") return;
 
     setIsLoading(true);
@@ -29,9 +24,7 @@ export function useNotifications() {
       const list = res?.data ?? [];
       setNotifications(list);
 
-      // First-ever fetch in this browser: mark existing history as already
-      // seen instead of notifying, so opening the app doesn't dump years of
-      // old notifications into the OS notification center.
+    
       const justSeeded = seedNotificationHistoryOnce(list.map((n) => n.id));
       if (!justSeeded) {
         list
@@ -47,8 +40,7 @@ export function useNotifications() {
     }
   }, []);
 
-  // Refresh on mount, whenever a foreground push arrives (catch-up), and on
-  // a fixed interval (so types the backend doesn't push via FCM still surface).
+ 
   useEffect(() => {
     fetchNotifications();
     const unsubscribe = onNewNotification(fetchNotifications);

@@ -80,7 +80,7 @@ const LeaveBalanceCards = ({ balances, leaveTotals, leaveHistory = [], loading, 
     ];
 
     return (
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {summaryCards.map(card => (
           <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} ${card.iconColor}`}>
@@ -131,7 +131,7 @@ const LeaveBalanceCards = ({ balances, leaveTotals, leaveHistory = [], loading, 
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {cards.map(card => (
         <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
           <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} ${card.iconColor}`}>

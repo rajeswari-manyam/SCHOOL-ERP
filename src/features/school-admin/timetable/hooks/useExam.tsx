@@ -45,9 +45,13 @@ export const useCreateExam = () => {
   return useMutation({
     mutationFn: (data: ExamPayload) => createExam(data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: EXAM_KEYS.all });
+      // refetchType: "all" forces an immediate refetch even if these queries
+      // are currently inactive (e.g. user navigated away), so the cache is
+      // already fresh by the time they come back — otherwise
+      // refetchOnMount:false would leave the stale cached data showing.
+      qc.invalidateQueries({ queryKey: EXAM_KEYS.all, refetchType: "all" });
       // Also invalidate useTimetable exam-names cache so the dropdown refreshes
-      qc.invalidateQueries({ queryKey: ["timetable", "exam-names"] });
+      qc.invalidateQueries({ queryKey: ["timetable", "exam-names"], refetchType: "all" });
       toast.success("Exam created successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -61,8 +65,10 @@ export const useUpdateExam = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<ExamPayload> }) =>
       updateExam(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: EXAM_KEYS.all });
-      qc.invalidateQueries({ queryKey: ["timetable", "exam-names"] });
+      // refetchType: "all" — force refresh even if inactive right now, so the
+      // cache is already current when the user navigates back to the list.
+      qc.invalidateQueries({ queryKey: EXAM_KEYS.all, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["timetable", "exam-names"], refetchType: "all" });
       toast.success("Exam updated successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -75,8 +81,10 @@ export const useDeleteExam = () => {
   return useMutation({
     mutationFn: (id: string) => deleteExam(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: EXAM_KEYS.all });
-      qc.invalidateQueries({ queryKey: ["timetable", "exam-names"] });
+      // refetchType: "all" — force refresh even if inactive right now, so the
+      // cache is already current when the user navigates back to the list.
+      qc.invalidateQueries({ queryKey: EXAM_KEYS.all, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["timetable", "exam-names"], refetchType: "all" });
       toast.success("Exam deleted successfully");
     },
     onError: (err: Error) => toast.error(err.message),

@@ -92,7 +92,51 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Card list (mobile only) — avoids horizontal scroll */}
+      <div className="sm:hidden divide-y divide-gray-50">
+        {pageRows.map((s) => {
+          const roleLabel = [s.role, s.classes?.[0]].filter(Boolean).join(" — ");
+          return (
+            <div
+              key={`${s.id}-card`}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-[#EFF4FF] transition-colors cursor-pointer"
+              onClick={() => goToProfile(s)}
+            >
+              <Avatar initials={s.initials ?? s.name?.slice(0, 2).toUpperCase() ?? "NA"} id={s.id} image={s.image} onPreview={() => setPreviewStaff(s)} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{s.name ?? "—"}</p>
+                <p className="text-xs text-gray-500 mt-0.5 truncate">
+                  {roleLabel || "—"}{s.employeeId ? ` · ${s.employeeId}` : ""}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <StatusBadge status={s.status} />
+                  {s.leaveBalance != null && (
+                    <span className={`text-[11px] font-semibold ${s.leaveBalance <= 3 ? "text-amber-600" : "text-gray-500"}`}>
+                      {s.leaveBalance} days leave
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => onView?.(s)} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                  View
+                </button>
+                <button onClick={() => onEdit?.(s)} className="text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors">
+                  Edit
+                </button>
+                {onDelete && (
+                  <button onClick={() => setDeleteTarget(s)} title="Delete"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>
             <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
@@ -202,7 +246,7 @@ export const StaffTable = ({ staff, total, onEdit, onView, onDelete }: Props) =>
       </div>
 
       {/* Footer / Pagination */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/40">
         <p className="text-xs text-gray-400">
           Showing <span className="font-semibold text-gray-700">{start + 1}–{Math.min(start + PAGE_SIZE, staff.length)}</span> of{" "}
           <span className="font-semibold text-gray-700">{total}</span> staff members

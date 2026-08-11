@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { MonthlyPayrollTab } from "../components/payroll/MonthlyPayRollTab";
 import { SalaryConfigTab } from "../components/salaryconfig/SalaryConfigTab";
 import { PayrollHistoryTab } from "../components/payrollhistory/PayrollHistoryTab";
-import { ProcessPayrollModal } from "../common/ProcessPayroll";
 import { PayslipModal } from "../components/PayslipModal";
 import { usePayroll, useSalaryConfig, usePayrollHistory, useMonthlyPayrollData } from "../hooks/usePayrolls";
 import { useUIStore } from "@/store/uiStore";
@@ -21,15 +20,17 @@ const TABS: { id: Tab; label: string }[] = [
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function PayrollPage() {
-  const [activeTab, setActiveTab]                       = useState<Tab>("monthly");
+  const location = useLocation();
+  const [activeTab, setActiveTab]                       = useState<Tab>(
+    ((location.state as { activeTab?: Tab } | null)?.activeTab) ?? "monthly"
+  );
   const [currentMonth, setCurrentMonth]                 = useState(() => { const d = new Date(); d.setDate(1); return d; });
-  const [showProcessModal, setShowProcessModal]         = useState(false);
   const [showPayslipModal, setShowPayslipModal]         = useState(false);
   const [selectedPayslipStaff, setSelectedPayslipStaff] = useState<StaffPayroll | null>(null);
 
   const academicYearName = useUIStore((s) => s.academicYearName);
 
-  const { processPayroll, paySalary, paySelected, getAttendanceDeductions } = usePayroll();
+  const { paySalary, paySelected } = usePayroll();
 
   const {
     staffData, summary, isProcessed, isLoading: monthlyLoading,
@@ -55,11 +56,6 @@ export default function PayrollPage() {
   };
 
   const formattedMonthShort = currentMonth.toLocaleString("default", { month: "short", year: "numeric" });
-
-  const handleProcessPayroll = (data: { paymentMode: string; paymentDate: string; approvalNote?: string }) => {
-    processPayroll(data);
-    setShowProcessModal(false);
-  };
 
   const handleViewPayslip = (staff: StaffPayroll) => {
     setSelectedPayslipStaff(staff);
@@ -116,16 +112,6 @@ export default function PayrollPage() {
                 <ChevronRight className="w-4 h-4 text-slate-600" />
               </button>
             </div>
-            {/* Generate Payroll button — only on Monthly tab when not processed */}
-            {activeTab === "monthly" && !isProcessed && (
-              <Button
-                size="sm"
-                className="h-9 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white px-4"
-                onClick={() => setShowProcessModal(true)}
-              >
-                Generate Payroll
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -180,7 +166,8 @@ export default function PayrollPage() {
                 isLoading={monthlyLoading}
                 processedDate={processedDate}
                 processedBy={processedBy}
-                onStartProcessing={() => setShowProcessModal(true)}
+                month={currentMonth.getMonth() + 1}
+                year={currentMonth.getFullYear()}
                 onViewPayslip={handleViewPayslip}
                 onGeneratePayslip={generatePayslip}
                 onPaySalary={paySalary}
@@ -202,14 +189,6 @@ export default function PayrollPage() {
       </div>
 
       {/* ── Modals ── */}
-      {showProcessModal && (
-        <ProcessPayrollModal
-          onClose={() => setShowProcessModal(false)}
-          onSubmit={handleProcessPayroll}
-          summary={summary}
-          attendanceDeductions={getAttendanceDeductions()}
-        />
-      )}
       {showPayslipModal && payslipStaff && (
         <PayslipModal
           staff={payslipStaff}

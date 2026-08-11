@@ -1,4 +1,5 @@
 import api from "@/config/axios";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 export interface ApiResponse<T> {
   status: boolean;
@@ -487,9 +488,8 @@ export const addConcession = async (payload: CreateConcessionPayload) => {
   try {
     const res = await api.post<ApiResponse<ConcessionRecord>>("/tenant/addconcession", payload);
     return res.data;
-  } catch (err: any) {
-    const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to add concession";
-    throw new Error(message);
+  } catch (err) {
+    throw new Error(getErrorMessage(err, "Failed to add concession"));
   }
 };
 
@@ -502,9 +502,8 @@ export const updateConcession = async (id: string, payload: Partial<CreateConces
   try {
     const res = await api.put<ApiResponse<ConcessionRecord>>(`/tenant/updateconcessionById/${id}`, payload);
     return res.data;
-  } catch (err: any) {
-    const message = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Failed to update concession";
-    throw new Error(message);
+  } catch (err) {
+    throw new Error(getErrorMessage(err, "Failed to update concession"));
   }
 };
 

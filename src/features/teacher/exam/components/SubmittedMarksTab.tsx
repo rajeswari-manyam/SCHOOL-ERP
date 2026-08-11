@@ -105,7 +105,128 @@ const SubmittedMarksTab = ({
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile card list */}
+      <div className="sm:hidden divide-y divide-gray-50">
+        {exams.map((ex) => {
+          const cfg = STATUS_CONFIG[ex.status] ?? STATUS_CONFIG.SUBMITTED;
+          const completion = ex.completionPercentage ?? 0;
+          const isExpanded = expandedId === ex.id;
+          return (
+            <div key={ex.id}>
+              <div
+                onClick={() => setExpandedId(isExpanded ? null : ex.id)}
+                className={`p-4 cursor-pointer active:bg-gray-50 transition-colors ${isExpanded ? "bg-indigo-50/40" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{ex.examLabel}</p>
+                    <p className="text-[11px] text-gray-400">{ex.academicYear}</p>
+                  </div>
+                  <span className={`shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cfg.classes}`}>
+                    {cfg.label}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
+                  <span className="truncate">{ex.className} · {ex.subject}</span>
+                  <span className="shrink-0">{formatDate(ex.submittedOn)}</span>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                  <span>{ex.appeared}/{ex.totalStudents} entered</span>
+                  <span className="font-semibold text-indigo-600">Avg {ex.average}</span>
+                  <span className={`font-semibold ${completion === 100 ? "text-emerald-600" : "text-amber-600"}`}>
+                    {completion}% complete
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                    {ex.status === "SUBMITTED" && (
+                      <button className="text-xs font-semibold text-amber-600 hover:text-amber-800 hover:underline transition-colors">
+                        Approve
+                      </button>
+                    )}
+
+                    {showPublish && (
+                      ex.status === "PUBLISHED" ? (
+                        <span className="flex items-center gap-1.5" title="Results published to students & parents">
+                          <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-indigo-600">
+                            <span className="inline-block h-3 w-3 translate-x-3.5 rounded-full bg-white" />
+                          </span>
+                          <span className="text-[11px] font-bold text-indigo-600">Published</span>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onPublish?.(ex)}
+                          disabled={publishingId === ex.id}
+                          title="Publish results to students & parents"
+                          className="flex items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="relative inline-flex h-4 w-7 items-center rounded-full bg-gray-200 group-hover:bg-gray-300 transition-colors">
+                            <span className="inline-block h-3 w-3 translate-x-0.5 rounded-full bg-white shadow transition-transform" />
+                          </span>
+                          <span className="text-[11px] font-semibold text-gray-500 group-hover:text-gray-700">
+                            {publishingId === ex.id ? "Publishing…" : "Publish"}
+                          </span>
+                        </button>
+                      )
+                    )}
+
+                    {classId && sectionId && subjectId && ex.examId && (
+                      <StudentDownloadMenu
+                        classId={classId}
+                        sectionId={sectionId}
+                        subjectId={subjectId}
+                        academicYearId={academicYearId ?? ex.academicYearId ?? ""}
+                        examId={ex.examId}
+                      />
+                    )}
+                  </div>
+
+                  <span className="flex items-center gap-1 text-xs font-semibold text-indigo-600 shrink-0">
+                    {isExpanded ? "Close" : "View"}
+                    {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </span>
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div className="px-4 pb-4 bg-gray-50/60">
+                  {!ex.enteredStudents || ex.enteredStudents.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-3">No student marks found for this exam.</p>
+                  ) : (
+                    <div className="bg-white rounded-lg border border-gray-100 divide-y divide-gray-50">
+                      {ex.enteredStudents.map((s) => (
+                        <div key={s.studentId} className="p-3 flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{s.studentName}</p>
+                            <p className="text-[11px] text-gray-400">{s.admissionNo || "—"}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-sm font-semibold text-indigo-600">{s.marksObtained}</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              s.isPublished
+                                ? "bg-indigo-50 text-indigo-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}>
+                              {s.isPublished ? "Published" : "Not Published"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100">

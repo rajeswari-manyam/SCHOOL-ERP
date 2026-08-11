@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Pencil, Trash2, Users, Wallet,
   BarChart3, GraduationCap, Loader2, IndianRupee,
@@ -14,7 +15,6 @@ import {
 import { getAllConcessions, deleteConcession } from "@/services/fee.api";
 import type { ConcessionRecord } from "@/services/fee.api";
 import { toast } from "sonner";
-import { AddFeeConcessionModal } from "./AddFeeConcessionModal";
 
 const getInitials = (name: string) => {
   const parts = name.trim().split(" ");
@@ -192,11 +192,10 @@ interface ConcessionsProps {
 }
 
 export function Concessions({ triggerAdd, onAddHandled }: ConcessionsProps = {}) {
+  const navigate = useNavigate();
   const [concessions, setConcessions]       = useState<ConcessionRecord[]>([]);
   const [page, setPage]                     = useState(1);
   const [deletingId, setDeletingId]         = useState<string | null>(null);
-  const [editingRecord, setEditingRecord]   = useState<ConcessionRecord | null>(null);
-  const [showAddModal, setShowAddModal]     = useState(false);
 
   const refresh = useCallback(() => {
     getAllConcessions()
@@ -208,10 +207,10 @@ export function Concessions({ triggerAdd, onAddHandled }: ConcessionsProps = {})
 
   useEffect(() => {
     if (triggerAdd) {
-      setShowAddModal(true);
+      navigate("/accountant/fees/concession/add");
       onAddHandled?.();
     }
-  }, [triggerAdd, onAddHandled]);
+  }, [triggerAdd, onAddHandled, navigate]);
 
   const handleDelete = useCallback(async (id: string) => {
     setDeletingId(id);
@@ -237,23 +236,6 @@ export function Concessions({ triggerAdd, onAddHandled }: ConcessionsProps = {})
 
   return (
     <div className="space-y-5 pb-8">
-
-      {/* Add Modal */}
-      {showAddModal && (
-        <AddFeeConcessionModal
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => { setShowAddModal(false); refresh(); }}
-        />
-      )}
-
-      {/* Edit Modal */}
-      {editingRecord && (
-        <AddFeeConcessionModal
-          editData={editingRecord}
-          onClose={() => setEditingRecord(null)}
-          onSuccess={() => { setEditingRecord(null); refresh(); }}
-        />
-      )}
 
       {/* Stats */}
       <div className="mx-5 mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -301,7 +283,7 @@ export function Concessions({ triggerAdd, onAddHandled }: ConcessionsProps = {})
                 <ConcessionCard
                   key={row.id}
                   row={row}
-                  onEdit={() => setEditingRecord(row)}
+                  onEdit={() => navigate(`/accountant/fees/concession/edit/${row.id}`, { state: { editData: row } })}
                   onDelete={() => handleDelete(row.id)}
                   deleting={deletingId === row.id}
                 />

@@ -9,7 +9,6 @@ import {
 } from "./hooks/useAttendance";
 import MyHistoryTab from "./components/MyHistoryTab";
 import MarkStudentAttendanceModal from "./components/MarkStudentAttendaceModal";
-import TeacherHolidaysTab from "./components/TeacherHolidaysTab";
 import type { StaffAttendanceRecord } from "@/services/attendance.api";
 import { getAllHolidays } from "@/services/holidays.api";
 import { fetchAllWorkingDays } from "@/services/working-days.api";
@@ -262,7 +261,7 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
               }`}
             >
               <CalendarDays size={12} />
-              Cal
+              <span className="hidden sm:inline">Cal</span>
             </button>
             <button
               onClick={() => setView("list")}
@@ -271,7 +270,7 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
               }`}
             >
               <List size={12} />
-              List
+              <span className="hidden sm:inline">List</span>
             </button>
           </div>
 
@@ -287,7 +286,7 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
 
       {/* Summary stat cards */}
       {records.length > 0 && (
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {[
             { label: "Present",  value: summary.present, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
             { label: "Absent",   value: summary.absent,  color: "text-red-500",     bg: "bg-red-50 border-red-100"         },
@@ -370,9 +369,8 @@ const MyStaffAttendanceTab = ({ staffId }: { staffId: string }) => {
 const TABS = [
   { key: "class",    label: "Class Attendance" },
   { key: "mine",     label: "My Attendance"    },
-  { key: "holidays", label: "Holidays"         },
 ];
-type TabKey = "class" | "mine" | "holidays";
+type TabKey = "class" | "mine";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const MyAttendancePage = () => {
@@ -401,7 +399,7 @@ const MyAttendancePage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
+    <div className="flex flex-col gap-4 min-h-full px-3 sm:px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -459,11 +457,6 @@ const MyAttendancePage = () => {
       {/* ── My Attendance tab (teacher's own staff attendance) ────────────── */}
       {activeTab === "mine" && (
         <MyStaffAttendanceTab staffId={activeTeacherId} />
-      )}
-
-      {/* ── Holidays tab ──────────────────────────────────────────────────── */}
-      {activeTab === "holidays" && (
-        <TeacherHolidaysTab />
       )}
 
       <MarkStudentAttendanceModal

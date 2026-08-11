@@ -175,7 +175,35 @@ const StaffAttendance = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Card list (mobile only) — avoids horizontal scroll */}
+          <div className="sm:hidden divide-y divide-gray-50">
+            {rows.map((rec) => (
+              <div key={`${rec.id}-card`} className="px-5 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-900">{rec.staffName}</span>
+                  <StatusBadge status={rec.status} />
+                </div>
+                <div className="flex items-center justify-between gap-2 mt-1.5">
+                  <span className="text-xs text-gray-500">{fmt(rec.date)}</span>
+                  {rec.workingDay ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                      <CheckCircle2 size={12} /> Working day
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-400">
+                      <XCircle size={12} /> Non-working
+                    </span>
+                  )}
+                </div>
+                {rec.remarks && (
+                  <p className="text-xs text-gray-500 capitalize mt-1">{rec.remarks}</p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full min-w-[560px]">
               <thead>
                 <tr className="border-b border-gray-100" style={{ background: "#EFF4FF" }}>
@@ -209,6 +237,7 @@ const StaffAttendance = () => {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

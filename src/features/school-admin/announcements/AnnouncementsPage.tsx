@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Megaphone, Calendar, Plus, Paperclip, Pencil, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AnnouncementFormModal from "./AnnouncementFormModal";
 import { useAnnouncements, useAnnouncementMutations } from "./hooks/useAnnouncements";
-import { AUDIENCES } from "./AnnouncementFormModal";
-import type { AnnouncementInitialValues } from "./AnnouncementFormModal";
-import type { SchoolAnnouncementRecord, SchoolAnnouncementPayload } from "@/services/school-announcement.api";
+import { AUDIENCES } from "./AnnouncementFormPage";
+import type { AnnouncementInitialValues } from "./AnnouncementFormPage";
+import type { SchoolAnnouncementRecord } from "@/services/school-announcement.api";
 
 const audienceLabel = (value: string) => AUDIENCES.find((a) => a.value === value)?.label ?? value;
 
@@ -15,37 +14,24 @@ const fmtDate = (iso: string) => {
 };
 
 export default function AnnouncementsPage() {
+  const navigate = useNavigate();
   const { data: announcements, isLoading, isError } = useAnnouncements();
-  const { createAnnouncement, updateAnnouncement, deleteAnnouncement } = useAnnouncementMutations();
-  const [openModal, setOpenModal] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<SchoolAnnouncementRecord | null>(null);
+  const { deleteAnnouncement } = useAnnouncementMutations();
 
-  const editingValues: AnnouncementInitialValues | null = editingAnnouncement
-    ? {
-        id: editingAnnouncement.id,
-        title: editingAnnouncement.title.trim(),
-        message: editingAnnouncement.message.trim(),
-        category: editingAnnouncement.category.trim(),
-        publishDate: editingAnnouncement.publishDate,
-        audience: editingAnnouncement.audience,
-        existingAttachmentName: editingAnnouncement.attachments?.[0]?.name,
-      }
-    : null;
+  const goToForm = (editing?: AnnouncementInitialValues) =>
+    navigate("/schooladmin/announcements/new", { state: { editing } });
 
-  const handleSubmit = (payload: SchoolAnnouncementPayload) => {
-    if (editingAnnouncement) {
-      updateAnnouncement.mutate(
-        { id: editingAnnouncement.id, payload },
-        { onSuccess: () => { setOpenModal(false); setEditingAnnouncement(null); } }
-      );
-    } else {
-      createAnnouncement.mutate(payload, { onSuccess: () => setOpenModal(false) });
-    }
+  const openEdit = (a: SchoolAnnouncementRecord) => {
+    goToForm({
+      id: a.id,
+      title: a.title.trim(),
+      message: a.message.trim(),
+      category: a.category.trim(),
+      publishDate: a.publishDate,
+      audience: a.audience,
+      existingAttachmentName: a.attachments?.[0]?.name,
+    });
   };
-
-  const openCreate = () => { setEditingAnnouncement(null); setOpenModal(true); };
-  const openEdit = (a: SchoolAnnouncementRecord) => { setEditingAnnouncement(a); setOpenModal(true); };
-  const closeModal = () => { setOpenModal(false); setEditingAnnouncement(null); };
 
   const handleDelete = (a: SchoolAnnouncementRecord) => {
     if (confirm(`Delete the announcement "${a.title.trim()}"?`)) {
@@ -64,7 +50,7 @@ export default function AnnouncementsPage() {
           </p>
         </div>
         <Button
-          onClick={openCreate}
+          onClick={() => goToForm()}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
@@ -151,14 +137,6 @@ export default function AnnouncementsPage() {
           ))}
         </div>
       )}
-
-      <AnnouncementFormModal
-        open={openModal}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        submitting={createAnnouncement.isPending || updateAnnouncement.isPending}
-        editing={editingValues}
-      />
     </div>
   );
 }

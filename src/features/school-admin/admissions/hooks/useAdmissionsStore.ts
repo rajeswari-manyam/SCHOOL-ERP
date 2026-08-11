@@ -3,7 +3,6 @@ import type { PipelineStage } from '../types';
 
 interface AdmissionsUIState {
   selectedEnquiryId: string | null;
-  isAddEnquiryOpen: boolean;
   isConfirmAdmissionOpen: boolean;
   isDeclineOpen: boolean;
   confirmTargetId: string | null;
@@ -11,8 +10,6 @@ interface AdmissionsUIState {
   filterStage: PipelineStage | 'all';
 
   setSelectedEnquiry: (id: string | null) => void;
-  openAddEnquiry: () => void;
-  closeAddEnquiry: () => void;
   openConfirmAdmission: (id: string) => void;
   closeConfirmAdmission: () => void;
   openDecline: (id: string) => void;
@@ -23,7 +20,6 @@ interface AdmissionsUIState {
 
 export const useAdmissionsStore = create<AdmissionsUIState>((set) => ({
   selectedEnquiryId: null,
-  isAddEnquiryOpen: false,
   isConfirmAdmissionOpen: false,
   isDeclineOpen: false,
   confirmTargetId: null,
@@ -31,8 +27,6 @@ export const useAdmissionsStore = create<AdmissionsUIState>((set) => ({
   filterStage: 'all',
 
   setSelectedEnquiry: (id) => set({ selectedEnquiryId: id }),
-  openAddEnquiry: () => set({ isAddEnquiryOpen: true }),
-  closeAddEnquiry: () => set({ isAddEnquiryOpen: false }),
   openConfirmAdmission: (id) => set({ isConfirmAdmissionOpen: true, confirmTargetId: id }),
   closeConfirmAdmission: () => set({ isConfirmAdmissionOpen: false, confirmTargetId: null }),
   openDecline: (id) => set({ isDeclineOpen: true, confirmTargetId: id }),

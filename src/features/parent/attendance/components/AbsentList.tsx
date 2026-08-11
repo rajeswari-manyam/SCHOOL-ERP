@@ -11,7 +11,7 @@ import {
 } from "recharts"
 
 import type { AbsentListProps, AbsentDay } from "../types/attendance.types"
-import { useAttendanceStore } from "../store/attedance.store"
+import { useAttendanceStore } from "../store/attendance.store"
 import { MONTH_NAMES } from "../../../../utils/date"
 
 const CustomTooltip = ({ active, payload, label }: any) => {

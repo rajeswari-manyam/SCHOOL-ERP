@@ -1,8 +1,10 @@
+import axios from 'axios';
 import api from '@/config/axios';
 import { getAuthToken, getTenantId } from '@/store/authStore';
+import { getErrorMessage } from '@/utils/getErrorMessage';
 import type {
   Enquiry, PipelineStage, NewEnquiryFormData, ConfirmAdmissionFormData, PipelineStats,
-  RawEnquiryItem, GetAllEnquiriesResponse, StageChangeResponse,
+  RawEnquiryItem, GetAllEnquiriesResponse, StageChangeResponse, Document,
   AdmissionDocumentRecord, GetAdmissionDocumentResponse, GetAdmissionDocumentsResponse,
 } from '@/features/school-admin/admissions/types';
 
@@ -43,7 +45,7 @@ const mapStage = (val?: string): PipelineStage => {
 
 // ─── Field pickers ────────────────────────────────────────────────────────────
 
-const pick = <T>(obj: Record<string, any>, keys: string[], fallback: T): T => {
+const pick = <T>(obj: Record<string, unknown>, keys: string[], fallback: T): T => {
   for (const k of keys) {
     const v = obj[k];
     if (v !== undefined && v !== null && v !== '') return v as T;
@@ -53,7 +55,27 @@ const pick = <T>(obj: Record<string, any>, keys: string[], fallback: T): T => {
 
 // ─── Response mappers ─────────────────────────────────────────────────────────
 
-const mapDocument = (doc: any) => ({
+/** Raw per-document shape as returned inline on an enquiry record — field names vary by endpoint/backend version. */
+interface RawEnquiryDocumentItem {
+  name?: string;
+  document_name?: string;
+  doc_name?: string;
+  title?: string;
+  label?: string;
+  status?: string;
+  document_status?: string;
+  id?: string;
+  document_id?: string;
+  file_name?: string;
+  filename?: string;
+  original_name?: string;
+  file_url?: string;
+  url?: string;
+  file_path?: string;
+  path?: string;
+}
+
+const mapDocument = (doc: RawEnquiryDocumentItem): Document => ({
   name:     doc?.name ?? doc?.document_name ?? doc?.doc_name ?? doc?.title ?? doc?.label ?? '',
   status:   (doc?.status ?? doc?.document_status ?? 'pending') as 'verified' | 'pending' | 'missing',
   id:       doc?.id ?? doc?.document_id ?? undefined,
@@ -62,7 +84,7 @@ const mapDocument = (doc: any) => ({
 });
 
 const mapEnquiry = (item: RawEnquiryItem): Enquiry => {
-  const o = item as Record<string, any>;
+  const o = item as unknown as Record<string, unknown>;
   return {
     id:               pick(o, ['enquiry_id', 'id', '_id'], ''),
     admissionNo:      pick(o, ['admission_no', 'admissionNo', 'admission_number'], undefined),
@@ -81,18 +103,18 @@ const mapEnquiry = (item: RawEnquiryItem): Enquiry => {
     interviewDate:    pick(o, ['interview_date', 'interviewDate', 'scheduled_date'], undefined),
     interviewNote:    pick(o, ['interview_note', 'interviewNote'], undefined),
     documents:        (() => {
-      const docs = o['documents'] ?? o['document_list'];
+      const docs = item.documents ?? item.document_list;
       return Array.isArray(docs) ? docs.map(mapDocument) : undefined;
     })(),
-    section:          o['section'],
+    section:          item.section,
     rollNumber:       pick(o, ['roll_number', 'rollNumber', 'roll_no'], undefined),
     firstDayOfSchool: pick(o, ['first_day_of_school', 'firstDayOfSchool'], undefined),
-    annualFee:        o['annual_fee'] ?? o['annualFee'] ?? o['fee'],
-    whatsappSent:     o['whatsapp_sent'] ?? o['whatsappSent'] ?? o['wa_sent'],
-    welcomeWhatsappSent: o['welcome_whatsapp_sent'] ?? o['welcomeWhatsappSent'],
+    annualFee:        item.annual_fee ?? item.annualFee ?? item.fee,
+    whatsappSent:     item.whatsapp_sent ?? item.whatsappSent ?? item.wa_sent,
+    welcomeWhatsappSent: item.welcome_whatsapp_sent ?? item.welcomeWhatsappSent,
     counselorNote:    pick(o, ['counselor_note', 'counselorNote', 'counsellor_note'], undefined),
     statusHistory:    (() => {
-      const h = o['status_history'] ?? o['statusHistory'] ?? o['history'];
+      const h = item.status_history ?? item.statusHistory ?? item.history;
       return Array.isArray(h) ? h : undefined;
     })(),
   };
@@ -226,6 +248,14 @@ function xhrUpload(
   });
 }
 
+/** Raw per-file shape as returned by the upload endpoint — field names vary by backend version. */
+interface RawUploadedDocItem {
+  id?: string | number;
+  document_id?: string | number;
+  file_name?: string;
+  original_name?: string;
+}
+
 function parseUploadMeta(body: unknown, files: File[]): UploadedDocumentMeta[] {
   if (!body || typeof body !== 'object') return [];
   const o = body as Record<string, unknown>;
@@ -233,8 +263,8 @@ function parseUploadMeta(body: unknown, files: File[]): UploadedDocumentMeta[] {
   for (const k of ['data', 'documents', 'files', 'records']) {
     const v = o[k];
     if (Array.isArray(v) && v.length) {
-      return v
-        .map((item: any, i) => {
+      return (v as RawUploadedDocItem[])
+        .map((item, i) => {
           const id = String(item?.id ?? item?.document_id ?? '');
           return id ? { documentId: id, fileName: item?.file_name ?? item?.original_name ?? files[i]?.name ?? `doc-${i + 1}` } : null;
         })
@@ -251,11 +281,8 @@ function parseUploadMeta(body: unknown, files: File[]): UploadedDocumentMeta[] {
 
 // ─── Error helper ─────────────────────────────────────────────────────────────
 
-function apiError(err: any, fallback: string): Error {
-  const ctx = err?.response?.data ?? err?.message ?? err;
-  return new Error(
-    (typeof ctx === 'object' ? ctx?.message ?? ctx?.error ?? JSON.stringify(ctx) : ctx) ?? fallback,
-  );
+function apiError(err: unknown, fallback: string): Error {
+  return new Error(getErrorMessage(err, fallback));
 }
 
 // ─── Payload builder (enquiry creation) ──────────────────────────────────────
@@ -451,8 +478,8 @@ export const admissionsApi = {
     try {
       const { data } = await api.get<GetAdmissionDocumentResponse>(`/tenant/getadmissiondocument/${documentId}`);
       return extractDocumentRecord(data);
-    } catch (err: any) {
-      if (err?.response?.status === 404) return null;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return null;
       throw apiError(err, 'Failed to fetch document');
     }
   },

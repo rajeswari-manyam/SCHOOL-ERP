@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { Plus, FileText, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SalaryTable } from "./SalaryTable";
 import { EditSalaryModal } from "./EditSalaryModal";
-import { AddPayrollModal } from "./AddPayrollModal";
 import type { SalaryConfigTabProps } from "../../types/payroll.types";
 
 export const SalaryConfigTab = ({
@@ -15,9 +14,8 @@ export const SalaryConfigTab = ({
   onClose,
   onSave,
   onDelete,
-  onRefresh,
 }: SalaryConfigTabProps) => {
-  const [showAddModal, setShowAddModal] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-5 pb-20 sm:pb-0">
@@ -30,12 +28,8 @@ export const SalaryConfigTab = ({
           </p>
         </div>
         <div className="hidden sm:flex gap-2 items-center">
-          <button className="text-xs text-[#3525CD] flex items-center gap-1 hover:underline">
-            <FileText className="w-3.5 h-3.5" />
-            View Audit Log
-          </button>
           <Button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => navigate("/accountant/payroll/salary/add")}
             variant="outline"
             className="h-9 text-xs gap-2 border-slate-200"
           >
@@ -69,7 +63,7 @@ export const SalaryConfigTab = ({
       {/* Mobile Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 flex gap-2 sm:hidden z-50 shadow-lg">
         <Button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => navigate("/accountant/payroll/salary/add")}
           variant="outline"
           className="flex-1 h-10 text-xs gap-1 border-slate-200"
         >
@@ -77,14 +71,6 @@ export const SalaryConfigTab = ({
           Add Staff
         </Button>
       </div>
-
-      {/* Add Payroll Modal */}
-      {showAddModal && (
-        <AddPayrollModal
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => { setShowAddModal(false); onRefresh(); }}
-        />
-      )}
 
       {/* Edit Modal */}
       {isEditing && (

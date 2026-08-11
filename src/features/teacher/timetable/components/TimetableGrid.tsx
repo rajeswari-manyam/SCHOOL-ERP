@@ -268,7 +268,10 @@ const TimetableGrid = ({
       </div>
 
       {/* ── Table ─── */}
-      <div className="overflow-auto max-h-[calc(100vh-300px)]" role="region" aria-label="Timetable grid">
+      {/* overflow-x-auto only — no max-height clamp, so the table's full
+          height flows with the page (page-level scroll) instead of being
+          boxed into its own internal scroll area. */}
+      <div className="overflow-x-auto" role="region" aria-label="Timetable grid">
         <table className="border-collapse" style={{ minWidth: 560 }} aria-label="Weekly schedule">
           <thead>
             <tr>

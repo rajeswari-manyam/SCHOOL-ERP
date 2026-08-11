@@ -36,7 +36,7 @@ interface Props {
 }
 
 const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionName, homeworkPending, attendanceThisMonth, leaveUsed, leaveAllocated, nextExam }: Props) => (
-  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     <Card
       label="Class Strength"
       value={`${currentStrength}/${totalStrength}`}
@@ -67,14 +67,16 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
       iconBg="bg-indigo-50"
       icon={<Calendar size={14} className="text-indigo-600" />}
     />
-    <Card
-      label="Next Exam"
-      value={nextExam ? (nextExam.subject?.subject_name ?? "—") : "—"}
-      sub={nextExam ? nextExam.exam_date : "No upcoming exams"}
-      accent="text-purple-600"
-      iconBg="bg-purple-50"
-      icon={<BookOpen size={14} className="text-purple-600" />}
-    />
+    <div className="col-span-2 sm:col-span-1">
+      <Card
+        label="Next Exam"
+        value={nextExam ? (nextExam.subject?.subject_name ?? "—") : "—"}
+        sub={nextExam ? nextExam.exam_date : "No upcoming exams"}
+        accent="text-purple-600"
+        iconBg="bg-purple-50"
+        icon={<BookOpen size={14} className="text-purple-600" />}
+      />
+    </div>
   </div>
 );
 

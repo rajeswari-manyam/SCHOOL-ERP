@@ -1,11 +1,24 @@
 
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FaThLarge, FaSchool, FaCreditCard, FaCog, FaComment, FaTicketAlt, FaUsers, FaFileAlt, FaChartBar } from "react-icons/fa";
 import Sidebar from "../components/common/Sidebar";
 import Topbar from "../components/common/Topbar";
+import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
+
+// Thin inline progress bar — NOT a full skeleton. Sidebar/Topbar render
+// outside this boundary (see below) so they never unmount during navigation;
+// this only ever appears in the rare case of clicking a page before its
+// chunk has been prefetched (see usePrefetchOtherPages in SuperAdminRouter).
+// Once a page's chunk is cached, lazy() resolves synchronously and this
+// never shows at all — the content just swaps.
+const RouteContentLoader = () => (
+  <div className="p-3">
+    <p className="text-sm text-slate-500">Loading...</p>
+  </div>
+);
 
 const BreadcrumbLabels: Record<string, string> = {
   "/superadmin/dashboard": "Dashboard",
@@ -85,7 +98,11 @@ export const SuperAdminLayout = () => {
         className={`overflow-y-auto bg-[#F4F6FA] pt-12 sm:pt-14 md:pt-14 transition-all duration-300 ${mainMargin}`}
       >
         <div className="px-3 sm:px-4 md:px-6 lg:px-8 pt-3 sm:pt-3 md:pt-4 pb-3 sm:pb-4 md:pb-6 lg:pb-8 min-h-screen">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Suspense fallback={<RouteContentLoader />}>
+              <Outlet />
+            </Suspense>
+          </RouteErrorBoundary>
         </div>
       </main>
     </div>

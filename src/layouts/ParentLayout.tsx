@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import ParentTopNavBar from "../features/parent/dashboard/components/ParentTopNavBar";
 import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
@@ -8,13 +8,21 @@ import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
 import { useParentChildren } from "./hooks/useParentChildren";
 
+// Shown in the content area while a route's code chunk downloads — the
+// nav bar stays mounted so navigation doesn't flash a blank page.
+const PageContentLoader = () => (
+  <div className="flex items-center justify-center h-[60vh]">
+    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+  </div>
+);
+
 const ParentLayout = () => {
   const students = useAuthStore((s) => s.students);
   const user = useAuthStore((s) => s.user);
   const setUserProfile = useAuthStore((s) => s.setUserProfile);
   const location = useLocation();
 
-  const { children, activeChild, setActiveChild, loading } = useParentChildren();
+  const { children, activeChild, setActiveChild, loading, error, refetch } = useParentChildren();
 
   const [showChildModal, setShowChildModal] = useState(false);
 
@@ -69,8 +77,16 @@ const ParentLayout = () => {
         )}
 
         {!loading && students.length > 0 && !activeChild && (
-          <div className="min-h-screen flex items-center justify-center text-gray-500 text-sm">
-            No student profiles found.
+          <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-gray-500 text-sm">
+            <p>{error ?? "No student profiles found."}</p>
+            {error && (
+              <button
+                onClick={refetch}
+                className="px-4 py-1.5 text-xs font-medium rounded-lg bg-[#3525CD] text-white hover:bg-[#2a1da3] transition-colors"
+              >
+                Retry
+              </button>
+            )}
           </div>
         )}
 
@@ -81,7 +97,9 @@ const ParentLayout = () => {
             has already changed. */}
         <div className={loading || students.length === 0 || !activeChild ? "hidden" : ""}>
           <RouteErrorBoundary>
-            <Outlet key={location.pathname} context={{ activeChild }} />
+            <Suspense fallback={<PageContentLoader />}>
+              <Outlet key={location.pathname} context={{ activeChild }} />
+            </Suspense>
           </RouteErrorBoundary>
         </div>
       </main>

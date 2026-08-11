@@ -18,7 +18,7 @@ export function useSupportTickets() {
 
 export function useSupportTicketMutations() {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: supportTicketKeys.list() });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: supportTicketKeys.list(), refetchType: "all" });
 
   const createTicket = useMutation({
     mutationFn: (payload: SupportTicketPayload) => supportTicketApi.createTicket(payload),

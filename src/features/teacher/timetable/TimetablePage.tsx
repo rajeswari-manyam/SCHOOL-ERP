@@ -1,11 +1,10 @@
 import { useRef, useState } from "react";
-import { Printer, Download, Loader2, RefreshCw, AlertCircle, Calendar, GraduationCap, User, School, BookOpen, GraduationCap as ExamIcon } from "lucide-react";
+import { Printer, Download, Loader2, RefreshCw, AlertCircle, Calendar, GraduationCap, User, School, BookOpen } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useTimetable, type DayName } from "./hooks/useTimetable";
 import { TimetableErrorBoundary } from "./components/ErrorBoundary";
 import TimetableGrid from "./components/TimetableGrid";
 import TimetableSummaryCards from "./components/TimetableSummaryCards";
-import UpcomingExamsTable from "./components/UpcomingExamsTable";
 import { useReactToPrint } from "react-to-print";
 import { downloadTeacherTimetable } from "@/services/timetable.api";
 
@@ -75,12 +74,9 @@ const EmptyState = ({ teacherName }: { teacherName?: string }) => (
   </div>
 );
 
-type Tab = "timetable" | "exams";
-
 const TimetablePage = () => {
   const user = useAuthStore((s) => s.user);
   const teacherName = user?.name ?? "";
-  const [activeTab, setActiveTab] = useState<Tab>("timetable");
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -97,8 +93,7 @@ const TimetablePage = () => {
 
   const {
     weekOffset, setWeekOffset,
-    grid, periods, exams,
-    isExamsLoading, isExamsError,
+    grid, periods,
     summary,
     classLabel, section, classTeacher, academicYear,
     todayName, currentPeriodId,
@@ -115,14 +110,9 @@ const TimetablePage = () => {
   const hasGrid  = Object.keys(grid).length > 0;
   const ayDisplay = formatAcademicYear(academicYear);
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "timetable", label: "Timetable",      icon: <Calendar size={13} /> },
-    { id: "exams",     label: "Exam Timetable", icon: <ExamIcon  size={13} /> },
-  ];
-
   return (
     <TimetableErrorBoundary>
-      <div className="flex flex-col gap-4 min-h-full px-5 pt-3 pb-5" data-testid="teacher-timetable-page">
+      <div className="flex flex-col gap-4 min-h-full px-3 sm:px-5 pt-3 pb-5" data-testid="teacher-timetable-page">
 
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -144,105 +134,51 @@ const TimetablePage = () => {
               {classTeacher && <><span className="text-gray-300">·</span><span className="flex items-center gap-1"><GraduationCap size={10} className="text-gray-400" /> {classTeacher}</span></>}
             </div>
           </div>
-          {activeTab === "timetable" && (
-            <div className="flex items-center gap-2 self-start">
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium transition-colors"
-                style={{ borderRadius: 10 }}
-              >
-                <Printer size={12} className="text-gray-500" strokeWidth={2} />
-                Print Timetable
-              </button>
-              <button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ borderRadius: 10 }}
-              >
-                {downloading ? (
-                  <Loader2 size={12} className="text-gray-500 animate-spin" />
-                ) : (
-                  <Download size={12} className="text-gray-500" strokeWidth={2} />
-                )}
-                {downloading ? "Downloading…" : "Download Timetable"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-0 border-b border-[#E5E7EB]">
-          {tabs.map((t) => (
+          <div className="flex flex-wrap items-center gap-2 self-start">
             <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === t.id
-                  ? "border-[#5B5CEB] text-[#5B5CEB]"
-                  : "border-transparent text-[#6B7280] hover:text-[#374151]"
-              }`}
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium transition-colors"
+              style={{ borderRadius: 10 }}
             >
-              {t.icon}
-              {t.label}
+              <Printer size={12} className="text-gray-500" strokeWidth={2} />
+              Print Timetable
             </button>
-          ))}
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] bg-white hover:bg-gray-50 text-[#374151] text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderRadius: 10 }}
+            >
+              {downloading ? (
+                <Loader2 size={12} className="text-gray-500 animate-spin" />
+              ) : (
+                <Download size={12} className="text-gray-500" strokeWidth={2} />
+              )}
+              {downloading ? "Downloading…" : "Download Timetable"}
+            </button>
+          </div>
         </div>
 
-        {/* Timetable tab */}
-        {activeTab === "timetable" && (
+        {!hasGrid ? (
+          <EmptyState teacherName={teacherName} />
+        ) : (
           <>
-            {!hasGrid ? (
-              <EmptyState teacherName={teacherName} />
-            ) : (
-              <>
-                {summary.totalPeriods > 0 && <TimetableSummaryCards summary={summary} />}
-                <div ref={timetableRef}>
-                  <TimetableGrid
-                    grid={grid}
-                    periods={periods}
-                    weekOffset={weekOffset}
-                    onPrevWeek={() => setWeekOffset((w) => w - 1)}
-                    onNextWeek={() => setWeekOffset((w) => w + 1)}
-                    onResetWeek={() => setWeekOffset(0)}
-                    weekLabel={weekLabel}
-                    weekSubLabel={weekSubLabel}
-                    todayName={todayName as DayName | null}
-                    currentPeriodId={currentPeriodId}
-                  />
-                </div>
-              </>
-            )}
+            {summary.totalPeriods > 0 && <TimetableSummaryCards summary={summary} />}
+            <div ref={timetableRef}>
+              <TimetableGrid
+                grid={grid}
+                periods={periods}
+                weekOffset={weekOffset}
+                onPrevWeek={() => setWeekOffset((w) => w - 1)}
+                onNextWeek={() => setWeekOffset((w) => w + 1)}
+                onResetWeek={() => setWeekOffset(0)}
+                weekLabel={weekLabel}
+                weekSubLabel={weekSubLabel}
+                todayName={todayName as DayName | null}
+                currentPeriodId={currentPeriodId}
+              />
+            </div>
           </>
-        )}
-
-        {/* Exam tab */}
-        {activeTab === "exams" && (
-          <div>
-            {isExamsLoading ? (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <div className="h-4 w-44 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-3 w-60 bg-gray-100 rounded mt-2 animate-pulse" />
-                </div>
-                <div className="p-5 space-y-3">
-                  {[...Array(3)].map((_, i) => <div key={i} className="h-12 bg-gray-50 rounded-xl animate-pulse" />)}
-                </div>
-              </div>
-            ) : isExamsError ? (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <h3 className="text-sm font-medium text-gray-900">Upcoming Examinations</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Could not load exam data</p>
-                </div>
-                <div className="py-10 text-center">
-                  <p className="text-sm text-gray-500">Exams are unavailable right now.</p>
-                </div>
-              </div>
-            ) : (
-              <UpcomingExamsTable exams={exams} />
-            )}
-          </div>
         )}
       </div>
     </TimetableErrorBoundary>

@@ -32,7 +32,7 @@ export const useConfigTemplates = () =>
 
 export const useConfigMutations = () => {
   const qc = useQueryClient();
-  const inv = () => qc.invalidateQueries({ queryKey: CONFIG_KEYS.all });
+  const inv = () => qc.invalidateQueries({ queryKey: CONFIG_KEYS.all, refetchType: "all" });
   return {
     saveDialog:    useMutation({ mutationFn: (p: DialogConfig) => configApi.saveDialog(p), onSuccess: inv }),
     testDialog:    useMutation({ mutationFn: () => configApi.testDialog() }),

@@ -68,91 +68,83 @@ const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPer
         )}
       </div>
 
-      {/* Grid — rows = days, columns = periods */}
+      {/* Grid — rows = periods, columns = days */}
       <div
         className="overflow-x-auto"
         style={{ scrollbarWidth: "thin", scrollbarColor: "#e2e8f0 transparent" }}
       >
         <Table className="w-full border-collapse text-sm" style={{ minWidth: 480 }}>
 
-          {/* ── Header: one column per slot ── */}
+          {/* ── Header: one column per day ── */}
           <TableHeader>
             <TableRow className="border-b border-gray-100 bg-gray-50/60">
 
-              {/* First cell: Day label */}
-              <TableHead className="sticky left-0 z-10 bg-gray-50 w-28 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400 sm:w-32 sm:px-4 sm:text-xs border-r border-gray-100">
-                Day
+              {/* First cell: Period label */}
+              <TableHead className="sticky left-0 z-10 bg-gray-50 w-20 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-400 sm:w-24 sm:px-4 sm:text-xs border-r border-gray-100">
+                Period
               </TableHead>
 
-              {slots.map((slot, idx) => {
-                  if (slot.kind === "BREAK" || slot.kind === "LUNCH") {
-                    return (
-                      <TableHead
-                        key={idx}
-                        className={`px-2 py-3 text-center text-[9px] font-semibold uppercase tracking-wide w-14 ${SLOT_KIND_STYLES[slot.kind]}`}
-                      >
-                        <span>{slot.kind === "BREAK" ? "Break" : "Lunch"}</span>
-                        <span className="block text-[8px] font-normal normal-case tracking-normal mt-0.5">
-                          {slot.startTime}–{slot.endTime}
-                        </span>
-                      </TableHead>
-                    );
-                  }
+              {DAY_ORDER.map((day) => {
+                const isWorking = !hasConstraint || workingDaySet.has(day);
                 return (
                   <TableHead
-                    key={idx}
-                    className={`px-3 py-3 text-left text-[10px] sm:text-xs sm:px-4 whitespace-nowrap ${SLOT_KIND_STYLES.PERIOD}`}
+                    key={day}
+                    className={`px-3 py-3 text-left text-[10px] sm:text-xs sm:px-4 whitespace-nowrap font-bold ${
+                      isWorking ? "text-gray-700" : "text-red-400 bg-red-50/20"
+                    }`}
                   >
-                    <span className="font-bold text-indigo-600">P{slot.periodNo}</span>
-                    <span className="block text-[9px] text-gray-400 font-normal normal-case tracking-normal mt-0.5">
-                      {slot.startTime}–{slot.endTime}
-                    </span>
+                    {DAY_LONG[day]}
+                    {!isWorking && (
+                      <span className="block text-[8px] text-red-300 font-normal normal-case tracking-normal mt-0.5">Holiday</span>
+                    )}
                   </TableHead>
                 );
               })}
             </TableRow>
           </TableHeader>
 
-          {/* ── Body: one row per day ── */}
+          {/* ── Body: one row per slot (period / break / lunch) ── */}
           <TableBody>
-            {DAY_ORDER.map((day) => {
-              const isWorking = !hasConstraint || workingDaySet.has(day);
+            {slots.map((slot, idx) => {
+              /* Break / Lunch row */
+              if (slot.kind === "BREAK" || slot.kind === "LUNCH") {
+                return (
+                  <TableRow key={idx} className={`border-b border-gray-100 ${SLOT_KIND_STYLES[slot.kind]}`}>
+                    <TableCell className={`sticky left-0 z-10 border-r border-gray-100 px-3 py-3 sm:px-4 text-center text-[9px] font-semibold uppercase tracking-wide ${SLOT_KIND_STYLES[slot.kind]}`}>
+                      <span>{slot.kind === "BREAK" ? "Break" : "Lunch"}</span>
+                      <span className="block text-[8px] font-normal normal-case tracking-normal mt-0.5">
+                        {slot.startTime}–{slot.endTime}
+                      </span>
+                    </TableCell>
+                    {DAY_ORDER.map((day) => (
+                      <TableCell key={day} className={`px-1 py-3 text-center ${SLOT_KIND_STYLES[slot.kind]}`}>
+                        <span className="text-[9px] font-medium">{slot.startTime}</span>
+                        <span className="block text-[8px] opacity-60">–</span>
+                        <span className="text-[9px] font-medium">{slot.endTime}</span>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              }
+
+              /* Period row */
               return (
-                <TableRow
-                  key={day}
-                  className={`border-b border-gray-100 transition-colors ${
-                    isWorking ? "hover:bg-gray-50/50" : "bg-red-50/20"
-                  }`}
-                >
-                  {/* Day label cell */}
+                <TableRow key={idx} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                  {/* Period label cell */}
                   <TableCell className="sticky left-0 z-10 bg-white border-r border-gray-100 px-3 py-3 sm:px-4 sm:py-4 align-middle">
-                    <span className={`text-xs font-bold ${isWorking ? "text-gray-800" : "text-red-400"}`}>
-                      {DAY_LONG[day]}
+                    <span className="text-xs font-bold text-indigo-600">P{slot.periodNo}</span>
+                    <span className="block text-[9px] text-gray-400 font-normal mt-0.5">
+                      {slot.startTime}–{slot.endTime}
                     </span>
-                    {!isWorking && (
-                      <span className="block text-[9px] text-red-300 font-normal mt-0.5">Holiday</span>
-                    )}
                   </TableCell>
 
-                  {slots.map((slot, idx) => {
-                    /* Break / Lunch cell */
-                    if (slot.kind === "BREAK" || slot.kind === "LUNCH") {
-                      return (
-                        <TableCell
-                          key={idx}
-                          className={`px-1 py-3 text-center w-14 ${SLOT_KIND_STYLES[slot.kind]}`}
-                        >
-                          <span className="text-[9px] font-medium">{slot.startTime}</span>
-                          <span className="block text-[8px] opacity-60">–</span>
-                          <span className="text-[9px] font-medium">{slot.endTime}</span>
-                        </TableCell>
-                      );
-                    }
+                  {DAY_ORDER.map((day) => {
+                    const isWorking = !hasConstraint || workingDaySet.has(day);
 
-                    /* Holiday row */
+                    /* Holiday cell */
                     if (!isWorking) {
                       return (
-                        <TableCell key={idx} className="px-3 py-3 bg-red-50/30 sm:px-4">
+                        <TableCell key={day} className="px-3 py-3 bg-red-50/30 sm:px-4">
                           <span className="text-red-200 text-xs select-none">—</span>
                         </TableCell>
                       );
@@ -163,7 +155,7 @@ const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPer
                     /* Empty cell */
                     if (!cell) {
                       return (
-                        <TableCell key={idx} className="px-3 py-3 sm:px-4">
+                        <TableCell key={day} className="px-3 py-3 sm:px-4">
                           <span className="text-gray-200 text-xs">—</span>
                         </TableCell>
                       );
@@ -172,7 +164,7 @@ const WeeklyTimetableGrid: React.FC<Props> = ({ timetable, onEditCell, onEditPer
                     /* Subject cell */
                     return (
                       <TableCell
-                        key={idx}
+                        key={day}
                         className="px-3 py-2.5 sm:px-4 sm:py-3 group relative hover:bg-[#EFF4FF] transition-colors cursor-pointer"
                         onClick={() =>
                           slot.periodNo != null &&

@@ -1,5 +1,4 @@
 import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { SchoolActivityRow } from "../types/dashboard.types";
 
 const PlanBadge = ({ plan }: { plan: string }) => (
@@ -28,16 +27,12 @@ const COL = "text-[10px] font-semibold uppercase tracking-widest text-gray-400 p
 interface SchoolActivityTableProps {
   rows: SchoolActivityRow[];
   isLoading: boolean;
-  onViewAll: () => void;
 }
 
-const SchoolActivityTable = ({ rows, isLoading, onViewAll }: SchoolActivityTableProps) => (
+const SchoolActivityTable = ({ rows, isLoading }: SchoolActivityTableProps) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="flex flex-col gap-3 px-4 py-3 border-b border-gray-50 sm:flex-row sm:items-center sm:justify-between">
+    <div className="px-4 py-3 border-b border-gray-50">
       <h2 className="text-[13px] font-extrabold text-gray-900">Schools Activity Today</h2>
-      <Button onClick={onViewAll} variant="link" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-        View Detailed Stats
-      </Button>
     </div>
 
     {isLoading ? (

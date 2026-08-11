@@ -170,8 +170,9 @@ export const BulkAddSectionModal = ({ classId: preselectedClassId = "", onClose,
 
         <div className="px-4 sm:px-6 py-4 space-y-3 overflow-y-auto flex-1">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-[11px] text-red-600 font-mono whitespace-pre-wrap break-all leading-relaxed">{error}</p>
+            <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+              <span className="text-red-500 text-base">⚠</span>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 

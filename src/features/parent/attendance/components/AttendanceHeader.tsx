@@ -10,9 +10,9 @@ export default function AttendanceHeader({ currentDate, onPrev, onNext, child }:
   const label = `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`
 
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-sm font-semibold text-gray-900">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="min-w-0">
+        <h1 className="text-sm font-semibold text-gray-900 truncate">
           Attendance — {child.name}
         </h1>
         {/* ✅ show resolved class, section, and academic year */}
@@ -23,7 +23,7 @@ export default function AttendanceHeader({ currentDate, onPrev, onNext, child }:
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 self-start sm:self-auto">
         <button
           onClick={onPrev}
           className="w-7 h-7 border border-gray-200 bg-white rounded-md flex items-center justify-center text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-all active:scale-95"

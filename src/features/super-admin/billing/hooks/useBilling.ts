@@ -140,7 +140,7 @@ export function useBillingMutations() {
   const qc = useQueryClient();
 
   const invalidateAll = () =>
-    qc.invalidateQueries({ queryKey: billingKeys.all });
+    qc.invalidateQueries({ queryKey: billingKeys.all, refetchType: "all" });
 
   const recordPayment = useMutation({
     mutationFn: (payload: RecordPaymentPayload) => billingApi.recordPayment(payload),
@@ -168,7 +168,7 @@ export function useBillingMutations() {
   const updatePlan = useMutation({
     mutationFn: (payload: UpdatePlanPayload) => billingApi.updatePlan(payload),
     onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: billingKeys.institutions() });
+      qc.invalidateQueries({ queryKey: billingKeys.institutions(), refetchType: "all" });
       qc.setQueryData(billingKeys.institution(updated.id), updated);
     },
   });
@@ -189,7 +189,7 @@ export function useBillingMutations() {
     mutationFn: (payload: CreateSubscriptionPayload) =>
       billingApi.createSubscription(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: billingKeys.subscriptions });
+      qc.invalidateQueries({ queryKey: billingKeys.subscriptions, refetchType: "all" });
     },
   });
 
@@ -197,19 +197,19 @@ export function useBillingMutations() {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateSubscriptionPayload }) =>
       billingApi.updateSubscription(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: billingKeys.subscriptions });
+      qc.invalidateQueries({ queryKey: billingKeys.subscriptions, refetchType: "all" });
     },
   });
 
   const deleteSubscription = useMutation({
     mutationFn: (id: string) => billingApi.deleteSubscription(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: billingKeys.subscriptions });
+      qc.invalidateQueries({ queryKey: billingKeys.subscriptions, refetchType: "all" });
     },
   });
 
   const invalidateSubscriptionPayments = () =>
-    qc.invalidateQueries({ queryKey: billingKeys.subscriptionPayments });
+    qc.invalidateQueries({ queryKey: billingKeys.subscriptionPayments, refetchType: "all" });
 
   const recordSubscriptionPayment = useMutation({
     mutationFn: (payload: SubscriptionPaymentPayload) => billingApi.recordSubscriptionPayment(payload),

@@ -20,7 +20,7 @@ export const useGenerateReport = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: GenerateReportPayload) => reportsApi.generateReport(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: REPORTS_KEYS.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: REPORTS_KEYS.all, refetchType: "all" }),
   });
 };
 

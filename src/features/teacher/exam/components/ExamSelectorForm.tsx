@@ -135,7 +135,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
         Exam Selector
       </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-3">
         {/* Exam Type */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[10px] font-bold text-gray-500">Exam Type</label>
@@ -201,7 +201,7 @@ const ExamSelectorForm = ({ selector, onChange, onLoad, studentsLoaded, apiError
         </div>
 
         {/* Subject */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
           <label className="text-[10px] font-bold text-gray-500">Subject</label>
           <select
             value={selector.subjectId ?? ""}

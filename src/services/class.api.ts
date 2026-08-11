@@ -1,4 +1,5 @@
 import api from "@/config/axios";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 export interface ClassRecord {
   id: string;
@@ -422,11 +423,8 @@ export const addClass = async (payload: CreateClassPayload): Promise<ClassItem> 
       status: "ACTIVE",
     };
   } catch (err: unknown) {
-    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
-    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
-    console.error("addClass failed", { url: "/tenant/class", payload: body, response: detailStr });
-    const fullMsg = [`POST /tenant/class`, `Payload: ${JSON.stringify(body)}`, `Response: ${detailStr}`].join("\n");
-    throw new Error(fullMsg);
+    console.error("addClass failed", { url: "/tenant/class", payload: body, error: err });
+    throw new Error(getErrorMessage(err, "Failed to add class"));
   }
 };
 
@@ -438,10 +436,8 @@ export const bulkAddClasses = async (payload: CreateClassPayload[]): Promise<Bul
     }
     return data;
   } catch (err: unknown) {
-    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
-    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
-    console.error("bulkAddClasses failed", { payload, response: detailStr });
-    throw new Error(detailStr);
+    console.error("bulkAddClasses failed", { payload, error: err });
+    throw new Error(getErrorMessage(err, "Failed to add classes"));
   }
 };
 
@@ -461,10 +457,8 @@ export const addSection = async (payload: AddSectionPayload): Promise<SectionIte
       subjects: [],
     };
   } catch (err: unknown) {
-    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
-    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
-    console.error("addSection failed", { url: "/tenant/createsections", payload, response: detailStr });
-    throw new Error(`POST /tenant/createsections\nPayload: ${JSON.stringify(payload)}\nResponse: ${detailStr}`);
+    console.error("addSection failed", { url: "/tenant/createsections", payload, error: err });
+    throw new Error(getErrorMessage(err, "Failed to add section"));
   }
 };
 
@@ -476,10 +470,8 @@ export const bulkAddSections = async (payload: AddSectionPayload[]): Promise<Bul
     }
     return data;
   } catch (err: unknown) {
-    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
-    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
-    console.error("bulkAddSections failed", { payload, response: detailStr });
-    throw new Error(detailStr);
+    console.error("bulkAddSections failed", { payload, error: err });
+    throw new Error(getErrorMessage(err, "Failed to add sections"));
   }
 };
 
@@ -497,10 +489,8 @@ export const addSubject = async (payload: AddSubjectPayload): Promise<SubjectIte
       teacher: record?.teacher_name || "",
     };
   } catch (err: unknown) {
-    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
-    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
-    console.error("addSubject failed", { url: "/tenant/subjects", payload, response: detailStr });
-    throw new Error(`POST /tenant/subjects\nPayload: ${JSON.stringify(payload)}\nResponse: ${detailStr}`);
+    console.error("addSubject failed", { url: "/tenant/subjects", payload, error: err });
+    throw new Error(getErrorMessage(err, "Failed to add subject"));
   }
 };
 
@@ -512,10 +502,8 @@ export const bulkAddSubjects = async (payload: AddSubjectPayload[]): Promise<Bul
     }
     return data;
   } catch (err: unknown) {
-    const responseDetail = (err as { response?: { data?: unknown }; message?: string })?.response?.data ?? (err as { message?: string })?.message ?? "Unknown error";
-    const detailStr = typeof responseDetail === "object" ? JSON.stringify(responseDetail, null, 2) : String(responseDetail);
-    console.error("bulkAddSubjects failed", { payload, response: detailStr });
-    throw new Error(detailStr);
+    console.error("bulkAddSubjects failed", { payload, error: err });
+    throw new Error(getErrorMessage(err, "Failed to add subjects"));
   }
 };
 

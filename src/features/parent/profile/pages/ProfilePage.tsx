@@ -26,23 +26,21 @@ type ParentLayoutContext = {
 export default function ProfilePage() {
   const authUser = useAuthStore((s) => s.user);
 
-  const {
-    parentName,
-    parentPhone,
-    parentEmail,
-    parentRelation,
-    parentOccupation,
-    parentAddress,
-    contact,
-    classTeacher,
-    notifications,
-    children,
-    isLoading,
-    error,
-    fetchProfile,
-    setContact,
-    toggleNotification,
-  } = useProfileStore();
+  const parentName        = useProfileStore((s) => s.parentName);
+  const parentPhone       = useProfileStore((s) => s.parentPhone);
+  const parentEmail       = useProfileStore((s) => s.parentEmail);
+  const parentRelation    = useProfileStore((s) => s.parentRelation);
+  const parentOccupation  = useProfileStore((s) => s.parentOccupation);
+  const parentAddress     = useProfileStore((s) => s.parentAddress);
+  const contact           = useProfileStore((s) => s.contact);
+  const classTeacher      = useProfileStore((s) => s.classTeacher);
+  const notifications     = useProfileStore((s) => s.notifications);
+  const children          = useProfileStore((s) => s.children);
+  const isLoading         = useProfileStore((s) => s.isLoading);
+  const error             = useProfileStore((s) => s.error);
+  const fetchProfile      = useProfileStore((s) => s.fetchProfile);
+  const setContact        = useProfileStore((s) => s.setContact);
+  const toggleNotification = useProfileStore((s) => s.toggleNotification);
 
   const { activeChild } = useOutletContext<ParentLayoutContext>();
 

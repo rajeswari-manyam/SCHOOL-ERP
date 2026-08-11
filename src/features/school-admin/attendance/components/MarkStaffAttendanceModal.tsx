@@ -182,7 +182,7 @@ const MarkStaffAttendanceModal = () => {
         // "Already marked" means our local view is stale (e.g. marked elsewhere
         // since this modal opened) — refetch so the row switches to Update/Delete.
         if (backendMessage.toLowerCase().includes("already marked")) {
-          queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+          queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
         }
       },
     });
@@ -227,7 +227,7 @@ const MarkStaffAttendanceModal = () => {
         // "Already marked" means our local view is stale for at least one row —
         // refetch so already-marked staff switch to Update/Delete on retry.
         if (backendMessage.toLowerCase().includes("already marked")) {
-          queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+          queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
         }
       },
     });

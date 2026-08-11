@@ -30,8 +30,8 @@ export const useGenerateReport = () => {
   return useMutation({
     mutationFn: (payload: CreateReportPayload) => reportsApi.generate(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all });
-      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated() });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated(), refetchType: "all" });
     },
   });
 };
@@ -41,8 +41,8 @@ export const useDeleteReport = () => {
   return useMutation({
     mutationFn: (id: string) => reportsApi.delete(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all });
-      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated() });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated(), refetchType: "all" });
     },
   });
 };
@@ -53,8 +53,8 @@ export const useUpdateReport = () => {
     mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateReportPayload> }) =>
       reportsApi.update(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all });
-      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated() });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.all, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: REPORTS_KEYS.recentlyGenerated(), refetchType: "all" });
     },
   });
 };

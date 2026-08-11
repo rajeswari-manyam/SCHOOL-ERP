@@ -14,7 +14,7 @@ export const useAnnouncements = () =>
 
 export const useAnnouncementMutations = () => {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ANNOUNCEMENTS_KEY });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ANNOUNCEMENTS_KEY, refetchType: "all" });
 
   const createAnnouncement = useMutation({
     mutationFn: (payload: SchoolAnnouncementPayload) => schoolAnnouncementApi.createAnnouncement(payload),

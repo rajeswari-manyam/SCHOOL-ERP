@@ -326,11 +326,11 @@ export default function TeacherHolidaysTab() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-4 mt-2 border-t border-gray-100">
                   <p className="text-[11px] text-gray-400">
                     Page {safePage} of {totalPages}
                   </p>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={safePage <= 1}

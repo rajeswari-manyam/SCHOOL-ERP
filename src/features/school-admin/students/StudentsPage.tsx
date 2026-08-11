@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useStudents } from "../students/hooks/useStudents";
 import { useClassesList } from "../students/hooks/useClassesList";
 import { useSectionsList } from "../students/hooks/useSectionsList";
@@ -6,23 +7,20 @@ import { useUIStore } from "@/store/uiStore";
 
 import StudentFilterBar from "../students/components/StudentFilterBar";
 import StudentTable from "../students/components/StudentTable";
-import AddStudentModal from "../students/components/AddStudentModal";
-import BulkAddStudentModal from "../students/components/BulkAddStudentModal";
 import { EditStudentModal } from "../students/components/EditStudentModal";
-import PromoteStudentsModal from "../students/components/PromoteStudentsModal";
 
 import StudentStatCards from "../students/components/StudentStatCards";
 import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
-import type { AddStudentFormData, Student } from "../students/types/student.types";
+import type { Student } from "../students/types/student.types";
 
 const StudentsPage = () => {
+  const navigate = useNavigate();
   const {
-    students, filtered, loading, error, stats,
+    filtered, loading, error, stats,
     search, setSearch,
     classFilter, setClassFilter,
     sectionFilter, setSectionFilter,
     statusFilter, setStatusFilter,
-    addStudent,
     updateStudent,
     deleteStudent,
     loadStudents,
@@ -35,15 +33,7 @@ const StudentsPage = () => {
     : null;
   const { sections: sectionOptions } = useSectionsList(selectedClassId);
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showBulkModal, setShowBulkModal] = useState(false);
-  const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-
-  const handleAddStudent = async (data: AddStudentFormData) => {
-    const student = await addStudent(data);
-    return { status: true, message: "Student created", data: student };
-  };
 
   return (
     <div className="space-y-5">
@@ -53,21 +43,21 @@ const StudentsPage = () => {
           <h1 className="text-base font-semibold text-gray-900 truncate">Students</h1>
           <p className="text-xs sm:text-sm text-emerald-600 font-semibold mt-1 sm:mt-0.5">● {stats.totalActive} active students</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           <button
-            onClick={() => setShowBulkModal(true)}
+            onClick={() => navigate("/schooladmin/students/bulk-add")}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Bulk Add
           </button>
           <button
-            onClick={() => setShowPromoteModal(true)}
+            onClick={() => navigate("/schooladmin/students/promote")}
             className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 h-9 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
           >
             Promote Students
           </button>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => navigate("/schooladmin/students/add")}
             className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 h-9 text-xs font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm"
           >
             + Add Student
@@ -113,15 +103,6 @@ const StudentsPage = () => {
         </>
       ))}
 
-      {/* Add Student Modal */}
-      {showAddModal && (
-        <AddStudentModal
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddStudent}
-          students={students}
-        />
-      )}
-
       {editingStudent && (
         <EditStudentModal
           student={editingStudent}
@@ -130,18 +111,6 @@ const StudentsPage = () => {
         />
       )}
 
-      {showBulkModal && (
-        <BulkAddStudentModal
-          onClose={() => {
-            setShowBulkModal(false);
-            loadStudents(academicYearId);
-          }}
-        />
-      )}
-
-      {showPromoteModal && (
-        <PromoteStudentsModal onClose={() => setShowPromoteModal(false)} />
-      )}
     </div>
   );
 };

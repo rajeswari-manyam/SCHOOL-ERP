@@ -86,9 +86,9 @@ export function useUploadAdmissionDocumentsMutation() {
 
     onSuccess: (_void, { enquiryId }) => {
       // Invalidate both the document list for this card and the broader pipeline
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.documents(enquiryId) });
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries() });
-      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats() });
+      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.documents(enquiryId), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.enquiries(), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ADMISSIONS_KEYS.stats(), refetchType: "all" });
       toast.success('Documents uploaded successfully');
     },
 

@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Download, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
@@ -125,7 +124,6 @@ export function DashboardPage() {
             : `${staffAttendanceToday.absent} absent today`,
           alert: staffAttendanceToday.notMarked > 0,
           icon: 'user-check',
-          action: { label: 'View Staff Attendance' },
         }
       : {
           id: 'staffAttendance',
@@ -214,18 +212,7 @@ export function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm">
-              <Download size={12} className="shrink-0" />
-              <span className="hidden sm:inline">Download Report</span>
-              <span className="sm:hidden">Download</span>
-            </button>
-            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs hover:bg-indigo-700 transition-colors shadow-sm">
-              <Radio size={12} className="shrink-0" />
-              <span className="hidden sm:inline">Send Broadcast</span>
-              <span className="sm:hidden">Broadcast</span>
-            </button>
-          </div>
+
         </div>
 
         {/* ── Pending Leave Requests — only shown when there are pending leaves ── */}

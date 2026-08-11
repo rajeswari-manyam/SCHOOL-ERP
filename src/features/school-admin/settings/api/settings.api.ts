@@ -1,4 +1,5 @@
 import api from "@/config/axios";
+import { useAuthStore } from "@/store/authStore";
 import type {
   SchoolProfile,
   AcademicYear,
@@ -23,20 +24,6 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   ROLE_OPTIONS,
 } from "../utils/Settings.utils";
-
-const MOCK_SCHOOL_PROFILE: SchoolProfile = {
-  id: "school-001",
-  schoolName: "Hanamkonda Public School",
-  board: "CBSE",
-  principalName: "Ramesh Kumar",
-  establishedYear: 2008,
-  phone: "+91 98765 43210",
-  totalStudentCapacity: 500,
-  email: "principal@hps.edu.in",
-  schoolType: "Private Unaided",
-  address: "Plot 45, Hanamkonda Urban, Warangal — 506001",
-  logoUrl: undefined,
-};
 
 const MOCK_ACADEMIC_YEARS: AcademicYear[] = [
   { id: "ay-2025-26", yearName: "2025-2026", startDate: "2025-06-01", endDate: "2026-05-31", active: true },
@@ -109,12 +96,54 @@ const MOCK_ALL_USERS: UserAccount[] = [
 
 // ─── School Profile ───────────────────────────────────────────────────────────
 
+// The backend may return the profile flat or wrapped ({ status, data } /
+// { school }). Map its snake_case fields onto the UI shape.
+const mapApiToSchoolProfile = (raw: Record<string, unknown>): SchoolProfile => ({
+  id: String(raw.id ?? ""),
+  schoolName: String(raw.school_name ?? raw.name ?? raw.schoolName ?? ""),
+  board: String(raw.board ?? ""),
+  principalName: String(raw.PrincipalName ?? raw.principal_name ?? ""),
+  establishedYear: Number(raw.establishedYear ?? raw.established_year ?? 0),
+  phone: String(raw.phone ?? ""),
+  totalStudentCapacity: Number(raw.totalSchoolstrength ?? raw.total_strength ?? 0),
+  email: String(raw.email ?? ""),
+  schoolType: String(raw.school_type ?? ""),
+  address: String(raw.address ?? ""),
+  logoUrl: (raw.logo ?? undefined) as string | undefined,
+  adminImageUrl: (raw.image ?? undefined) as string | undefined,
+});
+
+// Fallback built from the REAL logged-in school (stored at login), never a
+// fabricated dummy — so the page shows the actual school even if the
+// tenant profile endpoint is unreachable.
+const buildFallbackSchoolProfile = (): SchoolProfile => {
+  const current = useAuthStore.getState().user;
+  const schoolName =
+    localStorage.getItem("schoolName")?.trim() || current?.name?.trim() || "";
+  return {
+    id: current?.schoolcode ?? "",
+    schoolName,
+    board: "",
+    principalName: current?.principalName?.trim() ?? "",
+    establishedYear: 0,
+    phone: "",
+    totalStudentCapacity: 0,
+    email: "",
+    schoolType: "",
+    address: "",
+    logoUrl: localStorage.getItem("schoolLogo")?.trim() || undefined,
+  };
+};
+
 export const fetchSchoolProfile = async (): Promise<SchoolProfile> => {
   try {
-    const { data } = await api.get<SchoolProfile>("/tenant/school-profile");
-    return data;
+    const { data } = await api.get("/tenant/school-profile");
+    const raw = (data?.data ?? data?.school ?? data) as Record<string, unknown>;
+    const profile = mapApiToSchoolProfile(raw ?? {});
+    if (!profile.id && !profile.schoolName) return buildFallbackSchoolProfile();
+    return profile;
   } catch {
-    return MOCK_SCHOOL_PROFILE;
+    return buildFallbackSchoolProfile();
   }
 };
 

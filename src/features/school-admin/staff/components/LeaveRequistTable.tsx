@@ -8,10 +8,6 @@ import type { LeaveSummaryEntry } from "@/services/staff.api";
 import { useUIStore } from "@/store/uiStore";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 
-interface Props {
-  leaves: LeaveRecord[];
-}
-
 const LEAVE_TYPE_COLOR: Record<string, string> = {
   casual:    "bg-blue-50 border-blue-200 text-blue-700",
   sick:      "bg-rose-50 border-rose-200 text-rose-700",
@@ -67,7 +63,7 @@ const TH = ({ children, className = "" }: { children: React.ReactNode; className
   </th>
 );
 
-export const LeaveRequestsTab = ({ leaves: _leaves }: Props) => {
+export const LeaveRequestsTab = () => {
   const approveLeave    = useStaffStore((s) => s.approveLeave);
   const rejectLeave     = useStaffStore((s) => s.rejectLeave);
   const leaveProcessing = useStaffStore((s) => s.leaveProcessing);
@@ -321,7 +317,68 @@ export const LeaveRequestsTab = ({ leaves: _leaves }: Props) => {
 
       {/* ── Table ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Card list (mobile only) */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {leavesLoading ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-400">
+              <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+              Loading leaves…
+            </div>
+          ) : displayLeaves.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-10">
+              {selectedStaffId ? "No leave requests for this staff member." : "No leave requests found."}
+            </p>
+          ) : (
+            displayLeaves.map((r) => {
+              const isPending = normalizeStatus(r.status) === "PENDING";
+              const isProcessing = !!leaveProcessing[r.id];
+              return (
+                <div key={`${r.id}-card`} className={`px-4 py-3 ${isPending ? "bg-amber-50/60" : ""}`}>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={r.staffName ?? "?"} id={r.id} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{r.staffName ?? "—"}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {r.type ?? "—"} · {formatDate(r.from)} – {formatDate(r.to)}
+                        {r.days != null ? ` · ${r.days} ${Number(r.days) === 1 ? "day" : "days"}` : ""}
+                      </p>
+                    </div>
+                    <StatusBadge status={r.status} />
+                  </div>
+                  {r.reason && <p className="text-xs text-gray-500 mt-1.5 pl-12">{r.reason}</p>}
+                  <div className="flex items-center gap-2 mt-2 pl-12">
+                    <button onClick={() => openEditDialog(r)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setDeleteTarget(r)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors" title="Delete">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    {isPending && (
+                      <>
+                        <button
+                          disabled={isProcessing}
+                          onClick={() => handleApprove(r.id)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {leaveProcessing[r.id] === "approving" ? "Approving…" : "Approve"}
+                        </button>
+                        <button
+                          disabled={isProcessing}
+                          onClick={() => handleReject(r.id)}
+                          className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {leaveProcessing[r.id] === "rejecting" ? "Rejecting…" : "Reject"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full min-w-[820px]">
             <thead>
               <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>

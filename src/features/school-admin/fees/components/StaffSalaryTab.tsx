@@ -176,7 +176,62 @@ export function StaffSalaryTab() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        {/* Mobile card list */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {payslips.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-400">No payslips found</p>
+          ) : (
+            payslips.map((p) => (
+              <div key={p.id} className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 shrink-0">
+                      {p.staff_name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{p.staff_name}</p>
+                      <p className="text-[11px] text-gray-400">{monthNames[p.month - 1]} {p.year}</p>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={p.payment_status === "Paid" ? "success" : "warning"}
+                    className="text-[11px] shrink-0"
+                  >
+                    {p.payment_status}
+                  </Badge>
+                </div>
+
+                <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                  <span>Gross: {formatCurrency(p.gross_salary)}</span>
+                  <span className="font-bold text-gray-900">Net: {formatCurrency(p.net_salary)}</span>
+                </div>
+
+                <div className="mt-3 flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditTarget(toStaffPayroll(p))}
+                    className="h-8 px-2 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                  >
+                    Update
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(p.id)}
+                    className="h-8 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -251,6 +306,7 @@ export function StaffSalaryTab() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {editTarget && (

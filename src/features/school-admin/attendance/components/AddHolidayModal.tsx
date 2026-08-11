@@ -18,10 +18,18 @@ const holidayTypeOptions = [
   { label: "Restricted", value: "restricted" },
 ];
 
+// Native <input type="date"> only accepts min/max in exact "yyyy-mm-dd"
+// form — the API's startDate/endDate may come back as a full ISO timestamp
+// (e.g. "2025-06-01T00:00:00.000Z"), so slice down to the date portion.
+const toDateInputValue = (value?: string | null): string | undefined =>
+  value ? value.slice(0, 10) : undefined;
+
 const AddHolidayModal = () => {
   const { showAddHolidayModal, closeAddHoliday } = useAttendanceStore();
   const queryClient = useQueryClient();
   const { activeYear } = useAcademicYears();
+  const yearMin = toDateInputValue(activeYear?.startDate);
+  const yearMax = toDateInputValue(activeYear?.endDate);
   const [holidayName,     setHolidayName]     = useState("");
   const [fromDate,        setFromDate]        = useState("");
   const [toDate,          setToDate]          = useState("");
@@ -74,7 +82,7 @@ const AddHolidayModal = () => {
       // ✅ Use the imported createHoliday directly (was incorrectly calling attendanceApi.createHolidayProduction)
       const result = await createHoliday(payload);
 
-      queryClient.invalidateQueries({ queryKey: attendanceKeys.all });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
       setSuccess(result.message || "Holiday created successfully.");
       setHolidayName("");
       setFromDate("");
@@ -136,6 +144,8 @@ const AddHolidayModal = () => {
               <Input
                 type="date"
                 value={fromDate}
+                min={yearMin}
+                max={yearMax}
                 onChange={(e) => { setFromDate(e.target.value); if (toDate && e.target.value > toDate) setToDate(e.target.value); }}
                 disabled={loading}
               />
@@ -145,7 +155,8 @@ const AddHolidayModal = () => {
               <Input
                 type="date"
                 value={toDate}
-                min={fromDate || undefined}
+                min={fromDate || yearMin}
+                max={yearMax}
                 onChange={(e) => setToDate(e.target.value)}
                 disabled={loading}
               />

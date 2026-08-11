@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, MessageSquareText, Calendar, Paperclip, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import RaiseTicketModal from "./RaiseTicketModal";
 import { useSupportTickets, useSupportTicketMutations } from "./hooks/useSupportTickets";
 import { priorityFromApi } from "./types";
-import type { RaiseTicketInitialValues } from "./RaiseTicketModal";
-import type { SupportTicketRecord, SupportTicketPayload } from "@/services/support-ticket.api";
+import type { RaiseTicketInitialValues } from "./RaiseTicketPage";
+import type { SupportTicketRecord } from "@/services/support-ticket.api";
 import type { TicketPriority } from "./types";
 
 const PRIORITY_BADGE: Record<TicketPriority, string> = {
@@ -29,37 +28,24 @@ const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function SupportTicketPage() {
+  const navigate = useNavigate();
   const { data: tickets, isLoading, isError } = useSupportTickets();
-  const { createTicket, updateTicket, deleteTicket } = useSupportTicketMutations();
-  const [openModal, setOpenModal] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<SupportTicketRecord | null>(null);
+  const { deleteTicket } = useSupportTicketMutations();
 
-  const editingValues: RaiseTicketInitialValues | null = editingTicket
-    ? {
-        id: editingTicket.id,
-        subject: editingTicket.subject.trim(),
-        category: editingTicket.category.trim(),
-        contactPhone: editingTicket.contactNumber,
-        priority: priorityFromApi(editingTicket.priority),
-        description: editingTicket.description.trim(),
-        existingAttachmentName: editingTicket.attachments?.[0]?.name,
-      }
-    : null;
+  const goToForm = (editing?: RaiseTicketInitialValues) =>
+    navigate("/schooladmin/support/new", { state: { editing } });
 
-  const handleSubmit = (payload: SupportTicketPayload) => {
-    if (editingTicket) {
-      updateTicket.mutate(
-        { id: editingTicket.id, payload },
-        { onSuccess: () => { setOpenModal(false); setEditingTicket(null); } }
-      );
-    } else {
-      createTicket.mutate(payload, { onSuccess: () => setOpenModal(false) });
-    }
+  const openEdit = (ticket: SupportTicketRecord) => {
+    goToForm({
+      id: ticket.id,
+      subject: ticket.subject.trim(),
+      category: ticket.category.trim(),
+      contactPhone: ticket.contactNumber,
+      priority: priorityFromApi(ticket.priority),
+      description: ticket.description.trim(),
+      existingAttachmentName: ticket.attachments?.[0]?.name,
+    });
   };
-
-  const openCreate = () => { setEditingTicket(null); setOpenModal(true); };
-  const openEdit = (ticket: SupportTicketRecord) => { setEditingTicket(ticket); setOpenModal(true); };
-  const closeModal = () => { setOpenModal(false); setEditingTicket(null); };
 
   const handleDelete = (ticket: SupportTicketRecord) => {
     if (confirm(`Delete the ticket "${ticket.subject.trim()}"?`)) {
@@ -78,7 +64,7 @@ export default function SupportTicketPage() {
           </p>
         </div>
         <Button
-          onClick={openCreate}
+          onClick={() => goToForm()}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
@@ -161,14 +147,6 @@ export default function SupportTicketPage() {
           })}
         </div>
       )}
-
-      <RaiseTicketModal
-        open={openModal}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        submitting={createTicket.isPending || updateTicket.isPending}
-        editing={editingValues}
-      />
     </div>
   );
 }

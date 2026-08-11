@@ -1,8 +1,220 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* ============================================================
+   THEME TOKENS
+   Single source of truth for the brand gradient. Every color
+   below is derived from these four values — change them here
+   and the whole app follows.
+   ============================================================ */
 @theme {
   --breakpoint-xs: 475px;
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
+
+  /* Brand gradient endpoints */
+  --color-primary: #3525CD;
+  --color-primary-hover: #2F1FC0;
+  --color-accent: #4F46E5;
+  --color-accent-hover: #4338CA;
+  --color-primary-light: #EEF2FF;
+
+  /* Reusable gradient values */
+  --gradient-brand: linear-gradient(103.9deg, #3525CD 0%, #4F46E5 100%);
+  --gradient-brand-hover: linear-gradient(103.9deg, #2F1FC0 0%, #4338CA 100%);
+
+  /*
+   * Override Tailwind's built-in indigo/violet/purple scales so every
+   * bg-indigo-*, text-violet-*, border-purple-*, ring-indigo-*, etc.
+   * class already used across the app — in every component, on every
+   * page, in every portal — resolves to the new brand ramp with zero
+   * component edits. Each step is a sampled point along the gradient
+   * above, light-to-dark.
+   */
+  --color-indigo-50: #EEF2FF;
+  --color-indigo-100: #E0E4FF;
+  --color-indigo-200: #C7CCFF;
+  --color-indigo-300: #A8A9FA;
+  --color-indigo-400: #4F46E5;
+  --color-indigo-500: #4338CA;
+  --color-indigo-600: #3525CD;
+  --color-indigo-700: #2F1FC0;
+  --color-indigo-800: #281AA3;
+  --color-indigo-900: #201385;
+  --color-indigo-950: #170D5C;
+
+  --color-violet-50: #EEF2FF;
+  --color-violet-100: #E0E4FF;
+  --color-violet-200: #C7CCFF;
+  --color-violet-300: #A8A9FA;
+  --color-violet-400: #4F46E5;
+  --color-violet-500: #4338CA;
+  --color-violet-600: #3525CD;
+  --color-violet-700: #2F1FC0;
+  --color-violet-800: #281AA3;
+  --color-violet-900: #201385;
+  --color-violet-950: #170D5C;
+
+  --color-purple-50: #EEF2FF;
+  --color-purple-100: #E0E4FF;
+  --color-purple-200: #C7CCFF;
+  --color-purple-300: #A8A9FA;
+  --color-purple-400: #4F46E5;
+  --color-purple-500: #4338CA;
+  --color-purple-600: #3525CD;
+  --color-purple-700: #2F1FC0;
+  --color-purple-800: #281AA3;
+  --color-purple-900: #201385;
+  --color-purple-950: #170D5C;
+
+  /* Global font */
+  --font-sans: "Inter", sans-serif;
+}
+
+/* ===== Base styles for whole application ===== */
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 text-sm antialiased;
+  font-family: var(--font-sans);
+}
+
+/* ============================================================
+   GLOBAL GRADIENT OVERRIDES
+   Unlayered (not @layer) on purpose: an unlayered rule always
+   beats a Tailwind utility, regardless of specificity, so these
+   win over every bg-indigo-600 / bg-primary / bg-[#6C63FF] class
+   already sitting in existing components without touching them.
+   A CSS variable can only ever hold one flat color — background-
+   color can never become a two-stop gradient — so the indigo/
+   violet/purple scale above covers text, borders and rings, and
+   this block separately repaints known *solid brand fill* classes
+   (buttons, active/selected states) as the real gradient.
+   ============================================================ */
+[class~="bg-primary"],
+[class~="bg-indigo-500"],
+[class~="bg-indigo-600"],
+[class~="bg-indigo-700"],
+[class~="bg-indigo-800"],
+[class~="bg-indigo-900"],
+[class~="bg-violet-500"],
+[class~="bg-violet-600"],
+[class~="bg-violet-700"],
+[class~="bg-purple-500"],
+[class~="bg-purple-600"],
+[class~="bg-purple-700"],
+[class~="bg-[#6C63FF]"],
+[class~="bg-[#4338CA]"],
+[class~="bg-[#4F46E5]"] {
+  background-image: var(--gradient-brand);
+  background-color: transparent;
+  color: #fff;
+}
+
+[class~="hover:bg-primary"]:hover,
+[class~="hover:bg-primary/90"]:hover,
+[class~="hover:bg-indigo-600"]:hover,
+[class~="hover:bg-indigo-700"]:hover,
+[class~="hover:bg-indigo-800"]:hover,
+[class~="hover:bg-violet-600"]:hover,
+[class~="hover:bg-violet-700"]:hover,
+[class~="hover:bg-purple-600"]:hover,
+[class~="hover:bg-purple-700"]:hover {
+  background-image: var(--gradient-brand-hover);
+  background-color: transparent;
+}
+
+/* Raw arbitrary-hex utilities (e.g. Sidebar's ring-[#6C63FF]) don't
+   read from the theme scale above, so retarget them by exact class
+   token — solid accent, since rings/shadows can't gradient cleanly. */
+[class~="ring-[#6C63FF]"],
+[class~="focus-visible:ring-[#6C63FF]"] {
+  --tw-ring-color: var(--color-accent);
+}
+[class~="shadow-[#6C63FF]/30"] {
+  --tw-shadow-color: var(--color-accent);
+}
+
+/* ===== Global Components ===== */
+@layer components {
+  /* Page titles */
+  .app-page-title {
+    @apply text-2xl font-bold text-gray-900;
+  }
+
+  /* Section titles */
+  .app-section-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  /* Card titles */
+  .app-card-title {
+    @apply text-base font-semibold text-gray-900;
+  }
+
+  /* Card container */
+  .app-card {
+    @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+  }
+
+  /* Input fields */
+  .app-input {
+    @apply h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition;
+  }
+
+  .app-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgb(105 166 240 / 0.25);
+  }
+
+  /* Primary button — real two-stop gradient */
+  .app-button {
+    @apply h-10 rounded-lg px-4 text-sm font-medium text-white transition-all duration-200;
+    background-image: var(--gradient-brand);
+  }
+
+  .app-button:hover {
+    background-image: var(--gradient-brand-hover);
+  }
+
+  /* Secondary button */
+  .app-button-secondary {
+    @apply h-10 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50;
+  }
+
+  /* Gradient active / selected state (pagination, list items, etc.) */
+  .app-active {
+    @apply text-white shadow-lg;
+    background-image: var(--gradient-brand);
+  }
+
+  /* Soft tint background */
+  .app-primary-soft {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+  }
+
+  /* Table headers */
+  .app-table-head {
+    @apply text-xs font-semibold uppercase tracking-wide text-gray-500;
+  }
+
+  /* Table cells */
+  .app-table-cell {
+    @apply text-sm text-gray-700;
+  }
+
+  /* Helper text */
+  .app-helper-text {
+    @apply text-xs text-gray-500;
+  }
+
+  /* Links */
+  .app-link {
+    color: var(--color-primary);
+  }
+
+  .app-link:hover {
+    color: var(--color-accent);
+  }
 }

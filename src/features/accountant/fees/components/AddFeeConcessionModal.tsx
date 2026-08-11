@@ -275,7 +275,7 @@ export function AddFeeConcessionModal({
               </p>
 
               {/* Class filter */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={`${typography.form.label} text-gray-600`}>Class</label>
                   <select

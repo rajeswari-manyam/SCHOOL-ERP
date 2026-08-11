@@ -8,7 +8,7 @@ import {
   DAYS_OF_WEEK,
   MONTH_NAMES,
 } from "../../../../utils/date"
-import { useAttendanceStore } from "../store/attedance.store"
+import { useAttendanceStore } from "../store/attendance.store"
 
 const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 const DAY_BASE =

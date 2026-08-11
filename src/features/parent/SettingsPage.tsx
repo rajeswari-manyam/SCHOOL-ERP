@@ -20,7 +20,8 @@ type ParentLayoutContext = {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-    const { notifications, toggleNotification } = useProfileStore();
+    const notifications = useProfileStore((s) => s.notifications);
+    const toggleNotification = useProfileStore((s) => s.toggleNotification);
     const { activeChild } = useOutletContext<ParentLayoutContext>();
 
     // activeChild can briefly be missing right after login, on a page

@@ -62,6 +62,8 @@ export function useParentChildren() {
   const [children, setChildren] = useState<ChildInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
+  const refetch = () => setRetryToken((n) => n + 1);
 
   useEffect(() => {
     if (!students || students.length === 0) {
@@ -142,7 +144,7 @@ export function useParentChildren() {
     return () => {
       cancelled = true;
     };
-  }, [students]);
+  }, [students, retryToken]);
 
   const activeChild =
     children.find((c) => c.studentId === selectedStudent?.id) ?? children[0] ?? null;
@@ -154,5 +156,5 @@ export function useParentChildren() {
     setSelectedStudent(match ?? { id: child.studentId, name: child.name, roll_number: child.rollNumber, class_id: child.classId, sectionId: child.sectionId });
   };
 
-  return { children, activeChild, setActiveChild, loading, error };
+  return { children, activeChild, setActiveChild, loading, error, refetch };
 }

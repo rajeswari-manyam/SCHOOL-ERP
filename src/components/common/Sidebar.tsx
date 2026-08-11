@@ -1,6 +1,6 @@
 ﻿// src/components/common/Sidebar.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { X, ChevronDown, LogOut, User, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -79,14 +79,23 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
     navigate("/login", { replace: true });
   };
 
-  const navItems = useMemo(
-    () =>
-      items.map((item) => ({
-        ...item,
-        isActive: pathname === item.to || pathname.startsWith(item.to + "/"),
-      })),
-    [items, pathname]
-  );
+  const navItems = useMemo(() => {
+    // When one item's path is a prefix of another's (e.g. "/timetable" and
+    // "/timetable/exams"), only the most specific (longest) match should be
+    // highlighted — otherwise both light up while viewing the nested page.
+    const matches = items.filter(
+      (item) => pathname === item.to || pathname.startsWith(item.to + "/")
+    );
+    const bestMatch = matches.reduce(
+      (best, item) => (!best || item.to.length > best.to.length ? item : best),
+      null as (typeof items)[number] | null
+    );
+
+    return items.map((item) => ({
+      ...item,
+      isActive: item === bestMatch,
+    }));
+  }, [items, pathname]);
 
   return (
     <>
@@ -147,8 +156,8 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                 transition={{ duration: 0.2, ease: "easeInOut" }}
                 className="overflow-hidden flex items-center justify-between flex-1 min-w-0"
               >
-                <Link
-                  to="/dashboard"
+                <NavLink
+                  to="dashboard"
                   className="flex items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]"
                 >
                   <img
@@ -160,7 +169,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                     <p className="text-[13px] font-bold tracking-wide leading-tight">VidyaTracker</p>
                     <p className="text-[10px] text-slate-400 leading-tight">School Management</p>
                   </div>
-                </Link>
+                </NavLink>
 
                 {/* X — mobile only, closes the overlay */}
                 <Button
@@ -178,8 +187,8 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
 
           {/* Collapsed: app icon only, no button */}
           {collapsed && (
-            <Link
-              to="/dashboard"
+            <NavLink
+              to="dashboard"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 shadow-lg shadow-[#6C63FF]/30 outline-none focus-visible:ring-2 focus-visible:ring-[#6C63FF]"
               title="VidyaTracker"
             >
@@ -188,7 +197,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                 alt="VidyaTracker logo"
                 className="h-7 w-7 rounded-lg object-cover"
               />
-            </Link>
+            </NavLink>
           )}
         </div>
 
@@ -261,7 +270,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                   </div>
                 ) : (
                   /* ── Normal navigable item ── */
-                  <Link
+                  <NavLink
                     to={item.to}
                     onClick={() => {
                       if (window.innerWidth < 768) setSidebarOpen(false);
@@ -309,7 +318,7 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                         </motion.span>
                       )}
                     </AnimatePresence>
-                  </Link>
+                  </NavLink>
                 )}
               </li>
             ))}

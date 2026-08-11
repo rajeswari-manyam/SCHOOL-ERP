@@ -22,13 +22,11 @@ type ParentLayoutContext = {
 };
 
 export default function ComplaintsPage() {
-  const {
-    submitted,
-    isLoading,
-    error,
-    fetchComplaints,
-    deleteComplaint,
-  } = useComplaintsStore();
+  const submitted        = useComplaintsStore((s) => s.submitted);
+  const isLoading        = useComplaintsStore((s) => s.isLoading);
+  const error            = useComplaintsStore((s) => s.error);
+  const fetchComplaints  = useComplaintsStore((s) => s.fetchComplaints);
+  const deleteComplaint  = useComplaintsStore((s) => s.deleteComplaint);
 
   const { activeChild, token } = useOutletContext<ParentLayoutContext>();
 

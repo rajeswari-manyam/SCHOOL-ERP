@@ -467,27 +467,29 @@ const HomeworkPage = () => {
       </div>
 
       {/* Pill Tabs */}
-      <div className="inline-flex bg-indigo-50 rounded-xl p-[3px] gap-0.5 mb-5 self-start">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-[6px] px-[14px] py-[7px] rounded-[9px] text-[13px] font-semibold transition-all border-none cursor-pointer ${
-              tab === t.id
-                ? "bg-white text-indigo-600 shadow-[0_1px_3px_rgba(79,70,229,0.12)]"
-                : "bg-transparent text-indigo-400 hover:text-indigo-600"
-            }`}
-          >
-            {t.label}
-            <span className={`text-[11px] font-bold px-[7px] py-[1px] rounded-full ${
-              tab === t.id
-                ? "bg-indigo-50 text-indigo-600"
-                : "bg-indigo-100/60 text-indigo-500"
-            }`}>
-              {t.count}
-            </span>
-          </button>
-        ))}
+      <div className="max-w-full overflow-x-auto mb-5 -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="inline-flex bg-indigo-50 rounded-xl p-[3px] gap-0.5 w-max">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-[6px] px-[14px] py-[7px] rounded-[9px] text-[13px] font-semibold transition-all border-none cursor-pointer whitespace-nowrap ${
+                tab === t.id
+                  ? "bg-white text-indigo-600 shadow-[0_1px_3px_rgba(79,70,229,0.12)]"
+                  : "bg-transparent text-indigo-400 hover:text-indigo-600"
+              }`}
+            >
+              {t.label}
+              <span className={`text-[11px] font-bold px-[7px] py-[1px] rounded-full ${
+                tab === t.id
+                  ? "bg-indigo-50 text-indigo-600"
+                  : "bg-indigo-100/60 text-indigo-500"
+              }`}>
+                {t.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Active Panel */}

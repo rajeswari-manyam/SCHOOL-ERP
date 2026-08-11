@@ -1,7 +1,7 @@
 import { X, Phone, MessageCircle, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AbsentModalProps } from "../types/attendance.types"
-import { useAttendanceStore } from "../store/attedance.store"
+import { useAttendanceStore } from "../store/attendance.store"
 
 export default function AbsentModal({ data, onClose }: AbsentModalProps) {
   const selectedRecord   = useAttendanceStore((s) => s.selectedRecord)

@@ -14,7 +14,7 @@ export interface SetupItem {
   label: string;
   description: string;
   route: string;
-  routeState?: { openTab?: string; fromWizard?: boolean; [key: string]: unknown };
+  routeState?: { fromWizard?: boolean; [key: string]: unknown };
   done: boolean;
   order: number;
   subItems: SetupSubItem[];
@@ -59,8 +59,8 @@ function buildItems(steps: SetupStatusResponse['steps'], carriedModules: CarryFo
       id: 'settings',
       label: 'Academic Configuration',
       description: 'Set up your academic year, holidays, departments, and leave policies before anything else.',
-      route: '/schooladmin/settings',
-      routeState: { openTab: 'academicConfig', fromWizard: true },
+      route: '/schooladmin/settings/academic-config',
+      routeState: { fromWizard: true },
       done: steps.academicConfiguration || coveredByCarryForward('settings'),
       order: 1,
       subItems: [],

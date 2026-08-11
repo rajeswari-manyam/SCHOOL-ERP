@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Student } from "../types/student.types";
-import { StatusBadge, FeeBadge } from "./StudentBadge";
+import { StatusBadge } from "./StudentBadge";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
@@ -81,7 +81,43 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Card list (mobile only) — avoids horizontal scroll */}
+      <div className="sm:hidden divide-y divide-gray-50">
+        {pageRows.map((s) => (
+          <div
+            key={`${s.id}-card`}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-[#EFF4FF] transition-colors cursor-pointer"
+            onClick={() => navigate(`/schooladmin/students/${s.id}`)}
+          >
+            <Avatar s={s} onPreview={setPreviewStudent} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {s.firstName ?? "—"} {s.lastName ?? ""}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {s.admissionNo ?? (s as any).admissionNumber ?? "—"} · {s.class || "—"}{s.section ? ` ${s.section}` : ""}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <StatusBadge status={s.status} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <button title="Edit" onClick={() => onEdit?.(s)}
+                className="text-gray-400 hover:text-gray-700 transition-colors">
+                <Edit3 className="w-4 h-4" />
+              </button>
+              {onDelete && (
+                <button title="Delete" onClick={() => setDeleteTarget(s)}
+                  className="text-gray-400 hover:text-red-500 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full min-w-[800px]">
           <thead>
             <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
@@ -91,7 +127,6 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
               <TH>Class</TH>
               <TH>Section</TH>
               <TH>Status</TH>
-              <TH>Fee Status</TH>
               <TH className="text-right">Actions</TH>
             </tr>
           </thead>
@@ -116,7 +151,6 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
                 <td className="px-4 py-3 text-sm text-gray-700">{s.class   || "—"}</td>
                 <td className="px-4 py-3 text-sm text-gray-700">{s.section || "—"}</td>
                 <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
-                <td className="px-4 py-3"><FeeBadge status={s.feeStatus} /></td>
                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-3">
                     <button title="View" onClick={() => navigate(`/schooladmin/students/${s.id}`)}
@@ -142,12 +176,12 @@ const StudentTable = ({ students, onEdit, onDelete }: StudentTableProps) => {
       </div>
 
       {/* ── Pagination ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-gray-100">
         <p className="text-xs text-gray-500">
           Showing <span className="font-semibold text-gray-700">{start + 1}–{Math.min(start + PAGE_SIZE, students.length)}</span> of <span className="font-semibold text-gray-700">{students.length}</span> students
         </p>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           {/* Prev */}
           <button
             onClick={() => setPage((p) => p - 1)}

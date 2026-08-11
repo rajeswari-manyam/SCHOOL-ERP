@@ -1,7 +1,11 @@
 export { default as ReportsPage } from "./ReportsPage";
 export { default as ReportCardGrid } from "./components/Reportcardgrid";
 export { default as RecentReportsTable } from "./components/Recentreportstable";
-export { default as GenerateReportModal } from "./components/Generatereportmodal";
+export { default as GenerateReportPage } from "./pages/GenerateReportPage";
+export { default as AttendanceReportPage } from "./pages/AttendanceReportPage";
+export { default as StudentReportPage } from "./pages/StudentReportPage";
+export { default as FeeCollectionReportPage } from "./pages/FeeCollectionReportPage";
+export { default as StaffReportPage } from "./pages/StaffReportPage";
 export { FormatBadge, StatusBadge } from "./components/Reportbadges";
 export { useReports, useGenerateReport } from "./hooks/useReports";
 export type { ReportType, ReportFormat, ReportStatus, ReportRecord, ReportsResponse, GenerateReportPayload } from "./types/reports.types";

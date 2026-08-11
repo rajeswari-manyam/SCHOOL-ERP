@@ -167,7 +167,7 @@ const MarkStudentAttendanceModal = ({
       if (alreadyMarkedIds.length) {
         setAlreadyMarked(alreadyMarkedIds);
       } else {
-        queryClient.invalidateQueries({ queryKey: ["attendance"] });
+        queryClient.invalidateQueries({ queryKey: ["attendance"], refetchType: "all" });
         onClose();
       }
     },

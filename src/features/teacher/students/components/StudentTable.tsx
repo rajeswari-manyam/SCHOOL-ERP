@@ -1,72 +1,9 @@
 import { Fragment, useState } from "react";
 import { AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
-import type { Student, FeeStatus } from "../types/my-students.types";
+import type { Student } from "../types/my-students.types";
 import StudentExpandedDetails from "./StudentExpandedDetails";
 
 const PAGE_SIZE = 5;
-
-// ── Fee Status Badge ─────────────────────────────────────────────────────────
-const FEE_CONFIG: Record<FeeStatus, { label: string; classes: string; tipTitle: string; tipColor: string }> = {
-  PAID:    { label: "Paid",    classes: "bg-emerald-50 text-emerald-700 border border-emerald-200", tipTitle: "Fully Paid",     tipColor: "text-emerald-600" },
-  PENDING: { label: "Pending", classes: "bg-amber-50  text-amber-700  border border-amber-200",    tipTitle: "Payment Pending", tipColor: "text-amber-600"   },
-  PARTIAL: { label: "Partial", classes: "bg-blue-50   text-blue-700   border border-blue-200",     tipTitle: "Partial Payment", tipColor: "text-blue-600"    },
-  OVERDUE: { label: "Overdue", classes: "bg-red-50    text-red-700    border border-red-200",      tipTitle: "Overdue!",        tipColor: "text-red-600"     },
-};
-
-const FeeStatusBadge = ({ student }: { student: Student }) => {
-  const [show, setShow] = useState(false);
-  const cfg = FEE_CONFIG[student.feeStatus];
-  const balance = student.feeTotal - student.feePaid;
-  const pct = student.feeTotal > 0 ? Math.round((student.feePaid / student.feeTotal) * 100) : 0;
-
-  return (
-    <div className="relative inline-block" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
-      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-default ${cfg.classes}`}>
-        {cfg.label}
-      </span>
-      {show && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-          <div className="bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-52 text-left">
-            <p className={`text-xs font-semibold mb-2 ${cfg.tipColor}`}>{cfg.tipTitle}</p>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  student.feeStatus === "OVERDUE" ? "bg-red-500" :
-                  student.feeStatus === "PAID"    ? "bg-emerald-500" :
-                  student.feeStatus === "PARTIAL" ? "bg-blue-500" : "bg-amber-400"
-                }`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-500">Total</span>
-                <span className="font-medium text-gray-700">₹{student.feeTotal.toLocaleString("en-IN")}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-500">Paid</span>
-                <span className="font-medium text-emerald-600">₹{student.feePaid.toLocaleString("en-IN")}</span>
-              </div>
-              {balance > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">Balance</span>
-                  <span className={`font-medium ${student.feeStatus === "OVERDUE" ? "text-red-500" : "text-amber-500"}`}>
-                    ₹{balance.toLocaleString("en-IN")}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-500">Due Date</span>
-                <span className="font-medium text-gray-600">{student.feeDueDate}</span>
-              </div>
-            </div>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-white" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // ── Attendance cell ──────────────────────────────────────────────────────────
 const AttCell = ({ pct }: { pct: number }) => {
@@ -121,7 +58,6 @@ const StudentTable = ({ students }: Props) => {
               <th className="text-left text-xs text-gray-500 px-3 py-1.5">Student</th>
               <th className="text-left text-xs text-gray-500 px-3 py-1.5 hidden sm:table-cell">Class</th>
               <th className="text-left text-xs text-gray-500 px-3 py-1.5">Attendance</th>
-              <th className="text-left text-xs text-gray-500 px-3 py-1.5 hidden md:table-cell">Fee Status</th>
               <th className="w-8 px-3 py-1.5" />
             </tr>
           </thead>
@@ -159,9 +95,6 @@ const StudentTable = ({ students }: Props) => {
                   <td className="px-3 py-1.5">
                     <AttCell pct={s.attendancePct} />
                   </td>
-                  <td className="px-3 py-1.5 hidden md:table-cell">
-                    <FeeStatusBadge student={s} />
-                  </td>
                   <td className="px-3 py-1.5">
                     <button
                       onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : s.id); }}
@@ -174,7 +107,7 @@ const StudentTable = ({ students }: Props) => {
                 </tr>
                 {isExpanded && (
                   <tr className="border-b border-gray-100 last:border-0 bg-gray-50/60">
-                    <td colSpan={6} className="px-5">
+                    <td colSpan={5} className="px-5">
                       <StudentExpandedDetails studentId={s.id} classId={s.classId} sectionId={s.sectionId} />
                     </td>
                   </tr>
@@ -187,7 +120,7 @@ const StudentTable = ({ students }: Props) => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100 bg-gray-50/40">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t border-gray-100 bg-gray-50/40">
         <p className="text-xs text-gray-400">
           Showing <span className="font-semibold text-gray-700">{start + 1}–{Math.min(start + PAGE_SIZE, students.length)}</span> of{" "}
           <span className="font-semibold text-gray-700">{students.length}</span> students

@@ -232,7 +232,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload, editMaterial, onU
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[.1em] mb-3 after:content-[''] after:flex-1 after:h-px after:bg-slate-100">
             Academic details
           </div>
-          <div className="grid grid-cols-3 gap-[10px]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-[10px]">
             <FormField label="Class *" error={errors.classId?.message as string | undefined}>
               <Select
                 options={classes.map((c) => ({ label: c.class_name, value: c.id }))}
@@ -277,7 +277,7 @@ export const UploadMaterialModal = ({ open, onClose, onUpload, editMaterial, onU
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[.1em] mb-3 after:content-[''] after:flex-1 after:h-px after:bg-slate-100">
             Upload type
           </div>
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
             {(["FILE", "LINK"] as const).map((type) => (
               <button
                 key={type}

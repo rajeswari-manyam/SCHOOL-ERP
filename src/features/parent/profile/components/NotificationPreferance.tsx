@@ -57,7 +57,7 @@ export function NotificationPreferences({ notifications, onToggle, onSave }: Pro
                 className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
               >
                 {/* LEFT */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
                   {/* Icon badge */}
                   <div
                     className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -67,13 +67,13 @@ export function NotificationPreferences({ notifications, onToggle, onSave }: Pro
                   </div>
 
                   {/* Text */}
-                  <div>
-                    <p className={typography.form.label + " text-[#0B1C30]"}>
+                  <div className="min-w-0">
+                    <p className={typography.form.label + " text-[#0B1C30] truncate"}>
                       {n.label}
                     </p>
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex items-center gap-1 mt-0.5 min-w-0">
                       <MessageCircle size={11} strokeWidth={1.3} color="#006C49" style={{ flexShrink: 0 }} />
-                      <p className="text-[11px] text-[#006C49]/80 leading-snug">
+                      <p className="text-[11px] text-[#006C49]/80 leading-snug truncate">
                         {n.description}
                       </p>
                     </div>

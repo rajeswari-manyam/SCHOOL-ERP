@@ -27,22 +27,24 @@ const StudentFilterBar = ({ filters, onChange, totalCount, filteredCount }: Prop
         />
       </div>
 
-      {/* Attendance Range filter */}
-      <select
-        value={filters.attendanceRange}
-        onChange={(e) => set({ attendanceRange: e.target.value as MyStudentsFilters["attendanceRange"] })}
-        className={inputCls}
-      >
-        <option value="ALL">All Attendance</option>
-        <option value="BELOW_75">Below 75%</option>
-        <option value="75_TO_90">75% – 90%</option>
-        <option value="ABOVE_90">Above 90%</option>
-      </select>
+      {/* Attendance filter + count — grouped into one row on mobile, flattened back on sm+ */}
+      <div className="flex items-center justify-between gap-3 sm:contents">
+        <select
+          value={filters.attendanceRange}
+          onChange={(e) => set({ attendanceRange: e.target.value as MyStudentsFilters["attendanceRange"] })}
+          className={`${inputCls} flex-1 sm:flex-none`}
+        >
+          <option value="ALL">All Attendance</option>
+          <option value="BELOW_75">Below 75%</option>
+          <option value="75_TO_90">75% – 90%</option>
+          <option value="ABOVE_90">Above 90%</option>
+        </select>
 
-      {/* Count badge */}
-      <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
-        {isFiltered ? `${filteredCount} of ${totalCount}` : `${totalCount} students`}
-      </span>
+        {/* Count badge */}
+        <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
+          {isFiltered ? `${filteredCount} of ${totalCount}` : `${totalCount} students`}
+        </span>
+      </div>
     </div>
   );
 };

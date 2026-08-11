@@ -189,7 +189,7 @@ const buildSlotsFromRaw = (rawList: GetAllTimetableRawItem[]): TimetableSlot[] =
       periodNo: number;
       startTime: string;
       endTime: string;
-      cells: Partial<Record<DayOfWeek, { subject: string; teacherName: string; room?: string }>>;
+      cells: Partial<Record<DayOfWeek, { id?: string; subject: string; teacherName: string; room?: string }>>;
     }
   >();
 
@@ -217,6 +217,7 @@ const buildSlotsFromRaw = (rawList: GetAllTimetableRawItem[]): TimetableSlot[] =
 
     const slot = slotMap.get(periodNo)!;
     slot.cells[day] = {
+      id: r.id,
       subject: subjectName,
       teacherName: teacherName,
       room: roomNo,
@@ -327,7 +328,12 @@ export const useTimetablePage = (classId: string, classLabel: string, sectionId:
         // ignore — fall through to backup
       }
 
-      // Secondary: getalltimetable — fetch class teacher name + fallback slots
+      // Secondary: getalltimetable — fetch class teacher name + fallback slots,
+      // AND the real timetable-record ids. /tenant/remaining-periods (the
+      // primary source above) never returns an id on assigned_periods at all,
+      // but Edit/Delete need the real id to call updatetimetableById /
+      // deletetimetableById — without it those calls 404 on an empty id.
+      const idByDayPeriod = new Map<string, string>();
       try {
         const res = await getAllTimetable(classId, sectionId);
         const rawList: GetAllTimetableRawItem[] = extractArray(res, "data", "timetables", "result", "entries");
@@ -335,9 +341,30 @@ export const useTimetablePage = (classId: string, classLabel: string, sectionId:
           rawList.find((r) => r.teacher?.name)?.teacher?.name ??
           rawList.find((r) => r.teachername)?.teachername ??
           "";
+        for (const r of rawList) {
+          const day = normDay(r.day_of_week);
+          const pno = Number(r.period_no);
+          if (day && r.id && !isNaN(pno)) {
+            idByDayPeriod.set(`${day}-${pno}`, r.id);
+          }
+        }
         if (slots.length === 0) slots = buildSlotsFromRaw(rawList);
       } catch {
         // ignore
+      }
+
+      // Backfill cell.id from getalltimetable's real records, matched by
+      // day + period number.
+      if (idByDayPeriod.size > 0) {
+        for (const slot of slots) {
+          if (slot.kind !== "PERIOD" || !slot.cells) continue;
+          for (const day of Object.keys(slot.cells) as DayOfWeek[]) {
+            const cell = slot.cells[day];
+            if (cell && !cell.id) {
+              cell.id = idByDayPeriod.get(`${day}-${slot.periodNo}`);
+            }
+          }
+        }
       }
 
       return {
@@ -499,7 +526,11 @@ export const useSavePeriod = () => {
       await api.put("/tenant/updatetimetableById", payload);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" forces an immediate refetch even if the timetable
+      // page query is currently inactive (e.g. user is on a different route),
+      // so the cache is already fresh by the time they navigate back to it —
+      // otherwise refetchOnMount:false would show stale data with no refetch.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       toast.success("Period updated successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -513,7 +544,9 @@ export const useUpdateTimetable = () => {
     mutationFn: async ({ id, payload }: { id: string; payload: TimetablePayload }) =>
       updateTimetableById(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       toast.success("Period updated successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -526,7 +559,9 @@ export const useDeleteTimetable = () => {
   return useMutation({
     mutationFn: (id: string) => deleteTimetableById(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       toast.success("Period deleted successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -610,10 +645,15 @@ export const useCreateTimetable = () => {
           // fallback below
         }
       }
-      // Invalidate and immediately refetch the timetable page query
-      qc.invalidateQueries({ 
+      // Invalidate and immediately refetch the timetable page query.
+      // refetchType: 'all' (not just 'active') — this mutation runs from
+      // AddPeriodPage, a separate route from the Timetable list, so the
+      // list's query is inactive at this point; 'active' alone would mark
+      // it stale without refetching, and refetchOnMount:false means the
+      // next visit to Timetable wouldn't refetch it either.
+      qc.invalidateQueries({
         queryKey: TIMETABLE_KEYS.all,
-        refetchType: 'active' // Refetch active queries immediately
+        refetchType: 'all'
       });
       toast.success("Timetable period created successfully");
     },
@@ -629,7 +669,7 @@ export const useBulkCreateTimetable = () => {
       return await bulkCreateTimetable(payload);
     },
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: 'active' });
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: 'all' });
       if (res.inserted > 0) {
         toast.success(`${res.inserted} period(s) created successfully`);
       }
@@ -653,7 +693,9 @@ export const useCreateExamTimetable = () => {
   return useMutation({
     mutationFn: (payload: CreateExamTimetablePayload) => createExamSlot(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       toast.success("Exam timetable created successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -666,7 +708,9 @@ export const useBulkCreateExamTimetable = () => {
   return useMutation({
     mutationFn: (payload: BulkExamTimetablePayload) => bulkCreateExamTimetable(payload),
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       if (res.failed > 0) {
         toast.warning(`${res.inserted} added, ${res.failed} skipped (holiday/non-working day)`);
       } else {
@@ -684,7 +728,9 @@ export const useUpdateExamTimetable = () => {
     mutationFn: ({ id, data }: { id: string; data: CreateExamTimetablePayload }) =>
       updateExamTimetable(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       toast.success("Exam timetable updated successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -699,7 +745,9 @@ export const useAddExam = () => {
       await api.post("/tenant/addexam", entry);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam() });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.exam(), refetchType: "all" });
       toast.success("Exam added successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -711,7 +759,9 @@ export const useDeleteExam = () => {
   return useMutation({
     mutationFn: (examId: string) => deleteExamTimetable(examId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all });
+      // refetchType: "all" — force refresh even if the list query is inactive
+      // right now, so it's already current when the user navigates back to it.
+      qc.invalidateQueries({ queryKey: TIMETABLE_KEYS.all, refetchType: "all" });
       toast.success("Exam deleted successfully");
     },
     onError: (err: Error) => toast.error(err.message),

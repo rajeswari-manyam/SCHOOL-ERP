@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { getStudentById } from "../../../../services/student.api";
-import type { Student as ApiStudent } from "../../../../services/student.api";
+import type { Student as ApiStudent, ParentDetail } from "../../../../services/student.api";
 import { getAllClasses } from "../../../../services/class.api";
 import type { ClassRecord } from "../../../../services/class.api";
 import { getAllStaff } from "../../../../services/staff.api";
 import type { StaffRecord } from "../../../../services/staff.api";
 import { getAcademicYearById } from "../../../../services/academicYear.api";
 
-import type { Student, StudentStatus, Gender } from "../types/profile.types";
+import type { Student, StudentStatus, Gender, ParentInfo } from "../types/profile.types";
 import { STUDENT_DATA } from "../data/profile.mock";
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -27,6 +27,36 @@ const formatDate = (dateStr: string): string => {
     day: "numeric", month: "long", year: "numeric",
   });
 };
+
+/* ── Mapper: ParentDetail (one combined father+mother record) → ParentInfo[] ── */
+
+const mapParentDetails = (details: ParentDetail[]): ParentInfo[] =>
+  details.flatMap((d): ParentInfo[] => {
+    const parents: ParentInfo[] = [];
+    if (d.father_name) {
+      parents.push({
+        id:         `${d.id}-father`,
+        parent_name: d.father_name,
+        relation:   "Father",
+        phone:      d.father_phone ?? "",
+        email:      d.father_email ?? "",
+        occupation: d.father_occupation ?? "",
+        image:      d.father_image,
+      });
+    }
+    if (d.mother_name) {
+      parents.push({
+        id:         `${d.id}-mother`,
+        parent_name: d.mother_name,
+        relation:   "Mother",
+        phone:      d.mother_phone ?? "",
+        email:      d.mother_email ?? "",
+        occupation: d.mother_occupation ?? "",
+        image:      d.mother_image,
+      });
+    }
+    return parents;
+  });
 
 /* ── Mapper: ApiStudent → Student ────────────────────────── */
 
@@ -75,7 +105,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
     },
 
     quickDownloads: STUDENT_DATA.quickDownloads,
-    parentDetails:  s.parentDetail ?? [],
+    parentDetails:  mapParentDetails(s.parentDetail ?? []),
   };
 };
 

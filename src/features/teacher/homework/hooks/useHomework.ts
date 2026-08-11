@@ -192,12 +192,12 @@ export const useHomework = (): HomeworkState => {
 
   // ── Invalidation helper ───────────────────────────────────────────────────
   const invalidateList = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.list(teacherId) });
+    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.list(teacherId), refetchType: "all" });
     // HomeworkPage also runs a second, independent query ("homework"/"byClass"/…)
     // whenever a class filter is active — without this, a newly created/edited/
     // deleted homework never shows up while that filter is selected, since only
     // the unfiltered list query above gets refetched.
-    queryClient.invalidateQueries({ queryKey: ["homework", "byClass"] });
+    queryClient.invalidateQueries({ queryKey: ["homework", "byClass"], refetchType: "all" });
   }, [queryClient, teacherId]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ export const useHomework = (): HomeworkState => {
     if (payload.open_link) formData.append("open_link", payload.open_link);
     if (payload.pdf) formData.append("pdf", payload.pdf);
     await createStudyMaterial(formData);
-    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
+    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials(), refetchType: "all" });
   }, [queryClient]);
 
   const updateMaterial = useCallback(async (id: string, payload: CreateStudyMaterialPayload) => {
@@ -262,12 +262,12 @@ export const useHomework = (): HomeworkState => {
     if (payload.open_link) formData.append("open_link", payload.open_link);
     if (payload.pdf) formData.append("pdf", payload.pdf);
     await updateStudyMaterial(id, formData);
-    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
+    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials(), refetchType: "all" });
   }, [queryClient]);
 
   const deleteMaterial = useCallback(async (id: string) => {
     await deleteStudyMaterial(id);
-    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials() });
+    queryClient.invalidateQueries({ queryKey: HOMEWORK_KEYS.materials(), refetchType: "all" });
   }, [queryClient]);
 
   return {

@@ -103,7 +103,7 @@ const StudentAttendanceTab = ({
   return (
     <div className="space-y-6">
       {/* Today's Attendance */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-5">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
         {todayLoading ? (
           <div className="flex items-center gap-3 w-full">
             <div className="w-12 h-12 rounded-xl bg-gray-100 animate-pulse flex-shrink-0" />
@@ -114,27 +114,29 @@ const StudentAttendanceTab = ({
           </div>
         ) : (
           <>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl ${
-              todayStatus === "present" ? "bg-emerald-50" :
-              todayStatus === "absent" ? "bg-red-50" : "bg-gray-50"
-            }`}>
-              {todayStatus === "present" ? "✅" : todayStatus === "absent" ? "❌" : "—"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Today's Attendance</p>
-              <p className={`text-lg font-extrabold mt-0.5 ${
-                todayStatus === "present" ? "text-emerald-600" :
-                todayStatus === "absent" ? "text-red-500" : "text-gray-400"
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl ${
+                todayStatus === "present" ? "bg-emerald-50" :
+                todayStatus === "absent" ? "bg-red-50" : "bg-gray-50"
               }`}>
-                {todayStatus === "present" ? "Present" : todayStatus === "absent" ? "Absent" : "Not Marked"}
-              </p>
-              {todayData?.date && (
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {new Date(todayData.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                {todayStatus === "present" ? "✅" : todayStatus === "absent" ? "❌" : "—"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Today's Attendance</p>
+                <p className={`text-lg font-extrabold mt-0.5 ${
+                  todayStatus === "present" ? "text-emerald-600" :
+                  todayStatus === "absent" ? "text-red-500" : "text-gray-400"
+                }`}>
+                  {todayStatus === "present" ? "Present" : todayStatus === "absent" ? "Absent" : "Not Marked"}
                 </p>
-              )}
+                {todayData?.date && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {new Date(todayData.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex gap-4 text-center flex-shrink-0">
+            <div className="flex gap-4 text-center flex-shrink-0 pl-16 sm:pl-0">
               <div>
                 <p className="text-xs text-gray-400">Present</p>
                 <p className="text-base font-bold text-emerald-600">{todayData?.summary?.present ?? 0}</p>
@@ -201,7 +203,7 @@ const StudentAttendanceTab = ({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "This Month", val: monthPresent, sub: "Present", cls: "text-emerald-600" },
           { label: "This Month", val: monthAbsent, sub: "Absent", cls: "text-red-500" },

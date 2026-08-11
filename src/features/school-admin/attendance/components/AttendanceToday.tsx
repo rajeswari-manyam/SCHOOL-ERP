@@ -307,19 +307,16 @@ const AttendanceToday = ({
 
         {/* Class-wise Table */}
         <div className="rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div>
-              <h2 className="text-xs font-semibold text-gray-900">Class-wise Attendance — Today</h2>
-              <p className="text-[10px] text-gray-400 mt-0.5">
-                {allClassesData?.date
-                  ? new Date(allClassesData.date).toLocaleDateString("en-IN", {
-                      day: "numeric", month: "long", year: "numeric",
-                    })
-                  : "—"}{" "}
-                · ↻ Auto-refreshing every 60s
-              </p>
-            </div>
-            <span className="text-[10px] text-gray-400">Click View to see student details</span>
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h2 className="text-xs font-semibold text-gray-900">Class-wise Attendance — Today</h2>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              {allClassesData?.date
+                ? new Date(allClassesData.date).toLocaleDateString("en-IN", {
+                    day: "numeric", month: "long", year: "numeric",
+                  })
+                : "—"}{" "}
+              · ↻ Auto-refreshing every 60s
+            </p>
           </div>
 
           {classes.length === 0 ? (
@@ -328,7 +325,65 @@ const AttendanceToday = ({
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* ── Card list (mobile only) — avoids horizontal scroll ── */}
+              <div className="sm:hidden divide-y divide-gray-50">
+                {paginatedClasses.map((item) => {
+                  const isMarked    = item.attendance_status === "marked";
+                  const teacherName = (item as any).teacher?.name ?? "—";
+                  const isActive = panelItem?.class?.id === item.class?.id && panelItem?.section?.id === item.section?.id;
+
+                  return (
+                    <div
+                      key={`${item.class?.id}-${item.section?.id}-card`}
+                      className={`px-4 py-3 ${isActive ? "bg-indigo-50/60" : !isMarked ? "bg-orange-50" : ""}`}
+                      onClick={() => handleRowClick(item)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-gray-900 text-xs">
+                          {item.class?.name}
+                          <span className="text-indigo-600">{item.section?.name}</span>
+                        </span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 ${
+                          isMarked ? "bg-emerald-50 text-emerald-700" : "bg-red-100 text-red-700"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isMarked ? "bg-emerald-500" : "bg-red-500"}`} />
+                          {isMarked ? "MARKED" : "NOT MARKED"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1 truncate">{teacherName}</p>
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-600">
+                        <span>{item.total_students} total</span>
+                        {isMarked ? (
+                          <>
+                            <span className="text-green-600 font-semibold">{item.present_students} present</span>
+                            <span className="text-red-500 font-medium">{item.absent_students} absent</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-300">— present / absent</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleRowClick(item)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[11px] font-medium transition-colors"
+                        >
+                          <Eye className="w-3 h-3" />
+                          View
+                        </button>
+                        <button
+                          onClick={() => openMarkAttendance(item.class?.id, item.section?.id)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 text-[11px] font-medium transition-colors"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Edit
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full min-w-[560px]">
                   <thead>
                     <tr className="border-b border-gray-100" style={{ background: '#EFF4FF' }}>
@@ -351,10 +406,11 @@ const AttendanceToday = ({
                       return (
                         <tr
                           key={`${item.class?.id}-${item.section?.id}`}
-                          className={`border-b border-gray-50 transition-colors cursor-pointer ${isActive ? "bg-indigo-50/60" : ""}`}
-                          style={!isActive ? undefined : undefined}
-                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#EFF4FF'; }}
-                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = ''; }}
+                          className={`border-b border-gray-50 transition-colors cursor-pointer ${
+                            isActive ? "bg-indigo-50/60" : !isMarked ? "bg-orange-50" : ""
+                          }`}
+                          onMouseEnter={e => { if (!isActive && isMarked) e.currentTarget.style.background = '#EFF4FF'; }}
+                          onMouseLeave={e => { if (!isActive && isMarked) e.currentTarget.style.background = ''; }}
                           onClick={() => handleRowClick(item)}
                         >
                           <td className="px-4 py-2.5">
@@ -390,11 +446,11 @@ const AttendanceToday = ({
                               : <span className="text-gray-300 text-xs">—</span>}
                           </td>
                           <td className="px-4 py-2.5">
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                              isMarked ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              isMarked ? "bg-emerald-50 text-emerald-700" : "bg-red-100 text-red-700"
                             }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${isMarked ? "bg-green-500" : "bg-red-400"}`} />
-                              {isMarked ? "Marked" : "Not Marked"}
+                              <span className={`w-1.5 h-1.5 rounded-full ${isMarked ? "bg-emerald-500" : "bg-red-500"}`} />
+                              {isMarked ? "MARKED" : "NOT MARKED"}
                             </span>
                           </td>
                           <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
@@ -423,11 +479,11 @@ const AttendanceToday = ({
               </div>
 
               {/* Pagination — always visible */}
-              <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between">
+              <div className="px-4 py-2.5 border-t border-gray-100 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-[10px] text-gray-500">
                   Showing {(classPage - 1) * CLASSES_PAGE_SIZE + 1}–{Math.min(classPage * CLASSES_PAGE_SIZE, classes.length)} of {classes.length} classes
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-wrap">
                   <button
                     onClick={() => setClassPage((p) => Math.max(1, p - 1))}
                     disabled={classPage === 1}

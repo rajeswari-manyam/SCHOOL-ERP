@@ -15,7 +15,7 @@ const MyStudentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
+      <div className="flex flex-col gap-4 min-h-full px-3 sm:px-6 pt-2 pb-6">
         <div className="h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
         <div className="h-4 w-64 animate-pulse rounded bg-gray-100" />
         <div className="space-y-3 mt-4">
@@ -46,7 +46,7 @@ const MyStudentsPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
+    <div className="flex flex-col gap-4 min-h-full px-3 sm:px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">

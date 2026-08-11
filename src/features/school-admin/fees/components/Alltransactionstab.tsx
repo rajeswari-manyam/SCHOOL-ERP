@@ -128,8 +128,57 @@ export function AllTransactionsTab({
         </div>
       )}
 
+      {/* Mobile card list */}
+      <div className="sm:hidden bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-50">
+        {transactions.length === 0 ? (
+          <p className="py-10 text-center text-sm text-gray-400">No transactions found.</p>
+        ) : (
+          transactions.map((tx) => (
+            <div key={tx.receiptNo} className="p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-800 truncate">{tx.studentName}</p>
+                  <p className="text-xs text-gray-400">{tx.class}</p>
+                </div>
+                <span className="text-indigo-600 font-semibold text-xs shrink-0">{tx.receiptNo}</span>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-600">
+                <span className="truncate">{tx.feeHead || "—"}</span>
+                <span className="font-semibold text-gray-900 shrink-0">{formatCurrency(tx.amount)}</span>
+              </div>
+
+              <div className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-400">
+                <span className="whitespace-pre-line">{tx.dateTime}</span>
+                <PaymentModeBadge mode={tx.mode} />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                {tx.sentToParent ? (
+                  <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                    WA Sent
+                  </span>
+                ) : <span />}
+                <div className="flex gap-3">
+                  <Button variant="ghost" size="sm" className="text-xs text-indigo-600 hover:underline p-0">
+                    View
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:underline p-0">
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+        <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500">
+          Showing 1-{transactions.length} of {transactions.length} transactions this period
+        </div>
+      </div>
+
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="hidden sm:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

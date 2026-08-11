@@ -70,7 +70,7 @@ const AttendanceHistory = () => {
       <div className="rounded-xl overflow-hidden">
 
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-gray-100 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xs font-semibold text-gray-900">Chronic Absentees</h2>
             <p className="text-[10px] text-gray-400 mt-0.5">
@@ -78,7 +78,7 @@ const AttendanceHistory = () => {
             </p>
           </div>
           {!isLoading && students.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
+            <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600">
               <AlertTriangle className="w-3 h-3" />
               {students.length} student{students.length !== 1 ? "s" : ""}
             </span>
@@ -120,10 +120,46 @@ const AttendanceHistory = () => {
           </div>
         )}
 
-        {/* Table */}
+        {/* Card list (mobile only) — avoids horizontal scroll */}
+        {!isLoading && !error && paginated.length > 0 && (
+          <div className="sm:hidden divide-y divide-gray-50">
+            {paginated.map((student) => (
+              <div key={`${student.id}-card`} className="px-5 py-3.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ring-2 ring-white"
+                    style={{ backgroundColor: avatarBg(student.name) }}
+                  >
+                    {initials(student.name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{student.name}</p>
+                    <p className="text-xs text-gray-400">{student.className}{student.section}</p>
+                  </div>
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold shrink-0 ${badgeStyle(student.absentDays)}`}>
+                    {student.absentDays} days
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 mt-2 pl-12">
+                  <span className="text-xs text-gray-500">Last absent {student.lastAbsent} · {student.parentPhone}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button title="Call parent" className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-indigo-600 transition-colors">
+                      <Phone className="w-3.5 h-3.5" />
+                    </button>
+                    <button title="WhatsApp parent" className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-green-50 hover:text-green-600 transition-colors">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Table (sm and up) */}
         {!isLoading && !error && paginated.length > 0 && (
           <>
-            <div className="overflow-x-auto">
+            <div className="hidden sm:block overflow-x-auto">
             <div className="min-w-[560px]">
             <div className="grid grid-cols-[1fr_6rem_7rem_8rem_10rem_6rem] gap-3 px-5 py-2.5 border-b border-gray-100" style={{ background: '#E5EEFF' }}>
               {["Student", "Class", "Absent Days", "Last Absent", "Parent Contact", "Actions"].map((h) => (
@@ -167,13 +203,15 @@ const AttendanceHistory = () => {
                 </div>
               ))}
             </div>
+            </div>
+            </div>
 
-            {/* Pagination */}
-            <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+            {/* Pagination — shared by mobile card list and desktop table */}
+            <div className="px-5 py-3 border-t border-gray-100 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-gray-500">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, students.length)} of {students.length}
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
                   className="w-7 h-7 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                   <ChevronLeft className="w-4 h-4" />
@@ -189,8 +227,6 @@ const AttendanceHistory = () => {
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-            </div>
             </div>
           </>
         )}

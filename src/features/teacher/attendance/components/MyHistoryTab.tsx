@@ -82,16 +82,16 @@ const SectionCard = ({
       {/* Section header row */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-3 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-gray-800">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs font-bold text-gray-800 shrink-0">
             {class_name}-{section_name}
           </span>
-          <span className="text-[10px] text-gray-400">{date} · {marked_time}</span>
+          <span className="text-[10px] text-gray-400 truncate">{date} · {marked_time}</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Mini stats */}
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
@@ -102,15 +102,15 @@ const SectionCard = ({
               <UserX size={11} />
               {summary.absent_count}A
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-gray-400">
+            <span className="hidden sm:flex items-center gap-1 text-[11px] text-gray-400">
               <Users size={11} />
               {summary.total_strength} total
             </span>
           </div>
           {expanded ? (
-            <ChevronUp size={12} className="text-gray-400" />
+            <ChevronUp size={12} className="text-gray-400 shrink-0" />
           ) : (
-            <ChevronDown size={12} className="text-gray-400" />
+            <ChevronDown size={12} className="text-gray-400 shrink-0" />
           )}
         </div>
       </button>

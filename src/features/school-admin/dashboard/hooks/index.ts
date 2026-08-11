@@ -27,8 +27,7 @@ export function useSchoolTodayAttendance() {
   return useQuery({
     queryKey: [...DASHBOARD_QUERY_KEY, 'today-attendance'],
     queryFn: () => dashboardApi.getSchoolTodayAttendance(),
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 30_000,
     refetchInterval: 60_000,
     retry: 2,
   });
@@ -39,8 +38,7 @@ export function useClassAttendanceStatus() {
   return useQuery({
     queryKey: [...DASHBOARD_QUERY_KEY, 'class-attendance-status'],
     queryFn: () => dashboardApi.getClassAttendanceStatus(),
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 30_000,
     refetchInterval: 60_000,
     retry: 2,
   });
@@ -62,8 +60,7 @@ export function useAllClassesTodayAttendance() {
   return useQuery({
     queryKey: [...DASHBOARD_QUERY_KEY, 'all-classes-today-attendance'],
     queryFn: () => dashboardApi.getAllClassesTodayAttendance(),
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 30_000,
     refetchInterval: 60_000,
     retry: 2,
   });
@@ -282,7 +279,7 @@ export function useSendReminders() {
     mutationFn: (classes: string[]) => dashboardApi.sendWhatsAppReminder(classes),
     onSuccess: () => {
       // Invalidate so dashboard re-fetches
-      qc.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
+      qc.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY, refetchType: "all" });
     },
   });
 }

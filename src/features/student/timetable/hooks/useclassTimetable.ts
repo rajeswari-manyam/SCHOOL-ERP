@@ -195,6 +195,8 @@ export const useClassTimetable = () => {
 
   const [data, setData] = useState<ClassTimetable | null>(null);
   const [meta, setMeta] = useState<TimetableStudentMeta | null>(null);
+  const [classId, setClassId] = useState<string | undefined>(undefined);
+  const [sectionId, setSectionId] = useState<string | undefined>(undefined);
   const [isLoading, setLoading] = useState(false);
   const [isError, setError] = useState(false);
 
@@ -208,20 +210,33 @@ export const useClassTimetable = () => {
     setError(false);
 
     try {
-      // 1. Fetch student to get class_id and section_id UUIDs
+      // 1. Fetch student to get class_id and section_id UUIDs.
+      //    Cascade through every known shape (same as useHomework / useDashboard)
+      //    — the nested classDetail/sectionDetail are the reliable source.
       const student = await getStudentById(studentId);
 
-      const classId = student.class_id;
+      const resolvedClassId: string =
+        student.classDetail?.id ??
+        (student as any).class?.id ??
+        student.class_id ??
+        "";
       // Support both plain UUID and composite "sectionName:classId" formats
-      const rawSectionId: string = student.sectionId ?? "";
-      const sectionId = rawSectionId.includes(":")
+      const rawSectionId: string =
+        student.sectionDetail?.id ??
+        (student as any).section?.id ??
+        student.sectionId ??
+        "";
+      const resolvedSectionId = rawSectionId.includes(":")
         ? rawSectionId.split(":")[1]
         : rawSectionId;
 
-      if (!classId || !sectionId) {
+      if (!resolvedClassId || !resolvedSectionId) {
         setError(true);
         return;
       }
+
+      setClassId(resolvedClassId);
+      setSectionId(resolvedSectionId);
 
       // 2. Fetch active academic year name
       const { data: years } = await getAllAcademicYears();
@@ -229,18 +244,20 @@ export const useClassTimetable = () => {
       const academicYearName = activeYear?.yearName ?? "—";
 
       // 3. Fetch timetable using real UUIDs
-      const res = await getAllTimetable(classId, sectionId);
+      const res = await getAllTimetable(resolvedClassId, resolvedSectionId);
 
       if (res.status && res.data.length > 0) {
         const firstSlot = res.data[0] as any;
         const className =
           firstSlot?.class?.class_name ??
           student.classDetail?.class_name ??
-          classId;
+          (student as any).class?.class_name ??
+          resolvedClassId;
         const sectionName =
           firstSlot?.section?.sectionName ??
           student.sectionDetail?.sectionName ??
-          sectionId;
+          (student as any).section?.sectionName ??
+          resolvedSectionId;
         const displayName = `Class ${className} – ${sectionName}`;
         const studentName = `${student.first_name} ${student.last_name}`.trim();
 
@@ -258,7 +275,7 @@ export const useClassTimetable = () => {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { data, meta, isLoading, isError, refetch: fetch };
+  return { data, meta, classId, sectionId, isLoading, isError, refetch: fetch };
 };
 
 export const useUpcomingExaminations = (classId?: string, sectionId?: string) => {

@@ -4,8 +4,7 @@ export type StaffStatus = "ACTIVE" | "ON_LEAVE" | "INACTIVE";
 export type TabKey =
   | "all"
   | "teachers"
-  | "non-teaching"
-  | "leave-requests";
+  | "non-teaching";
 export type LeaveType = "SICK" | "CASUAL" | "PAID";
 
 export interface LeaveRequest {

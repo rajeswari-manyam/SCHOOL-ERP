@@ -128,8 +128,8 @@ const PendingLeavesTab = () => {
     try {
       await approveLeave(id);
       toast.success("Leave approved");
-      qc.invalidateQueries({ queryKey: QUERY_KEY });
-      qc.invalidateQueries({ queryKey: ['all-leaves-today'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEY, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ['all-leaves-today'], refetchType: "all" });
     } catch {
       toast.error("Failed to approve leave");
     } finally {
@@ -142,8 +142,8 @@ const PendingLeavesTab = () => {
     try {
       await rejectLeave(id);
       toast.success("Leave rejected");
-      qc.invalidateQueries({ queryKey: QUERY_KEY });
-      qc.invalidateQueries({ queryKey: ['all-leaves-today'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEY, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ['all-leaves-today'], refetchType: "all" });
     } catch {
       toast.error("Failed to reject leave");
     } finally {
@@ -271,7 +271,31 @@ const PendingLeavesTab = () => {
         ) : todayLeaves.length === 0 ? (
           <p className="text-xs text-amber-600/70 text-center py-2">No leaves recorded for today.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Card list (mobile only) */}
+          <div className="sm:hidden divide-y divide-amber-100">
+            {todayLeaves.map((l) => (
+              <div key={`${l.id}-card`} className="py-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${avatarColor(l.staffName ?? "")}`}>
+                      {(l.staffName ?? "?").slice(0, 2).toUpperCase()}
+                    </div>
+                    <span className="text-xs font-semibold text-gray-900 truncate">{l.staffName ?? "—"}</span>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase shrink-0 ${LEAVE_TYPE_STYLE[l.type?.toLowerCase()] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}>
+                    {l.type}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600 mt-1 pl-8">
+                  {fmt(l.from)} → {fmt(l.to)} <span className="font-semibold">· {l.days ?? "-"}d</span>
+                </p>
+                {l.reason && <p className="text-[11px] text-gray-400 truncate pl-8">{l.reason}</p>}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-amber-100/50 border-b border-amber-200">
@@ -308,6 +332,7 @@ const PendingLeavesTab = () => {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
       )}
@@ -338,7 +363,37 @@ const PendingLeavesTab = () => {
               <p className="text-sm font-semibold text-gray-400">No leave records found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Card list (mobile only) */}
+            <div className="sm:hidden divide-y divide-gray-50">
+              {allStaffLeaves.map((l) => {
+                const typeStyle = LEAVE_TYPE_STYLE[l.type?.toLowerCase()] ?? "bg-gray-50 text-gray-600 border-gray-200";
+                const statusStyle = STATUS_BADGE[l.status?.toLowerCase()] ?? "bg-gray-100 text-gray-500";
+                const isToday = isTodayInRange(l.from, l.to);
+                return (
+                  <div key={`${l.id}-card`} className={`px-5 py-3 ${isToday ? "bg-amber-50/40" : ""}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase ${typeStyle}`}>
+                        {l.type}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusStyle}`}>
+                        {l.status ?? "—"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-700 mt-1.5">
+                      {fmt(l.from)} → {fmt(l.to)} <span className="font-semibold text-gray-500">· {l.days ?? "-"}d</span>
+                      {isToday && <span className="ml-1.5 text-[10px] font-semibold text-amber-600">●</span>}
+                    </p>
+                    {l.reason && <p className="text-xs text-gray-400 truncate mt-0.5">{l.reason}</p>}
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      Applied {l.createdAt ? fmt(l.createdAt.split("T")[0]) : "—"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
@@ -384,6 +439,7 @@ const PendingLeavesTab = () => {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       )}
@@ -419,7 +475,7 @@ const PendingLeavesTab = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 items-center px-5 py-2.5 bg-gray-50 border-b border-gray-100">
+            <div className="hidden sm:grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-4 items-center px-5 py-2.5 bg-gray-50 border-b border-gray-100">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 col-start-2">Staff</span>
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Type</span>
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Duration</span>
@@ -434,17 +490,27 @@ const PendingLeavesTab = () => {
                 const busy = !!processing[leave.id];
 
                 return (
-                  <div key={leave.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor(name)}`}>
-                      {name.slice(0, 2).toUpperCase()}
-                    </div>
+                  <div key={leave.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor(name)}`}>
+                        {name.slice(0, 2).toUpperCase()}
+                      </div>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">{name}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
-                        {fmt(leave.start_date)} → {fmt(leave.end_date)}
-                        <span className="ml-1.5 font-semibold text-gray-500">{leave.total_days}d</span>
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-gray-900">{name}</p>
+                          <span className={`sm:hidden inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase shrink-0 ${typeStyle}`}>
+                            {leave.leave_type}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {fmt(leave.start_date)} → {fmt(leave.end_date)}
+                          <span className="ml-1.5 font-semibold text-gray-500">{leave.total_days}d</span>
+                        </p>
+                        {leave.reason && (
+                          <p className="md:hidden text-[11px] text-gray-400 truncate mt-0.5">{leave.reason}</p>
+                        )}
+                      </div>
                     </div>
 
                     <span className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase shrink-0 ${typeStyle}`}>
@@ -455,7 +521,7 @@ const PendingLeavesTab = () => {
                       {leave.reason || "—"}
                     </p>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                       <button
                         disabled={busy}
                         onClick={() => handleApprove(leave.id)}

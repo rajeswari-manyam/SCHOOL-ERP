@@ -1,28 +1,33 @@
 
+import { useNavigate, useLocation } from "react-router-dom";
 import { AlertCircle, RefreshCw, Plus } from "lucide-react";
 import { useLeave } from "./hooks/useLeave";
 import LeaveBalanceCards from "./components/LeaveBalanceCards";
 import LeaveCalendar from "./components/LeaveCalendar";
 import LeaveHistoryTable from "./components/LeaveHistoryTable";
-import ApplyLeaveModal from "./components/ApplyLeaveModal";
 import CancelLeaveModal from "./components/CancelLeaveModal";
 
+// This page is reused as-is by other staff portals (e.g. accountant), so
+// navigation must stay under whichever portal prefix the page is currently
+// mounted under rather than a hardcoded "/teacher/...".
+const usePortalBase = () => {
+  const { pathname } = useLocation();
+  return pathname.startsWith("/accountant") ? "/accountant" : "/teacher";
+};
+
 const LeavePage = () => {
+  const navigate = useNavigate();
+  const portalBase = usePortalBase();
   const {
     balances, leaveTotals, leaveHistory, loading, error, retry,
-    applyModalOpen, openApplyModal, closeApplyModal,
-    form, patchForm,
-    totalDays, needsMedicalCert, formValid,
-    submitting, submitSuccess, submitError, submitLeave,
     cancelId, confirmCancel, closeCancel, doCancel,
     calendarDays, calMonthLabel, prevMonth, nextMonth,
-    previewDays, previewMonthLabel,
   } = useLeave();
 
   const pendingCount = leaveHistory.filter((l) => l.status === "PENDING").length;
 
   return (
-    <div className="flex flex-col gap-4 min-h-full px-6 pt-2 pb-6">
+    <div className="flex flex-col gap-4 min-h-full px-3 sm:px-6 pt-2 pb-6">
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -38,7 +43,7 @@ const LeavePage = () => {
           </p>
         </div>
         <button
-          onClick={openApplyModal}
+          onClick={() => navigate(`${portalBase}/leave/apply`)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors self-start sm:self-auto"
         >
           <Plus size={13} strokeWidth={2.5} />
@@ -72,22 +77,6 @@ const LeavePage = () => {
       {/* Calendar below the table */}
       <LeaveCalendar days={calendarDays} monthLabel={calMonthLabel} onPrev={prevMonth} onNext={nextMonth} />
 
-      <ApplyLeaveModal
-        open={applyModalOpen}
-        onClose={closeApplyModal}
-        balances={balances}
-        form={form}
-        patchForm={patchForm}
-        totalDays={totalDays}
-        needsMedicalCert={needsMedicalCert}
-        formValid={formValid}
-        submitting={submitting}
-        submitSuccess={submitSuccess}
-        submitError={submitError}
-        onSubmit={submitLeave}
-        previewDays={previewDays}
-        previewMonthLabel={previewMonthLabel}
-      />
       <CancelLeaveModal open={!!cancelId} onClose={closeCancel} onConfirm={doCancel} />
     </div>
   );

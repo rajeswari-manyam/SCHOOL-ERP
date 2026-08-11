@@ -17,7 +17,6 @@ export const StaffTabs = ({ activeTab, tabs, onChange }: StaffTabsProps) => (
     <div className="flex gap-6 sm:gap-8">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
-        const isLeave = tab.key === "leave-requests";
         return (
           <button
             key={tab.key}
@@ -31,11 +30,9 @@ export const StaffTabs = ({ activeTab, tabs, onChange }: StaffTabsProps) => (
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                isLeave
-                  ? "bg-amber-100 text-amber-700"
-                  : isActive
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "bg-gray-100 text-gray-500"
+                isActive
+                  ? "bg-indigo-100 text-indigo-700"
+                  : "bg-gray-100 text-gray-500"
               }`}>
                 {tab.count}
               </span>

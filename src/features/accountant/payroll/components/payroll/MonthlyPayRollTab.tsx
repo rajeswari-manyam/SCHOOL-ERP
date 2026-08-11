@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users, CheckCircle2, Clock, TrendingUp, Wallet, AlertCircle,
-  Download, CreditCard, RefreshCw, Loader2,
+  Download, CreditCard, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PayrollTable } from "./PayrollTable";
-import { PaySalaryModal } from "./PaySalaryModal";
 import { BulkPayModal } from "./BulkPayModal";
 
 import { formatINR as formatCurrency } from "../../../../../utils/formatters";
@@ -20,16 +20,18 @@ export const MonthlyPayrollTab = ({
   isLoading,
   processedDate,
   processedBy,
-  onStartProcessing,
+  month,
+  year,
   onViewPayslip,
-  onPaySalary,
   onPaySelected,
   onDeletePayslip,
-  onGeneratePayslip,
 }: MonthlyPayrollTabProps) => {
+  const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [payTarget,   setPayTarget]   = useState<StaffPayroll | null>(null);
   const [showBulkPay, setShowBulkPay] = useState(false);
+
+  const goToPaySalary = (staff: StaffPayroll) =>
+    navigate(`/accountant/payroll/salary/pay/${staff.id}`, { state: { staff, month, year } });
 
   // ── Derived counts & amounts ──────────────────────────────────────────────
   const paidStaff    = staffData.filter((s) => s.status === "Paid");
@@ -49,14 +51,6 @@ export const MonthlyPayrollTab = ({
   const selectedStaff = staffData.filter((s) => selectedIds.includes(s.id));
 
   // ── Pay handlers ──────────────────────────────────────────────────────────
-  const handlePayConfirm = async (staffId: string, data: PaySalaryFormData) => {
-    if (payTarget && onGeneratePayslip) {
-      return await onGeneratePayslip(payTarget, data.bonus, data.overtime, data.extraClass);
-    } else {
-      onPaySalary(staffId, data);
-    }
-  };
-
   const handleBulkPayConfirm = (ids: string[], data: PaySalaryFormData) => {
     onPaySelected(ids, data);
     setSelectedIds([]);
@@ -114,25 +108,7 @@ export const MonthlyPayrollTab = ({
     <div className="space-y-4">
 
       {/* ── Status Banner ────────────────────────────────────────────────────── */}
-      {!isProcessed ? (
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3.5">
-          <Clock className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-800">Payroll Not Generated</p>
-            <p className="text-xs text-amber-700 mt-0.5">
-              Click "Generate Payroll" to calculate salaries and move all staff to Pending status before processing individual payments.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            className="shrink-0 h-8 text-xs bg-[#3525CD] hover:bg-[#2a1fb5] text-white px-3 gap-1.5"
-            onClick={onStartProcessing}
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Generate Payroll
-          </Button>
-        </div>
-      ) : (
+      {isProcessed && (
         <div className="flex items-center gap-2.5 px-4 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <p className="text-xs text-emerald-700 flex-1">
@@ -223,9 +199,9 @@ export const MonthlyPayrollTab = ({
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             onSelectAll={selectAll}
-            onPaySalary={setPayTarget}
+            onPaySalary={goToPaySalary}
             onViewPayslip={onViewPayslip}
-            onEdit={setPayTarget}
+            onEdit={goToPaySalary}
             onDelete={onDeletePayslip}
           />
         )}
@@ -266,15 +242,6 @@ export const MonthlyPayrollTab = ({
           </div>
         </div>
       </div>
-
-      {/* ── Pay Salary Modal (single employee) ─────────────────────────────── */}
-      {payTarget && (
-        <PaySalaryModal
-          staff={payTarget}
-          onClose={() => setPayTarget(null)}
-          onPay={handlePayConfirm}
-        />
-      )}
 
       {/* ── Bulk Pay Modal ──────────────────────────────────────────────────── */}
       {showBulkPay && selectedStaff.length > 0 && (

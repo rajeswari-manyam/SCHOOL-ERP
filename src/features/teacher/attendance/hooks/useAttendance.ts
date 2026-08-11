@@ -66,7 +66,7 @@ export const useMarkAttendanceViaWeb = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: MarkAttendancePayload) => attendanceApi.markViaWeb(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.all, refetchType: "all" }),
   });
 };
 
@@ -74,7 +74,7 @@ export const useRetryWaAlert = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (_studentId: string) => Promise.resolve(), // endpoint not yet on backend
-    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.today() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.today(), refetchType: "all" }),
   });
 };
 
@@ -93,7 +93,7 @@ export const useUpdateStudentAttendance = () => {
       if (!record) throw new Error("No attendance record found for this student on this date.");
       return updateAttendanceById(record.id, { status, remarks });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.all }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ATTENDANCE_KEYS.all, refetchType: "all" }),
   });
 };
 

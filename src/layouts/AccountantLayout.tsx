@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import {
   FaThLarge,
@@ -12,10 +12,21 @@ import {
 
 import Sidebar from "@/components/common/Sidebar";
 import Topbar from "@/components/common/Topbar";
+import { RouteErrorBoundary } from "@/components/common/RouteErrorBoundary";
 import WhatsAppFAB from "@/components/ui/whatsappfab";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
+
+// Thin fallback while a route's own chunk downloads — Sidebar/Topbar render
+// outside this boundary (see below) so they never unmount/flash during
+// navigation; once a page's chunk is cached (see usePrefetchOtherPages in
+// AccountantRouter) this never shows at all — the content just swaps.
+const PageContentLoader = () => (
+  <div className="flex items-center justify-center h-[60vh]">
+    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+  </div>
+);
 
 const NavItem = [
   { label: "Dashboard", to: "/accountant/dashboard", icon: <FaThLarge /> },
@@ -61,7 +72,11 @@ export const AccountantLayout = () => {
       <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 mt-12 sm:mt-14">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Suspense fallback={<PageContentLoader />}>
+              <Outlet />
+            </Suspense>
+          </RouteErrorBoundary>
         </main>
       </div>
       <WhatsAppFAB />

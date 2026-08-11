@@ -134,7 +134,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
       </div>
 
       {/* Dropdowns grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
 
         {/* Academic Year */}
         <div className="flex flex-col gap-1.5">
@@ -245,7 +245,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
         </div>
 
         {/* Exam (optional) */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
           <label className="text-[11px] font-bold text-gray-500">
             Exam{" "}
             <span className="text-gray-300 font-normal">(optional)</span>
@@ -273,7 +273,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
       </div>
 
       {/* Search button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <p className="text-[11px] text-gray-400">
           {canSearch
             ? "Click Search to load results"
@@ -285,7 +285,7 @@ const SubmittedMarksFilter = ({ filter, onChange, onSearch, loading }: Props) =>
           variant="default"
           size="sm"
           disabled={!canSearch || loading}
-          className="px-5 rounded-xl text-xs font-semibold disabled:opacity-50"
+          className="w-full sm:w-auto px-5 rounded-xl text-xs font-semibold disabled:opacity-50"
         >
           {loading ? (
             <span className="flex items-center gap-2">

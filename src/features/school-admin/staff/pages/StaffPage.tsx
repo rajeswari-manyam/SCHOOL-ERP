@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { TabKey, StaffMember } from "../types/staff.types";
-import type { LeaveRecord, LeaveBalanceResponse } from "@/services/staff.api";
+import type { LeaveBalanceResponse } from "@/services/staff.api";
 import { getStaffLeaveBalance } from "@/services/staff.api";
 import { useStaffStore, filterStaff } from "../store/usestore";
 import { useUIStore } from "@/store/uiStore";
@@ -8,27 +9,24 @@ import { StatsCards } from "../components/StatCards";
 import { StaffTabs } from "../components/StaffTabs";
 import { StaffFilters } from "../components/StaffFilter";
 import { StaffTable } from "../components/StaffTable";
-import { LeaveRequestsTab } from "../components/LeaveRequistTable";
-import { AddStaffModal } from "../components/AddStaffModal";
 import { EditStaffModal } from "../components/EditStaffModal";
-import BulkAddStaffModal from "../components/BulkAddStaffModal";
 import { Button } from "../../../../components/ui/button";
 import { StaffDetailModal } from "../components/StaffDetailModal";
 import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
 
-const buildTabs = (staffData: StaffMember[], leaveData: LeaveRecord[]) => {
+const buildTabs = (staffData: StaffMember[]) => {
   const teachers = staffData.filter(s => s.isTeaching).length;
   const nonTeaching = staffData.filter(s => !s.isTeaching).length;
-  const leavePending = leaveData.filter(l => l.status === "PENDING").length;
   return [
     { key: "all" as TabKey, label: "All Staff", count: staffData.length },
     { key: "teachers" as TabKey, label: "Teachers", count: teachers },
     { key: "non-teaching" as TabKey, label: "Non-Teaching", count: nonTeaching },
-    { key: "leave-requests" as TabKey, label: "Leave Requests", count: leavePending },
   ];
 };
 
 export default function StaffManagementPage() {
+
+  const navigate = useNavigate();
 
   const {
     activeTab,
@@ -36,9 +34,7 @@ export default function StaffManagementPage() {
     roleFilter,
     statusFilter,
     selectedStaffId,
-    showModal,
     staffData,
-    leaveData,
     stats,
     loading,
     error,
@@ -47,9 +43,7 @@ export default function StaffManagementPage() {
     setRoleFilter,
     setStatusFilter,
     setSelectedStaffId,
-    setShowModal,
     loadStaff,
-    loadLeaves,
     editStaffMember,
     setEditStaffMember,
     deleteStaff,
@@ -57,7 +51,6 @@ export default function StaffManagementPage() {
 
   const academicYearId = useUIStore((s) => s.academicYearId);
 
-  const [showBulkModal, setShowBulkModal] = useState(false);
   const [viewStaffId, setViewStaffId] = useState<string | null>(null);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalanceResponse | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
@@ -70,14 +63,12 @@ export default function StaffManagementPage() {
     if (!selectedStaffId || !academicYearId) {
       setLeaveBalance(null);
       setBalanceLoading(false);
-      loadLeaves();
       return;
     }
     setBalanceLoading(true);
     getStaffLeaveBalance(selectedStaffId, academicYearId)
       .then(setLeaveBalance)
       .finally(() => setBalanceLoading(false));
-    loadLeaves(selectedStaffId);
   }, [selectedStaffId, academicYearId]);
 
   const filteredStaff = useMemo(
@@ -86,14 +77,12 @@ export default function StaffManagementPage() {
   );
 
   const tabs = useMemo(
-    () => buildTabs(staffData, leaveData),
-    [staffData, leaveData]
+    () => buildTabs(staffData),
+    [staffData]
   );
 
   return (
     <div className="space-y-0">
-      {showModal && <AddStaffModal onClose={() => setShowModal(false)} />}
-      {showBulkModal && <BulkAddStaffModal onClose={() => setShowBulkModal(false)} />}
       {editStaffMember && (
         <EditStaffModal staff={editStaffMember} onClose={() => setEditStaffMember(null)} />
       )}
@@ -116,27 +105,25 @@ export default function StaffManagementPage() {
           </div>
         </div>
 
-        {/* Right: CTA — hidden on Leave Requests tab */}
-        {activeTab !== "leave-requests" && (
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              onClick={() => setShowBulkModal(true)}
-              variant="outline"
-              className="gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
-            >
-              <span className="text-sm leading-none font-bold">⇅</span>
-              <span className="hidden sm:inline">Bulk Add</span>
-            </Button>
-            <Button
-              onClick={() => setShowModal(true)}
-              className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
-            >
-              <span className="text-sm leading-none font-bold">+</span>
-              <span className="hidden sm:inline">Add Staff Member</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </div>
-        )}
+        {/* Right: CTA */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            onClick={() => navigate("/schooladmin/staff/bulk-add")}
+            variant="outline"
+            className="gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
+          >
+            <span className="text-sm leading-none font-bold">⇅</span>
+            <span className="hidden sm:inline">Bulk Add</span>
+          </Button>
+          <Button
+            onClick={() => navigate("/schooladmin/staff/add")}
+            className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
+          >
+            <span className="text-sm leading-none font-bold">+</span>
+            <span className="hidden sm:inline">Add Staff Member</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        </div>
       </div>
 
       {/* ── Main content ── */}
@@ -180,13 +167,7 @@ export default function StaffManagementPage() {
           </div>
         )}
 
-        {!error && !loading && activeTab === "leave-requests" ? (
-          <div className="w-full overflow-x-auto">
-            <LeaveRequestsTab
-              leaves={selectedStaffId ? leaveData.filter(l => l.staffId === selectedStaffId) : leaveData}
-            />
-          </div>
-        ) : !error && !loading ? (
+        {!error && !loading && (
           <>
             {/* Filters stack vertically on mobile, row on larger screens */}
             <StaffFilters
@@ -205,7 +186,7 @@ export default function StaffManagementPage() {
               <StaffTable staff={filteredStaff} total={staffData.length} onEdit={setEditStaffMember} onView={(s) => setViewStaffId(s.id)} onDelete={deleteStaff} />
             </div>
           </>
-        ) : null}
+        )}
       </div>
     </div>
   );

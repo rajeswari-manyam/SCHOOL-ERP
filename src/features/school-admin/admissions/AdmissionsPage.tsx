@@ -1,17 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PipelineStats } from './components/PipelineStats';
 import { PipelineBoard } from './components/PipelineBoard';
 import { EnquiryDetailDrawer } from './components/EnquiryDetailDrawer';
-import { AddEnquiryModal } from './components/AddEnquiryModal';
 import { ConfirmAdmissionModal } from './components/ConfirmAdmissionModal';
-import { useAdmissionsStore } from './hooks/useAdmissionsStore';
 import { useUIStore } from '@/store/uiStore';
 import { getAllAcademicYears } from '@/services/academicYear.api';
 
 export function AdmissionsPage() {
-  const { openAddEnquiry } = useAdmissionsStore();
+  const navigate = useNavigate();
   const storeYearId = useUIStore((s) => s.academicYearId);
   const { data: activeYear } = useQuery({
     queryKey: ['academic-years', storeYearId],
@@ -53,7 +52,7 @@ export function AdmissionsPage() {
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={openAddEnquiry}
+              onClick={() => navigate('/schooladmin/admissions/add')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs transition-colors shadow-sm"
             >
               <UserPlus size={13} />
@@ -74,7 +73,6 @@ export function AdmissionsPage() {
       </main>
 
       {/* Modals & Drawers */}
-      <AddEnquiryModal />
       <ConfirmAdmissionModal />
       <EnquiryDetailDrawer />
     </div>

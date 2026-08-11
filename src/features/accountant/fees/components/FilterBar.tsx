@@ -4,11 +4,7 @@ import { Search } from "lucide-react";
 import type { DueStatus, FilterValues, FilterBarProps } from "../types/fees.types";
 import { getAllClasses, getSectionsByClassId } from "@/services/class.api";
 import { useUIStore } from "@/store/uiStore";
-import {
-  FILTER_MODES,
-  SORT_OPTIONS,
-  DUE_STATUSES,
-} from "../constants/fee.constants";
+import { FILTER_MODES } from "../constants/fee.constants";
 
 export const FilterBar = ({
   onSearch,
@@ -64,14 +60,6 @@ export const FilterBar = ({
   const handleSearch      = () => onSearch?.(buildFilters());
   const handleKeyDown     = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleSearch();
-  };
-  const handleStatusClick = (status: DueStatus) => {
-    setDueStatus(status);
-    onSearch?.(buildFilters({ dueStatus: status }));
-  };
-  const handleSortChange  = (value: string) => {
-    setSortBy(value);
-    onSearch?.(buildFilters({ sortBy: value }));
   };
   const handleClear = () => {
     const cleared: FilterValues = {
@@ -176,43 +164,15 @@ export const FilterBar = ({
         </Button>
       </div>
 
-      {/* ── Row 2: DUE STATUS pills + sort + clear ── */}
+      {/* ── Row 2: clear ── */}
       {showDueStatus && (
-        <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="text-xs font-medium text-gray-500 shrink-0 uppercase tracking-wide">
-            Due Status:
-          </span>
-
-          {DUE_STATUSES.map(({ label, className, activeClassName }) => (
-            <button
-              key={label}
-              onClick={() => handleStatusClick(label)}
-              className={`text-xs px-3 py-1 rounded-full font-medium border transition-colors whitespace-nowrap ${
-                dueStatus === label ? activeClassName : className
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            <span className="text-xs text-gray-500 whitespace-nowrap">Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => handleSortChange(e.target.value)}
-              className="h-7 px-2 rounded-lg border border-gray-200 text-xs text-gray-700 bg-white focus:outline-none"
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o} value={o}>{o}</option>
-              ))}
-            </select>
-            <button
-              onClick={handleClear}
-              className="text-xs text-gray-400 hover:text-gray-600 underline whitespace-nowrap"
-            >
-              Clear
-            </button>
-          </div>
+        <div className="flex items-center justify-end gap-2 flex-wrap min-w-0">
+          <button
+            onClick={handleClear}
+            className="text-xs text-gray-400 hover:text-gray-600 underline whitespace-nowrap"
+          >
+            Clear
+          </button>
         </div>
       )}
     </div>

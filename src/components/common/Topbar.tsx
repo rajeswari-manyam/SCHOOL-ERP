@@ -128,10 +128,10 @@ const Topbar = ({
 
         {/* ── Right: status + bell + year ── */}
         <div className="flex flex-nowrap items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
-          <span className="hidden md:flex items-center gap-1.5 rounded-lg bg-[#f4f7fd] px-2.5 py-1 font-semibold text-[11px] text-[#6c7380] whitespace-nowrap">
+          <span className="flex items-center gap-1.5 rounded-lg bg-[#f4f7fd] px-2 sm:px-2.5 py-1 font-semibold text-[11px] text-[#6c7380] whitespace-nowrap shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-[#3fe0b0] inline-block" />
             <span className="hidden lg:inline">WhatsApp Connected</span>
-            <span className="lg:hidden">Connected</span>
+            <span className="hidden sm:inline lg:hidden">Connected</span>
           </span>
 
           <div className="relative" ref={notifRef}>

@@ -646,6 +646,26 @@ const ClassesPage = () => {
         </div>
       )}
 
+      {/* Step guide — how classes, sections, and subjects relate */}
+      {!error && !loading && !selectedClass && (
+        <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">1</span>
+            Add a Class
+          </span>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+          <span className="flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
+            Add Sections to it
+          </span>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+          <span className="flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">3</span>
+            Add Subjects to each section
+          </span>
+        </div>
+      )}
+
       {/* Class list with inline add rows */}
       {!error && !loading && !selectedClass && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -823,7 +843,7 @@ const ClassesPage = () => {
 
           {/* Pagination */}
           {sortedClasses.length > CLASS_PAGE_SIZE && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/40">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/40">
               <p className="text-xs text-gray-400">
                 Showing <span className="font-semibold text-gray-700">{(classPage - 1) * CLASS_PAGE_SIZE + 1}–{Math.min(classPage * CLASS_PAGE_SIZE, sortedClasses.length)}</span> of{" "}
                 <span className="font-semibold text-gray-700">{sortedClasses.length}</span> classes
@@ -880,7 +900,7 @@ const ClassesPage = () => {
       {/* Selected class sections */}
       {!error && !loading && selectedClass && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white rounded-2xl border border-indigo-100 px-5 py-3.5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white rounded-2xl border border-indigo-100 px-5 py-3.5 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-extrabold text-xs shadow-sm shrink-0 overflow-hidden">
                 {selectedClass.className.replace(/\D/g, "") || selectedClass.className.slice(0, 2).toUpperCase()}

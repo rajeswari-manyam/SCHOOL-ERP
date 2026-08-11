@@ -87,7 +87,7 @@ export interface CreateAttendanceResponse {
   total: number;
   present: number;
   absent: number;
-  data: any[];
+  data: AttendanceRecord[];
 }
 
 export interface StudentByClassSection {
@@ -189,7 +189,7 @@ export const createAttendance = async (
 export const updateAttendanceById = async (
   id: string,
   payload: UpdateAttendancePayload
-): Promise<any> => {
+): Promise<SingleAttendanceResponse> => {
   const { data } = await api.put(
     `/tenant/updateattendanceById/${id}`,
     payload
@@ -197,8 +197,10 @@ export const updateAttendanceById = async (
   return data;
 };
 
-// BULK
-export const bulkAttendance = async (payload: any): Promise<any> => {
+// BULK — not currently called anywhere in the app; shape kept generic
+// (`unknown`, not `any`) so any future caller is forced to narrow it
+// explicitly rather than silently accepting whatever comes back.
+export const bulkAttendance = async (payload: unknown): Promise<unknown> => {
   const { data } = await api.post(`/tenant/attendance/bulk`, payload);
   return data;
 };
@@ -215,7 +217,7 @@ export interface MonthlyAttendanceResponse {
     present_dates: string[];
     absent_dates: string[];
   };
-  records: any[];
+  records: AttendanceRecord[];
 }
 
 // MONTHLY
@@ -281,11 +283,13 @@ export const getClassAttendanceByDate = async (
   return data;
 };
 
+// Not currently called anywhere in the app; `unknown` (not `any`) so any
+// future caller must narrow the response shape explicitly.
 export const getAttendanceRoster = async (payload: {
   className: string;
   section: string;
   date: string;
-}): Promise<any> => {
+}): Promise<unknown> => {
   const { data } = await api.post(`/tenant/attendance/roster`, payload);
   return data;
 };

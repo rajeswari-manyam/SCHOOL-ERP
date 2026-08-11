@@ -27,7 +27,7 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>, ay?: string | null
     ADMISSIONS_KEYS.declined(ay),
     ADMISSIONS_KEYS.stats(ay),
   ];
-  keys.forEach((k) => qc.invalidateQueries({ queryKey: k }));
+  keys.forEach((k) => qc.invalidateQueries({ queryKey: k, refetchType: "all" }));
 }
 
 // ─── Stage list hooks ─────────────────────────────────────────────────────────
