@@ -26,6 +26,13 @@ const ParentLayout = () => {
 
   const [showChildModal, setShowChildModal] = useState(false);
 
+  // TEMP DIAGNOSTIC — see matching note in ParentDashBoard.tsx. Confirms
+  // whether ParentLayout itself (not just the routed page) is remounting.
+  useEffect(() => {
+    console.log("[diag] ParentLayout MOUNT");
+    return () => console.log("[diag] ParentLayout UNMOUNT");
+  }, []);
+
   // Always refresh the parent's own profile once per page load (for their
   // avatar photo) — there's no reliable persisted signal for "already fresh".
   useEffect(() => {
