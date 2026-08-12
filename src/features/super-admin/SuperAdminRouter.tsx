@@ -14,11 +14,17 @@ const BillingPage           = lazy(() => import("./billing/BillingPage").then(m 
 const RecordPaymentPage     = lazy(() => import("./billing/pages/RecordPaymentPage"));
 const SubscriptionFormPage  = lazy(() => import("./billing/pages/SubscriptionFormPage"));
 const ReportsPage           = lazy(() => import("./reports/ReportsPage"));
+const GenerateReportFormPage = lazy(() => import("./reports/pages/GenerateReportFormPage"));
 const AuditLogsPage         = lazy(() => import("./audit-logs/AuditLogsPage"));
 const WhatsAppTemplatesPage = lazy(() => import("./whatsapp-templates/WhatsAppTemplatesPage"));
+const AddEditTemplatePage   = lazy(() => import("./whatsapp-templates/pages/AddEditTemplatePage"));
 const SupportPage           = lazy(() => import("./support/SupportPage"));
 const MarketingPage         = lazy(() => import("./marketing-team/MarketingTeamPage"));
+const AddRepPage            = lazy(() => import("./marketing-team/pages/AddRepPage"));
+const MarkRepAttendancePage = lazy(() => import("./marketing-team/pages/MarkRepAttendancePage"));
 const PlatformConfigPage    = lazy(() => import("./platform-configure/PlatformConfigPage"));
+const AddConfigTemplatePage = lazy(() => import("./platform-configure/pages/AddConfigTemplatePage"));
+const AssignTemplatePage    = lazy(() => import("./platform-configure/pages/AssignTemplatePage"));
 
 // Each sidebar link above is its own lazy chunk, so the FIRST visit to a page
 // still has to wait on a fresh network fetch for that chunk — lazy-loading
@@ -38,11 +44,17 @@ function usePrefetchOtherPages() {
       import("./billing/pages/RecordPaymentPage");
       import("./billing/pages/SubscriptionFormPage");
       import("./reports/ReportsPage");
+      import("./reports/pages/GenerateReportFormPage");
       import("./audit-logs/AuditLogsPage");
       import("./whatsapp-templates/WhatsAppTemplatesPage");
+      import("./whatsapp-templates/pages/AddEditTemplatePage");
       import("./support/SupportPage");
       import("./marketing-team/MarketingTeamPage");
+      import("./marketing-team/pages/AddRepPage");
+      import("./marketing-team/pages/MarkRepAttendancePage");
       import("./platform-configure/PlatformConfigPage");
+      import("./platform-configure/pages/AddConfigTemplatePage");
+      import("./platform-configure/pages/AssignTemplatePage");
     };
 
     const w = window as Window & {
@@ -95,12 +107,16 @@ export default function SuperAdminRouter() {
             <PlatformConfigPage />
           }
         />
+        <Route path="config/templates/add" element={<AddConfigTemplatePage />} />
+        <Route path="config/templates/assign" element={<AssignTemplatePage />} />
         <Route
           path="whatsapp"
           element={
 <WhatsAppTemplatesPage/>
           }
         />
+        <Route path="whatsapp/add" element={<AddEditTemplatePage />} />
+        <Route path="whatsapp/edit" element={<AddEditTemplatePage />} />
         <Route
           path="support"
           element={
@@ -113,6 +129,8 @@ export default function SuperAdminRouter() {
 <MarketingPage />
           }
         />
+        <Route path="marketing/add" element={<AddRepPage />} />
+        <Route path="marketing/attendance/mark" element={<MarkRepAttendancePage />} />
         <Route
           path="audit"
           element={
@@ -125,6 +143,7 @@ export default function SuperAdminRouter() {
             <ReportsPage />
           }
         />
+        <Route path="reports/generate" element={<GenerateReportFormPage />} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />

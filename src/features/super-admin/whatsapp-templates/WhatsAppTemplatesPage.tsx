@@ -1,10 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Send, Plus } from "lucide-react";
 import TemplateStatCards from "./components/TemplateStatCards";
 import TemplateTabs from "./components/TemplateTabs";
 import TemplateFilterBar from "./components/TemplateFilterBar";
 import TemplatesTable from "./components/TemplatesTable";
-import AddEditTemplateModal from "./components/AddEditTemplateModal";
 import Pagination from "../components/Pagination";
 import { useTemplates, useTemplateStats, useTemplateMutations } from "./hooks/useTemplates";
 import type { TemplateFilters, TemplateTab, WhatsAppTemplate } from "./types/templates.types";
@@ -18,9 +18,8 @@ const DEFAULT_FILTERS: TemplateFilters = {
 const MOCK_STATS = { approved: 7, approvedWeekDelta: 2, pendingApproval: 1, rejected: 0, schoolsUsingWA: 41 };
 
 const WhatsAppTemplatesPage = () => {
+  const navigate = useNavigate();
   const [filters, setFilters]         = useState<TemplateFilters>(DEFAULT_FILTERS);
-  const [modalOpen, setModalOpen]     = useState(false);
-  const [editTemplate, setEditTemplate] = useState<WhatsAppTemplate | null>(null);
 
   const { data, isLoading }   = useTemplates(filters);
   const { data: stats }       = useTemplateStats();
@@ -37,8 +36,7 @@ const WhatsAppTemplatesPage = () => {
   };
 
   const handleEdit = (t: WhatsAppTemplate) => {
-    setEditTemplate(t);
-    setModalOpen(true);
+    navigate("/superadmin/whatsapp/edit", { state: { template: t } });
   };
 
   const displayStats = stats ?? MOCK_STATS;
@@ -67,7 +65,7 @@ const WhatsAppTemplatesPage = () => {
               Submit to Meta
             </Button>
             <Button
-              onClick={() => { setEditTemplate(null); setModalOpen(true); }}
+              onClick={() => navigate("/superadmin/whatsapp/add")}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
@@ -101,13 +99,6 @@ const WhatsAppTemplatesPage = () => {
           />
         </div>
       </div>
-
-      {/* Add / Edit Modal */}
-      <AddEditTemplateModal
-        open={modalOpen}
-        template={editTemplate}
-        onClose={() => { setModalOpen(false); setEditTemplate(null); }}
-      />
     </div>
   );
 };

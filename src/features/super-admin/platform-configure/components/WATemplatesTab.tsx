@@ -2,9 +2,8 @@
 
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Plus, RefreshCcw, Search } from "lucide-react";
-import AddNewTemplateModal from "./AddNewTemplateModal";
-import AssignModal from "./AssignModal";
 import { useConfigTemplates, useConfigMutations } from "../hooks/useConfig";
 import type { ConfigTemplate } from "../types/config.types";
 import { Info } from "lucide-react";
@@ -45,10 +44,8 @@ const COL =
   "text-[11px] font-semibold uppercase tracking-widest text-gray-400 px-4 py-3 text-left";
 
 const WATemplatesTab = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [showAddTemplate, setShowAddTemplate] = useState(false);
-  const [assignTemplate, setAssignTemplate] = useState<ConfigTemplate | null>(null);
-  const [showAssignModal, setShowAssignModal] = useState(false);
   const query = useConfigTemplates();
   const { isLoading } = query;
   const { syncTemplates } = useConfigMutations();
@@ -79,7 +76,7 @@ const WATemplatesTab = () => {
           {syncTemplates.isPending ? "Syncing…" : "Sync from Meta"}
         </button>
         <button
-          onClick={() => setShowAddTemplate(true)}
+          onClick={() => navigate("/superadmin/config/templates/add")}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
@@ -174,8 +171,7 @@ const WATemplatesTab = () => {
                             <button
                               className="text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
                               onClick={() => {
-                                setAssignTemplate(t);
-                                setShowAssignModal(true);
+                                navigate("/superadmin/config/templates/assign", { state: { template: t } });
                               }}
                             >
                               Assign
@@ -206,16 +202,6 @@ const WATemplatesTab = () => {
           </div>
         )}
       </div>
-
-      <AddNewTemplateModal open={showAddTemplate} onClose={() => setShowAddTemplate(false)} />
-      <AssignModal
-        open={showAssignModal}
-        template={assignTemplate}
-        onClose={() => {
-          setShowAssignModal(false);
-          setAssignTemplate(null);
-        }}
-      />
 
       {/* Meta Approval Guidelines */}
       <div className="bg-amber-50 rounded-2xl border border-amber-100 px-5 py-4">

@@ -5,7 +5,7 @@ export { default as TeamOverviewTab } from "./components/TeamOverviewTab";
 export { default as AttendanceTab } from "./components/AttendanceTab";
 export { default as TargetsTab } from "./components/TargetsTab";
 export { default as PayoutsTab } from "./components/PayoutsTab";
-export { default as AddRepModal } from "./components/AddRepModal";
+export { default as AddRepPage } from "./pages/AddRepPage";
 export { RepAvatar, StatusBadge, PayoutBadge, AchievementBadge } from "./components/RepBadges";
 export { useReps, useAttendance, useMarketingStats, useMarketingMutations } from "./hooks/useMarketing";
 export type {

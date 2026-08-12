@@ -3,26 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import ReportCardGrid from "./components/ReportCardGrid";
 import RecentReportsTable from "./components/RecentReportsTable";
-import GenerateReportModal from "./components/GenerateReportModal";
 import { useReports } from "./hooks/useReports";
 import type { ReportType } from "./types/reports.types";
 import { Button } from "@/components/ui/button";
 const ReportsPage = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [preselectedType, setPreselectedType] = useState<ReportType | undefined>();
 
   const { data, isLoading } = useReports(page, 4);
 
   const handleCardClick = (type: ReportType) => {
-    setPreselectedType(type);
-    setModalOpen(true);
+    navigate("/superadmin/reports/generate", { state: { preselectedType: type } });
   };
 
   const handleGenerateClick = () => {
-    setPreselectedType(undefined);
-    setModalOpen(true);
+    navigate("/superadmin/reports/generate");
   };
 
   return (
@@ -61,16 +56,6 @@ const ReportsPage = () => {
         pageSize={4}
         onPageChange={setPage}
         onViewAll={() => navigate("/super-admin/reports/history")}
-      />
-
-      {/* Generate modal */}
-      <GenerateReportModal
-        open={modalOpen}
-        preselectedType={preselectedType}
-        onClose={() => {
-          setModalOpen(false);
-          setPreselectedType(undefined);
-        }}
       />
     </div>
   );

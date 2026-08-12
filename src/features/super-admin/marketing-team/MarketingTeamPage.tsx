@@ -106,8 +106,6 @@ const MarketingTeamPage = () => {
         <span className="hidden sm:inline">Quick Message</span>
         <span className="sm:hidden">Message</span>
       </button>
-
-      <AddRepModal open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   );
 };

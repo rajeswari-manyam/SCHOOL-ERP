@@ -1,10 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, getDaysInMonth } from "date-fns";
 import { ChevronLeft, ChevronRight, SquarePen } from "lucide-react";
 import type { AttendanceRecord, AttendanceMark } from "../types/marketing.types";
 import { RepAvatar } from "./RepBadges";
 import { useAttendance } from "../hooks/useMarketing";
-import AttendanceModal from "./AttendanceModal";
 
 const dotColors: Record<AttendanceMark, string> = {
   P: "bg-emerald-500",
@@ -20,10 +20,10 @@ const dotTitles: Record<AttendanceMark, string> = {
 };
 
 const AttendanceTab = () => {
+  const navigate = useNavigate();
   const today = new Date();
   const [year, setYear]       = useState(today.getFullYear());
   const [month, setMonth]     = useState(today.getMonth() + 1);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const { data: recordsData, isLoading } = useAttendance(month, year);
 
@@ -105,7 +105,7 @@ const AttendanceTab = () => {
 
         {/* CTA button — full width on mobile */}
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => navigate("/superadmin/marketing/attendance/mark")}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 active:scale-[0.98] sm:w-auto sm:py-2"
         >
           <SquarePen size={14} className="shrink-0" />
@@ -229,8 +229,6 @@ const AttendanceTab = () => {
           mobile app check-in location and time. Manual overrides require Super Admin approval.
         </p>
       </div>
-
-      <AttendanceModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 };
