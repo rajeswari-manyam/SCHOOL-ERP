@@ -10,10 +10,8 @@ import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
 import { Select } from "@/components/ui/select";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { AddClassModal } from "./components/AddClassModal";
-import { BulkAddSectionModal } from "./components/BulkAddSectionModal";
 import { AddSectionModal } from "./components/AddSectionModal";
 import { AddSubjectModal } from "./components/AddSubjectModal";
-import { BulkAddSubjectModal } from "./components/BulkAddSubjectModal";
 import { EditClassModal } from "./components/EditClassModal";
 import { EditSectionModal } from "./components/EditSectionModal";
 import { EditSubjectModal } from "./components/EditSubjectModal";
@@ -263,12 +261,11 @@ const SubjectDetailPopup = ({
 /* ── Section card with strength ── */
 const SectionCard = ({
   sec, classId, clsName, refreshKey,
-  onAddSubject, onBulkAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects,
+  onAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects,
   onEditSection, onDeleteSection, onViewStudents, onViewSubject,
 }: {
   sec: SectionItem; classId: string; clsName: string; refreshKey: number;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
-  onBulkAddSubject: (p: { classId: string; sectionId: string }) => void;
   onEditSubject: (p: { id: string; name: string }) => void;
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
@@ -334,7 +331,6 @@ const SectionCard = ({
           classId={classId}
           className={clsName}
           onAddSubject={onAddSubject}
-          onBulkAddSubject={onBulkAddSubject}
           onEditSubject={onEditSubject}
           onDeleteSubject={onDeleteSubject}
           onUpdateSubjects={onUpdateSubjects}
@@ -348,11 +344,10 @@ const SectionCard = ({
 /* ── Subject chips for one section ── */
 const SectionSubjectChips = ({
   sectionId, sectionName, classId, className: clsName,
-  onAddSubject, onBulkAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects, onViewSubject,
+  onAddSubject, onEditSubject, onDeleteSubject, onUpdateSubjects, onViewSubject,
 }: {
   sectionId: string; sectionName: string; classId: string; className: string;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
-  onBulkAddSubject: (p: { classId: string; sectionId: string }) => void;
   onEditSubject: (p: { id: string; name: string }) => void;
   onDeleteSubject: (p: { id: string; name: string }) => void;
   onUpdateSubjects: (id: string, subjects: SubjectItem[]) => void;
@@ -399,12 +394,6 @@ const SectionSubjectChips = ({
       >
         <Plus className="w-3 h-3" /> Add Subject
       </button>
-      <button
-        onClick={() => onBulkAddSubject({ classId, sectionId })}
-        className="flex items-center gap-0.5 text-[10px] font-bold text-purple-600 hover:text-purple-800 transition-colors"
-      >
-        <Plus className="w-3 h-3" /> Bulk Subjects
-      </button>
     </div>
   );
 };
@@ -412,14 +401,12 @@ const SectionSubjectChips = ({
 /* ── Sections grid for selected class ── */
 const SelectedClassSections = ({
   classId, className: clsName, refreshKey,
-  onAddSection, onBulkAddSection, onBulkAddSubject, onAddSubject,
+  onAddSection, onAddSubject,
   onEditSection, onDeleteSection, onEditSubject, onDeleteSubject,
   onUpdateSections, onUpdateSubjects, onViewStudents, onViewSubject,
 }: {
   classId: string; className: string; refreshKey: number;
   onAddSection: (p: { classId: string; className: string }) => void;
-  onBulkAddSection: () => void;
-  onBulkAddSubject: (p: { classId: string; sectionId: string }) => void;
   onAddSubject: (p: { classId: string; className: string; sectionId: string; sectionName: string }) => void;
   onEditSection: (p: { id: string; name: string }) => void;
   onDeleteSection: (p: { id: string; name: string }) => void;
@@ -464,7 +451,6 @@ const SelectedClassSections = ({
               clsName={clsName}
               refreshKey={refreshKey}
               onAddSubject={onAddSubject}
-              onBulkAddSubject={onBulkAddSubject}
               onEditSubject={onEditSubject}
               onDeleteSubject={onDeleteSubject}
               onUpdateSubjects={onUpdateSubjects}
@@ -484,12 +470,6 @@ const SelectedClassSections = ({
         >
           <Plus className="w-4 h-4" /> Add Section
         </button>
-        <button
-          onClick={onBulkAddSection}
-          className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-2xl text-sm font-semibold text-gray-500 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Bulk Sections
-        </button>
       </div>
     </div>
   );
@@ -501,7 +481,7 @@ const SelectedClassSections = ({
 const ClassesPage = () => {
   const {
     classes, loading, error, stats,
-    loadClasses, addClass, bulkAddClasses, addSection, addSubject, bulkAddSections, bulkAddSubjects,
+    loadClasses, addClass, bulkAddClasses, addSection, addSubject,
     updateClassSections, updateSectionSubjects,
     deleteClass, updateClass, updateSection, deleteSection, updateSubject, deleteSubject,
   } = useClasses();
@@ -511,8 +491,6 @@ const ClassesPage = () => {
   const { years, loading: yearsLoading } = useAcademicYears();
 
   const [showAddClass, setShowAddClass] = useState(false);
-  const [showBulkAddSection, setShowBulkAddSection] = useState(false);
-  const [bulkSubjectFor, setBulkSubjectFor] = useState<{ classId: string; sectionId: string } | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [addSectionFor, setAddSectionFor] = useState<{ classId: string; className: string } | null>(null);
   const [addSubjectFor, setAddSubjectFor] = useState<{
@@ -928,8 +906,6 @@ const ClassesPage = () => {
             className={selectedClass.className}
             refreshKey={sectionsRefreshKey}
             onAddSection={setAddSectionFor}
-            onBulkAddSection={() => setShowBulkAddSection(true)}
-            onBulkAddSubject={setBulkSubjectFor}
             onAddSubject={setAddSubjectFor}
             onEditSection={setEditSectionFor}
             onDeleteSection={(p) => setDeleteTarget({ ...p, type: "section" })}
@@ -971,30 +947,6 @@ const ClassesPage = () => {
           onClose={() => setAddSubjectFor(null)}
           onSubmit={async (data) => {
             await addSubject(data);
-            setSectionsRefreshKey((k) => k + 1);
-          }}
-        />
-      )}
-      {showBulkAddSection && (
-        <BulkAddSectionModal
-          classId={selectedClassId}
-          onClose={() => setShowBulkAddSection(false)}
-          onSubmit={async (data) => {
-            const res = await bulkAddSections(data);
-            setShowBulkAddSection(false);
-            setSectionsRefreshKey((k) => k + 1);
-            return res;
-          }}
-        />
-      )}
-      {bulkSubjectFor && (
-        <BulkAddSubjectModal
-          presetClassId={bulkSubjectFor.classId}
-          presetSectionId={bulkSubjectFor.sectionId}
-          onClose={() => setBulkSubjectFor(null)}
-          onSubmit={async (data) => {
-            await bulkAddSubjects(data);
-            setBulkSubjectFor(null);
             setSectionsRefreshKey((k) => k + 1);
           }}
         />

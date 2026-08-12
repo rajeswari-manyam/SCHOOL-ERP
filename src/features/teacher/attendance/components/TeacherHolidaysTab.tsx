@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllHolidays } from "@/services/holidays.api";
+import type { HolidayFromApi, GetAllHolidaysResponse } from "@/services/holidays.api";
 
 
 const PAGE_SIZE = 8;
@@ -60,14 +61,20 @@ interface NormalisedHoliday {
   note: string;
 }
 
-const normalise = (raw: any): NormalisedHoliday[] => {
-  if (!raw) return [];
-  let arr: any[] = [];
-  if (Array.isArray(raw.data))                            arr = raw.data;
-  else if (raw.data && Array.isArray(raw.data.holidays))  arr = raw.data.holidays;
-  else if (Array.isArray(raw.holidays))                   arr = raw.holidays;
+// Some API responses vary slightly from the declared shape (Mongo `_id`, or a
+// bare `name` instead of `holidayname`) — this widened type accounts for that
+// without falling back to `any`.
+type RawHoliday = HolidayFromApi & { _id?: string; name?: string };
 
-  return arr.map((h: any) => ({
+const normalise = (raw: GetAllHolidaysResponse | undefined): NormalisedHoliday[] => {
+  if (!raw) return [];
+  let arr: RawHoliday[] = [];
+  if (Array.isArray(raw.data))                                          arr = raw.data;
+  else if (raw.data && !Array.isArray(raw.data) && Array.isArray(raw.data.holidays))
+                                                                         arr = raw.data.holidays;
+  else if (Array.isArray(raw.holidays))                                 arr = raw.holidays;
+
+  return arr.map((h) => ({
     id:   h.id ?? h._id ?? "",
     name: h.holidayname ?? h.name ?? "Untitled",
     date: h.date ?? "",

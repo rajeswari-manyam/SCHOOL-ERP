@@ -83,13 +83,11 @@ export const useStudentsByClassSection = (classId: string, sectionId: string) =>
 // ─── Submit Attendance ────────────────────────────────────────────────────────
 export const useSubmitAttendance = () => {
   const queryClient = useQueryClient();
-  const { closeMarkAttendance } = useAttendanceStore();
 
   return useMutation({
     mutationFn: (payload: CreateAttendancePayload) => createAttendance(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
-      closeMarkAttendance();
     },
   });
 };
@@ -158,13 +156,11 @@ export const useAllHolidays = () => {
 // ─── Add Holiday ──────────────────────────────────────────────────────────────
 export const useAddHoliday = () => {
   const queryClient = useQueryClient();
-  const { closeAddHoliday } = useAttendanceStore();
 
   return useMutation({
     mutationFn: (payload: CreateHolidayPayload) => createHoliday(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.holidays(), refetchType: "all" });
-      closeAddHoliday();
     },
   });
 };
@@ -207,7 +203,6 @@ export const useStaffList = () => {
 // ─── Submit Staff Attendance ──────────────────────────────────────────────────
 export const useSubmitStaffAttendance = () => {
   const queryClient = useQueryClient();
-  const { closeMarkStaffAttendance } = useAttendanceStore();
 
   return useMutation({
     mutationFn: (payload: CreateStaffAttendancePayload) => {
@@ -221,7 +216,6 @@ export const useSubmitStaffAttendance = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
-      closeMarkStaffAttendance();
     },
   });
 };

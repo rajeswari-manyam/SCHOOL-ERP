@@ -68,6 +68,7 @@ export const AccountantLayout = () => {
           role: user?.userType ?? user?.role?.name ?? "Accountant",
           avatar: user?.image ?? undefined,
         }}
+        profilePath="/accountant/profile"
       />
       <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar />

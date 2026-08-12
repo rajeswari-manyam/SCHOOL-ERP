@@ -98,14 +98,6 @@ export const useClasses = () => {
     return newSection;
   };
 
-  const handleBulkAddSections = async (payload: AddSectionPayload[]) => {
-    const res = await classesApi.bulkAddSections(payload);
-    if (mountedRef.current) {
-      loadClasses();
-    }
-    return res;
-  };
-
   const handleAddSubject = async (payload: AddSubjectPayload) => {
     const newSubject = await classesApi.addSubject(payload);
     if (mountedRef.current) {
@@ -125,14 +117,6 @@ export const useClasses = () => {
       );
     }
     return newSubject;
-  };
-
-  const handleBulkAddSubjects = async (payload: AddSubjectPayload[]) => {
-    const res = await classesApi.bulkAddSubjects(payload);
-    if (mountedRef.current) {
-      loadClasses();
-    }
-    return res;
   };
 
   const handleUpdateClass = async (id: string, payload: classesApi.UpdateClassPayload) => {
@@ -246,9 +230,7 @@ export const useClasses = () => {
     addClass: handleAddClass,
     bulkAddClasses: handleBulkAddClasses,
     addSection: handleAddSection,
-    bulkAddSections: handleBulkAddSections,
     addSubject: handleAddSubject,
-    bulkAddSubjects: handleBulkAddSubjects,
     deleteClass: handleDeleteClass,
     updateClass: handleUpdateClass,
     updateSection: handleUpdateSection,

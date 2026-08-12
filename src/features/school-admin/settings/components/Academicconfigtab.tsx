@@ -12,6 +12,7 @@ import type { HolidayFromApi, CreateHolidayPayload, UpdateHolidayPayload } from 
 import type { WorkingDayRecord, WorkingDayPayload } from "@/services/working-days.api";
 import { getDepartmentById } from "@/services/department.api";
 import type { DepartmentDetail } from "@/services/department.api";
+import { findLikelyTypoOf } from "@/utils/fuzzyMatch";
 import type { LeaveAllocation, CreateLeaveAllocationPayload } from "@/services/leave-allocation.api";
 import { useAuthStore } from "@/store/authStore";
 
@@ -207,6 +208,18 @@ export const AcademicConfigTab: React.FC<Props> = ({
   const handleAddDept = async () => {
     if (!deptName.trim() || !deptYearId) return;
     setDeptError("");
+
+    // Catch e.g. "Telgu" when "Telugu" already exists — a near-duplicate
+    // department silently breaks subject→department matching elsewhere
+    // (Add Subject matches by exact name), so flag it before saving instead
+    // of letting it create a confusing, hard-to-notice duplicate.
+    const typoOf = findLikelyTypoOf(deptName, departments.map((d) => d.departmentName));
+    if (typoOf) {
+      setDeptError(`"${deptName.trim()}" looks like a typo of the existing department "${typoOf}" — did you mean to use that one instead?`);
+      setTimeout(() => setDeptError(""), 6000);
+      return;
+    }
+
     try {
       await onAddDepartment({ departmentName: deptName.trim(), academicYearId: deptYearId });
       setDeptName("");
@@ -238,6 +251,17 @@ export const AcademicConfigTab: React.FC<Props> = ({
       );
       setBulkError(`Duplicate department name(s): ${dupeList.join(", ")}. Each department must be unique.`);
       return;
+    }
+
+    // Catch near-duplicates of departments that already exist (e.g. "Telgu"
+    // vs "Telugu") before they're saved.
+    const existingNames = departments.map((d) => d.departmentName);
+    for (const r of valid) {
+      const typoOf = findLikelyTypoOf(r.departmentName, existingNames);
+      if (typoOf) {
+        setBulkError(`"${r.departmentName.trim()}" looks like a typo of the existing department "${typoOf}" — did you mean to use that one instead?`);
+        return;
+      }
     }
 
     setBulkError("");

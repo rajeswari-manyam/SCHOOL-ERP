@@ -7,7 +7,8 @@ import { createStaff } from "@/services/staff.api";
 import { fetchDepartments } from "@/services/department.api";
 import { getAllAcademicYears, type AcademicYearRecord } from "@/services/academicYear.api";
 import { useStaffStore } from "../store/usestore";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, PORTAL_STAFF_ROLES } from "@/store/authStore";
+import { findLikelyTypoOf } from "@/utils/fuzzyMatch";
 import type { StaffMember } from "../types/staff.types";
 import { useUIStore } from "@/store/uiStore";
 import type { CreateStaffPayload } from "../types/staff.types";
@@ -150,6 +151,16 @@ export const AddStaffPage = () => {
 
     if (!form.fullName.trim()) errs.fullName = "Full name is required";
     if (!form.role)            errs.role     = "Role is required";
+    else {
+      // Catch e.g. "Accountent" before it's saved — a misspelled role won't
+      // match any known portal role, so this person would silently fail to
+      // log in later. Only flags near-misses of a *known* role; genuinely
+      // different job titles (e.g. "Librarian") pass through untouched.
+      const typoOf = findLikelyTypoOf(form.role, PORTAL_STAFF_ROLES);
+      if (typoOf) {
+        errs.role = `"${form.role}" doesn't match any recognized role — did you mean "${typoOf}"? A misspelled role will prevent this person from logging in.`;
+      }
+    }
     if (!form.joiningDate)     errs.joiningDate = "Date of joining is required";
 
     // Phone — required, exactly 10 digits, starts with 6-9

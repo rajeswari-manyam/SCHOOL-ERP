@@ -32,6 +32,7 @@ export default function ProfilePage() {
   const parentRelation    = useProfileStore((s) => s.parentRelation);
   const parentOccupation  = useProfileStore((s) => s.parentOccupation);
   const parentAddress     = useProfileStore((s) => s.parentAddress);
+  const parentImage       = useProfileStore((s) => s.parentImage);
   const contact           = useProfileStore((s) => s.contact);
   const classTeacher      = useProfileStore((s) => s.classTeacher);
   const notifications     = useProfileStore((s) => s.notifications);
@@ -176,6 +177,7 @@ export default function ProfilePage() {
             <ProfileCard
               name={displayName}
               initials={initials}
+              photo={parentImage}
               role="Parent"
               phone={parentPhone}
               email={parentEmail}

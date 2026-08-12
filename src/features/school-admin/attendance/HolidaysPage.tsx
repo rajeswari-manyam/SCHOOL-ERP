@@ -1,5 +1,4 @@
 import HolidayCalendar from "./components/HolidayCalendar";
-import AddHolidayModal from "./components/AddHolidayModal";
 
 const HolidaysPage = () => {
   return (
@@ -21,8 +20,6 @@ const HolidaysPage = () => {
 
         <HolidayCalendar />
       </div>
-
-      <AddHolidayModal />
     </div>
   );
 };

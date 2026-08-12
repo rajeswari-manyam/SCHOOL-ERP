@@ -191,10 +191,13 @@ export const useAuthStore = create<AuthState>()(
             role:        profile.role  ?? current.role,
             permissions: profile.permissions ?? current.permissions,
             schoolcode:  d.school_code ?? current.schoolcode,
-            // schoolImage (Admin's own photo, set via School Profile) takes
-            // priority over the staff record's own `image` field.
-            image:       profile.schoolImage ?? d.image ?? current.image,
+            // The person's own photo (staff record's `image`) always wins —
+            // schoolImage/schoolLogo is only a fallback for accounts with no
+            // personal photo uploaded (e.g. a School Admin who never set one).
+            image:       d.image ?? profile.schoolImage ?? current.image,
             principalName: profile.principalName ?? current.principalName,
+            schoolImage: profile.schoolImage ?? current.schoolImage,
+            schoolLogo:  profile.schoolLogo  ?? current.schoolLogo,
           },
         });
       },

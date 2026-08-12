@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Download, CheckCircle, Loader2 } from "lucide-react";
 import type { Student } from "../types/profile.types";
 import { STATUS_STYLES } from "../utils/Profile.utils";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 interface ProfileCardProps {
   student: Student;
@@ -9,6 +10,7 @@ interface ProfileCardProps {
 
 export default function ProfileCard({ student }: ProfileCardProps) {
   const [dlState, setDlState] = useState<"idle" | "loading" | "done">("idle");
+  const [showPhoto, setShowPhoto] = useState(false);
   const status = STATUS_STYLES[student.status] ?? STATUS_STYLES.ACTIVE;
 
   function handleIdDownload() {
@@ -31,15 +33,25 @@ export default function ProfileCard({ student }: ProfileCardProps) {
     >
       {/* Avatar + identity */}
       <div className="flex flex-col items-center px-4 sm:px-6 pt-6 sm:pt-7 pb-4 sm:pb-5 text-center">
-        <div
-          className="flex h-[64px] w-[64px] sm:h-[68px] sm:w-[68px]
-          items-center justify-center rounded-full text-[20px] sm:text-[22px]
-          font-semibold text-white"
-          style={{ backgroundColor: student.avatarColor }}
-          aria-label={`Avatar for ${student.name}`}
-        >
-          {student.avatarInitials}
-        </div>
+        {student.photo ? (
+          <button type="button" onClick={() => setShowPhoto(true)}>
+            <img
+              src={student.photo}
+              alt={student.name}
+              className="h-[64px] w-[64px] sm:h-[68px] sm:w-[68px] rounded-full object-cover ring-1 ring-black/5 cursor-pointer hover:opacity-90 transition-opacity"
+            />
+          </button>
+        ) : (
+          <div
+            className="flex h-[64px] w-[64px] sm:h-[68px] sm:w-[68px]
+            items-center justify-center rounded-full text-[20px] sm:text-[22px]
+            font-semibold text-white"
+            style={{ backgroundColor: student.avatarColor }}
+            aria-label={`Avatar for ${student.name}`}
+          >
+            {student.avatarInitials}
+          </div>
+        )}
 
         <h2 className="mt-3 text-[15px] sm:text-[17px] font-semibold text-slate-900 leading-tight break-words">
           {student.name}
@@ -112,6 +124,16 @@ export default function ProfileCard({ student }: ProfileCardProps) {
           </span>
         </button>
       </div>
+
+      {showPhoto && student.photo && (
+        <ImagePreviewModal
+          src={student.photo}
+          alt={student.name}
+          title={student.name}
+          subtitle={`${student.className} · Roll No: ${student.rollNo}`}
+          onClose={() => setShowPhoto(false)}
+        />
+      )}
     </div>
   );
 }

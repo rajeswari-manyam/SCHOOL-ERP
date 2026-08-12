@@ -45,10 +45,10 @@ const StudentsPage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap shrink-0">
           <button
-            onClick={() => navigate("/schooladmin/students/bulk-add")}
+            onClick={() => navigate("/schooladmin/students/import")}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 h-9 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Bulk Add
+            Import
           </button>
           <button
             onClick={() => navigate("/schooladmin/students/promote")}

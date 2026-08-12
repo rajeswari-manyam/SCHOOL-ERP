@@ -185,6 +185,11 @@ export interface AuthUser {
   role?: Role;
   students?: { id: string; name: string }[];
   image?: string | null;
+  // School-level fields getUserById returns for any staff member (not just
+  // Admin/SchoolAdmin) — kept distinct from `image` (the person's own photo)
+  // so profile pages can show the school's own branding separately.
+  schoolImage?: string | null;
+  schoolLogo?: string | null;
 }
 
 // ── Login Step State ───────────────────────────────────────────────────────────

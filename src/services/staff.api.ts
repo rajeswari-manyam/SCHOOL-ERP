@@ -503,6 +503,25 @@ export const fetchStaff = async (academicYearId?: string | null): Promise<StaffM
   });
 };
 
+/**
+ * ⚠️ PENDING BACKEND INTEGRATION.
+ *
+ * Unlike the Excel path (which reuses the real createStaff() endpoint one
+ * row at a time), a PDF or Word document can't be parsed into rows/columns
+ * in the browser — there's nothing to loop over and submit. Actually
+ * reading a document's contents has to happen server-side. This
+ * intentionally throws so the Import UI shows a clear "not connected yet"
+ * state for document uploads instead of pretending to succeed.
+ */
+export const importStaffFromDocument = async (
+  _file: File
+): Promise<void> => {
+  throw new Error(
+    "Importing staff from a PDF or Word document isn't connected to a backend yet — Excel/CSV imports work today. " +
+    "This will start working once a document-import API is wired up here."
+  );
+};
+
 export const createStaff = async (
   input: CreateStaffPayload,
 ): Promise<StaffMember> => {

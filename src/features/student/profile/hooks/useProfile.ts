@@ -72,6 +72,7 @@ const mapApiStudent = (s: ApiStudent): Student => {
     admissionNo:    s.admission_number ?? "",
     rollNo:         s.roll_number      ?? "",
     name:           fullName,
+    photo:          s.photo ?? null,
     avatarInitials: initials || "??",
     avatarColor:    "#4f46e5",
     status:         (s.status?.toUpperCase() as StudentStatus) ?? "ACTIVE",

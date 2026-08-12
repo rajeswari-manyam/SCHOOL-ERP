@@ -84,17 +84,20 @@ const timeToMins = (t: string): number => {
 const parseTimeSloat = (ts: string): { start: string; end: string } => {
   // "09:00 AM - 09:45 AM" -> { start: "09:00", end: "09:45" }
   const parts = ts.split(/\s*-\s*/);
-  const toHHMM = (raw: string): string => {
-    const m = (raw ?? "").trim().match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
-    if (!m) return "";
-    let h = parseInt(m[1], 10);
-    const min = m[2];
-    const ampm = m[3]?.toUpperCase();
-    if (ampm === "PM" && h !== 12) h += 12;
-    if (ampm === "AM" && h === 12) h = 0;
-    return `${String(h).padStart(2, "0")}:${min}`;
-  };
-  return { start: toHHMM(parts[0] ?? ""), end: toHHMM(parts[1] ?? "") };
+  return { start: parseSingleTime(parts[0]), end: parseSingleTime(parts[1]) };
+};
+
+// Parse a single time value ("09:00", "09:00:00", "09:00 AM") to "HH:MM".
+const parseSingleTime = (raw: string | undefined): string => {
+  if (!raw) return "";
+  const m = raw.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!m) return "";
+  let h = parseInt(m[1], 10);
+  const min = m[2];
+  const ampm = m[4]?.toUpperCase();
+  if (ampm === "PM" && h !== 12) h += 12;
+  if (ampm === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${min}`;
 };
 
 // ─── Build full grid from remaining-periods API ───────────────────────────────────
@@ -206,11 +209,14 @@ const buildSlotsFromRaw = (rawList: GetAllTimetableRawItem[]): TimetableSlot[] =
     const roomNo = r.room_no ?? "";
 
     if (!slotMap.has(periodNo)) {
+      // Prefer the API's own time fields; fall back to the hardcoded map only
+      // when the API record carries no time data at all.
+      const parsed = parseTimeSloat(r.time_sloat ?? "");
       const timeSlot = TIME_SLOT_MAP[periodNo] ?? { start_time: "", end_time: "" };
       slotMap.set(periodNo, {
         periodNo,
-        startTime: timeSlot.start_time,
-        endTime: timeSlot.end_time,
+        startTime: parsed.start || parseSingleTime(r.start_time) || timeSlot.start_time,
+        endTime:   parsed.end   || parseSingleTime(r.end_time)   || timeSlot.end_time,
         cells: {},
       });
     }
@@ -334,9 +340,10 @@ export const useTimetablePage = (classId: string, classLabel: string, sectionId:
       // but Edit/Delete need the real id to call updatetimetableById /
       // deletetimetableById — without it those calls 404 on an empty id.
       const idByDayPeriod = new Map<string, string>();
+      let rawList: GetAllTimetableRawItem[] = [];
       try {
         const res = await getAllTimetable(classId, sectionId);
-        const rawList: GetAllTimetableRawItem[] = extractArray(res, "data", "timetables", "result", "entries");
+        rawList = extractArray(res, "data", "timetables", "result", "entries");
         classTeacher =
           rawList.find((r) => r.teacher?.name)?.teacher?.name ??
           rawList.find((r) => r.teachername)?.teachername ??
@@ -363,6 +370,33 @@ export const useTimetablePage = (classId: string, classLabel: string, sectionId:
             if (cell && !cell.id) {
               cell.id = idByDayPeriod.get(`${day}-${slot.periodNo}`);
             }
+          }
+        }
+      }
+
+      // Pull the authoritative per-period times from getalltimetable
+      // (time_sloat / start_time / end_time) and overlay them onto every
+      // period row — including unassigned/empty ones — so the period
+      // headings in the grid show the API's times rather than the
+      // hardcoded TIME_SLOT_MAP fallback.
+      const periodTimeMap = new Map<number, { start: string; end: string }>();
+      for (const r of rawList) {
+        const pno = Number(r.period_no);
+        if (isNaN(pno)) continue;
+        const parsed = parseTimeSloat(r.time_sloat ?? "");
+        const start = parsed.start || parseSingleTime(r.start_time);
+        const end   = parsed.end   || parseSingleTime(r.end_time);
+        if (start && end && !periodTimeMap.has(pno)) {
+          periodTimeMap.set(pno, { start, end });
+        }
+      }
+      if (periodTimeMap.size > 0) {
+        for (const slot of slots) {
+          if (slot.kind !== "PERIOD") continue;
+          const t = slot.periodNo != null ? periodTimeMap.get(slot.periodNo) : undefined;
+          if (t) {
+            slot.startTime = t.start;
+            slot.endTime   = t.end;
           }
         }
       }

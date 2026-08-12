@@ -1,16 +1,19 @@
+// school-admin/attendance/AddHolidayPage.tsx
+// Full-page version of the former AddHolidayModal popup — same data/logic,
+// just rendered as a routed page instead of a fixed overlay.
 import { useState, useEffect, useRef } from "react";
-import { useAttendanceStore } from "../store";
-import { createHoliday } from "../../../../services/holidays.api";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, CalendarPlus } from "lucide-react";
+import { createHoliday } from "@/services/holidays.api";
 import { useQueryClient } from "@tanstack/react-query";
-import { attendanceKeys } from "../hooks/useAttendance";
-import { useAcademicYears } from "../../../../components/common/hooks/useAcademicYears";
-import { Button } from "../../../../components/ui/button";
-import { Card } from "../../../../components/ui/card";
-import { Input } from "../../../../components/ui/input";
-import { Select } from "../../../../components/ui/select";
-import { Textarea } from "../../../../components/ui/textarea";
-import { Label } from "../../../../components/ui/label";
-import { Switch } from "../../../../components/ui/switch";
+import { attendanceKeys } from "./hooks/useAttendance";
+import { useAcademicYears } from "@/components/common/hooks/useAcademicYears";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const holidayTypeOptions = [
   { label: "Public",     value: "public"     },
@@ -24,8 +27,9 @@ const holidayTypeOptions = [
 const toDateInputValue = (value?: string | null): string | undefined =>
   value ? value.slice(0, 10) : undefined;
 
-const AddHolidayModal = () => {
-  const { showAddHolidayModal, closeAddHoliday } = useAttendanceStore();
+const AddHolidayPage = () => {
+  const navigate = useNavigate();
+  const goBackToHolidays = () => navigate("/schooladmin/holidays");
   const queryClient = useQueryClient();
   const { activeYear } = useAcademicYears();
   const yearMin = toDateInputValue(activeYear?.startDate);
@@ -79,21 +83,12 @@ const AddHolidayModal = () => {
         academicYearId: activeYear.id,
       };
 
-      // ✅ Use the imported createHoliday directly (was incorrectly calling attendanceApi.createHolidayProduction)
       const result = await createHoliday(payload);
 
       queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
       setSuccess(result.message || "Holiday created successfully.");
-      setHolidayName("");
-      setFromDate("");
-      setToDate("");
-      setHolidayType("public");
-      setRepeatAnnually(true);
-      setNotes("");
-      setNotifyTeachers(true);
       successTimerRef.current = setTimeout(() => {
-        setSuccess(null);
-        closeAddHoliday();
+        goBackToHolidays();
       }, 1200);
     } catch (err: any) {
       console.error(
@@ -112,22 +107,33 @@ const AddHolidayModal = () => {
     }
   };
 
-  if (!showAddHolidayModal) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6">
-      <Card className="w-full max-w-md flex flex-col overflow-hidden max-h-[90vh]">
+    <div className="max-w-2xl mx-auto space-y-4">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        <button type="button" onClick={goBackToHolidays} className="hover:text-indigo-600 transition-colors font-medium">
+          Holidays
+        </button>
+        <span>›</span>
+        <span className="text-gray-700 font-semibold">Add Holiday</span>
+      </div>
 
-        {/* Header — always visible */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-lg font-bold text-gray-900">Add Holiday</h2>
-          <Button onClick={closeAddHoliday} variant="ghost" size="sm" className="p-1.5">
-            &times;
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <CalendarPlus size={16} />
+            </div>
+            <h1 className="text-lg font-bold text-gray-900">Add Holiday</h1>
+          </div>
+          <Button onClick={goBackToHolidays} variant="ghost" size="sm" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 shrink-0">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+        {/* Form Body */}
+        <div className="px-6 py-5 space-y-4">
           <div>
             <Label required className="block mb-1">Holiday Name</Label>
             <Input
@@ -231,10 +237,10 @@ const AddHolidayModal = () => {
           )}
         </div>
 
-        {/* Footer — always visible */}
+        {/* Footer */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
           <Button
-            onClick={closeAddHoliday}
+            onClick={goBackToHolidays}
             variant="outline"
             className="w-full sm:w-auto"
             disabled={loading}
@@ -249,9 +255,9 @@ const AddHolidayModal = () => {
             {loading ? "Saving..." : "Save Holiday"}
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
 
-export default AddHolidayModal;
+export default AddHolidayPage;

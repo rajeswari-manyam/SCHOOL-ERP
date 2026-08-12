@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CreditCard, Plus, Pencil, Trash2 } from 'lucide-react';
 import { KPICards } from './components/KPICards';
 import { MRRChart } from './components/MRRChart';
@@ -6,8 +7,6 @@ import { RevenuePlanChart } from './components/RevenuePlanChart';
 import { TopInstitutionsTable } from './components/TopInstitutionsTable';
 import { InstitutionsTable } from './components/InstitutionsTable';
 import { SchoolsByStatusTable } from './components/SchoolsByStatusTable';
-import { RecordPaymentModal } from './components/RecordPaymentModal';
-import { SubscriptionDialog } from './components/SubscriptionDialog';
 
 import {
   useRevenueOverview,
@@ -23,11 +22,9 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export const BillingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>('revenue');
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showAllInstitutions, setShowAllInstitutions] = useState(false);
-  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
-  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
 
   const revenueOverview = useRevenueOverview();
   const { data: subscriptionsData, isLoading: subsLoading } = useAllSubscriptions();
@@ -41,15 +38,8 @@ export const BillingPage: React.FC = () => {
         : []
     : [];
 
-  const openCreateDialog = () => {
-    setSelectedSubscription(null);
-    setShowSubscriptionDialog(true);
-  };
-
-  const openEditDialog = (sub: Subscription) => {
-    setSelectedSubscription(sub);
-    setShowSubscriptionDialog(true);
-  };
+  const openCreateDialog = () => navigate('/superadmin/billing/plan/add');
+  const openEditDialog = (sub: Subscription) => navigate('/superadmin/billing/plan/edit', { state: { subscription: sub } });
 
   return (
     <div className="flex flex-col gap-6 min-h-full">
@@ -69,7 +59,7 @@ export const BillingPage: React.FC = () => {
               </Button>
             )}
             <Button
-              onClick={() => setShowPaymentModal(true)}
+              onClick={() => navigate('/superadmin/billing/record-payment')}
               className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-indigo-700"
             >
               <CreditCard size={14} />
@@ -233,19 +223,6 @@ export const BillingPage: React.FC = () => {
             )}
           </div>
         )}
-
-      {/* Record Payment Modal */}
-      <RecordPaymentModal
-        open={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-      />
-
-      {/* Subscription Dialog */}
-      <SubscriptionDialog
-        open={showSubscriptionDialog}
-        onClose={() => setShowSubscriptionDialog(false)}
-        subscription={selectedSubscription}
-      />
     </div>
   );
 };

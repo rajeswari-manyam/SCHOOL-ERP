@@ -11,6 +11,8 @@ const DashboardPage         = lazy(() => import("./dashboard/DashboardPage"));
 const SchoolsPage           = lazy(() => import("./schools/SchoolsPage"));
 const AddSchoolPage         = lazy(() => import("./schools/pages/AddSchoolPage"));
 const BillingPage           = lazy(() => import("./billing/BillingPage").then(m => ({ default: m.BillingPage })));
+const RecordPaymentPage     = lazy(() => import("./billing/pages/RecordPaymentPage"));
+const SubscriptionFormPage  = lazy(() => import("./billing/pages/SubscriptionFormPage"));
 const ReportsPage           = lazy(() => import("./reports/ReportsPage"));
 const AuditLogsPage         = lazy(() => import("./audit-logs/AuditLogsPage"));
 const WhatsAppTemplatesPage = lazy(() => import("./whatsapp-templates/WhatsAppTemplatesPage"));
@@ -33,6 +35,8 @@ function usePrefetchOtherPages() {
       import("./schools/SchoolsPage");
       import("./schools/pages/AddSchoolPage");
       import("./billing/BillingPage");
+      import("./billing/pages/RecordPaymentPage");
+      import("./billing/pages/SubscriptionFormPage");
       import("./reports/ReportsPage");
       import("./audit-logs/AuditLogsPage");
       import("./whatsapp-templates/WhatsAppTemplatesPage");
@@ -82,6 +86,9 @@ export default function SuperAdminRouter() {
            <BillingPage />
           }
         />
+        <Route path="billing/record-payment" element={<RecordPaymentPage />} />
+        <Route path="billing/plan/add" element={<SubscriptionFormPage />} />
+        <Route path="billing/plan/edit" element={<SubscriptionFormPage />} />
         <Route
           path="config"
           element={

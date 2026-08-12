@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import { useAttendanceStore } from "../store";
 import { useAllHolidays } from "../hooks/useAttendance";
 import { downloadHolidays } from "../../../../services/holidays.api";
-import BulkAddHolidayModal from "./BulkAddHolidayModal";
 import {
   Card,
   CardContent,
@@ -143,12 +143,12 @@ const CalendarError = ({ message, onRetry }: { message: string; onRetry: () => v
 /* ─── Main Component ──────────────────────────────────────────────────────────── */
 
 const HolidayCalendar = () => {
+  const navigate = useNavigate();
   const {
     calendarMonth, calendarYear,
-    goToPrevMonth, goToNextMonth, openAddHoliday,
+    goToPrevMonth, goToNextMonth,
   } = useAttendanceStore();
 
-  const [showBulkModal, setShowBulkModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const { data: rawData, isLoading, isError, error, refetch } = useAllHolidays();
@@ -249,15 +249,15 @@ const HolidayCalendar = () => {
               {downloading ? "Downloading…" : "Download"}
             </Button>
             <Button
-              onClick={() => setShowBulkModal(true)}
+              onClick={() => navigate("/schooladmin/holidays/import")}
               size="sm"
               variant="outline"
               className="flex-1 sm:flex-none rounded-lg border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 sm:px-4"
             >
-              Bulk Add
+              Import
             </Button>
             <Button
-              onClick={openAddHoliday}
+              onClick={() => navigate("/schooladmin/holidays/add")}
               size="sm"
               className="flex-1 sm:flex-none rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 sm:px-5"
             >
@@ -442,10 +442,6 @@ const HolidayCalendar = () => {
           )}
         </CardContent>
       </Card>
-
-      {showBulkModal && (
-        <BulkAddHolidayModal onClose={() => setShowBulkModal(false)} />
-      )}
     </div>
   );
 };

@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChevronDown, Bell, Check, Download } from 'lucide-react';
 import { Select } from '@/components/ui/select';
 import { billingApi } from '@/services/billing.api';
 import { billingKeys, useAllSubscriptions, useSchoolSubscriptionDetail, useSubscriptionPaymentsBySchool, useBillingMutations } from '../hooks/useBilling';
-import { RecordPaymentModal } from './RecordPaymentModal';
 import type { SchoolSubscriptionStatus, SubscriptionStatusFilter, Subscription } from '../types/billing.types';
 
 const STATUSES: SubscriptionStatusFilter[] = ["TRIAL", "PENDING", "PAID", "DUE", "OVERDUE", "SUSPENDED", "CANCELLED"];
@@ -130,10 +130,10 @@ export function SchoolDetailPanel({ schoolId }: { schoolId: string }) {
 }
 
 export const SchoolsByStatusTable: React.FC = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<SubscriptionStatusFilter | "ALL">("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAllRenewals, setShowAllRenewals] = useState(false);
-  const [collectSchoolId, setCollectSchoolId] = useState<string | null>(null);
 
   const statusQueries = useQueries({
     queries: STATUSES.map((status) => ({
@@ -174,7 +174,7 @@ export const SchoolsByStatusTable: React.FC = () => {
 
   const handleAction = (row: MergedRow) => {
     if (row.subscriptionStatus === "OVERDUE" || row.subscriptionStatus === "DUE" || row.subscriptionStatus === "SUSPENDED") {
-      setCollectSchoolId(row.schoolId);
+      navigate('/superadmin/billing/record-payment', { state: { schoolId: row.schoolId } });
     } else {
       toast.info(`Reminder queued for ${row.schoolName}`);
     }
@@ -336,12 +336,6 @@ export const SchoolsByStatusTable: React.FC = () => {
           )}
         </div>
       )}
-
-      <RecordPaymentModal
-        open={!!collectSchoolId}
-        onClose={() => setCollectSchoolId(null)}
-        preselectedSchoolId={collectSchoolId ?? undefined}
-      />
     </div>
   );
 };

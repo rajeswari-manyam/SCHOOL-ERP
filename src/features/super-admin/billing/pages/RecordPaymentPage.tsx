@@ -1,6 +1,10 @@
+// super-admin/billing/pages/RecordPaymentPage.tsx
+// Full-page version of the former RecordPaymentModal popup — same data/logic,
+// just rendered as a routed page instead of a fixed overlay.
 import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { X, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown, CreditCard } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,10 +35,8 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-interface RecordPaymentModalProps {
-  open: boolean;
-  onClose: () => void;
-  preselectedSchoolId?: string;
+interface RecordPaymentLocationState {
+  schoolId?: string;
 }
 
 const inputClass =
@@ -43,7 +45,12 @@ const inputClass =
 const labelClass =
   'mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400';
 
-export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, onClose, preselectedSchoolId }) => {
+const RecordPaymentPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const preselectedSchoolId = (location.state as RecordPaymentLocationState | null)?.schoolId;
+  const goBackToBilling = () => navigate('/superadmin/billing');
+
   const { recordSubscriptionPayment } = useBillingMutations();
   const { data: schools } = useAllSchools();
 
@@ -52,7 +59,6 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
     handleSubmit,
     control,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -69,8 +75,8 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
   });
 
   useEffect(() => {
-    if (open) setValue('schoolId', preselectedSchoolId ?? '');
-  }, [open, preselectedSchoolId, setValue]);
+    if (preselectedSchoolId) setValue('schoolId', preselectedSchoolId);
+  }, [preselectedSchoolId, setValue]);
 
   const schoolId = useWatch({ control, name: 'schoolId' });
   const paymentMode = useWatch({ control, name: 'paymentMode' });
@@ -90,8 +96,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
       {
         onSuccess: () => {
           toast.success('Payment recorded successfully');
-          reset();
-          onClose();
+          goBackToBilling();
         },
         onError: (error) => {
           toast.error(error instanceof Error ? error.message : 'Failed to record payment');
@@ -100,54 +105,42 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
     );
   };
 
-  if (!open) return null;
-
   return (
-    /* ── Backdrop — bottom-sheet on mobile, centered on sm+ ── */
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 bg-black/60"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="
-          w-full sm:max-w-lg
-          bg-white dark:bg-gray-900
-          rounded-t-2xl sm:rounded-2xl
-          shadow-2xl
-          max-h-[92vh] sm:max-h-[90vh]
-          flex flex-col
-          overflow-hidden
-        "
-      >
-        {/* Drag handle — mobile only */}
-        <div className="flex justify-center pt-3 sm:hidden flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-white/20" />
-        </div>
+    <div className="max-w-2xl mx-auto space-y-4">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <button onClick={goBackToBilling} className="hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+          Billing &amp; Plans
+        </button>
+        <span>›</span>
+        <span className="text-gray-700 dark:text-gray-200 font-semibold">Record Payment</span>
+      </div>
 
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 flex-shrink-0">
-          <div className="min-w-0 pr-3">
-            <h2 className="text-base sm:text-[17px] font-bold text-gray-900 dark:text-white leading-snug">
-              Record Payment
-            </h2>
-            <p className="mt-0.5 text-xs sm:text-[13px] text-gray-400">
-              Log a payment received from a school
-            </p>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-start justify-between px-5 sm:px-6 pt-5 pb-4 border-b border-gray-100 dark:border-white/10 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <CreditCard size={16} />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-[17px] font-bold text-gray-900 dark:text-white leading-snug">
+                Record Payment
+              </h1>
+              <p className="text-xs sm:text-[13px] text-gray-400">Log a payment received from a school</p>
+            </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={goBackToBilling}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 flex-shrink-0"
           >
-            <X size={16} />
+            <ArrowLeft size={18} />
           </button>
         </div>
 
-        {/* ── Scrollable form body ── */}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col flex-1 overflow-hidden"
-        >
-          <div className="flex-1 overflow-y-auto space-y-4 sm:space-y-5 px-4 sm:px-6 pb-4">
+        {/* ── Form body ── */}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1">
+          <div className="space-y-4 sm:space-y-5 px-5 sm:px-6 py-5">
 
             {/* School selector */}
             <div>
@@ -174,7 +167,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
               )}
             </div>
 
-            {/* Amount + Date — always 2-col (both are compact) */}
+            {/* Amount + Date */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>
@@ -211,7 +204,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
               </div>
             </div>
 
-            {/* Payment Mode — wraps to 2×2 on very narrow, single row on sm+ */}
+            {/* Payment Mode */}
             <div>
               <label className={`${labelClass} mb-2`}>
                 Payment Mode <span className="text-red-500">*</span>
@@ -282,10 +275,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
           </div>
 
           {/* ── Footer ── */}
-          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between border-t border-gray-100 dark:border-white/10 px-4 sm:px-6 py-4 flex-shrink-0 gap-2 sm:gap-0">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between border-t border-gray-100 dark:border-white/10 px-5 sm:px-6 py-4 flex-shrink-0 gap-2 sm:gap-0">
             <button
               type="button"
-              onClick={onClose}
+              onClick={goBackToBilling}
               className="w-full sm:w-auto text-center px-4 py-2.5 sm:py-2 text-[13px] font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             >
               Cancel
@@ -303,3 +296,5 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ open, on
     </div>
   );
 };
+
+export default RecordPaymentPage;

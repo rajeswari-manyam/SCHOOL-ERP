@@ -11,6 +11,7 @@ interface ProfileState {
   parentRelation: string;
   parentOccupation: string;
   parentAddress: string;
+  parentImage: string | null;
   contact: ContactInfo;
   classTeacher: ClassTeacherInfo | null;
   notifications: NotificationPref[];
@@ -47,6 +48,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
   parentRelation:   "",
   parentOccupation: "",
   parentAddress:    "",
+  parentImage:      null,
   contact:          EMPTY_CONTACT,
   classTeacher:     null,
   notifications:    DEFAULT_NOTIFICATIONS,
@@ -97,6 +99,14 @@ export const useProfileStore = create<ProfileState>((set) => ({
             emergencyContact: parent.phone ?? "",
           };
 
+      // The logged-in parent's own photo — getUserById's generic response has
+      // no photo field for a parent account; the real image lives on the
+      // student's combined parentDetail record, split by relation the same
+      // way `contact` above is.
+      const parentImage: string | null = parentRecord
+        ? ((parent.relation?.toLowerCase() === "mother" ? parentRecord.mother_image : parentRecord.father_image) ?? null)
+        : null;
+
       const teacher = activeStudent?.classTeacher;
       const classTeacher: ClassTeacherInfo | null = teacher
         ? {
@@ -114,6 +124,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
         parentRelation:   parent.relation          ?? "",
         parentOccupation: parent.occupation        ?? "",
         parentAddress:    parent.address           ?? "",
+        parentImage,
         contact,
         classTeacher,
         children,

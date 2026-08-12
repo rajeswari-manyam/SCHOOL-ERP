@@ -26,13 +26,6 @@ const ParentLayout = () => {
 
   const [showChildModal, setShowChildModal] = useState(false);
 
-  // TEMP DIAGNOSTIC — see matching note in ParentDashBoard.tsx. Confirms
-  // whether ParentLayout itself (not just the routed page) is remounting.
-  useEffect(() => {
-    console.log("[diag] ParentLayout MOUNT");
-    return () => console.log("[diag] ParentLayout UNMOUNT");
-  }, []);
-
   // Always refresh the parent's own profile once per page load (for their
   // avatar photo) — there's no reliable persisted signal for "already fresh".
   useEffect(() => {
@@ -53,38 +46,38 @@ const ParentLayout = () => {
   // to lose the route context and stale-render the previous page.
   return (
     <div className="min-h-screen bg-[#F4F6FA] overflow-x-hidden">
-      {/* Nav: only shown when we have an active child */}
-      {activeChild && (
-        <ParentTopNavBar
-          activeChild={activeChild}
-          onSwitchChild={() => setShowChildModal(true)}
-          hasMultipleChildren={children.length > 1}
-        />
-      )}
+      {/* Nav shell renders immediately after login — activeChild is null
+          for the brief moment before the linked-children fetch resolves,
+          and ParentTopNavBar already handles that (shows placeholders)
+          instead of the whole screen going blank behind a spinner. */}
+      <ParentTopNavBar
+        activeChild={activeChild}
+        onSwitchChild={() => setShowChildModal(true)}
+        hasMultipleChildren={children.length > 1}
+      />
 
       <main
         className={
           showChildModal ? "blur-sm pointer-events-none select-none" : ""
         }
       >
-        {/* Loading screen — Outlet still mounts below (zero-height, invisible) */}
+        {/* Loading screen — Outlet still mounts below (zero-height, invisible).
+            The nav bar above is already visible, so this only needs to fill
+            the content area, not the whole viewport. */}
         {loading && (
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3 text-gray-400">
-              <div className="w-7 h-7 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-              <p className="text-sm">Loading profile…</p>
-            </div>
+          <div className="py-24 flex items-center justify-center">
+            <p className="text-sm text-gray-400">Loading…</p>
           </div>
         )}
 
         {!loading && students.length === 0 && (
-          <div className="min-h-screen flex items-center justify-center text-gray-500 text-sm">
+          <div className="py-24 flex items-center justify-center text-gray-500 text-sm">
             No student is linked to this parent.
           </div>
         )}
 
         {!loading && students.length > 0 && !activeChild && (
-          <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-gray-500 text-sm">
+          <div className="py-24 flex flex-col items-center justify-center gap-3 text-gray-500 text-sm">
             <p>{error ?? "No student profiles found."}</p>
             {error && (
               <button

@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSetupStatus } from "@/features/school-admin/dashboard/hooks/useSetupStatus";
 import { SetupProgressBanner } from "@/features/school-admin/dashboard/components/SetupProgressBanner";
-import { Building2, MessageSquare, Calendar, Banknote, Users, Shield, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Building2, MessageSquare, Calendar, Banknote, Users, Shield, ChevronRight, CheckCircle2, CreditCard } from "lucide-react";
 
 // ── Settings card config ───────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ const SETTINGS_CARDS: {
   { id: "feeConfig",      path: "fee-config",      title: "Fee Configuration",        description: "Manage fee heads, structures, and transport slabs",        icon: "banknote",  color: "bg-emerald-100 text-emerald-600"},
   { id: "userAccounts",   path: "user-accounts",   title: "User Accounts",            description: "Create and manage staff login credentials",                icon: "users",     color: "bg-amber-100 text-amber-600"   },
   { id: "permissions",    path: "permissions",     title: "Permissions",              description: "Set module access for different roles",                    icon: "shield",    color: "bg-rose-100 text-rose-600"     },
+  { id: "billing",        path: "billing",         title: "Plan & Billing",           description: "View your subscription, track usage, and manage payments", icon: "billing",   color: "bg-violet-100 text-violet-600" },
 ];
 
 // ── Icon map ───────────────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   banknote:  <Banknote   className="w-5 h-5 sm:w-6 sm:h-6" />,
   users:     <Users      className="w-5 h-5 sm:w-6 sm:h-6" />,
   shield:    <Shield     className="w-5 h-5 sm:w-6 sm:h-6" />,
+  billing:   <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />,
 };
 
 // ── Main page ──────────────────────────────────────────────────────────────────

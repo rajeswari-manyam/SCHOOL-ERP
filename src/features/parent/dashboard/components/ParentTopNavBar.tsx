@@ -36,6 +36,8 @@ const navLinks = [
 ];
 
 interface ParentTopNavBarProps {
+  // Nullable — the nav shell now renders immediately after login, before the
+  // linked-children fetch resolves, so there's briefly no active child yet.
   activeChild: {
     id?: number | string;
     studentId?: number | string;
@@ -43,7 +45,7 @@ interface ParentTopNavBarProps {
     class?: string;
     school?: string;
     avatar?: string;
-  };
+  } | null;
   onSwitchChild: () => void;
   hasMultipleChildren?: boolean;
 }

@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MessageCircle, X, Bell,
   ChevronLeft, ChevronRight, CheckCircle2, Eye, Pencil,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { useClassTodayAttendance } from "../hooks/useAttendance";
-import { useAttendanceStore } from "../store";
 import type {
   GetAllClassesTodayAttendanceResponse,
   ClassTodayItem,
@@ -199,7 +199,9 @@ const AttendanceToday = ({
   allClassesError,
   onSelectClass,
 }: AttendanceTodayProps) => {
-  const { openMarkAttendance } = useAttendanceStore();
+  const navigate = useNavigate();
+  const openMarkAttendance = (classId?: string, sectionId?: string) =>
+    navigate("/schooladmin/attendance/mark", { state: { classId, sectionId } });
   const [panelItem, setPanelItem]             = useState<ClassTodayItem | null>(null);
   const [classPage, setClassPage]             = useState(1);
 

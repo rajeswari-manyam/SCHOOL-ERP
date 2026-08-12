@@ -1,9 +1,12 @@
+// school-admin/attendance/MarkStaffAttendancePage.tsx
+// Full-page version of the former MarkStaffAttendanceModal popup — same
+// data/logic, just rendered as a routed page instead of a fixed overlay.
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, UserCheck } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
-import { useAttendanceStore } from "../store";
 import {
   useStaffList,
   useSubmitStaffAttendance,
@@ -12,11 +15,10 @@ import {
   useUpdateStaffAttendance,
   useDeleteStaffAttendance,
   attendanceKeys,
-} from "../hooks/useAttendance";
-import type { StaffAttendanceStatus, CreateStaffAttendancePayload } from "../types/attendance.types";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../../../../components/ui/card";
-import { Button } from "../../../../components/ui/button";
-import { Input } from "../../../../components/ui/input";
+} from "./hooks/useAttendance";
+import type { StaffAttendanceStatus, CreateStaffAttendancePayload } from "./types/attendance.types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type DisplayStatus = StaffAttendanceStatus | "not_marked";
 
@@ -51,8 +53,9 @@ interface StaffRow {
   isMarked: boolean;
 }
 
-const MarkStaffAttendanceModal = () => {
-  const { showMarkStaffAttendanceModal, closeMarkStaffAttendance } = useAttendanceStore();
+const MarkStaffAttendancePage = () => {
+  const navigate = useNavigate();
+  const goBackToAttendance = () => navigate("/schooladmin/attendance");
   const queryClient = useQueryClient();
   const academicYearId = useUIStore((s) => s.academicYearId);
 
@@ -146,7 +149,7 @@ const MarkStaffAttendanceModal = () => {
     }
   }, [deleteMutation]);
 
-  // Mark a single not-yet-marked staff member (modal stays open)
+  // Mark a single not-yet-marked staff member (page stays open)
   const handleMarkOne = useCallback((row: StaffRow) => {
     if (row.isMarked) return;
     setSavingId(row.staffId);
@@ -180,7 +183,7 @@ const MarkStaffAttendanceModal = () => {
         setSubmitError(`${row.name}: ${backendMessage}`);
         setSavingId(null);
         // "Already marked" means our local view is stale (e.g. marked elsewhere
-        // since this modal opened) — refetch so the row switches to Update/Delete.
+        // since this page opened) — refetch so the row switches to Update/Delete.
         if (backendMessage.toLowerCase().includes("already marked")) {
           queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: "all" });
         }
@@ -220,6 +223,7 @@ const MarkStaffAttendanceModal = () => {
         } else {
           toast.success("Staff attendance submitted successfully");
         }
+        goBackToAttendance();
       },
       onError:   (err: any) => {
         const backendMessage = err?.response?.data?.message ?? err?.message ?? "Failed to submit attendance";
@@ -239,29 +243,40 @@ const MarkStaffAttendanceModal = () => {
     notMarked:  rows.filter((r) => !r.isMarked).length,
   }), [rows]);
 
-  if (!showMarkStaffAttendanceModal) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <Card className="w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="max-w-4xl mx-auto space-y-4">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        <button type="button" onClick={goBackToAttendance} className="hover:text-indigo-600 transition-colors font-medium">
+          Attendance
+        </button>
+        <span>›</span>
+        <span className="text-gray-700 font-semibold">Mark Staff Attendance</span>
+      </div>
 
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
         {/* Header */}
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-100">
-          <div>
-            <CardTitle className="text-lg">Mark Staff Attendance</CardTitle>
-            <CardDescription>
-              <span className="text-emerald-600 font-semibold">{summary.marked} marked</span>
-              {" · "}
-              <span className="text-gray-400">{summary.notMarked} not marked</span>
-            </CardDescription>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 sm:px-7 pt-5 pb-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <UserCheck size={16} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 leading-tight">Mark Staff Attendance</h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                <span className="text-emerald-600 font-semibold">{summary.marked} marked</span>
+                {" · "}
+                <span className="text-gray-400">{summary.notMarked} not marked</span>
+              </p>
+            </div>
           </div>
-          <Button variant="ghost" size="sm" className="h-10 w-10 rounded-full p-0 text-gray-400 hover:text-gray-600" onClick={closeMarkStaffAttendance}>
-            <span className="text-2xl leading-none">&times;</span>
+          <Button onClick={goBackToAttendance} variant="ghost" size="sm" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 shrink-0">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-        </CardHeader>
+        </div>
 
         {/* Date + bulk actions */}
-        <CardContent className="px-6 py-4 border-b border-gray-100">
+        <div className="px-5 sm:px-7 py-4 border-b border-gray-100">
           <div className="flex items-center gap-4 flex-wrap">
             <div>
               <label className="uppercase tracking-wide text-xs text-gray-500">Date</label>
@@ -283,11 +298,11 @@ const MarkStaffAttendanceModal = () => {
               </Button>
             </div>
           </div>
-        </CardContent>
+        </div>
 
         {/* Submit error (e.g. holiday / non-working day) */}
         {submitError && (
-          <div className="px-6 pt-4">
+          <div className="px-5 sm:px-7 pt-4">
             <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
               <span className="text-red-500 text-base leading-none">⚠</span>
               <span>{submitError}</span>
@@ -296,7 +311,7 @@ const MarkStaffAttendanceModal = () => {
         )}
 
         {/* Staff list */}
-        <CardContent className="flex-1 overflow-y-auto min-h-[300px] p-0">
+        <div className="flex-1 overflow-y-auto min-h-[300px]">
           {staffLoading ? (
             <div className="flex items-center justify-center h-40 gap-2 text-gray-500 text-sm">
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -312,7 +327,7 @@ const MarkStaffAttendanceModal = () => {
           ) : (
             <div className="divide-y divide-gray-50">
               {/* Column headers */}
-              <div className="flex items-center px-6 py-2 bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <div className="flex items-center px-5 sm:px-7 py-2 bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <span className="flex-1">Staff Member</span>
                 <span className="w-64 text-center hidden sm:block">Status</span>
                 <span className="w-24 text-right">Actions</span>
@@ -321,7 +336,7 @@ const MarkStaffAttendanceModal = () => {
               {rows.map((staff) => {
                 const isSaving = savingId === staff.staffId;
                 return (
-                  <div key={staff.staffId} className={`flex items-center px-6 py-2.5 gap-3 hover:bg-gray-50 transition-colors ${isSaving ? "opacity-60 pointer-events-none" : ""}`}>
+                  <div key={staff.staffId} className={`flex items-center px-5 sm:px-7 py-2.5 gap-3 hover:bg-gray-50 transition-colors ${isSaving ? "opacity-60 pointer-events-none" : ""}`}>
 
                     {/* Avatar + name */}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -394,13 +409,13 @@ const MarkStaffAttendanceModal = () => {
               })}
             </div>
           )}
-        </CardContent>
+        </div>
 
         {/* Footer */}
-        <CardFooter className="flex items-center justify-between gap-3 p-6 border-t border-gray-100">
+        <div className="flex items-center justify-between gap-3 px-5 sm:px-7 py-4 border-t border-gray-100 shrink-0">
           <p className="text-xs text-gray-400">{summary.notMarked} staff not yet marked</p>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={closeMarkStaffAttendance}>Cancel</Button>
+            <Button variant="ghost" onClick={goBackToAttendance}>Cancel</Button>
             <Button
               onClick={handleSubmitNew}
               disabled={summary.notMarked === 0 || submitMutation.isPending}
@@ -418,10 +433,10 @@ const MarkStaffAttendanceModal = () => {
               )}
             </Button>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default MarkStaffAttendanceModal;
+export default MarkStaffAttendancePage;

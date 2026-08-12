@@ -14,6 +14,10 @@ interface SidebarProps {
   items: NavItem[];
   className?: string;
   user?: { name: string; role: string; avatar?: string };
+  // When provided, the bottom-avatar dropdown's "Profile" item navigates
+  // here (a real page) instead of opening the generic ProfileModal popup.
+  // Omit for portals with no dedicated profile page (e.g. Super Admin).
+  profilePath?: string;
 }
 
 export const SIDEBAR_EXPANDED_W  = 260;
@@ -28,7 +32,7 @@ const getInitials = (name: string) =>
     .toUpperCase()
     .slice(0, 2) || "—";
 
-const Sidebar = ({ items, className, user }: SidebarProps) => {
+const Sidebar = ({ items, className, user, profilePath }: SidebarProps) => {
   const { pathname }   = useLocation();
   const navigate       = useNavigate();
 
@@ -397,7 +401,11 @@ const Sidebar = ({ items, className, user }: SidebarProps) => {
                     <Button
                       variant="ghost"
                       role="menuitem"
-                      onClick={() => { setShowProfile(true); setOpenMenu(false); }}
+                      onClick={() => {
+                        setOpenMenu(false);
+                        if (profilePath) navigate(profilePath);
+                        else setShowProfile(true);
+                      }}
                       className="flex h-11 w-full items-center justify-start gap-3 rounded-none px-4 text-[13px] font-medium text-slate-200 hover:bg-white/10 hover:text-white"
                     >
                       <User className="h-4 w-4 shrink-0 text-slate-400" />

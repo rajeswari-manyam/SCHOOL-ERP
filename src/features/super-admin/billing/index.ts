@@ -1,16 +1,16 @@
-// Page
+// Pages
 export { BillingPage } from './BillingPage';
+export { default as RecordPaymentPage } from './pages/RecordPaymentPage';
+export { default as SubscriptionFormPage } from './pages/SubscriptionFormPage';
 
 // Components
 export { KPICards } from './components/KPICards';
-export { SubscriptionDialog } from './components/SubscriptionDialog';
 export { MRRChart } from './components/MRRChart';
 export { RevenuePlanChart } from './components/RevenuePlanChart';
 export { TopInstitutionsTable } from './components/TopInstitutionsTable';
 export { InstitutionsTable } from './components/InstitutionsTable';
 export { BillingFilterBar } from './components/BillingFilterBar';
 export { InstitutionActionsMenu } from './components/InstitutionActionsMenu';
-export { RecordPaymentModal } from './components/RecordPaymentModal';
 export { Pagination } from './components/Pagination';
 export { PlanBadge, StatusBadge } from './components/BillingBadges';
 

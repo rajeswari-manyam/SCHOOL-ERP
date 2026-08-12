@@ -25,23 +25,6 @@ interface AttendanceState {
   calendarYear: number;
   goToPrevMonth: () => void;
   goToNextMonth: () => void;
-
-  // Mark Attendance Modal
-  showMarkAttendanceModal: boolean;
-  prefilledClassId: string;
-  prefilledSectionId: string;
-  openMarkAttendance: (classId?: string, sectionId?: string) => void;
-  closeMarkAttendance: () => void;
-
-  // Add Holiday Modal
-  showAddHolidayModal: boolean;
-  openAddHoliday: () => void;
-  closeAddHoliday: () => void;
-
-  // Mark Staff Attendance Modal
-  showMarkStaffAttendanceModal: boolean;
-  openMarkStaffAttendance: () => void;
-  closeMarkStaffAttendance: () => void;
 }
 
 export const useAttendanceStore = create<AttendanceState>((set, get) => ({
@@ -79,20 +62,4 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       set({ calendarMonth: calendarMonth + 1 });
     }
   },
-
-  showMarkAttendanceModal: false,
-  prefilledClassId: "",
-  prefilledSectionId: "",
-  openMarkAttendance: (classId = "", sectionId = "") =>
-    set({ showMarkAttendanceModal: true, prefilledClassId: classId, prefilledSectionId: sectionId }),
-  closeMarkAttendance: () =>
-    set({ showMarkAttendanceModal: false, prefilledClassId: "", prefilledSectionId: "" }),
-
-  showAddHolidayModal: false,
-  openAddHoliday: () => set({ showAddHolidayModal: true }),
-  closeAddHoliday: () => set({ showAddHolidayModal: false }),
-
-  showMarkStaffAttendanceModal: false,
-  openMarkStaffAttendance: () => set({ showMarkStaffAttendanceModal: true }),
-  closeMarkStaffAttendance: () => set({ showMarkStaffAttendanceModal: false }),
 }));

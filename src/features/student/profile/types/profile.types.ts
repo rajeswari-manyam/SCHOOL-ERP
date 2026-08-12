@@ -52,6 +52,7 @@ export interface Student {
   admissionNo:    string;
   rollNo:         string;
   name:           string;
+  photo?:         string | null;
   avatarInitials: string;
   avatarColor:    string;
   status:         StudentStatus;

@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useTeacherProfile } from "./hooks/useTeacherProfile";
 import type { LeaveBalance } from "@/features/teacher/leave/types/leave.types";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
+import { SchoolInfoCard } from "@/components/common/SchoolInfoCard";
 
 const InfoRow = ({ label, value }: { label: string; value?: string | number | null }) => (
   <div>
@@ -50,6 +53,7 @@ const LeaveTile = ({ label, value, accent }: { label: string; value: number; acc
 
 export const TeacherProfilePage = () => {
   const { user, staff, leaveBalances, loading, error, reload } = useTeacherProfile();
+  const [showPhoto, setShowPhoto] = useState(false);
 
   const name = staff?.name ?? user?.name ?? "Teacher";
   const initials = name.slice(0, 2).toUpperCase();
@@ -73,7 +77,9 @@ export const TeacherProfilePage = () => {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center gap-4">
           {image ? (
-            <img src={image} alt={name} className="w-16 h-16 rounded-full object-cover border border-gray-100" />
+            <button type="button" onClick={() => setShowPhoto(true)} className="shrink-0">
+              <img src={image} alt={name} className="w-16 h-16 rounded-full object-cover border border-gray-100 cursor-pointer hover:opacity-90 transition-opacity" />
+            </button>
           ) : (
             <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
               {initials}
@@ -92,6 +98,13 @@ export const TeacherProfilePage = () => {
           </div>
         </div>
       </div>
+
+      <SchoolInfoCard
+        schoolName={localStorage.getItem("schoolName") || undefined}
+        schoolImage={user?.schoolImage}
+        schoolLogo={user?.schoolLogo}
+        principalName={user?.principalName}
+      />
 
       {error && (
         <div className="flex items-center justify-between gap-3 bg-rose-50 border border-rose-100 text-rose-700 rounded-2xl px-4 py-3">
@@ -171,6 +184,10 @@ export const TeacherProfilePage = () => {
           </SectionCard>
         </div>
       </div>
+
+      {showPhoto && image && (
+        <ImagePreviewModal src={image} alt={name} title={name} subtitle={role} onClose={() => setShowPhoto(false)} />
+      )}
     </div>
   );
 };

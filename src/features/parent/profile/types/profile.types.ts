@@ -38,6 +38,7 @@ export interface ParentProfile {
 export interface ProfileCardProps {
   name: string;
   initials: string;
+  photo?: string | null;
   role: string;
   phone: string;
   email?: string;

@@ -60,26 +60,12 @@ const DashboardPage = () => {
   // and race each other's writes right as you navigate to another page.
   const fetchedKeyRef = useRef<string | null>(null)
 
-  // TEMP DIAGNOSTIC — tracks whether DashboardPage is unmounting/remounting
-  // while the user just sits on the page (would explain a repeat fetchAll
-  // even though the effect below is otherwise correctly guarded by a ref).
-  // Safe to leave in: console.* is stripped from production builds.
-  const instanceIdRef = useRef(Math.random().toString(36).slice(2, 8))
-  useEffect(() => {
-    console.log(`[diag] DashboardPage MOUNT instance=${instanceIdRef.current}`)
-    return () => console.log(`[diag] DashboardPage UNMOUNT instance=${instanceIdRef.current}`)
-  }, [])
-
   useEffect(() => {
     if (!studentId) return
     if (!classId) return
 
     const key = `${studentId}|${classId}|${sectionId ?? ""}`
-    if (fetchedKeyRef.current === key) {
-      console.log(`[diag] fetchAll SKIPPED (same key="${key}") instance=${instanceIdRef.current}`)
-      return
-    }
-    console.log(`[diag] fetchAll RUNNING key="${key}" (prevKey="${fetchedKeyRef.current}") instance=${instanceIdRef.current}`)
+    if (fetchedKeyRef.current === key) return
     fetchedKeyRef.current = key
 
     let cancelled = false

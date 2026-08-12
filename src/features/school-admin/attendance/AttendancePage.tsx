@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { CalendarCheck } from "lucide-react";
 import { useAttendanceStore } from "./store";
 import { useAllClassesTodayAttendance } from "./hooks/useAttendance";
@@ -5,8 +6,6 @@ import AttendanceToday from "./components/AttendanceToday";
 import AttendanceHistory from "./components/AttendanceHistory";
 import StaffAttendance from "./components/StaffAttendance";
 import PendingLeavesTab from "./components/PendingLeavesTab";
-import MarkAttendanceModal from "./components/MarkAttendanceModal";
-import MarkStaffAttendanceModal from "./components/MarkStaffAttendanceModal";
 import type { AttendanceTab } from "./types/attendance.types";
 
 const TABS: { key: AttendanceTab; label: string }[] = [
@@ -16,7 +15,8 @@ const TABS: { key: AttendanceTab; label: string }[] = [
 ];
 
 const AttendancePage = () => {
-  const { activeTab, setActiveTab, openMarkAttendance } = useAttendanceStore();
+  const navigate = useNavigate();
+  const { activeTab, setActiveTab } = useAttendanceStore();
 
   const {
     data: allClassesData,
@@ -44,7 +44,7 @@ const AttendancePage = () => {
 
           {activeTab === "today" && (
             <button
-              onClick={() => openMarkAttendance()}
+              onClick={() => navigate("/schooladmin/attendance/mark")}
               className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700"
             >
               <CalendarCheck className="h-3.5 w-3.5" />
@@ -91,9 +91,6 @@ const AttendancePage = () => {
         {activeTab === "staff"   && <StaffAttendance />}
         {activeTab === "leaves"  && <PendingLeavesTab />}
       </div>
-
-      <MarkAttendanceModal />
-      <MarkStaffAttendanceModal />
     </div>
   );
 };

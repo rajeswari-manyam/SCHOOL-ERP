@@ -7,7 +7,9 @@ import { TeacherLayout } from "@/layouts/TeacherLayout";
 // homework, timetable, exams, payslip, ...) to download too, since a static
 // import bundles its module into the same chunk as whatever imports it.
 const DashboardPage      = lazy(() => import("./dashboard/TeacherDashboardPage"));
+const DashboardMarkAttendancePage = lazy(() => import("./dashboard/MarkAttendancePage"));
 const MyAttendancePage   = lazy(() => import("./attendance/Myattendancepage"));
+const MarkAttendancePage = lazy(() => import("./attendance/MarkAttendancePage"));
 const HolidaysPage       = lazy(() => import("./attendance/HolidaysPage"));
 const MyStudentsPage     = lazy(() => import("./students/MyStudentsPage"));
 const HomeworkPage       = lazy(() => import("./homework/HomeworkPage"));
@@ -37,7 +39,9 @@ export default function TeacherRouter() {
     
             {/* Pages */}
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="dashboard/mark-attendance" element={<DashboardMarkAttendancePage />} />
             <Route path="attendance" element={<MyAttendancePage />} />
+            <Route path="attendance/mark" element={<MarkAttendancePage />} />
             <Route path="holidays" element={<HolidaysPage />} />
             <Route path="students" element={<MyStudentsPage />} />
             <Route path="homework" element={<HomeworkPage />} />

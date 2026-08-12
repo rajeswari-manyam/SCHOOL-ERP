@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, Mail, MapPin, Briefcase, Pencil } from "lucide-react";
+import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 
 import type { ProfileCardProps } from "../types/profile.types";
 export function ProfileCard({
   name,
   initials,
+  photo,
   role,
   phone,
   email,
@@ -13,6 +16,8 @@ export function ProfileCard({
   address,
   onEdit,
 }: ProfileCardProps) {
+  const [showPhoto, setShowPhoto] = useState(false);
+
   return (
     <Card
       className="
@@ -26,15 +31,25 @@ export function ProfileCard({
       <CardContent className="p-5 text-center">
 
         {/* AVATAR */}
-        <div className="
-          w-[72px] h-[72px] rounded-full
-          bg-[#3525CD] flex items-center justify-center
-          text-[22px] font-bold text-white
-          mx-auto mb-3
-          hover:scale-105 transition-transform duration-200
-        ">
-          {initials}
-        </div>
+        {photo ? (
+          <button type="button" onClick={() => setShowPhoto(true)} className="mx-auto block">
+            <img
+              src={photo}
+              alt={name}
+              className="w-[72px] h-[72px] rounded-full object-cover mx-auto mb-3 ring-1 ring-black/5 cursor-pointer hover:scale-105 transition-transform duration-200"
+            />
+          </button>
+        ) : (
+          <div className="
+            w-[72px] h-[72px] rounded-full
+            bg-[#3525CD] flex items-center justify-center
+            text-[22px] font-bold text-white
+            mx-auto mb-3
+            hover:scale-105 transition-transform duration-200
+          ">
+            {initials}
+          </div>
+        )}
 
         {/* NAME */}
         <p className="text-[16px] font-bold text-[#0B1C30]">
@@ -93,6 +108,10 @@ export function ProfileCard({
         </button>
 
       </CardContent>
+
+      {showPhoto && photo && (
+        <ImagePreviewModal src={photo} alt={name} title={name} subtitle={role} onClose={() => setShowPhoto(false)} />
+      )}
     </Card>
   );
 }

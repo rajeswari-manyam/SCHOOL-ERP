@@ -5,6 +5,7 @@ export { default as AcademicConfigPage } from "./pages/AcademicConfigPage";
 export { default as FeeConfigPage } from "./pages/FeeConfigPage";
 export { default as UserAccountsPage } from "./pages/UserAccountsPage";
 export { default as PermissionsPage } from "./pages/PermissionsPage";
+export { default as PlanBillingPage } from "./pages/PlanBillingPage";
 export { useSchoolProfile, useWhatsApp, useAcademicConfig, useFeeConfig, useUserAccounts, usePermissions } from "./hooks/useSettings";
 export type * from "./types/settings.types";
 export * from "./utils/Settings.utils";

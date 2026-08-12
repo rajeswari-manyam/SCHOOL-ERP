@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Upload, UserPlus, MessageSquare } from "lucide-react";
 import MarketingStatCards from "./components/MarketingStatCards";
 import MarketingTabs from "./components/MarketingTabs";
@@ -6,7 +7,6 @@ import TeamOverviewTab from "./components/TeamOverviewTab";
 import AttendanceTab from "./components/AttendanceTab";
 import TargetsTab from "./components/TargetsTab";
 import PayoutsTab from "./components/PayoutsTab";
-import AddRepModal from "./components/AddRepModal";
 import { useReps, useMarketingStats, useMarketingMutations } from "./hooks/useMarketing";
 import type { MarketingTab, RepFilters } from "./types/marketing.types";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,9 @@ const MOCK_STATS = { totalReps: 8, presentToday: 6, presentPct: 75, demosThisMon
 const DEFAULT_FILTERS: RepFilters = { search: "", territory: "", status: "ALL", page: 1, pageSize: 6 };
 
 const MarketingTeamPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<MarketingTab>("team-overview");
   const [filters, setFilters]     = useState<RepFilters>(DEFAULT_FILTERS);
-  const [addOpen, setAddOpen]     = useState(false);
 
   const { data, isLoading } = useReps(filters);
   const { data: stats }     = useMarketingStats();
@@ -53,7 +53,7 @@ const MarketingTeamPage = () => {
               <span className="xs:hidden">Export</span>
             </Button>
             <Button
-              onClick={() => setAddOpen(true)}
+              onClick={() => navigate("/superadmin/marketing/add")}
               className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
             >
               <UserPlus size={14} />

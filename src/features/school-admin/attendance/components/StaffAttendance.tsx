@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { CalendarDays, CheckCircle2, XCircle, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useStaffList, useStaffAttendanceRange } from "../hooks/useAttendance";
-import { useAttendanceStore } from "../store";
 import type { StaffAttendanceStatusValue } from "../../../../services/attendance.api";
 
 const selectCls = "h-9 pl-3 pr-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 transition-colors cursor-pointer";
@@ -29,7 +29,7 @@ const fmt = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
 const StaffAttendance = () => {
-  const { openMarkStaffAttendance } = useAttendanceStore();
+  const navigate = useNavigate();
   const { data: staffData, isLoading: staffListLoading } = useStaffList();
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -104,7 +104,7 @@ const StaffAttendance = () => {
             Staff Attendance{searched && staffId && selectedStaffName ? ` — ${selectedStaffName}` : ""}
           </h3>
           <button
-            onClick={openMarkStaffAttendance}
+            onClick={() => navigate("/schooladmin/attendance/mark-staff")}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" />

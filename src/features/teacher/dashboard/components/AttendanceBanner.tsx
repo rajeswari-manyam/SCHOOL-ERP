@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AlertCircle, Check, Send, MessageCircle } from "lucide-react";
 import  ProgressRing  from "@/components/ui/progress-ring";
 import type { AttendanceBanner as AttendanceBannerType } from "../types/teacher-dashboard.types";
 import { useMarkAttendanceViaWA } from "../hooks/useTeacherDashboard";
-import MarkAttendanceModal from "./MarkAttendanceModal";
 
 interface AttendanceBannerProps {
   banner: AttendanceBannerType;
@@ -50,7 +49,9 @@ function StatPill({
 
 // ── AttendanceBanner ──────────────────────────────────────────────────────────
 const AttendanceBanner = ({ banner }: AttendanceBannerProps) => {
-  const [webModalOpen, setWebModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const goToMarkAttendance = () =>
+    navigate("/teacher/dashboard/mark-attendance", { state: { totalStudents: banner.totalStudents } });
   const { mutate: markViaWA, isPending } = useMarkAttendanceViaWA();
 
   const pct =
@@ -149,18 +150,12 @@ const AttendanceBanner = ({ banner }: AttendanceBannerProps) => {
           </p>
         </div>
 
-        <MarkAttendanceModal
-          open={webModalOpen}
-          onClose={() => setWebModalOpen(false)}
-          totalStudents={banner.totalStudents}
-        />
       </div>
     );
   }
 
   // ── NOT_MARKED state ─────────────────────────────────────────────────────────
   return (
-    <>
       <div
         role="alert"
         className={[
@@ -211,7 +206,7 @@ const AttendanceBanner = ({ banner }: AttendanceBannerProps) => {
 
           <button
             type="button"
-            onClick={() => setWebModalOpen(true)}
+            onClick={goToMarkAttendance}
             className={[
               "flex w-full items-center justify-center gap-1.5 sm:w-auto",
               "rounded-xl border border-red-300 dark:border-red-700",
@@ -227,13 +222,6 @@ const AttendanceBanner = ({ banner }: AttendanceBannerProps) => {
           </button>
         </div>
       </div>
-
-      <MarkAttendanceModal
-        open={webModalOpen}
-        onClose={() => setWebModalOpen(false)}
-        totalStudents={banner.totalStudents}
-      />
-    </>
   );
 };
 

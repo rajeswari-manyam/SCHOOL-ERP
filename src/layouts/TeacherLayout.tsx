@@ -7,7 +7,7 @@ import { Outlet } from "react-router-dom";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
-import { FaThLarge, FaUserCheck, FaUserFriends, FaClipboard, FaCalendarAlt, FaCalendarTimes, FaCalendarCheck, FaGraduationCap, FaSignOutAlt, FaMoneyBill, FaBullhorn, FaUserCircle } from "react-icons/fa";
+import { FaThLarge, FaUserCheck, FaUserFriends, FaClipboard, FaCalendarAlt, FaCalendarTimes, FaCalendarCheck, FaGraduationCap, FaSignOutAlt, FaMoneyBill, FaBullhorn } from "react-icons/fa";
 
 // Shown in the content area while a route's code chunk downloads — the
 // sidebar/topbar stay mounted so navigation doesn't flash a blank page.
@@ -29,7 +29,6 @@ const NavItem = [
   { label: "Leave", to: "/teacher/leave", icon: <FaSignOutAlt /> },
   { label: "Payslip", to: "/teacher/payslip", icon: <FaMoneyBill /> },
   { label: "Announcements", to: "/teacher/announcements", icon: <FaBullhorn /> },
-  { label: "My Profile", to: "/teacher/profile", icon: <FaUserCircle /> },
 ];
 
 
@@ -65,6 +64,7 @@ export const TeacherLayout = () => {
           role: user?.userType ?? user?.role?.name ?? "Teacher",
           avatar: user?.image ?? undefined,
         }}
+        profilePath="/teacher/profile"
       />
       <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar />

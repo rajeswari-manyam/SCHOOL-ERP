@@ -16,6 +16,7 @@ import {
   FaClipboardList,
   FaTicketAlt,
   FaChartBar,
+  FaCreditCard,
 } from "react-icons/fa";
 
 import Sidebar from "../components/common/Sidebar";
@@ -50,6 +51,8 @@ const BreadcrumbLabels: Record<string, string> = {
   "/schooladmin/reports": "Reports",
   "/schooladmin/results": "Results",
   "/schooladmin/settings": "Settings",
+  "/schooladmin/settings/billing": "Plan & Billing",
+  "/schooladmin/profile": "My Profile",
   "/schooladmin/support": "Support Ticket",
   "/schooladmin/support/new": "Raise Ticket",
   "/schooladmin/announcements": "Announcements",
@@ -72,6 +75,7 @@ const NavItem = [
   { label: "Announcements",  to: "/schooladmin/announcements", icon: <FaBullhorn />,  group: "Communication" },
   { label: "Support Ticket", to: "/schooladmin/support",    icon: <FaTicketAlt />,    group: "Communication" },
   { label: "Reports",        to: "/schooladmin/reports",    icon: <FaChartBar />,     group: "Reports & Settings" },
+  { label: "Plan & Billing", to: "/schooladmin/settings/billing", icon: <FaCreditCard />, group: "Reports & Settings" },
   { label: "Settings",       to: "/schooladmin/settings",   icon: <FaCog />,          group: "Reports & Settings" },
 ];
 
@@ -192,6 +196,7 @@ export const SchoolAdminLayout = () => {
             return user?.role?.name ?? "Administrator";
           })(),
         }}
+        profilePath="/schooladmin/profile"
       />
       <div className={`flex-1 flex flex-col min-h-0 min-w-0 transition-all duration-300 ${mainPadding}`}>
         <Topbar breadcrumbs={breadcrumbs} onBreadcrumb={(href) => navigate(href)} />

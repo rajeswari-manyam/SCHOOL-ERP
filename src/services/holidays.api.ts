@@ -1,5 +1,6 @@
 import api from "@/config/axios";
 import { getAuthToken } from "@/store/authStore";
+import type { HolidayImportResponse } from "@/features/school-admin/attendance/types/holidayImport.types";
 
 /* ================= TYPES ================= */
 
@@ -116,6 +117,28 @@ export const bulkAddHolidays = async (
     const message = err?.response?.data?.message ?? err?.message ?? "Bulk add failed";
     throw new Error(message);
   }
+};
+
+/**
+ * ⚠️ PENDING BACKEND INTEGRATION — UI-only per request.
+ *
+ * There is no confirmed Holiday Excel Import API yet (endpoint, method, and
+ * response shape are all unconfirmed). This intentionally throws so the
+ * Import UI (useHolidayImport → ImportHolidaysExcelPage) shows a clear
+ * "not connected yet" state instead of pretending to succeed or silently
+ * reusing bulkAddHolidays' different (non-file) contract.
+ *
+ * When a real Excel import endpoint is provided, replace this body — it
+ * must resolve to a HolidayImportResponse. Do not change the Import UI
+ * itself; it already renders whatever this returns.
+ */
+export const importHolidaysFromExcel = async (
+  _file: File
+): Promise<HolidayImportResponse> => {
+  throw new Error(
+    "Holiday Excel import is not connected to a backend API yet. The import screen is fully built — " +
+    "it will start working as soon as importHolidaysFromExcel() is wired to the real endpoint."
+  );
 };
 
 export const downloadHolidays = async (): Promise<Blob> => {

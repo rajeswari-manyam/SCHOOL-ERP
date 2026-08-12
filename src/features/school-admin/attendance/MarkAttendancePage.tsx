@@ -1,25 +1,25 @@
+// school-admin/attendance/MarkAttendancePage.tsx
+// Full-page version of the former MarkAttendanceModal popup — same data/logic,
+// just rendered as a routed page instead of a fixed overlay.
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { useAttendanceStore } from "../store";
+import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import {
   useAttendanceClasses,
   useAttendanceSections,
   useStudentsByClassSection,
   useClassAttendanceByDate,
   useSubmitAttendance,
-} from "../hooks/useAttendance";
-import {
-  getAllAttendance,
-  updateAttendanceById,
-} from "../../../../services/attendance.api";
-import type { ClassTodayStudentRecord } from "../../../../services/attendance.api";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../../../../components/ui/card";
-import { Button } from "../../../../components/ui/button";
-import { Input } from "../../../../components/ui/input";
-import { Select } from "../../../../components/ui/select";
-import { Label } from "../../../../components/ui/label";
-import { Checkbox } from "../../../../components/ui/checkbox";
-import { Badge } from "../../../../components/ui/badge";
+} from "./hooks/useAttendance";
+import { getAllAttendance, updateAttendanceById } from "@/services/attendance.api";
+import type { ClassTodayStudentRecord } from "@/services/attendance.api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 /* ─── Local state per student ─────────────────────────────────────────────── */
 interface StudentRow {
@@ -30,33 +30,27 @@ interface StudentRow {
   isMarked: boolean; // has an existing attendance record for this date
 }
 
-const MarkAttendanceModal = () => {
-  const { showMarkAttendanceModal, closeMarkAttendance, prefilledClassId, prefilledSectionId } =
-    useAttendanceStore();
+interface MarkAttendanceLocationState {
+  classId?: string;
+  sectionId?: string;
+}
+
+const MarkAttendancePage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = (location.state ?? {}) as MarkAttendanceLocationState;
+  const goBackToAttendance = () => navigate("/schooladmin/attendance");
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Selected IDs — initialised from store prefill when modal opens
-  const [selectedClassId, setSelectedClassId] = useState(prefilledClassId);
-  const [selectedSectionId, setSelectedSectionId] = useState(prefilledSectionId);
+  const [selectedClassId, setSelectedClassId] = useState(routeState.classId ?? "");
+  const [selectedSectionId, setSelectedSectionId] = useState(routeState.sectionId ?? "");
   const [date, setDate] = useState(todayStr);
 
   // Student rows local state
   const [rows, setRows] = useState<StudentRow[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Sync selections when modal opens — prefilled from the Edit button, or blank
-  // when opened via the page-level "Mark Attendance" button.
-  useEffect(() => {
-    if (showMarkAttendanceModal) {
-      setSelectedClassId(prefilledClassId);
-      setSelectedSectionId(prefilledSectionId);
-      setDate(new Date().toISOString().slice(0, 10));
-      setRows([]);
-      setSubmitError(null);
-    }
-  }, [showMarkAttendanceModal, prefilledClassId, prefilledSectionId]);
 
   // ── Fetch classes ──
   const { data: classesData, isLoading: classesLoading } = useAttendanceClasses();
@@ -196,38 +190,48 @@ const MarkAttendanceModal = () => {
     };
 
     submitMutation.mutate(payload, {
-      onSuccess: () => toast.success("Attendance submitted successfully"),
+      onSuccess: () => {
+        toast.success("Attendance submitted successfully");
+        goBackToAttendance();
+      },
       onError: (err: any) =>
         setSubmitError(err?.response?.data?.message ?? err?.message ?? "Failed to submit attendance"),
     });
-  }, [selectedClassId, selectedSectionId, rows, sectionsData, submitMutation]);
-
-  if (!showMarkAttendanceModal) return null;
+  }, [selectedClassId, selectedSectionId, rows, sectionsData, submitMutation, date]);
 
   const loading = studentsLoading || attendanceLoading;
   const bothSelected = !!selectedClassId && !!selectedSectionId;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <Card className="w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="max-w-3xl mx-auto space-y-4">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        <button type="button" onClick={goBackToAttendance} className="hover:text-indigo-600 transition-colors font-medium">
+          Attendance
+        </button>
+        <span>›</span>
+        <span className="text-gray-700 font-semibold">Mark Attendance</span>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
         {/* Header */}
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-gray-100">
-          <div>
-            <CardTitle className="text-lg">Mark Attendance</CardTitle>
-            <CardDescription>Select class and section to mark attendance</CardDescription>
+        <div className="flex items-start justify-between px-5 sm:px-7 pt-5 pb-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <ClipboardCheck size={16} />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900 leading-tight">Mark Attendance</h1>
+              <p className="text-xs text-gray-400 mt-0.5">Select class and section to mark attendance</p>
+            </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-10 w-10 rounded-full p-0 text-gray-400 hover:text-gray-600"
-            onClick={closeMarkAttendance}
-          >
-            <span className="text-2xl leading-none">&times;</span>
+          <Button onClick={goBackToAttendance} variant="ghost" size="sm" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 shrink-0">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-        </CardHeader>
+        </div>
 
         {/* Class / Section / Date row */}
-        <CardContent className="px-6 py-4 bg-slate-50/60">
+        <div className="px-5 sm:px-7 py-4 bg-slate-50/60 border-b border-gray-100">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Class */}
             <div>
@@ -282,11 +286,11 @@ const MarkAttendanceModal = () => {
               />
             </div>
           </div>
-        </CardContent>
+        </div>
 
         {/* Submit error (e.g. holiday / non-working day) */}
         {submitError && (
-          <div className="px-6 pt-4">
+          <div className="px-5 sm:px-7 pt-4">
             <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">
               <span className="text-red-500 text-base leading-none">⚠</span>
               <span>{submitError}</span>
@@ -295,7 +299,7 @@ const MarkAttendanceModal = () => {
         )}
 
         {/* Student list */}
-        <CardContent className="flex-1 overflow-y-auto min-h-[200px]">
+        <div className="flex-1 overflow-y-auto min-h-[200px] px-5 sm:px-7">
           {!bothSelected ? (
             <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
               Select a class and section to view students
@@ -321,7 +325,7 @@ const MarkAttendanceModal = () => {
           ) : (
             <>
               {/* Stats + bulk actions */}
-              <div className="px-6 py-3 border-b border-gray-100 -mx-6">
+              <div className="py-3 border-b border-gray-100">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Student Attendance</p>
@@ -341,11 +345,11 @@ const MarkAttendanceModal = () => {
               </div>
 
               {/* Rows */}
-              <div className="divide-y divide-gray-50 -mx-6">
+              <div className="divide-y divide-gray-50">
                 {rows.map((student, idx) => (
                   <div
                     key={student.studentId}
-                    className={`flex items-center justify-between px-6 py-2.5 hover:bg-gray-50 transition-colors ${
+                    className={`flex items-center justify-between py-2.5 hover:bg-gray-50 transition-colors ${
                       !student.isPresent ? "bg-red-50" : ""
                     }`}
                   >
@@ -390,18 +394,19 @@ const MarkAttendanceModal = () => {
           )}
 
           {/* WhatsApp notice */}
-          <div className="px-6 py-3 bg-amber-50 border-t border-amber-100 -mx-6 mt-2">
-            <div className="flex items-center gap-2">
+          <div className="py-3 bg-amber-50 border-t border-amber-100 mt-2">
+            <div className="flex items-center gap-2 px-2">
               <span className="text-amber-500 text-sm">&#9888;</span>
               <p className="text-xs text-amber-700 italic">
                 Parent WhatsApp alerts will be sent automatically for all absent students.
               </p>
             </div>
           </div>
-        </CardContent>
+        </div>
 
-        <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 p-6 border-t border-gray-100">
-          <Button variant="ghost" onClick={closeMarkAttendance} className="w-full sm:w-auto">
+        {/* Footer */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 px-5 sm:px-7 py-4 border-t border-gray-100 shrink-0">
+          <Button variant="ghost" onClick={goBackToAttendance} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button
@@ -421,10 +426,10 @@ const MarkAttendanceModal = () => {
               "Submit Attendance"
             )}
           </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default MarkAttendanceModal;
+export default MarkAttendancePage;

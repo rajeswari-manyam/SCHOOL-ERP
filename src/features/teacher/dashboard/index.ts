@@ -5,7 +5,7 @@ export { default as TodayScheduleCard } from "./components/TodayScheduleCard";
 export { default as QuickActionsCard } from "./components/QuickActionsCard";
 export { default as HomeworkDueCard } from "./components/HomeworkDueCard";
 export { default as ClassOverviewCard } from "./components/ClassOverviewCard";
-export { default as MarkAttendanceModal } from "./components/MarkAttendanceModal";
+export { default as MarkAttendancePage } from "./MarkAttendancePage";
 export { default as AssignHomeworkModal } from "./components/AssignHomeworkModal";
 export { ApplyLeaveModal, UploadMaterialModal } from "./components/TeacherModals";
 export {

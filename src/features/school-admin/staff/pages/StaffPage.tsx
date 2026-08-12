@@ -108,12 +108,12 @@ export default function StaffManagementPage() {
         {/* Right: CTA */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
-            onClick={() => navigate("/schooladmin/staff/bulk-add")}
+            onClick={() => navigate("/schooladmin/staff/import")}
             variant="outline"
             className="gap-1.5 text-xs px-3 h-9 whitespace-nowrap rounded-xl"
           >
             <span className="text-sm leading-none font-bold">⇅</span>
-            <span className="hidden sm:inline">Bulk Add</span>
+            <span className="hidden sm:inline">Import</span>
           </Button>
           <Button
             onClick={() => navigate("/schooladmin/staff/add")}

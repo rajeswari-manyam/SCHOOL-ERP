@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, getDaysInMonth, startOfMonth } from "date-fns";
 import { ClipboardCheck, ChevronLeft, ChevronRight, CalendarDays, List } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -8,7 +9,6 @@ import {
   useStaffAttendanceByStaffId,
 } from "./hooks/useAttendance";
 import MyHistoryTab from "./components/MyHistoryTab";
-import MarkStudentAttendanceModal from "./components/MarkStudentAttendaceModal";
 import type { StaffAttendanceRecord } from "@/services/attendance.api";
 import { getAllHolidays } from "@/services/holidays.api";
 import { fetchAllWorkingDays } from "@/services/working-days.api";
@@ -374,12 +374,12 @@ type TabKey = "class" | "mine";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const MyAttendancePage = () => {
+  const navigate = useNavigate();
   const activeTeacherId = useAuthStore((s) => s.user?.id ?? "");
   const todayStr = new Date().toISOString().slice(0, 10);
   const [historyFromDate, setHistoryFromDate] = useState(todayStr);
   const [historyToDate,   setHistoryToDate]   = useState(todayStr);
   const [activeTab, setActiveTab] = useState<TabKey>("class");
-  const [markAttendanceOpen, setMarkAttendanceOpen] = useState(false);
 
   const { data: todayData, isLoading: todayLoading } = useTodayAttendanceSummary(activeTeacherId);
   const { data: rangeSummaryData, isLoading: rangeLoading } = useTeacherAttendanceSummaryRange(
@@ -412,7 +412,9 @@ const MyAttendancePage = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap self-start">
           <button
-            onClick={() => setMarkAttendanceOpen(true)}
+            onClick={() => navigate("/teacher/attendance/mark", {
+              state: { classId: today.classId ?? "", sectionId: today.sectionId ?? "" },
+            })}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition-colors"
           >
             <ClipboardCheck size={13} />
@@ -458,13 +460,6 @@ const MyAttendancePage = () => {
       {activeTab === "mine" && (
         <MyStaffAttendanceTab staffId={activeTeacherId} />
       )}
-
-      <MarkStudentAttendanceModal
-        open={markAttendanceOpen}
-        onClose={() => setMarkAttendanceOpen(false)}
-        defaultClassId={today.classId ?? ""}
-        defaultSectionId={today.sectionId ?? ""}
-      />
     </div>
   );
 };

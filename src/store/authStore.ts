@@ -46,6 +46,16 @@ export const USER_TYPE_ROLE_MAP: Record<string, string> = {
   student:          "student",
 };
 
+// ── Role names a school admin can actually type into the "Role" field when
+// creating a staff member (Add Staff / Bulk Add) that grant portal login.
+// A typo here (e.g. "Accountent") won't match USER_TYPE_ROLE_MAP above, so
+// that staff member's role silently falls back to a lowercase-typo string
+// instead of a valid role key — ProtectedRoute then rejects them and they
+// bounce straight back to /login with no explanation. Used to flag likely
+// typos of these specific names before they're ever saved. SuperAdmin/
+// Parent/Student are excluded — they aren't created through the staff form.
+export const PORTAL_STAFF_ROLES = ["Admin", "SchoolAdmin", "Teacher", "Class Teacher", "Accountant"];
+
 // ── Store interface ───────────────────────────────────────────────────────────
 interface AuthState {
   user: AuthUser | null;
@@ -187,10 +197,15 @@ export const useAuthStore = create<AuthState>()(
             role:        profile.role  ?? current.role,
             permissions: profile.permissions ?? current.permissions,
             schoolcode:  d.school_code ?? current.schoolcode,
-            // schoolImage (Admin's own photo, set via School Profile) takes
-            // priority over the staff record's own `image` field.
-            image:       profile.schoolImage ?? d.image ?? current.image,
+            // The person's own photo (staff record's `image`) always wins —
+            // schoolImage/schoolLogo is only a fallback for accounts with no
+            // personal photo uploaded (e.g. a School Admin who never set one).
+            image:       d.image ?? profile.schoolImage ?? current.image,
             principalName: profile.principalName ?? current.principalName,
+            // Kept distinct (not folded into `image`) so profile pages can
+            // show the school's own branding as its own section.
+            schoolImage: profile.schoolImage ?? current.schoolImage,
+            schoolLogo:  profile.schoolLogo  ?? current.schoolLogo,
           },
         });
       },

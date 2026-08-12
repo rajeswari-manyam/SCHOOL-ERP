@@ -23,6 +23,7 @@ const StudentLedgerPage     = lazy(() => import("./ledger/pages/StudentLedgerPag
 const AttendancePage        = lazy(() => import("./attendance/pages/AttendancePage"));
 const LeavePage              = lazy(() => import("./leave/LeavePage"));
 const ApplyLeavePage        = lazy(() => import("./leave/ApplyLeavePage"));
+const ProfilePage           = lazy(() => import("./profile/pages/ProfilePage"));
 
 // Once the dashboard is idle, quietly prefetch every other page's chunk in
 // the background so clicking a sidebar link resolves instantly instead of
@@ -45,6 +46,7 @@ function usePrefetchOtherPages() {
       import("./attendance/pages/AttendancePage");
       import("./leave/LeavePage");
       import("./leave/ApplyLeavePage");
+      import("./profile/pages/ProfilePage");
     };
 
     const w = window as Window & {
@@ -89,6 +91,7 @@ export default function AccountantRouter() {
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="leave" element={<LeavePage />} />
         <Route path="leave/apply" element={<ApplyLeavePage />} />
+        <Route path="profile" element={<ProfilePage />} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />

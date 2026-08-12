@@ -90,6 +90,7 @@ export const getStudentById = async (
 };
 /* ===== Merged from school-students.api.ts (Student type aliased to AdminStudentUI to avoid collision with the Student interface above) ===== */
 import type { CreateStudentPayload, UpdateStudentPayload, UpdateParentPayload, Student as AdminStudentUI } from "@/features/school-admin/students/types/student.types";
+import type { StudentImportResponse } from "@/features/school-admin/students/types/studentImport.types";
 import { getAllClasses } from "@/services/class.api";
 import { getSectionsByClassId, getAllSections } from "@/services/section.api";
 
@@ -366,6 +367,26 @@ export const studentsApi = {
       feeStatus: (String(camel.feeStatus ?? camel.fee ?? camel.feePaymentStatus ?? "PENDING")).toUpperCase(),
       status: (String(camel.status ?? camel.studentStatus ?? "ACTIVE")).toUpperCase(),
     } as AdminStudentUI;
+  },
+
+  /**
+   * ⚠️ PENDING BACKEND INTEGRATION.
+   *
+   * The backend team has not yet provided the Student Excel Import API —
+   * its HTTP method, endpoint, multipart field name, and response shape are
+   * all unconfirmed. Do NOT guess these. This intentionally throws so the
+   * Import UI (useStudentImport → ImportStudentsExcelPage) shows a clear
+   * "not connected yet" state instead of pretending to succeed.
+   *
+   * When the real API is provided, replace this body with the actual call —
+   * it must resolve to a StudentImportResponse. Do not change the Import UI
+   * itself; it already renders whatever this returns.
+   */
+  importFromExcel: async (_file: File): Promise<StudentImportResponse> => {
+    throw new Error(
+      "Student Excel import is not connected to a backend API yet. The import screen is fully built — " +
+      "it will start working as soon as studentsApi.importFromExcel() is wired to the real endpoint."
+    );
   },
 
   bulkCreateStudents: async (students: CreateStudentPayload[]): Promise<AdminStudentUI[]> => {

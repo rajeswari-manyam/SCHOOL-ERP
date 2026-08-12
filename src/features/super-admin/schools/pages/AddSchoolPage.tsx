@@ -98,7 +98,44 @@ const STEP1_FIELDS = [
   "schoolInfo.address", "schoolInfo.whatsappNumber",
 ] as const;
 
-const STATES = ["Telangana","Andhra Pradesh","Maharashtra","Karnataka","Tamil Nadu","Kerala","Gujarat","Rajasthan","Delhi","Uttar Pradesh","West Bengal"];
+const STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+];
 const BOARDS = ["CBSE","ICSE","State Board","IB","IGCSE"];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -236,25 +273,25 @@ function StepSchoolInfo({ data, errors, onChange, mode, existingPhotos }: {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
       <Field label="School Name" required error={errors.school_name}>
         <Input value={data.school_name} onChange={(e) => onChange("school_name", e.target.value)}
-          placeholder="St. Mary's CBSE School" variant={errors.school_name ? "error" : "default"} />
+          placeholder="Enter school name" variant={errors.school_name ? "error" : "default"} />
       </Field>
       <Field label="School Code" required error={errors.school_code}
         hint={mode === "edit" ? "School code cannot be changed" : undefined}>
         <Input value={data.school_code} onChange={(e) => onChange("school_code", e.target.value)}
-          placeholder="STMARYS001" variant={errors.school_code ? "error" : "default"}
+          placeholder="Enter school code" variant={errors.school_code ? "error" : "default"}
           disabled={mode === "edit"} />
       </Field>
       <Field label="School Phone Number" required error={errors.schoolNumber} hint="Landline or main contact number for the school">
         <Input value={data.schoolNumber} onChange={(e) => onChange("schoolNumber", e.target.value)}
-          placeholder="7998877665" variant={errors.schoolNumber ? "error" : "default"} />
+          placeholder="Enter phone number" variant={errors.schoolNumber ? "error" : "default"} />
       </Field>
       <Field label="Email" error={errors.email} hint="Optional: school contact email">
         <Input type="email" value={data.email} onChange={(e) => onChange("email", e.target.value)}
-          placeholder="principal@school.com" variant={errors.email ? "error" : "default"} />
+          placeholder="Enter email" variant={errors.email ? "error" : "default"} />
       </Field>
       <Field label="City" required error={errors.city}>
         <Input value={data.city} onChange={(e) => onChange("city", e.target.value)}
-          placeholder="Hanamkonda" variant={errors.city ? "error" : "default"} />
+          placeholder="Enter city" variant={errors.city ? "error" : "default"} />
       </Field>
       <Field label="State" required error={errors.state}>
         <Select value={data.state} onChange={(e) => onChange("state", e.target.value)}
@@ -267,20 +304,20 @@ function StepSchoolInfo({ data, errors, onChange, mode, existingPhotos }: {
           className={errors.board ? "border-red-500" : undefined} />
       </Field>
       <Field label="Pincode" required error={errors.pincode}>
-        <Input value={data.pincode} maxLength={6} onChange={(e) => onChange("pincode", e.target.value)} placeholder="506001"
+        <Input value={data.pincode} maxLength={6} onChange={(e) => onChange("pincode", e.target.value)} placeholder="Enter pincode"
           variant={errors.pincode ? "error" : "default"} />
       </Field>
       <Field label="Website" hint="Optional: add the school website">
         <Input type="url" value={data.website} onChange={(e) => onChange("website", e.target.value)}
-          placeholder="https://www.stmarys.edu" variant={errors.website ? "error" : "default"} />
+          placeholder="Enter website URL" variant={errors.website ? "error" : "default"} />
       </Field>
       <Field label="Established Year" error={errors.establishedYear}>
         <Input type="number" value={data.establishedYear} min={1800} max={2024}
-          onChange={(e) => onChange("establishedYear", e.target.value)} placeholder="2005" />
+          onChange={(e) => onChange("establishedYear", e.target.value)} placeholder="Enter established year" />
       </Field>
       <Field label="Total School Strength" error={errors.totalSchoolstrength} hint="Optional: total number of students">
         <Input type="number" value={data.totalSchoolstrength} min={0}
-          onChange={(e) => onChange("totalSchoolstrength", e.target.value)} placeholder="500"
+          onChange={(e) => onChange("totalSchoolstrength", e.target.value)} placeholder="Enter total school strength"
           variant={errors.totalSchoolstrength ? "error" : "default"} />
       </Field>
       <FileUploadField label="School Logo" hint={mode === "edit" ? "Managed separately" : "Optional: upload the school logo"}
@@ -301,7 +338,7 @@ function StepSchoolInfo({ data, errors, onChange, mode, existingPhotos }: {
         <Field label="WhatsApp Business Number" required error={errors.whatsappNumber}
           hint="This number will send all automated WhatsApp messages to parents">
           <PhoneInput id="whatsappNumber" value={data.whatsappNumber} onChange={(v) => onChange("whatsappNumber", v)}
-            placeholder="90000 12345" error={errors.whatsappNumber} />
+            placeholder="Enter WhatsApp Business Number" error={errors.whatsappNumber} />
         </Field>
       </div>
     </div>
@@ -397,7 +434,7 @@ function StepPlanBilling({ data, subscriptionId, subscriptionIdError, subscripti
         <div className="mt-3">
           <Label className="text-[11px] font-bold uppercase tracking-[0.07em] text-amber-700">Razorpay Order ID</Label>
           <Input value={data.razorpayOrderId} onChange={(e) => onBillingChange("razorpayOrderId", e.target.value)}
-            placeholder="RZP_ORD_XXXXXX" className="mt-1 bg-white" />
+            placeholder="Enter Razorpay Order ID" className="mt-1 bg-white" />
         </div>
       </div>
     </div>
@@ -426,15 +463,15 @@ function StepAdminSetup({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
         <Field label="Principal Name" required error={principalNameError}>
           <Input value={principalName} onChange={(e) => onPrincipalNameChange(e.target.value)}
-            placeholder="Mr. Ramesh Kumar" variant={principalNameError ? "error" : "default"} />
+            placeholder="Enter principal name" variant={principalNameError ? "error" : "default"} />
         </Field>
         <Field label="Admin Phone Number" required error={adminPhoneError}>
           <PhoneInput id="adminPhone" value={adminPhone} onChange={onAdminPhoneChange}
-            placeholder="98765 43210" error={adminPhoneError} />
+            placeholder="Enter admin phone number" error={adminPhoneError} />
         </Field>
         <Field label="Admin Email" required error={errors.adminEmail}>
           <Input type="email" value={data.adminEmail} onChange={(e) => onChange("adminEmail", e.target.value)}
-            placeholder="admin@school.com" variant={errors.adminEmail ? "error" : "default"} />
+            placeholder="Enter admin email" variant={errors.adminEmail ? "error" : "default"} />
         </Field>
         <FileUploadField label="Principal Photo" hint={mode === "edit" ? "Managed separately" : "Optional: upload the principal's photo"}
           file={principalPhoto} onChange={onPrincipalPhotoChange}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Edit3, FileText, MoreVertical, MessageCircle, ArrowLeft, UserPlus } from "lucide-react";
+import { Edit3, FileText, MoreVertical, ArrowLeft, UserPlus } from "lucide-react";
 import { useStudentProfile } from "../hooks/useStudents";
 import { useStudentAttendance } from "../hooks/useStudentAttendance";
 import { StatusBadge, FeeBadge } from "./StudentBadge";
@@ -245,7 +245,6 @@ const StudentProfilePage = () => {
                 </div>
               )}
               <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-4">
-                <InfoRow label="Admitted On" value={student.admittedOn} />
                 <InfoRow label="Academic Year" value={student.academicYear} />
               </div>
             </div>
@@ -295,17 +294,6 @@ const StudentProfilePage = () => {
                   <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Last Activity</p>
                   <p className="text-xs text-gray-600">Today 8:47 AM</p>
                   <p className="text-xs text-gray-400">Attendance marked for 7 Apr 2025</p>
-                </div>
-              </div>
-            </div>
-
-            {/* WhatsApp concierge */}
-            <div className="bg-[#25d366] rounded-2xl p-4 text-white">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs">Parent Concierge</p>
-                  <p className="text-[10px] opacity-80">Direct support via WhatsApp</p>
                 </div>
               </div>
             </div>

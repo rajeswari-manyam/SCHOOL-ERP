@@ -156,6 +156,21 @@ const response = await verifyOtp({
       const verifiedUserType = (response.userType ?? rawUserType) as UserType;
       const isParent = verifiedUserType.toLowerCase() === "parent";
 
+      // ── Guard: unrecognized role ───────────────────────────────────────────
+      // If this account's stored role doesn't match any known portal role
+      // (e.g. it was saved as "Accountent" — a typo of "Accountant" — when
+      // the staff record was created), USER_TYPE_ROUTE_MAP has no entry for
+      // it. Without this check, the code below would still commit a token
+      // to the auth store and then silently redirect back to /login (since
+      // ProtectedRoute's role check would fail too) with no explanation —
+      // looking exactly like "the OTP was right but login didn't work."
+      if (!USER_TYPE_ROUTE_MAP[verifiedUserType]) {
+        const msg = `Your account's role ("${verifiedUserType}") isn't recognized by the system. Please contact your school administrator to fix this.`;
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
       // ── Step 2: commit token to Zustand IMMEDIATELY ───────────────────────
       // The axios interceptor reads useAuthStore.getState().token — NOT
       // localStorage directly.  setAuth must run before getUserById so the

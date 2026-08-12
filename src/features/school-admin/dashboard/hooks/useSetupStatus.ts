@@ -116,6 +116,13 @@ export function useSetupStatus() {
     },
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    // Always refetch when a component (re)mounts this query — e.g. navigating
+    // back to the dashboard right after finishing the last setup step on
+    // another page. Without this, a fetch inside the 30s staleTime window
+    // shows stale "not done" data until a full page reload (see the
+    // "Refresh status" button in SetupWizard, which was a workaround for
+    // exactly this).
+    refetchOnMount: 'always',
     retry: false,
   });
 }

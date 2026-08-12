@@ -122,7 +122,13 @@ const AddStudentPage = () => {
   const { classes, loading: classesLoading, error: classesError, retry: retryClasses } = useClassesList(academicYearId);
   const { sections, loading: sectionsLoading, error: sectionsError, retry: retrySections } = useSectionsList(selectedClassId);
 
-  const [generatedAdmNo] = useState(() => formatAdmissionNo(getNextAdmissionNumber(students)));
+  // Recomputed whenever `students` changes — it starts empty and loads
+  // asynchronously, so a one-shot useState here would freeze on "ADM-001"
+  // forever (computed before the real list ever arrived).
+  const generatedAdmNo = useMemo(
+    () => formatAdmissionNo(getNextAdmissionNumber(students)),
+    [students]
+  );
   const [selectedParentId, setSelectedParentId] = useState("");
 
   const goBackToList = () => navigate("/schooladmin/students");

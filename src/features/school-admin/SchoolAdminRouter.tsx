@@ -11,16 +11,20 @@ import SchoolAdminLayout from "../../layouts/SchoolAdminLayout";
 // imports it.
 const DashboardPage         = lazy(() => import("../school-admin/dashboard/DashboardPage").then(m => ({ default: m.DashboardPage })));
 const AttendancePage        = lazy(() => import("../school-admin/attendance/AttendancePage"));
+const MarkAttendancePage    = lazy(() => import("../school-admin/attendance/MarkAttendancePage"));
+const MarkStaffAttendancePage = lazy(() => import("../school-admin/attendance/MarkStaffAttendancePage"));
 const HolidaysPage          = lazy(() => import("../school-admin/attendance/HolidaysPage"));
+const AddHolidayPage        = lazy(() => import("../school-admin/attendance/AddHolidayPage"));
+const ImportHolidaysExcelPage = lazy(() => import("../school-admin/attendance/ImportHolidaysExcelPage"));
 const StaffManagementPage   = lazy(() => import("../school-admin/staff/pages/StaffPage"));
 const StaffProfilePage      = lazy(() => import("../school-admin/staff/pages/StaffProfilePage"));
 const AddStaffPage          = lazy(() => import("../school-admin/staff/components/AddStaffPage").then(m => ({ default: m.AddStaffPage })));
-const BulkAddStaffPage      = lazy(() => import("../school-admin/staff/components/BulkAddStaffPage"));
+const ImportStaffExcelPage  = lazy(() => import("../school-admin/staff/components/ImportStaffExcelPage"));
 const LeavesPage            = lazy(() => import("../school-admin/staff/pages/LeavesPage"));
 const StudentsPage          = lazy(() => import("../school-admin/students/StudentsPage"));
 const StudentProfilePage    = lazy(() => import("../school-admin/students/components/StudentProfilePage"));
 const AddStudentPage        = lazy(() => import("../school-admin/students/components/AddStudentPage"));
-const BulkAddStudentPage    = lazy(() => import("../school-admin/students/components/BulkAddStudentPage"));
+const ImportStudentsExcelPage = lazy(() => import("../school-admin/students/components/ImportStudentsExcelPage"));
 const PromoteStudentsPage   = lazy(() => import("../school-admin/students/components/PromoteStudentsPage"));
 const AdmissionsPage        = lazy(() => import("../school-admin/admissions/AdmissionsPage").then(m => ({ default: m.AdmissionsPage })));
 const AddEnquiryPage        = lazy(() => import("../school-admin/admissions/components/AddEnquiryPage").then(m => ({ default: m.AddEnquiryPage })));
@@ -38,6 +42,8 @@ const AcademicConfigPage    = lazy(() => import("./settings").then(m => ({ defau
 const FeeConfigPage         = lazy(() => import("./settings").then(m => ({ default: m.FeeConfigPage })));
 const UserAccountsPage      = lazy(() => import("./settings").then(m => ({ default: m.UserAccountsPage })));
 const PermissionsPage       = lazy(() => import("./settings").then(m => ({ default: m.PermissionsPage })));
+const PlanBillingPage       = lazy(() => import("./settings").then(m => ({ default: m.PlanBillingPage })));
+const MyProfilePage         = lazy(() => import("./profile/pages/ProfilePage"));
 const TimetablePage         = lazy(() => import("../school-admin/timetable/TimetablePage"));
 const ExamTimetablePage     = lazy(() => import("../school-admin/timetable/ExamTimetablePage"));
 const AddPeriodPage         = lazy(() => import("../school-admin/timetable/components/AddPeriodPage"));
@@ -149,14 +155,22 @@ export default function SchoolAdminRouter() {
         <Route path="classes"     element={<ClassesPage />} />
         <Route path="staff"       element={<StaffManagementPage />} />
         <Route path="staff/add"      element={<AddStaffPage />} />
-        <Route path="staff/bulk-add" element={<BulkAddStaffPage />} />
+        <Route path="staff/import" element={<ImportStaffExcelPage />} />
+        {/* Old Bulk Add route, replaced by Excel Import — kept as a redirect so stale links/bookmarks still land somewhere valid. */}
+        <Route path="staff/bulk-add" element={<Navigate to="/schooladmin/staff/import" replace />} />
         <Route path="staff/leaves" element={<LeavesPage />} />
         <Route path="staff/:id"   element={<StaffProfilePage />} />
         <Route path="attendance"  element={<AttendancePage />} />
+        <Route path="attendance/mark" element={<MarkAttendancePage />} />
+        <Route path="attendance/mark-staff" element={<MarkStaffAttendancePage />} />
         <Route path="holidays"    element={<HolidaysPage />} />
+        <Route path="holidays/add" element={<AddHolidayPage />} />
+        <Route path="holidays/import" element={<ImportHolidaysExcelPage />} />
         <Route path="students"    element={<StudentsPage />} />
         <Route path="students/add" element={<AddStudentPage />} />
-        <Route path="students/bulk-add" element={<BulkAddStudentPage />} />
+        <Route path="students/import" element={<ImportStudentsExcelPage />} />
+        {/* Old Bulk Add route, replaced by Excel Import — kept as a redirect so stale links/bookmarks still land somewhere valid. */}
+        <Route path="students/bulk-add" element={<Navigate to="/schooladmin/students/import" replace />} />
         <Route path="students/promote" element={<PromoteStudentsPage />} />
         <Route path="students/:id" element={<StudentProfilePage />} />
         <Route path="timetable"   element={<TimetablePage />} />
@@ -182,6 +196,8 @@ export default function SchoolAdminRouter() {
         <Route path="settings/fee-config"      element={<FeeConfigPage />} />
         <Route path="settings/user-accounts"   element={<UserAccountsPage />} />
         <Route path="settings/permissions"     element={<PermissionsPage />} />
+        <Route path="settings/billing"         element={<PlanBillingPage />} />
+        <Route path="profile" element={<MyProfilePage />} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
