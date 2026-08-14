@@ -46,7 +46,18 @@ const CriticalTicketsTable = ({ tickets, requiresAction, isLoading }: CriticalTi
       </div>
 
       {isLoading ? (
-        <div className="p-6 text-center text-sm text-gray-400 animate-pulse">Loading…</div>
+        <div className="divide-y divide-gray-50">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3 animate-pulse">
+              <div className="h-3 w-16 rounded bg-gray-100" />
+              <div className="h-3 w-24 rounded bg-gray-100" />
+              <div className="h-3 flex-1 rounded bg-gray-100" />
+              <div className="h-5 w-14 rounded-full bg-gray-100" />
+              <div className="h-3 w-16 rounded bg-gray-100" />
+              <div className="h-3 w-14 rounded bg-gray-100" />
+            </div>
+          ))}
+        </div>
       ) : tickets.length === 0 ? (
         <div className="py-10 text-center text-sm text-gray-400">No critical tickets right now.</div>
       ) : (

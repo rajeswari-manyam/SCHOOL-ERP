@@ -5,29 +5,15 @@ import PlatformStatCards from "./components/PlatformStatCards";
 import PlatformHealthCard from "./components/PlatformHealthCard";
 import RecentSchoolsCard from "./components/RecentSchoolsCard";
 import { useDashboard } from "./hooks/useDashboard";
+import {
+  SkeletonChartCard,
+  SkeletonTableCard,
+} from "@/components/common/skeletons";
 
 // Lazy load only heavy sections
 const SchoolActivityTable = lazy(() => import("./components/SchoolActivityTable"));
 const RevenueChart = lazy(() => import("./components/RevenueChart"));
 const CriticalTicketsTable = lazy(() => import("./components/CriticalTicketsTable"));
-
-// Skeletons
-const SectionSkeleton = () => (
-  <div className="rounded-2xl border bg-white p-5 space-y-3">
-    {[1, 2, 3, 4].map((i) => (
-      <div
-        key={i}
-        className="h-10 rounded bg-slate-100 animate-pulse"
-      />
-    ))}
-  </div>
-);
-
-const ChartSkeleton = () => (
-  <div className="rounded-2xl border bg-white p-5">
-    <div className="h-72 rounded bg-slate-100 animate-pulse" />
-  </div>
-);
 
 // Mock data for initial render
 const MOCK_STATS = {
@@ -67,7 +53,7 @@ const DashboardPage = () => {
       {/* Activity + Health */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
-          <Suspense fallback={<SectionSkeleton />}>
+          <Suspense fallback={<SkeletonTableCard rows={4} />}>
             <SchoolActivityTable
               rows={schoolActivity}
               isLoading={isLoading}
@@ -84,10 +70,11 @@ const DashboardPage = () => {
 
       {/* Revenue + Recent Schools */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Suspense fallback={<ChartSkeleton />}>
+        <Suspense fallback={<SkeletonChartCard height="h-72" />}>
           <RevenueChart
             data={revenueHistory}
             currentMrr={stats.monthlyRevenue}
+            isLoading={isLoading}
           />
         </Suspense>
 
@@ -98,7 +85,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Critical Tickets */}
-      <Suspense fallback={<SectionSkeleton />}>
+      <Suspense fallback={<SkeletonTableCard rows={4} />}>
         <CriticalTicketsTable
           tickets={criticalTickets}
           requiresAction={requiresAction}

@@ -15,6 +15,7 @@ import { RouteErrorBoundary } from "./components/common/RouteErrorBoundary";
 const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
 const OtpPage = lazy(() => import("./features/auth/pages/OtpPage"));
 const SuperAdminLoginPage = lazy(() => import("./features/auth/pages/SuperAdminLoginPage"));
+const FeePaymentPage = lazy(() => import("./features/public/feePayment/FeePaymentPage"));
 
 // Lazy-loaded routers
 const ParentRouter = lazy(() => import("./features/parent/ParentRouter"));
@@ -80,6 +81,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/otp" element={<OtpPage />} />
             <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
+            {/* Parent fee payment — no login, the token in the URL is the credential (see PAYMENTS_INTEGRATION_GUIDE.md §3.2) */}
+            <Route path="/pay/:token" element={<FeePaymentPage />} />
 
             {/* Teacher */}
             <Route

@@ -77,9 +77,14 @@ export default function AttendancePage() {
   const isModalOpen = !!selectedDay
 
   // ─── Initial data fetch ───────────────────────────────
-  // Waits for student UUIDs to resolve before calling yearly API
+  // Waits for student UUIDs to resolve before calling yearly API.
+  // Gated by activeTab: the Holidays tab renders HolidaysTab, which fetches
+  // its own data via useQuery(["parent-holidays"]) and never reads
+  // monthSummary/yearlySummary — so there's no reason to fetch/refetch
+  // monthly+yearly attendance while that tab is open.
   useEffect(() => {
     if (!studentId) return
+    if (activeTab !== "attendance") return
 
     const month = currentDate.getMonth() + 1
     const year  = currentDate.getFullYear()
@@ -97,7 +102,7 @@ export default function AttendancePage() {
       academicYearId,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentId, classId, sectionId, academicYearId])
+  }, [studentId, classId, sectionId, academicYearId, activeTab])
 
   // ─── Helpers ─────────────────────────────────────────
   function openModal(id: string, day: number, label: string, time = "") {

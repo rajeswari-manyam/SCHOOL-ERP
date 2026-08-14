@@ -1,87 +1,96 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getDashboard, getDashboardSummary } from "@/services/accountant-reports.api";
-import type {
-  DashboardRecentPayment,
-  DashboardSummary,
-} from "@/services/accountant-reports.api";
 import { getUserById } from "@/services/auth.api";
 import { useAuthStore } from "@/store/authStore";
-import type { Transaction, PaymentModeSummary, MonthlyTrendItem } from "../types/dashboard.types";
+import type {
+  Transaction,
+  PaymentModeSummary,
+  MonthlyTrendItem,
+} from "../types/dashboard.types";
 
-export const useDashboardData = () => {
-  const userId = useAuthStore((s) => s.user?.id ?? "");
-
-  const [summary,        setSummary]        = useState<DashboardSummary | null>(null);
-  const [transactions,   setTransactions]   = useState<Transaction[]>([]);
-  const [paymentModes,   setPaymentModes]   = useState<PaymentModeSummary[]>([]);
-  const [trend,          setTrend]          = useState<MonthlyTrendItem[]>([]);
-  const [accountantName, setAccountantName] = useState("");
-  const [dateOfJoin,     setDateOfJoin]     = useState("");
-
-  // Fetch accountant profile
-  useEffect(() => {
-    if (!userId) return;
-    getUserById(userId)
-      .then((res) => {
-        if (!res.status) return;
-        const d = res.data as any;
-        const name = d.name ?? d.accountant_name ?? d.first_name ?? "";
-        setAccountantName(name);
-        if (d.date_of_join) setDateOfJoin(d.date_of_join);
-      })
-      .catch(() => {});
-  }, [userId]);
-
-  // Fetch stat card summary from dedicated endpoint
-  useEffect(() => {
-    getDashboardSummary()
-      .then((res) => {
-        if (!res.status) return;
-        setSummary(res.data);
-      })
-      .catch(() => {});
-  }, []);
-
-  // Fetch transactions, payment modes, and monthly trend
-  useEffect(() => {
-    getDashboard()
-      .then((res) => {
-        if (!res.status) return;
-        const d = res.data;
-
-        setPaymentModes(
-          d.payment_mode_summary.map((p) => ({
-            mode:   p.payment_mode as PaymentModeSummary["mode"],
-            amount: p.amount,
-          }))
-        );
-
-        setTransactions(
-          d.recent_payments.map((p: DashboardRecentPayment) => ({
-            id:        p.id,
-            time:      new Date(p.createdAt).toLocaleTimeString("en-IN", {
-                         hour: "2-digit", minute: "2-digit", hour12: true,
-                       }),
-            student:   p.student.name,
-            className: p.student.admission_number,
-            feeHead:   p.fee_type === "transport" ? "Transport" : "Fee",
-            amount:    p.amount_received,
-            mode:      p.payment_mode as Transaction["mode"],
-          }))
-        );
-
-        setTrend(d.monthly_collection_trend);
-      })
-      .catch(() => {});
-  }, []);
-
-  return {
-    summary,
-    transactions,
-    paymentModes,
-    trend,
-    accountantName,
-    dateOfJoin,
-    reminder: null,
-  };
+/**
+ * Accountant dashboard data, split into three independent React Query keys so
+ * each section of the page resolves on its own. A slow/failed endpoint never
+ * blocks the others — each section renders its own skeleton until ready.
+ */
+export const ACCOUNTANT_KEYS = {
+  all: ["accountant", "dashboard"] as const,
+  summary: () => [...ACCOUNTANT_KEYS.all, "summary"] as const,
+  dashboard: () => [...ACCOUNTANT_KEYS.all, "dashboard"] as const,
+  profile: (userId: string) => [...ACCOUNTANT_KEYS.all, "profile", userId] as const,
 };
+
+interface DashboardSectionData {
+  transactions: Transaction[];
+  paymentModes: PaymentModeSummary[];
+  trend: MonthlyTrendItem[];
+}
+
+/** GET /tenant/getdashboardsummary — stat + financial summary cards */
+export function useAccountantSummary() {
+  return useQuery({
+    queryKey: ACCOUNTANT_KEYS.summary(),
+    queryFn: async () => {
+      const res = await getDashboardSummary();
+      return res?.status ? res.data : null;
+    },
+    staleTime: 60_000,
+    retry: 2,
+  });
+}
+
+/** GET /tenant/getdashboard — recent transactions, payment modes, monthly trend */
+export function useAccountantDashboard() {
+  return useQuery({
+    queryKey: ACCOUNTANT_KEYS.dashboard(),
+    queryFn: async (): Promise<DashboardSectionData> => {
+      const res = await getDashboard();
+      if (!res?.status) return { transactions: [], paymentModes: [], trend: [] };
+
+      const d = res.data;
+
+      return {
+        paymentModes: d.payment_mode_summary.map((p) => ({
+          mode: p.payment_mode as PaymentModeSummary["mode"],
+          amount: p.amount,
+        })),
+        transactions: d.recent_payments.map((p) => ({
+          id: p.id,
+          time: new Date(p.createdAt).toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }),
+          student: p.student.name,
+          className: p.student.admission_number,
+          feeHead: p.fee_type === "transport" ? "Transport" : "Fee",
+          amount: p.amount_received,
+          mode: p.payment_mode as Transaction["mode"],
+        })),
+        trend: d.monthly_collection_trend,
+      };
+    },
+    staleTime: 60_000,
+    retry: 2,
+  });
+}
+
+/** GET /tenant/getuserById — accountant display name (header only, cached long) */
+export function useAccountantProfile() {
+  const userId = useAuthStore((s) => s.user?.id ?? "");
+  return useQuery({
+    queryKey: ACCOUNTANT_KEYS.profile(userId),
+    queryFn: async () => {
+      const res = await getUserById(userId);
+      if (!res?.status) return null;
+      const d = res.data as any;
+      return {
+        name: d.name ?? d.accountant_name ?? d.first_name ?? "",
+        dateOfJoin: d.date_of_join ?? "",
+      };
+    },
+    enabled: Boolean(userId),
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
+}

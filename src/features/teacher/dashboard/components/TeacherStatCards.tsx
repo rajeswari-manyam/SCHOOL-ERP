@@ -1,4 +1,5 @@
 import { Users, FileText, CheckSquare, Calendar, BookOpen } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { UpcomingExamItem } from "@/services/examtimetable.api";
 
 interface StatCard {
@@ -8,20 +9,38 @@ interface StatCard {
   accent?: string;
   iconBg?: string;
   icon: React.ReactNode;
+  loading?: boolean;
 }
 
-const Card = ({ label, value, sub, accent = "text-gray-900", iconBg = "bg-indigo-50", icon }: StatCard) => (
+const Card = ({ label, value, sub, accent = "text-gray-900", iconBg = "bg-indigo-50", icon, loading }: StatCard) => (
   <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 flex items-center gap-3 hover:shadow-md transition-shadow duration-200">
     <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>
       {icon}
     </div>
     <div className="min-w-0 flex-1">
       <p className="text-xs text-gray-500 truncate">{label}</p>
-      <p className={`text-base font-semibold leading-tight truncate ${accent}`}>{value}</p>
-      {sub && <p className="text-[10px] text-gray-400 truncate">{sub}</p>}
+      {loading ? (
+        <div className="mt-1.5 space-y-1.5">
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-2.5 w-20" />
+        </div>
+      ) : (
+        <>
+          <p className={`text-base font-semibold leading-tight truncate ${accent}`}>{value}</p>
+          {sub && <p className="text-[10px] text-gray-400 truncate">{sub}</p>}
+        </>
+      )}
     </div>
   </div>
 );
+
+interface LoadingFlags {
+  classStrength?: boolean;
+  homework?: boolean;
+  attendance?: boolean;
+  leave?: boolean;
+  exam?: boolean;
+}
 
 interface Props {
   currentStrength: number;
@@ -33,15 +52,18 @@ interface Props {
   leaveUsed: number;
   leaveAllocated: number;
   nextExam?: UpcomingExamItem | null;
+  /** Per-card shimmer toggles — each card swaps to a skeleton until its own API resolves. */
+  loading?: LoadingFlags;
 }
 
-const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionName, homeworkPending, attendanceThisMonth, leaveUsed, leaveAllocated, nextExam }: Props) => (
+const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionName, homeworkPending, attendanceThisMonth, leaveUsed, leaveAllocated, nextExam, loading = {} }: Props) => (
   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     <Card
       label="Class Strength"
       value={`${currentStrength}/${totalStrength}`}
       sub={className ? `${className}${sectionName ? ` · ${sectionName}` : ""}` : "Total enrolled"}
       icon={<Users size={14} className="text-indigo-600" />}
+      loading={loading.classStrength}
     />
     <Card
       label="Homework Pending"
@@ -50,6 +72,7 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
       accent={homeworkPending > 0 ? "text-amber-500" : "text-gray-900"}
       iconBg={homeworkPending > 0 ? "bg-amber-50" : "bg-indigo-50"}
       icon={<FileText size={14} className={homeworkPending > 0 ? "text-amber-500" : "text-indigo-600"} />}
+      loading={loading.homework}
     />
     <Card
       label="Attendance"
@@ -58,6 +81,7 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
       accent="text-emerald-600"
       iconBg="bg-emerald-50"
       icon={<CheckSquare size={14} className="text-emerald-600" />}
+      loading={loading.attendance}
     />
     <Card
       label="Leave Balance"
@@ -66,6 +90,7 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
       accent="text-indigo-600"
       iconBg="bg-indigo-50"
       icon={<Calendar size={14} className="text-indigo-600" />}
+      loading={loading.leave}
     />
     <div className="col-span-2 sm:col-span-1">
       <Card
@@ -75,6 +100,7 @@ const TeacherStatCards = ({ currentStrength, totalStrength, className, sectionNa
         accent="text-purple-600"
         iconBg="bg-purple-50"
         icon={<BookOpen size={14} className="text-purple-600" />}
+        loading={loading.exam}
       />
     </div>
   </div>

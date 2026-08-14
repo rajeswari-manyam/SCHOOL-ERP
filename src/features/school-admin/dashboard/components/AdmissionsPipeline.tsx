@@ -4,11 +4,14 @@ import {
   Search, MessageCircle, FileText, CheckCircle, XCircle,
   UserPlus, ClipboardCheck, Receipt, Megaphone, Table2, Calendar,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { AdmissionStage } from '../types';
 
 interface AdmissionsPipelineProps {
   pipeline: AdmissionStage[];
   academicYearName?: string;
+  /** Show shimmer in the pipeline card while the enquiries API resolves. */
+  isLoading?: boolean;
 }
 
 const stageConfig = [
@@ -28,7 +31,7 @@ const quickActions = [
   { id: 'report',      label: 'Gen. Report',  icon: Table2,         path: '/schooladmin/reports'    },
 ];
 
-export function AdmissionsPipeline({ pipeline, academicYearName }: AdmissionsPipelineProps) {
+export function AdmissionsPipeline({ pipeline, academicYearName, isLoading = false }: AdmissionsPipelineProps) {
   const navigate = useNavigate();
 
   const stageCountMap = pipeline.reduce<Record<string, number>>((acc, s) => {
@@ -83,26 +86,33 @@ export function AdmissionsPipeline({ pipeline, academicYearName }: AdmissionsPip
 
         {/* ── Stage cards ── */}
         <div className="grid grid-cols-3 gap-2">
-          {stageConfig.map((stage, i) => {
-            const count = stageCountMap[stage.key] ?? 0;
-            const Icon  = stage.icon;
-            return (
-              <motion.div
-                key={stage.key}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.28 }}
-                className="rounded-lg p-2.5 flex items-center justify-between border border-gray-100 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 cursor-pointer"
-                style={{ background: '#EEF2FF' }}
-              >
-                <div>
-                  <p className={`text-base font-semibold leading-none text-gray-900 tabular-nums`}>{count}</p>
-                  <p className={`text-[10px] mt-0.5 ${stage.accent}`}>{stage.label}</p>
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-lg p-2.5 space-y-2 border border-gray-100">
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-2.5 w-12" />
                 </div>
-                <Icon className={`h-4 w-4 ${stage.accent} opacity-80 shrink-0`} strokeWidth={1.75} />
-              </motion.div>
-            );
-          })}
+              ))
+            : stageConfig.map((stage, i) => {
+              const count = stageCountMap[stage.key] ?? 0;
+              const Icon  = stage.icon;
+              return (
+                <motion.div
+                  key={stage.key}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06, duration: 0.28 }}
+                  className="rounded-lg p-2.5 flex items-center justify-between border border-gray-100 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200 cursor-pointer"
+                  style={{ background: '#EEF2FF' }}
+                >
+                  <div>
+                    <p className="text-base font-semibold leading-none text-gray-900 tabular-nums">{count}</p>
+                    <p className={`text-[10px] mt-0.5 ${stage.accent}`}>{stage.label}</p>
+                  </div>
+                  <Icon className={`h-4 w-4 ${stage.accent} opacity-80 shrink-0`} strokeWidth={1.75} />
+                </motion.div>
+              );
+            })}
         </div>
       </div>
     </div>

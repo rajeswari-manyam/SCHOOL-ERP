@@ -125,12 +125,13 @@ export const useStaffAttendanceByStaffId = (staffId: string) =>
 export const useTeacherAttendanceSummaryRange = (
   teacherId: string,
   fromDate: string,
-  toDate: string
+  toDate: string,
+  options?: { enabled?: boolean }
 ) =>
   useQuery({
     queryKey: [...ATTENDANCE_KEYS.all, "summary-range", teacherId, fromDate, toDate],
     queryFn: () => attendanceApi.getTeacherAttendanceSummaryRange(teacherId, fromDate, toDate),
-    enabled: Boolean(teacherId) && Boolean(fromDate) && Boolean(toDate),
+    enabled: Boolean(teacherId) && Boolean(fromDate) && Boolean(toDate) && (options?.enabled ?? true),
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });

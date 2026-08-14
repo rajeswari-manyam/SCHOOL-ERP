@@ -16,7 +16,7 @@ import { FeesDueSummary }      from './components/FeesDueSummary';
 import { PendingFeesModal }    from './components/PendingFeesModal';
 import { AdmissionsPipeline }  from './components/AdmissionsPipeline';
 import { PendingLeavesCard }   from './components/PendingLeavesCard';
-import { DashboardSkeleton }   from './components/DashboardSkeleton';
+import { SkeletonTableCard }   from '@/components/common/skeletons';
 import type { AttendanceClass, StatsCard } from './types/index';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
@@ -40,17 +40,17 @@ export function DashboardPage() {
   const principalName = user?.principalName?.trim();
   const greetingName  = principalName || schoolName;
 
-  const { data, isLoading, isError }                                    = useDashboard();
+  const { data, isLoading }                                  = useDashboard();
   const { data: todayAttendance, isLoading: isAttendanceLoading }       = useSchoolTodayAttendance();
   const { data: classAttendance = [], isLoading: isClassAttendanceLoading } = useAllClassesTodayAttendance();
   const { data: classStatus }      = useClassAttendanceStatus();
-  const { data: enquiriesPipeline = [] }                                = useEnquiriesPipeline();
+  const { data: enquiriesPipeline = [], isLoading: isPipelineLoading } = useEnquiriesPipeline();
   const { data: activeAcademicYear }                                    = useActiveAcademicYear();
   const { data: setupData, isLoading: isSetupLoading }                   = useSetupStatus();
   const setupItems                                                        = setupData?.items;
   const wizardState                                                       = useWizardState(setupItems);
   const { mutate: sendReminders, isPending: isSending }                 = useSendReminders();
-  const { data: feeSummary }                                            = useFeeSummary();
+  const { data: feeSummary, isLoading: isFeeSummaryLoading }            = useFeeSummary();
   const { data: pendingLeaves = [], isLoading: isPendingLeavesLoading } = usePendingLeaves();
   const { data: staffAttendanceToday, isLoading: isStaffAttendanceLoading } = useStaffAttendanceToday();
   const wizardDismissed    = useUIStore((s) => s.wizardDismissed);
@@ -155,22 +155,6 @@ export function DashboardPage() {
     );
   }
 
-  if (isLoading) return <DashboardSkeleton />;
-
-  if (isError || !data) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <p className="text-red-500 font-semibold text-sm">Failed to load dashboard data.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 text-sm font-semibold hover:bg-indigo-100 transition-colors"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
   const attendanceClasses = classAttendance;
 
   const unmarkedClasses = attendanceClasses
@@ -224,34 +208,32 @@ export function DashboardPage() {
         <StatsGrid stats={stats} loadingStatIds={loadingStatIds} />
 
         {/* ── Row 1: Attendance + Fee ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
           <div>
             {isClassAttendanceLoading && attendanceClasses.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 w-40 rounded-lg bg-gray-100" />
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-8 w-full rounded-lg bg-gray-100" />
-                  ))}
-                </div>
-              </div>
+              <SkeletonTableCard rows={3} minHeight="min-h-[220px]" />
             ) : (
               <AttendanceTable classes={attendanceClasses} onSendReminder={handleSendReminders} />
             )}
           </div>
           <div>
             <FeesDueSummary
-              totalOutstanding={feeSummary?.total_pending_fees ?? data.feeTotalOutstanding}
+              totalOutstanding={feeSummary?.total_pending_fees ?? data?.feeTotalOutstanding ?? 0}
               feeCollected={feeSummary?.fee_collection ?? 0}
-              paidPercent={data.feePaidPercent}
-              defaulters={data.feeDefaulters}
+              paidPercent={data?.feePaidPercent ?? 0}
+              defaulters={data?.feeDefaulters ?? []}
+              isLoading={isLoading || isFeeSummaryLoading}
               onViewAll={() => setShowPendingModal(true)}
             />
           </div>
         </div>
 
         {/* ── Row 2: Quick Actions + Admissions Pipeline ── */}
-        <AdmissionsPipeline pipeline={enquiriesPipeline} academicYearName={activeAcademicYear?.yearName} />
+        <AdmissionsPipeline
+          pipeline={enquiriesPipeline}
+          academicYearName={activeAcademicYear?.yearName}
+          isLoading={isPipelineLoading}
+        />
       </div>
     </motion.div>
 

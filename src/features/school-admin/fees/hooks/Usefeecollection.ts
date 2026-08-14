@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useUIStore } from "@/store/uiStore";
 import {
   getAllPendingFees,
@@ -26,6 +27,16 @@ import type {
 
 export type FeeTab = "pending" | "transactions" | "structure" | "staffsalary";
 
+// Query keys for the Structure-tab-only data (fee heads / transport slabs /
+// concessions / per-class fee structure). Kept out of the shared `load()`
+// effect below and fetched via `useQuery` with `enabled` gated on
+// `activeTab === "structure"` so they're only requested when that panel is
+// actually on screen — mirrors the pattern in useLedger.ts.
+const feeKeys = {
+  structureStatic: (academicYearId: string) => ["fees", "structure-static", academicYearId] as const,
+  classFeeStructure: (classId: string) => ["fees", "class-fee-structure", classId] as const,
+};
+
 function computeDueInfo(dueDate: string | null | undefined) {
   if (!dueDate) return { daysOverdue: null, daysRemaining: null, isDueToday: false };
   const today = new Date();
@@ -45,22 +56,36 @@ function pendingEntryToRows(entry: AllPendingFeesEntry): PendingFee[] {
     .join("")
     .toUpperCase()
     .slice(0, 2) || "?";
-  return entry.details.map((d) => ({
-    studentId: entry.student.id,
-    studentName: entry.student.name,
-    admissionNo: entry.student.id,
-    initials,
-    class: "",
-    section: "",
-    feeHead: d.feeHeadName ?? "Fee",
-    amount: d.dueAmount,
-    feeStructureId: d.feeHeadMappingId,
-    originalAmount: d.originalAmount,
-    dueDate: d.dueDate ?? "",
-    ...computeDueInfo(d.dueDate),
-    reminders: { sent: 0, total: 0 },
-    parentPhone: "",
-  }));
+  return entry.details.map((d) => {
+    const rawType = d.fee_type ?? d.type;
+    const isConcession = rawType === "concession" || !!d.feeConcessionId;
+    const isTransport =
+      !isConcession &&
+      (rawType === "transport" ||
+        (d.feeHeadName ?? "").toLowerCase().includes("transport") ||
+        !!d.transportfeeId);
+    const feeType: PendingFee["feeType"] = isConcession ? "concession" : isTransport ? "transport" : "feehead";
+
+    return {
+      studentId: entry.student.id,
+      studentName: entry.student.name,
+      admissionNo: entry.student.id,
+      initials,
+      class: "",
+      section: "",
+      feeHead: d.feeHeadName ?? "Fee",
+      amount: d.dueAmount,
+      feeStructureId: d.feeHeadMappingId,
+      feeType,
+      transportfeeId: d.transportfeeId,
+      feeConcessionId: d.feeConcessionId,
+      originalAmount: d.originalAmount,
+      dueDate: d.dueDate ?? "",
+      ...computeDueInfo(d.dueDate),
+      reminders: { sent: 0, total: 0 },
+      parentPhone: "",
+    };
+  });
 }
 
 function recordToTransaction(r: RecordFeePaymentRecord): FeeTransaction {
@@ -88,11 +113,7 @@ export function useFeeCollection() {
   const [stats, setStats] = useState<FeeStats | null>(null);
   const [pendingFees, setPendingFees] = useState<PendingFee[]>([]);
   const [transactions, setTransactions] = useState<FeeTransaction[]>([]);
-  const [feeHeads, setFeeHeads] = useState<FeeHead[]>([]);
-  const [transportSlabs, setTransportSlabs] = useState<TransportSlab[]>([]);
-  const [classFeeStructure, setClassFeeStructure] = useState<ClassFeeStructure[]>([]);
   const [periodSummary, setPeriodSummary] = useState<PeriodSummary | null>(null);
-  const [concessions, setConcessions] = useState<ConcessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [classMap, setClassMap] = useState<Map<string, string>>(new Map());
   const [sectionMap, setSectionMap] = useState<Map<string, string>>(new Map()); // sectionName → sectionId
@@ -157,13 +178,10 @@ export function useFeeCollection() {
     async function load() {
       setLoading(true);
       try {
-        const [pendingRes, recordsRes, headsRes, classesRes, transportRes, concessionsRes] = await Promise.all([
+        const [pendingRes, recordsRes, classesRes] = await Promise.all([
           getAllPendingFees(),
           getAllRecordFeePayments(),
-          getFeeHeads(),
           getAllClasses(),
-          getAllTransportFees(),
-          getAllConcessions(),
         ]);
 
         // Build class name → id map
@@ -195,28 +213,10 @@ export function useFeeCollection() {
         }
         setTransactions(txs);
 
-        // Fee heads
-        const heads: FeeHead[] = [];
-        if (headsRes.status) {
-          for (const h of headsRes.data) {
-            heads.push({ id: h.id, name: h.feeName, code: "", mandatory: false, taxable: false, gstPercent: 0, status: h.status === "Active" ? "Active" : "Inactive" });
-          }
-        }
-        setFeeHeads(heads);
-
-        // Transport fees → slabs
-        const slabs: TransportSlab[] = [];
-        if (transportRes.status) {
-          for (const t of transportRes.data) {
-            slabs.push({ slab: t.slab_name, range: `${t.from_km}–${t.to_km} KM`, monthly: t.monthly_fee, students: 0 });
-          }
-        }
-        setTransportSlabs(slabs);
-
-        // Concessions
-        if (concessionsRes?.status) {
-          setConcessions(concessionsRes.data ?? []);
-        }
+        // Note: fee heads / transport slabs / concessions (Structure-tab-only
+        // static data) are fetched separately below via `structureStaticQuery`,
+        // gated on `activeTab === "structure"` — they used to be fetched here
+        // unconditionally on every mount/academic-year change regardless of tab.
 
         // Stats - compute from real data
         const totalDue = rows.reduce((s, r) => s + r.amount, 0);
@@ -282,32 +282,73 @@ export function useFeeCollection() {
       .catch(() => {});
   }, [txClassFilter, classMap]);
 
-  // Load class fee structure when class changes
-  useEffect(() => {
-    if (!selectedClass || classMap.size === 0) return;
-    const classId = classMap.get(selectedClass);
-    if (!classId) return;
-    getFeeStructures({
-      class_id: classId,
-      section_id: "",
-      fromDate: "2000-01-01",
-      toDate: "2100-12-31",
-    })
-      .then((res) => {
-        if (!res.status) return;
-        const mapped: ClassFeeStructure[] = res.data.map((f) => ({
-          feeHeadId: f.feeHeadId,
-          feeHeadName: f.feeHeadName,
-          subtitle: "",
-          billingCycle: (f.billingCycle as "Monthly" | "Quarterly" | "Annually") || "Monthly",
-          dueDate: f.dueDate,
-          amount: f.amount,
-          annualTotal: f.amount * (f.billingCycle === "Monthly" ? 12 : f.billingCycle === "Quarterly" ? 4 : 1),
-        }));
-        setClassFeeStructure(mapped);
-      })
-      .catch(() => {});
-  }, [selectedClass, classMap]);
+  // ── Structure-tab-only data ────────────────────────────────────────────────
+  // Fee heads / transport slabs / concessions used to be fetched unconditionally
+  // in the `load()` effect above on every mount and academic-year change, even
+  // though they're only ever displayed on the Fee Structure tab. Gated here via
+  // `enabled` so they're only requested while that tab is actually active —
+  // same pattern as the tab-only queries in useLedger.ts.
+  const structureStaticQuery = useQuery({
+    queryKey: feeKeys.structureStatic(academicYearId ?? ""),
+    queryFn: async () => {
+      const [headsRes, transportRes, concessionsRes] = await Promise.all([
+        getFeeHeads(),
+        getAllTransportFees(),
+        getAllConcessions(),
+      ]);
+
+      const heads: FeeHead[] = [];
+      if (headsRes.status) {
+        for (const h of headsRes.data) {
+          heads.push({ id: h.id, name: h.feeName, code: "", mandatory: false, taxable: false, gstPercent: 0, status: h.status === "Active" ? "Active" : "Inactive" });
+        }
+      }
+
+      const slabs: TransportSlab[] = [];
+      if (transportRes.status) {
+        for (const t of transportRes.data) {
+          slabs.push({ slab: t.slab_name, range: `${t.from_km}–${t.to_km} KM`, monthly: t.monthly_fee, students: 0 });
+        }
+      }
+
+      const concessionRecords: ConcessionRecord[] = concessionsRes?.status ? (concessionsRes.data ?? []) : [];
+
+      return { heads, slabs, concessions: concessionRecords };
+    },
+    enabled: activeTab === "structure",
+  });
+
+  const feeHeads = structureStaticQuery.data?.heads ?? [];
+  const transportSlabs = structureStaticQuery.data?.slabs ?? [];
+  const concessions = structureStaticQuery.data?.concessions ?? [];
+
+  // Load class fee structure when class changes — also Structure-tab-only.
+  const selectedClassId = classMap.get(selectedClass);
+  const classFeeStructureQuery = useQuery({
+    queryKey: feeKeys.classFeeStructure(selectedClassId ?? ""),
+    queryFn: async () => {
+      const res = await getFeeStructures({
+        class_id: selectedClassId!,
+        section_id: "",
+        fromDate: "2000-01-01",
+        toDate: "2100-12-31",
+      });
+      if (!res.status) return [];
+      const mapped: ClassFeeStructure[] = res.data.map((f) => ({
+        feeHeadId: f.feeHeadId,
+        feeHeadName: f.feeHeadName,
+        subtitle: "",
+        billingCycle: (f.billingCycle as "Monthly" | "Quarterly" | "Annually") || "Monthly",
+        dueDate: f.dueDate,
+        amount: f.amount,
+        annualTotal: f.amount * (f.billingCycle === "Monthly" ? 12 : f.billingCycle === "Quarterly" ? 4 : 1),
+      }));
+      return mapped;
+    },
+    enabled: activeTab === "structure" && !!selectedClassId,
+  });
+
+  const classFeeStructure = classFeeStructureQuery.data ?? [];
 
   // Load sections when class filter changes
   useEffect(() => {

@@ -26,8 +26,8 @@ export const BillingPage: React.FC = () => {
   const [tab, setTab] = useState<TabKey>('revenue');
   const [showAllInstitutions, setShowAllInstitutions] = useState(false);
 
-  const revenueOverview = useRevenueOverview();
-  const { data: subscriptionsData, isLoading: subsLoading } = useAllSubscriptions();
+  const revenueOverview = useRevenueOverview(tab === 'revenue');
+  const { data: subscriptionsData, isLoading: subsLoading } = useAllSubscriptions(tab === 'plan-config');
   const { deleteSubscription } = useBillingMutations();
 
   const subscriptions: Subscription[] = subscriptionsData

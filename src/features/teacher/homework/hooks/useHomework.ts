@@ -183,7 +183,7 @@ export const useHomework = (): HomeworkState => {
     },
     staleTime: 1000 * 60 * 3,
     retry: 0,
-    enabled: !!teacherId,
+    enabled: !!teacherId && tab === "materials",
   });
 
   const data           = rawList;

@@ -218,16 +218,22 @@ export const useExamData = (
     }
   }, []);
 
-  /* ── Re-fetch marks whenever selected exam changes ── */
+  /* ── Re-fetch marks whenever selected exam changes (Results tab only) ── */
   useEffect(() => {
-    if (selectedResultExamId) {
+    if (activeTab === "results" && selectedResultExamId) {
       fetchMarksByExam(selectedResultExamId);
     }
-  }, [selectedResultExamId, fetchMarksByExam]);
+  }, [activeTab, selectedResultExamId, fetchMarksByExam]);
 
-  /* ── Auto-fetch on mount / param change ── */
-  useEffect(() => { fetchAllExams(); }, [fetchAllExams]);
-  useEffect(() => { fetchExamList(); }, [fetchExamList]);
+  /* ── Auto-fetch on mount / tab change, gated so each tab only fetches
+     the data it actually renders ── */
+  useEffect(() => {
+    if (activeTab === "upcoming") fetchAllExams();
+  }, [activeTab, fetchAllExams]);
+
+  useEffect(() => {
+    if (activeTab === "results") fetchExamList();
+  }, [activeTab, fetchExamList]);
 const refetchResults = useCallback(() => {
   if (selectedResultExamId) {
     fetchMarksByExam(selectedResultExamId);

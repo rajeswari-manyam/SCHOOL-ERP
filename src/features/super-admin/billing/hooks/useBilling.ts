@@ -37,12 +37,13 @@ export const billingKeys = {
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
-export function useRevenueOverview() {
+export function useRevenueOverview(enabled: boolean = true) {
   return useQuery({
     queryKey: billingKeys.revenueOverview(),
     queryFn: billingApi.getRevenueOverview,
     staleTime: 60_000,
     refetchInterval: 5 * 60_000, // auto-refresh every 5 min
+    enabled,
   });
 }
 
@@ -82,11 +83,12 @@ export function useOrganizationSchools() {
 
 // ─── Subscription Queries ──────────────────────────────────────────────────────
 
-export function useAllSubscriptions() {
+export function useAllSubscriptions(enabled: boolean = true) {
   return useQuery({
     queryKey: billingKeys.subscriptions,
     queryFn: billingApi.getAllSubscriptions,
     staleTime: 60_000,
+    enabled,
   });
 }
 

@@ -6,6 +6,7 @@ import { StatusBadge, ReminderDots } from "./Feebadges";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AddFeeConcessionModal } from "@/features/accountant/fees/components/AddFeeConcessionModal";
+import { GeneratePaymentLinkModal } from "./GeneratePaymentLinkModal";
 import {
   Table,
   TableHeader,
@@ -38,6 +39,7 @@ export function PendingFeesTable({
 }: PendingFeesTableProps) {
   const allSelected = fees.length > 0 && selectedIds.size === fees.length;
   const [concessionFee, setConcessionFee] = useState<PendingFee | null>(null);
+  const [linkFee, setLinkFee] = useState<PendingFee | null>(null);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -118,6 +120,14 @@ export function PendingFeesTable({
                   )}
                   <Button variant="ghost" size="sm" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
                     💬
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="whitespace-nowrap border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                    onClick={() => setLinkFee(fee)}
+                  >
+                    🔗 Send Link
                   </Button>
                 </div>
               </div>
@@ -200,6 +210,15 @@ export function PendingFeesTable({
                     <Button variant="ghost" size="sm" onClick={() => onSendReminder(fee)} title="Send WhatsApp reminder">
                       💬
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="whitespace-nowrap border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => setLinkFee(fee)}
+                      title="Generate an online payment link for the parent"
+                    >
+                      🔗 Send Link
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -237,6 +256,10 @@ export function PendingFeesTable({
           presetFeeStructureLabel={concessionFee.feeHead}
           presetFeeAmount={concessionFee.originalAmount ?? concessionFee.amount}
         />
+      )}
+
+      {linkFee && (
+        <GeneratePaymentLinkModal fee={linkFee} onClose={() => setLinkFee(null)} />
       )}
     </div>
   );

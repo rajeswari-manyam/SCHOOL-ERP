@@ -90,7 +90,7 @@ export const getStudentById = async (
 };
 /* ===== Merged from school-students.api.ts (Student type aliased to AdminStudentUI to avoid collision with the Student interface above) ===== */
 import type { CreateStudentPayload, UpdateStudentPayload, UpdateParentPayload, Student as AdminStudentUI } from "@/features/school-admin/students/types/student.types";
-import type { StudentImportResponse } from "@/features/school-admin/students/types/studentImport.types";
+import type { BulkImportApiResponse } from "@/features/school-admin/students/types/studentImport.types";
 import { getAllClasses } from "@/services/class.api";
 import { getSectionsByClassId, getAllSections } from "@/services/section.api";
 
@@ -370,44 +370,41 @@ export const studentsApi = {
   },
 
   /**
-   * ⚠️ PENDING BACKEND INTEGRATION.
-   *
-   * The backend team has not yet provided the Student Excel Import API —
-   * its HTTP method, endpoint, multipart field name, and response shape are
-   * all unconfirmed. Do NOT guess these. This intentionally throws so the
-   * Import UI (useStudentImport → ImportStudentsExcelPage) shows a clear
-   * "not connected yet" state instead of pretending to succeed.
-   *
-   * When the real API is provided, replace this body with the actual call —
-   * it must resolve to a StudentImportResponse. Do not change the Import UI
-   * itself; it already renders whatever this returns.
+   * ✅ CONFIRMED BACKEND CONTRACT (re-verified via Postman against the real
+   * server, 2026-08-13 — superseding an earlier, wrong guess). POST
+   * /tenant/students/bulk takes the WHOLE Excel/CSV file in a single
+   * request, field name `file` — the backend parses every row itself and
+   * creates all students server-side in one call. It does NOT take one
+   * student's fields per call; an earlier version of this function guessed
+   * that shape and it was wrong (confirmed by a real request returning
+   * `{ status: true, inserted: 2, skipped: 0, invalid: [], data: [...] }`
+   * for a 2-row file). "Bulk" really does mean bulk here.
    */
-  importFromExcel: async (_file: File): Promise<StudentImportResponse> => {
-    throw new Error(
-      "Student Excel import is not connected to a backend API yet. The import screen is fully built — " +
-      "it will start working as soon as studentsApi.importFromExcel() is wired to the real endpoint."
-    );
-  },
-
-  bulkCreateStudents: async (students: CreateStudentPayload[]): Promise<AdminStudentUI[]> => {
-    const { data: raw } = await api.post("/tenant/students/bulk", { students });
-    const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-    if (obj?.status === false) {
-      throw new Error((obj?.message as string) ?? "Bulk creation failed");
-    }
-    const list = Array.isArray(obj?.data) ? (obj.data as Record<string, unknown>[]) : [];
-    return list.map((record) => {
-      const camel = toCamelCase(record) as Record<string, unknown>;
+  importStudentsBulk: async (file: File): Promise<BulkImportApiResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      // Do NOT set Content-Type manually here — the browser must generate it
+      // itself (multipart/form-data; boundary=...). A hardcoded header with
+      // no boundary breaks multer's parsing on the backend, so `file` never
+      // arrives even though the request "succeeds" from the client's side.
+      const { data } = await api.post<BulkImportApiResponse>("/tenant/students/bulk", formData);
+      if (data?.status === false) {
+        throw new Error(data?.message ?? "Failed to import students");
+      }
+      // Defensive defaults — a response that's technically `status: true` but
+      // omits `data`/`invalid` (e.g. when nothing was actually inserted) must
+      // never crash the caller with "Cannot read properties of undefined".
       return {
-        ...camel,
-        admissionNo: camel.admissionNo ?? camel.admissionNumber ?? "",
-        firstName: camel.firstName ?? camel.first ?? "",
-        lastName: camel.lastName ?? camel.last ?? "",
-        parentPhone: camel.parentPhone ?? camel.phone ?? "",
-        feeStatus: "PENDING",
-        status: "ACTIVE",
-      } as AdminStudentUI;
-    });
+        ...data,
+        inserted: data?.inserted ?? 0,
+        skipped: data?.skipped ?? 0,
+        invalid: data?.invalid ?? [],
+        data: data?.data ?? [],
+      };
+    } catch (err) {
+      throw new Error(getErrorMessage(err, "Failed to import students"));
+    }
   },
 
   updateParent: async (parentId: string, payload: UpdateParentPayload): Promise<void> => {

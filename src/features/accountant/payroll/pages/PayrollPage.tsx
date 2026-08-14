@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { MonthlyPayrollTab } from "../components/payroll/MonthlyPayRollTab";
@@ -34,18 +34,13 @@ export default function PayrollPage() {
 
   const {
     staffData, summary, isProcessed, isLoading: monthlyLoading,
-    processedDate, processedBy, generatePayslip, deletePayslip, refresh: refreshMonthly,
-  } = useMonthlyPayrollData(currentMonth.getMonth() + 1, currentMonth.getFullYear());
+    processedDate, processedBy, generatePayslip, deletePayslip,
+  } = useMonthlyPayrollData(currentMonth.getMonth() + 1, currentMonth.getFullYear(), activeTab);
   const {
     salaryData, isLoading: salaryLoading, selectedStaff, isEditing,
     openEditModal, closeEditModal, updateSalary, deletePayroll, refresh: refreshSalary,
-  } = useSalaryConfig();
-  const { history, totalPayrollFY, avgMonthlyPayroll, staffCount } = usePayrollHistory();
-
-  // Auto-refresh monthly data when tab becomes active or month changes
-  useEffect(() => {
-    if (activeTab === "monthly") refreshMonthly();
-  }, [activeTab, currentMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+  } = useSalaryConfig(activeTab);
+  const { history, totalPayrollFY, avgMonthlyPayroll, staffCount } = usePayrollHistory(activeTab);
 
   const navigate = (dir: -1 | 1) => {
     setCurrentMonth((prev) => {

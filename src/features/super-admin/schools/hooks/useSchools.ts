@@ -1,21 +1,13 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { schoolsApi } from "@/services/super-admin-schools.api";
-import type { SchoolFilters, SchoolFormValues, School, SchoolUpdatePayload } from "../types/school.types";
+import type { SchoolFilters, SchoolFormValues, School, SchoolUpdatePayload, SchoolsResponse } from "../types/school.types";
 
 export const SCHOOLS_KEYS = {
   all: ["super-admin", "schools"] as const,
   list: (filters: Partial<SchoolFilters>) => [...SCHOOLS_KEYS.all, "list", filters] as const,
   detail: (id: string) => [...SCHOOLS_KEYS.all, "detail", id] as const,
   allSchools: ["super-admin", "schools", "all"] as const,
-};
-
-export const useSchools = (filters: Partial<SchoolFilters>) => {
-  return useQuery({
-    queryKey: SCHOOLS_KEYS.list(filters),
-    queryFn: () => schoolsApi.getSchools(filters),
-    staleTime: 1000 * 60 * 2,
-    placeholderData: (prev) => prev,
-  });
 };
 
 export const useAllSchools = (search?: string) => {
@@ -31,6 +23,46 @@ export const useAllSchools = (search?: string) => {
       return [];
     },
   });
+};
+
+/**
+ * `getSchools` (server) and `getAllSchools` (server) both resolve to the same
+ * `GET /organization/getallschooldetails` call — the backend has no
+ * filter/page params, every bit of filtering/pagination already happens
+ * client-side in JS after the fetch. Calling them as two separate hooks with
+ * two separate query keys meant SchoolsPage fired the identical network
+ * request twice on every load. Deriving this hook's result from
+ * `useAllSchools`'s already-cached data instead removes the duplicate call —
+ * same filtering/pagination logic, now applied to shared data in a `useMemo`
+ * rather than behind its own `useQuery`.
+ */
+export const useSchools = (filters: Partial<SchoolFilters>) => {
+  const { data: allSchools, isLoading, isFetching } = useAllSchools();
+
+  const data = useMemo((): SchoolsResponse => {
+    const all = allSchools ?? [];
+    const search = (filters.search ?? "").toLowerCase().trim();
+    const filtered = all.filter((s) => {
+      const matchesSearch = !search || s.name.toLowerCase().includes(search) || s.city.toLowerCase().includes(search);
+      const matchesPlan = !filters.plan || filters.plan === "ALL" || s.plan === filters.plan;
+      const matchesStatus = !filters.status || filters.status === "ALL" || s.status === filters.status;
+      const matchesCity = !filters.city || s.city === filters.city;
+      return matchesSearch && matchesPlan && matchesStatus && matchesCity;
+    });
+
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 8;
+    const start = (page - 1) * pageSize;
+
+    return {
+      data: filtered.slice(start, start + pageSize),
+      total: filtered.length,
+      page,
+      pageSize,
+    };
+  }, [allSchools, filters.search, filters.plan, filters.status, filters.city, filters.page, filters.pageSize]);
+
+  return { data, isLoading, isFetching };
 };
 
 export const useSchool = (id: string) => {

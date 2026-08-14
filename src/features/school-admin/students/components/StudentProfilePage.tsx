@@ -41,9 +41,9 @@ const InfoRow = ({ label, value }: { label: string; value?: string | number }) =
 const StudentProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { student, loading, error, feeSummary, feePayments, retry } = useStudentProfile(id!);
-  const attendanceHook = useStudentAttendance(student ?? null);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const { student, loading, error, feeSummary, feePayments, retry } = useStudentProfile(id!, activeTab);
+  const attendanceHook = useStudentAttendance(student ?? null, activeTab);
   const [showEdit, setShowEdit] = useState(false);
   const [showAddParent, setShowAddParent] = useState(false);
   const [showParentPhoto, setShowParentPhoto] = useState(false);

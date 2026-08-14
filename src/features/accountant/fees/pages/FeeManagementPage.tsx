@@ -23,7 +23,7 @@ export default function FeeManagementPage() {
   const [activeTab, setActiveTab] = useState(
     (location.state as { activeTab?: string } | null)?.activeTab ?? "Pending Fees"
   );
-  const { fees, feesLoading, transactions, refreshTransactions, refreshFees } = useFeeData();
+  const { fees, feesLoading, transactions, refreshTransactions, refreshFees } = useFeeData(activeTab);
 
   const handleDeleteRecord = useCallback(async (id: string) => {
     await deleteRecordFeePayment(id);

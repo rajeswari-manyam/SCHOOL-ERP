@@ -43,6 +43,7 @@ const FeeConfigPage         = lazy(() => import("./settings").then(m => ({ defau
 const UserAccountsPage      = lazy(() => import("./settings").then(m => ({ default: m.UserAccountsPage })));
 const PermissionsPage       = lazy(() => import("./settings").then(m => ({ default: m.PermissionsPage })));
 const PlanBillingPage       = lazy(() => import("./settings").then(m => ({ default: m.PlanBillingPage })));
+const IntegrationsPage      = lazy(() => import("./settings").then(m => ({ default: m.IntegrationsPage })));
 const MyProfilePage         = lazy(() => import("./profile/pages/ProfilePage"));
 const TimetablePage         = lazy(() => import("../school-admin/timetable/TimetablePage"));
 const ExamTimetablePage     = lazy(() => import("../school-admin/timetable/ExamTimetablePage"));
@@ -197,6 +198,7 @@ export default function SchoolAdminRouter() {
         <Route path="settings/user-accounts"   element={<UserAccountsPage />} />
         <Route path="settings/permissions"     element={<PermissionsPage />} />
         <Route path="settings/billing"         element={<PlanBillingPage />} />
+        <Route path="settings/integrations"    element={<IntegrationsPage />} />
         <Route path="profile" element={<MyProfilePage />} />
 
         {/* Catch-all */}

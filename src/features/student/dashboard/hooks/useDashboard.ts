@@ -1,38 +1,36 @@
 // src/features/student/dashboard/hooks/useDashboard.ts
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
-import { getStudentById } from "../../../../services/student.api";
-import { getHomeworkThisWeek } from "../../../../services/homework.api";
-import { getAllTimetable } from "../../../../services/timetable.api";
-import { getAllExamTimetables } from "../../../../services/examtimetable.api";
-import { getMonthlyAttendance, getStudentTodayAttendance } from "../../../../services/attendance.api";
+import { getStudentById, type Student } from "../../../../services/student.api";
+import { getHomeworkThisWeek, type Homework } from "../../../../services/homework.api";
+import { getAllTimetable, type TimetableSlot } from "../../../../services/timetable.api";
+import {
+  getAllExamTimetables,
+  type ExamTimetableListItem,
+} from "../../../../services/examtimetable.api";
+import {
+  getMonthlyAttendance,
+  getStudentTodayAttendance,
+} from "../../../../services/attendance.api";
 import type {
-  StatItem,
   AttendanceDay,
   ScheduleItem,
   HomeworkItem,
-  RecentResult,
-  Announcement,
 } from "../types/dashboard.types";
 
-interface DashboardState {
-  loading: boolean;
-  error: string | null;
-  studentName: string;
-  rollNumber: string;
-  studentClass: string;
-  studentSection: string;
-  studentSchoolCode: string;
-  stats: StatItem[];
-  schedule: ScheduleItem[];
-  homework: HomeworkItem[];
-  attendance: AttendanceDay[];
-  attendanceToday: number;
-  attendanceMonthLabel: string;
-  recentResult: RecentResult | null;
-  announcements: Announcement[];
-}
+export const STUDENT_KEYS = {
+  all: ["student", "dashboard"] as const,
+  profile: (userId: string) => [...STUDENT_KEYS.all, "profile", userId] as const,
+  attendance: (studentId: string, month: number, year: number) =>
+    [...STUDENT_KEYS.all, "attendance", studentId, month, year] as const,
+  homework: (classId: string, sectionId: string) =>
+    [...STUDENT_KEYS.all, "homework", classId, sectionId] as const,
+  schedule: (classId: string, sectionId: string) =>
+    [...STUDENT_KEYS.all, "schedule", classId, sectionId] as const,
+  exams: (classId: string, sectionId: string) =>
+    [...STUDENT_KEYS.all, "exams", classId, sectionId] as const,
+};
 
 const SUBJECT_COLOR: Record<string, "blue" | "green" | "amber"> = {
   Mathematics: "blue",
@@ -54,7 +52,7 @@ const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 // API returns summary with present_dates and absent_dates arrays.
 // We pad with `empty` cells for leading weekday offset, then fill
 // the rest of the month with present / absent / holiday.
-const buildCalendarDays = (
+export const buildCalendarDays = (
   presentDates: string[],
   absentDates: string[],
   year: number,
@@ -97,7 +95,7 @@ const buildCalendarDays = (
 };
 
 // ── Compute monthly % from calendar days ──────────────────────────────────────
-const calcMonthlyPercent = (days: AttendanceDay[]): number | null => {
+export const calcMonthlyPercent = (days: AttendanceDay[]): number | null => {
   const present = days.filter((d) => d.status === "present").length;
   const absent = days.filter((d) => d.status === "absent").length;
   const total = present + absent;
@@ -105,235 +103,228 @@ const calcMonthlyPercent = (days: AttendanceDay[]): number | null => {
   return Math.round((present / total) * 1000) / 10; // 1 decimal place
 };
 
-export const useDashboard = (): DashboardState => {
-  const authUser = useAuthStore((s) => s.user);
+export interface StudentProfile {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  studentClass: string;
+  studentSection: string;
+  studentSchoolCode: string;
+  classId: string;
+  sectionId: string;
+}
 
-  const [state, setState] = useState<DashboardState>({
-    loading: true,
-    error: null,
-    studentName: "",
-    rollNumber: "",
-    studentClass: "",
-    studentSection: "",
-    studentSchoolCode: "",
-    stats: [],
-    schedule: [],
-    homework: [],
-    attendance: [],
-    attendanceToday: 0,
-    attendanceMonthLabel: "",
-    recentResult: null,
-    announcements: [],
+/** Raw API responses sometimes embed `class` / `section` directly. */
+type StudentWithNestedClass = Student & {
+  class?: { id?: string; class_name?: string };
+  section?: { id?: string; sectionName?: string };
+};
+
+// ── Student identity + class/section resolution ───────────────────────────────
+export const useStudentProfile = () => {
+  const userId = useAuthStore((s) => s.user?.id ?? "");
+
+  return useQuery({
+    queryKey: STUDENT_KEYS.profile(userId),
+    queryFn: async (): Promise<StudentProfile> => {
+      const raw = await getStudentById(userId);
+      const student = raw as StudentWithNestedClass;
+
+      // Resolve class / section IDs — cascade through all shapes
+      const classId =
+        student.classDetail?.id ??
+        student.class?.id ??
+        student.class_id ??
+        "";
+
+      const rawSectionId: string =
+        student.sectionDetail?.id ??
+        student.section?.id ??
+        student.sectionId ??
+        "";
+      const sectionId = rawSectionId.includes(":")
+        ? rawSectionId.split(":")[1]
+        : rawSectionId;
+
+      return {
+        studentId: student.id ?? userId,
+        studentName: `${student.first_name ?? ""} ${student.last_name ?? ""}`.trim(),
+        rollNumber: student.roll_number || "",
+        studentClass:
+          student.classDetail?.class_name ??
+          student.class?.class_name ??
+          "",
+        studentSection:
+          student.sectionDetail?.sectionName ??
+          student.section?.sectionName ??
+          "",
+        studentSchoolCode: student.school_code || "",
+        classId,
+        sectionId,
+      };
+    },
+    enabled: Boolean(userId),
+    staleTime: 5 * 60_000,
+    retry: 2,
+  });
+};
+
+// ── Attendance (monthly calendar + today's status) ────────────────────────────
+export const useStudentAttendance = (studentId: string) => {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-based
+  const year = now.getFullYear();
+  const monthLabel = now.toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric",
   });
 
-  useEffect(() => {
-    if (!authUser?.id) return;
+  return useQuery({
+    queryKey: STUDENT_KEYS.attendance(studentId, month, year),
+    queryFn: async () => {
+      const [attendanceRes, todayAttendanceRes] = await Promise.all([
+        getMonthlyAttendance({
+          studentId,
+          month,
+          year,
+        }).catch(() => null),
+        getStudentTodayAttendance(studentId).catch(() => null),
+      ]);
 
-    const load = async () => {
-      try {
-        const student = await getStudentById(authUser.id);
+      // ── Map monthly attendance → calendar days ─────────────────────────
+      let calendarDays: AttendanceDay[] = [];
+      if (attendanceRes?.summary) {
+        const { present_dates = [], absent_dates = [] } = attendanceRes.summary;
+        calendarDays = buildCalendarDays(present_dates, absent_dates, year, month);
+      }
 
-        const now = new Date();
-        const currentMonth = now.getMonth() + 1; // 1-based
-        const currentYear = now.getFullYear();
+      // ── Today's attendance ─────────────────────────────────────────────
+      const todayStatus = todayAttendanceRes?.records?.[0]
+        ? ["present", "late"].includes(
+            (todayAttendanceRes.records[0].status ?? "").toLowerCase()
+          )
+          ? "Present"
+          : "Absent"
+        : "—";
 
-        const monthLabel = now.toLocaleDateString("en-IN", {
-          month: "long",
-          year: "numeric",
-        });
+      const presentDays = calendarDays.filter((d) => d.status === "present").length;
+      const absentDays = calendarDays.filter((d) => d.status === "absent").length;
+      const totalDays = presentDays + absentDays;
+      const monthlyPct = calcMonthlyPercent(calendarDays);
 
-        // Resolve class / section IDs — cascade through all shapes
-        const classId =
-          student.classDetail?.id ??
-          (student as any).class?.id ??
-          student.class_id ??
-          "";
-
-        const rawSectionId: string =
-          student.sectionDetail?.id ??
-          (student as any).section?.id ??
-          student.sectionId ??
-          "";
-        const sectionId = rawSectionId.includes(":")
-          ? rawSectionId.split(":")[1]
-          : rawSectionId;
-
-        const studentId = student.id ?? authUser.id;
-
-        // ── Parallel fetches ──────────────────────────────────────────────
-        let hwItems: HomeworkItem[] = [];
-        let scheduleItems: ScheduleItem[] = [];
-        let calendarDays: AttendanceDay[] = [];
-
-        const fetches: Promise<any>[] = [
-          // Monthly attendance — always try
-          getMonthlyAttendance({
-            studentId,
-            month: currentMonth,
-            year: currentYear,
-          }).catch(() => null),
-          // Today's attendance — always try
-          getStudentTodayAttendance(studentId).catch(() => null),
-        ];
-
-        if (classId && sectionId) {
-          fetches.push(
-            getHomeworkThisWeek({ class_id: classId, section_id: sectionId }).catch(() => ({ data: [] })),
-            getAllTimetable(classId, sectionId).catch(() => ({ data: [] })),
-            getAllExamTimetables({ class_id: classId, section_id: sectionId }).catch(() => []),
-          );
-        }
-
-        const [attendanceRes, todayAttendanceRes, hwRes, ttRes, examRes] = await Promise.all(fetches);
-
-        // ── Map monthly attendance → calendar days ────────────────────────
-        if (attendanceRes?.summary) {
-          const { present_dates = [], absent_dates = [] } = attendanceRes.summary;
-          calendarDays = buildCalendarDays(present_dates, absent_dates, currentYear, currentMonth);
-        }
-
-        // ── Map homework ──────────────────────────────────────────────────
-        if (hwRes) {
-          const todayStr = now.toISOString().slice(0, 10);
-          hwItems = (hwRes.data ?? [])
-            .filter((h: any) => h.is_published)
-            .sort((a: any, b: any) => new Date(a.submission_date).getTime() - new Date(b.submission_date).getTime())
-            .slice(0, 5)
-            .map((h: any) => {
-              const subName = h.subject?.name ?? "";
-              return {
-                id: h.id,
-                subject: subName,
-                title: h.title,
-                dueDate: h.submission_date < todayStr ? "Overdue" : h.submission_date,
-                colorType: SUBJECT_COLOR[subName] ?? "blue",
-              };
-            });
-        }
-
-        // ── Map today's timetable ─────────────────────────────────────────
-        if (ttRes) {
-          const todayDay = WEEKDAYS[now.getDay()];
-          const todaySlots = (ttRes.data ?? [])
-            .filter((s: any) => {
-              const day = DAY_MAP[s.day_of_week?.toLowerCase()] ?? "";
-              return day === todayDay;
-            })
-            .sort((a: any, b: any) => (a.period_no ?? 0) - (b.period_no ?? 0));
-
-          scheduleItems = todaySlots.map((s: any) => ({
-            period: `P${s.period_no}`,
-            time: s.time_sloat ?? `${s.start_time ?? ""}–${s.end_time ?? ""}`,
-            subject: s.subject?.subject_name ?? s.subjectname ?? "",
-            teacher: s.teacher?.name ?? s.teachername ?? "",
-          }));
-        }
-
-        // ── Find nearest upcoming exam ────────────────────────────────────
-        let nextExamValue = "—";
-        let nextExamExtra = "Upcoming";
-        if (Array.isArray(examRes) && examRes.length > 0) {
-          const todayStr = now.toISOString().slice(0, 10);
-          const upcoming = examRes
-            .filter((e: any) => e.exam_date >= todayStr)
-            .sort((a: any, b: any) => a.exam_date.localeCompare(b.exam_date));
-          if (upcoming.length > 0) {
-            const next = upcoming[0];
-            const examDate = new Date(next.exam_date);
-            const dateStr = examDate.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
-            nextExamValue = next.subject?.subject_name ?? "Exam";
-            nextExamExtra = dateStr;
-          }
-        }
-
-        // ── Today's attendance ──────────────────────────────────────────
-        const todayStatus =
-          todayAttendanceRes?.records?.[0]
-            ? ["present", "late"].includes(
-                (todayAttendanceRes.records[0].status ?? "").toLowerCase()
-              )
-              ? "Present"
-              : "Absent"
-            : "—";
-        const todayExtra =
+      return {
+        calendarDays,
+        todayStatus,
+        todayExtra:
           todayStatus === "Present"
             ? "You're marked present today"
             : todayStatus === "Absent"
             ? "You're marked absent today"
-            : "Attendance status";
+            : "Attendance status",
+        monthlyPct,
+        monthSummary: `${presentDays}/${totalDays} days present`,
+        todayDate: now.getDate(),
+        monthLabel: `My Attendance — ${monthLabel}`,
+      };
+    },
+    enabled: Boolean(studentId),
+    staleTime: 60_000,
+    retry: 2,
+  });
+};
 
-        // ── Compute stats ─────────────────────────────────────────────────
-        const monthlyPct = calcMonthlyPercent(calendarDays);
-        const presentDays = calendarDays.filter((d) => d.status === "present").length;
-        const absentDays = calendarDays.filter((d) => d.status === "absent").length;
-        const totalDays = presentDays + absentDays;
+// ── Homework due this week ────────────────────────────────────────────────────
+export const useStudentHomework = (classId: string, sectionId: string) => {
+  return useQuery({
+    queryKey: STUDENT_KEYS.homework(classId, sectionId),
+    queryFn: async (): Promise<HomeworkItem[]> => {
+      const hwRes = await getHomeworkThisWeek({
+        class_id: classId,
+        section_id: sectionId,
+      }).catch(() => ({ data: [] as Homework[] }));
 
-        const stats: StatItem[] = [
-          {
-            title: "TODAY'S STATUS",
-            value: todayStatus,
-            extra: todayExtra,
-            iconType: "attendance",
-            badge: { text: "Live", variant: "green" },
-          },
-          {
-            title: "ATTENDANCE MONTH",
-            value: monthlyPct !== null ? `${monthlyPct}%` : "—",
-            extra: `${presentDays}/${totalDays} days present`,
-            iconType: "percent",
-          },
-          {
-            title: "HOMEWORK DUE",
-            value: hwItems.length > 0 ? String(hwItems.length) : "—",
-            extra: "Pending tasks",
-            iconType: "homework",
-            badge: {
-              text: hwItems.length > 0 ? "Due soon" : "All done",
-              variant: hwItems.length > 0 ? "amber" : "green",
-            },
-          },
-          {
-            title: "NEXT EXAM",
-            value: nextExamValue,
-            extra: nextExamExtra,
-            iconType: "exam",
-          },
-        ];
-
-        setState({
-          loading: false,
-          error: null,
-          studentName: `${student.first_name} ${student.last_name}`,
-          rollNumber: student.roll_number || "",
-          studentClass:
-            student.classDetail?.class_name ??
-            (student as any).class?.class_name ??
-            "",
-          studentSection:
-            student.sectionDetail?.sectionName ??
-            (student as any).section?.sectionName ??
-            "",
-          studentSchoolCode: student.school_code || "",
-          stats,
-          schedule: scheduleItems,
-          homework: hwItems,
-          attendance: calendarDays,
-          attendanceToday: now.getDate(),
-          attendanceMonthLabel: `My Attendance — ${monthLabel}`,
-          recentResult: null,
-          announcements: [],
+      const todayStr = new Date().toISOString().slice(0, 10);
+      return (hwRes.data ?? [])
+        .filter((h: Homework) => h.is_published)
+        .sort((a, b) => new Date(a.submission_date).getTime() - new Date(b.submission_date).getTime())
+        .slice(0, 5)
+        .map((h) => {
+          const subName = h.subject?.name ?? "";
+          return {
+            id: h.id,
+            subject: subName,
+            title: h.title,
+            dueDate: h.submission_date < todayStr ? "Overdue" : h.submission_date,
+            colorType: SUBJECT_COLOR[subName] ?? "blue",
+          };
         });
-      } catch (error: any) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error?.message || "Failed to load",
+    },
+    enabled: Boolean(classId && sectionId),
+    staleTime: 2 * 60_000,
+    retry: 2,
+  });
+};
+
+// ── Today's timetable ─────────────────────────────────────────────────────────
+export const useStudentSchedule = (classId: string, sectionId: string) => {
+  return useQuery({
+    queryKey: STUDENT_KEYS.schedule(classId, sectionId),
+    queryFn: async (): Promise<ScheduleItem[]> => {
+      const ttRes = await getAllTimetable(classId, sectionId).catch(() => ({
+        status: false,
+        count: 0,
+        data: [] as TimetableSlot[],
+      }));
+
+      const now = new Date();
+      const todayDay = WEEKDAYS[now.getDay()];
+      const todaySlots = (ttRes.data ?? [])
+        .filter((s: TimetableSlot) => {
+          const day = DAY_MAP[s.day_of_week?.toLowerCase()] ?? "";
+          return day === todayDay;
+        })
+        .sort((a, b) => (a.period_no ?? 0) - (b.period_no ?? 0));
+
+      return todaySlots.map((s: TimetableSlot) => ({
+        period: `P${s.period_no}`,
+        time: s.time_sloat ?? `${s.start_time ?? ""}–${s.end_time ?? ""}`,
+        subject: s.subject?.subject_name ?? s.subjectname ?? "",
+        teacher: s.teacher?.name ?? s.teachername ?? "",
+      }));
+    },
+    enabled: Boolean(classId && sectionId),
+    staleTime: 5 * 60_000,
+    retry: 2,
+  });
+};
+
+// ── Upcoming exams ────────────────────────────────────────────────────────────
+export interface UpcomingExam {
+  subject: string;
+  examDate: string; // ISO date
+}
+
+export const useStudentExams = (classId: string, sectionId: string) => {
+  return useQuery({
+    queryKey: STUDENT_KEYS.exams(classId, sectionId),
+    queryFn: async (): Promise<UpcomingExam[]> => {
+      const examRes = await getAllExamTimetables({
+        class_id: classId,
+        section_id: sectionId,
+      }).catch(() => [] as ExamTimetableListItem[]);
+
+      if (!Array.isArray(examRes) || examRes.length === 0) return [];
+
+      return examRes
+        .filter((e) => Boolean(e.exam_date))
+        .sort((a, b) => a.exam_date.localeCompare(b.exam_date))
+        .map((e) => ({
+          subject: e.subject?.subject_name ?? "Exam",
+          examDate: e.exam_date,
         }));
-      }
-    };
-
-    load();
-  }, [authUser?.id]);
-
-  return state;
+    },
+    enabled: Boolean(classId && sectionId),
+    staleTime: 5 * 60_000,
+    retry: 2,
+  });
 };

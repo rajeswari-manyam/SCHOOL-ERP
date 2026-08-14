@@ -17,14 +17,23 @@ import WhatsAppFAB from "@/components/ui/whatsappfab";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { getUserById } from "@/services/auth.api";
+import { SkeletonStatGrid, SkeletonChartCard, SkeletonTableCard } from "@/components/common/skeletons";
 
-// Thin fallback while a route's own chunk downloads — Sidebar/Topbar render
+// Fallback while a route's own chunk downloads — Sidebar/Topbar render
 // outside this boundary (see below) so they never unmount/flash during
 // navigation; once a page's chunk is cached (see usePrefetchOtherPages in
-// AccountantRouter) this never shows at all — the content just swaps.
+// AccountantRouter) this never shows at all — the content just swaps. Can't
+// know which specific page is about to render, so it approximates the common
+// shape (stat row + two content blocks) rather than a blank/spinner screen.
 const PageContentLoader = () => (
-  <div className="flex items-center justify-center h-[60vh]">
-    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+  <div className="flex flex-col gap-5" aria-busy="true" aria-label="Loading page">
+    <SkeletonStatGrid count={4} cols={4} />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="lg:col-span-2">
+        <SkeletonTableCard rows={4} />
+      </div>
+      <SkeletonChartCard height="h-56" />
+    </div>
   </div>
 );
 

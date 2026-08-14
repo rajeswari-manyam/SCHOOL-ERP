@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import type { RevenuePoint } from "../types/dashboard.types";
 
-interface RevenueChartProps { data: RevenuePoint[]; currentMrr: number; }
+interface RevenueChartProps { data: RevenuePoint[]; currentMrr: number; isLoading?: boolean; }
 
 const fmt = (v: number) => `₹${(v / 100000).toFixed(2)}L`;
 
@@ -14,16 +14,31 @@ const monthLabel = (iso: string) => {
 const monthLabelFromTooltip = (label: ReactNode) =>
   typeof label === "string" ? monthLabel(label) : label;
 
-const RevenueChart = ({ data, currentMrr }: RevenueChartProps) => {
+const RevenueChart = ({ data, currentMrr, isLoading = false }: RevenueChartProps) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       <h2 className="text-[13px] font-extrabold text-gray-900 mb-3">Revenue Growth (Lakhs)</h2>
       <div className="relative">
         {/* Current MRR label */}
         <div className="absolute top-0 right-0 px-2.5 py-1 rounded-xl bg-indigo-600 text-white text-[11px] font-bold z-10">
-          {fmt(currentMrr)}
+          {isLoading ? (
+            <div className="h-3 w-10 rounded bg-white/40 animate-pulse" />
+          ) : (
+            fmt(currentMrr)
+          )}
         </div>
-        {data.length === 0 ? (
+        {isLoading ? (
+          // Chart-shaped skeleton — a wavy area-chart silhouette, not just a
+          // gray box, so it reads as "a chart is coming" rather than empty
+          // space. Distinct from the "No revenue recorded yet." empty state
+          // below, which must only ever show once loading has genuinely
+          // finished with zero data — never while data is still in flight.
+          <div className="h-[150px] flex items-end gap-1.5 px-1 animate-pulse" aria-label="Loading chart" aria-busy="true">
+            {[40, 65, 50, 80, 60, 95, 75, 110, 90, 130, 115, 150].map((h, i) => (
+              <div key={i} className="flex-1 rounded-t bg-gray-100" style={{ height: `${h}px` }} />
+            ))}
+          </div>
+        ) : data.length === 0 ? (
           <div className="h-[150px] flex items-center justify-center text-sm text-gray-400">
             No revenue recorded yet.
           </div>

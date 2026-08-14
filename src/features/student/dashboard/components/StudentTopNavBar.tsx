@@ -14,7 +14,7 @@ import {
   User,
 } from "lucide-react";
 
-import { useDashboard } from "../hooks/useDashboard";
+import { useStudentProfile } from "../hooks/useDashboard";
 import { ImagePreviewModal } from "@/components/common/ImagePreviewModal";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationDropdownPanel } from "@/components/common/NotificationDropdownPanel";
@@ -51,14 +51,13 @@ const StudentTopNavBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [notifOpen]);
 
-  // ✅ Correct hook usage
-  const {
-    studentName,
-    studentClass,
-    studentSection,
-    rollNumber,
-    loading,
-  } = useDashboard();
+  // ✅ Correct hook usage — profile query is cached, shares data with the dashboard
+  const profileQuery = useStudentProfile();
+  const loading = profileQuery.isPending;
+  const studentName = profileQuery.data?.studentName ?? "";
+  const studentClass = profileQuery.data?.studentClass ?? "";
+  const studentSection = profileQuery.data?.studentSection ?? "";
+  const rollNumber = profileQuery.data?.rollNumber ?? "";
 
   // ✅ initials
   const initials =

@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUIStore } from "@/store/uiStore";
 import {
@@ -7,7 +8,6 @@ import {
   getMonthlyPaidPayroll,
   getBalanceSheet,
 } from "@/services/accountant-reports.api";
-import type { BalanceSheetData } from "@/services/accountant-reports.api";
 import {
   getAllLedgerEntries,
   createLedgerEntry,
@@ -16,6 +16,8 @@ import {
 } from "@/services/ledger.api";
 import { initialPettyCash, monthlyChartData } from "../data/ledger.data";
 import type { LedgerEntry, ExpenseFormInput } from "../types/Ledger.types";
+
+export type LedgerTab = "income" | "expenses" | "balance";
 
 function buildFormData(data: ExpenseFormInput, file?: File): FormData {
   const fd = new FormData();
@@ -35,86 +37,107 @@ function matchesMonth(dateStr: string, m: number, y: number): boolean {
   return d.getFullYear() === y && d.getMonth() + 1 === m;
 }
 
-export function useLedger(month?: number, year?: number) {
+// Query keys centralized here so mutations below can invalidate precisely —
+// same pattern to copy into any other hook you convert.
+const ledgerKeys = {
+  expenses: ["ledger", "expenses", "all"] as const,
+  income: ["ledger", "income", "all"] as const,
+  expenseStats: (m: number, y: number, academicYearId: string) =>
+    ["ledger", "expense-stats", m, y, academicYearId] as const,
+  balanceSheet: (m: number, y: number) => ["ledger", "balance-sheet", m, y] as const,
+};
+
+/**
+ * @param activeTab   Which of the 3 Ledger tabs is currently open. Tab-only
+ *                     APIs are gated behind `enabled` so switching tabs never
+ *                     fires a request the visible panel doesn't need — and
+ *                     revisiting a tab within the global 5-minute staleTime
+ *                     (see src/config/queryClient.ts) serves cached data
+ *                     instead of refetching.
+ */
+export function useLedger(activeTab: LedgerTab, month?: number, year?: number) {
   const now = new Date();
   const m   = month ?? (now.getMonth() + 1);
   const y   = year  ?? now.getFullYear();
   const academicYearId = useUIStore((s) => s.academicYearId) ?? "";
+  const queryClient = useQueryClient();
 
-  // ── Raw data (all records from API) ──────────────────────────────────────
+  // ── Base data — needed by every tab (Income/Expense tabs cross-reference
+  //    each other's totals, and Balance derives from both), so these two
+  //    stay unconditional. Gating them would just trade "fetch once" for
+  //    "refetch on every tab switch", which is the opposite of the goal. ──
 
-  const [allExpenses,         setAllExpenses]         = useState<LedgerEntry[]>([]);
-  const [allIncomeTransactions,setAllIncomeTransactions]=useState<LedgerEntry[]>([]);
-  const [totalExpenses,       setTotalExpenses]       = useState<number>(0);
-  const [paidPayroll,         setPaidPayroll]         = useState<number>(0);
-  const [balanceSheetData,    setBalanceSheetData]    = useState<BalanceSheetData | null>(null);
-
-  // ── Fetch all expense entries once (re-fetch after CRUD) ─────────────────
-
-  const loadEntries = useCallback(async () => {
-    try {
+  const expensesQuery = useQuery({
+    queryKey: ledgerKeys.expenses,
+    queryFn: async (): Promise<LedgerEntry[]> => {
       const res = await getAllLedgerEntries();
-      if (res.status) {
-        setAllExpenses(
-          res.data.map((r) => ({
-            id:          r.id,
-            date:        r.date,
-            category:    r.category,
-            description: r.description,
-            reference:   r.reference ?? undefined,
-            amount:      r.amount,
-            recordedBy:  "",
-            type:        "Expense" as const,
-            paidVia:     r.paidVia,
-            notes:       r.notes ?? undefined,
-          }))
-        );
-      }
-    } catch {
-      toast.error("Failed to load expense entries");
-    }
-  }, []);
+      if (!res.status) throw new Error("Failed to load expense entries");
+      return res.data.map((r) => ({
+        id:          r.id,
+        date:        r.date,
+        category:    r.category,
+        description: r.description,
+        reference:   r.reference ?? undefined,
+        amount:      r.amount,
+        recordedBy:  "",
+        type:        "Expense" as const,
+        paidVia:     r.paidVia,
+        notes:       r.notes ?? undefined,
+      }));
+    },
+  });
+  if (expensesQuery.isError) toast.error("Failed to load expense entries");
 
-  useEffect(() => { loadEntries(); }, [loadEntries]);
+  const incomeQuery = useQuery({
+    queryKey: ledgerKeys.income,
+    queryFn: async (): Promise<LedgerEntry[]> => {
+      const res = await getRecentIncomeTransactions();
+      if (!res.status) throw new Error("Failed to load income transactions");
+      return res.data.map((tx, i) => ({
+        id:          String(i),
+        date:        tx.date,
+        category:    tx.type,
+        description: tx.description,
+        reference:   tx.references?.join(", ") ?? "",
+        amount:      tx.total_amount,
+        recordedBy:  tx.collected_by,
+        type:        "Income" as const,
+      }));
+    },
+  });
 
-  // ── Fetch all income transactions once ───────────────────────────────────
+  // ── Expense-tab-only stat totals — only ever requested while that panel
+  //    is the one on screen. ──
+  const expenseStatsQuery = useQuery({
+    queryKey: ledgerKeys.expenseStats(m, y, academicYearId),
+    queryFn: async () => {
+      const [totalRes, payrollRes] = await Promise.all([
+        getTotalExpensesByMonth(m, y),
+        getMonthlyPaidPayroll(m, academicYearId),
+      ]);
+      return {
+        totalExpenses: totalRes.status ? totalRes.data.totalExpenses : 0,
+        paidPayroll:   payrollRes.status ? payrollRes.data.total_paid : 0,
+      };
+    },
+    enabled: activeTab === "expenses",
+  });
 
-  useEffect(() => {
-    getRecentIncomeTransactions()
-      .then((res) => {
-        if (res.status) {
-          setAllIncomeTransactions(
-            res.data.map((tx, i) => ({
-              id:          String(i),
-              date:        tx.date,
-              category:    tx.type,
-              description: tx.description,
-              reference:   tx.references?.join(", ") ?? "",
-              amount:      tx.total_amount,
-              recordedBy:  tx.collected_by,
-              type:        "Income" as const,
-            }))
-          );
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  // ── Expense stat card + balance sheet APIs (support month/year) ──────────
-
-  useEffect(() => {
-    getTotalExpensesByMonth(m, y)
-      .then((res) => { if (res.status) setTotalExpenses(res.data.totalExpenses); })
-      .catch(() => {});
-    getMonthlyPaidPayroll(m, academicYearId)
-      .then((res) => { if (res.status) setPaidPayroll(res.data.total_paid); })
-      .catch(() => {});
-    getBalanceSheet(m, y)
-      .then((res) => { if (res.status) setBalanceSheetData(res.data); })
-      .catch(() => {});
-  }, [m, y, academicYearId]);
+  // ── Balance-tab-only ──
+  const balanceSheetQuery = useQuery({
+    queryKey: ledgerKeys.balanceSheet(m, y),
+    queryFn: async () => {
+      const res = await getBalanceSheet(m, y);
+      if (!res.status) throw new Error("Failed to load balance sheet");
+      return res.data;
+    },
+    enabled: activeTab === "balance",
+  });
 
   // ── Client-side month filtering ───────────────────────────────────────────
+
+  const allExpenses = expensesQuery.data ?? [];
+  const allIncomeTransactions = incomeQuery.data ?? [];
 
   const expenseEntries = useMemo(
     () => allExpenses.filter((e) => matchesMonth(e.date, m, y)),
@@ -160,13 +183,17 @@ export function useLedger(month?: number, year?: number) {
     [expenseEntries]
   );
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
+  // ── CRUD — mutate then invalidate, instead of the old re-fetch-manually
+  //    `loadEntries()` call. Only the "expenses" query is affected; income
+  //    and the two tab-gated queries are untouched. ──────────────────────────
+
+  const invalidateExpenses = () => queryClient.invalidateQueries({ queryKey: ledgerKeys.expenses });
 
   const createEntry = async (data: ExpenseFormInput, file?: File) => {
     const res = await createLedgerEntry(buildFormData(data, file));
     if (res.status) {
       toast.success("Expense entry added");
-      loadEntries();
+      invalidateExpenses();
     } else {
       toast.error(res.message || "Failed to add entry");
       throw new Error();
@@ -177,7 +204,7 @@ export function useLedger(month?: number, year?: number) {
     const res = await updateLedgerEntryById(id, buildFormData(data, file));
     if (res.status) {
       toast.success("Entry updated successfully");
-      loadEntries();
+      invalidateExpenses();
     } else {
       toast.error(res.message || "Failed to update entry");
       throw new Error();
@@ -189,7 +216,7 @@ export function useLedger(month?: number, year?: number) {
       const res = await deleteLedgerEntryById(id);
       if (res.status) {
         toast.success("Entry deleted");
-        loadEntries();
+        invalidateExpenses();
       }
     } catch {
       toast.error("Failed to delete entry");
@@ -205,9 +232,9 @@ export function useLedger(month?: number, year?: number) {
     totalIncome,
     feeCollection,
     otherIncome,
-    totalExpenses,
-    paidPayroll,
-    balanceSheetData,
+    totalExpenses: expenseStatsQuery.data?.totalExpenses ?? 0,
+    paidPayroll:   expenseStatsQuery.data?.paidPayroll ?? 0,
+    balanceSheetData: balanceSheetQuery.data ?? null,
     pettyCash,
     expense,
     payrollExpense,
@@ -216,5 +243,6 @@ export function useLedger(month?: number, year?: number) {
     createEntry,
     updateEntry,
     deleteEntry,
+    isLoading: expensesQuery.isLoading || incomeQuery.isLoading,
   };
 }

@@ -7,16 +7,25 @@ import Topbar from "../components/common/Topbar";
 import { RouteErrorBoundary } from "../components/common/RouteErrorBoundary";
 import { useUIStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
+import { SkeletonStatGrid, SkeletonChartCard, SkeletonTableCard } from "@/components/common/skeletons";
 
-// Thin inline progress bar — NOT a full skeleton. Sidebar/Topbar render
-// outside this boundary (see below) so they never unmount during navigation;
-// this only ever appears in the rare case of clicking a page before its
-// chunk has been prefetched (see usePrefetchOtherPages in SuperAdminRouter).
-// Once a page's chunk is cached, lazy() resolves synchronously and this
-// never shows at all — the content just swaps.
+// A generic page-shaped skeleton — NOT plain "Loading..." text. Sidebar/Topbar
+// render outside this boundary (see below) so they never unmount during
+// navigation; this only ever appears in the rare case of clicking a page
+// before its chunk has been prefetched (see usePrefetchOtherPages in
+// SuperAdminRouter). Once a page's chunk is cached, lazy() resolves
+// synchronously and this never shows at all — the content just swaps.
+// It can't know which specific page is about to render, so it approximates
+// the common shape (stat row + two content blocks) rather than going blank.
 const RouteContentLoader = () => (
-  <div className="p-3">
-    <p className="text-sm text-slate-500">Loading...</p>
+  <div className="flex flex-col gap-5" aria-busy="true" aria-label="Loading page">
+    <SkeletonStatGrid count={4} cols={4} />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="lg:col-span-2">
+        <SkeletonTableCard rows={4} />
+      </div>
+      <SkeletonChartCard height="h-56" />
+    </div>
   </div>
 );
 

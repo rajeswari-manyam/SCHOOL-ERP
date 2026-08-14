@@ -9,19 +9,27 @@ import {
 
 // Required on the frontend only for fields the UI itself needs to place a
 // student (matches what AddStudentPage marks required). Everything else —
-// including whether admission_number/class_id/sectionId/academicYearId/
-// school_code already exist — is left to the backend.
+// including whether admission_number/class_name/section_name/academic_year/
+// school_code already exist — is left to the backend's resolveAcademicContext.
 const REQUIRED_COLUMNS: StudentImportColumn[] = [
   "first_name",
   "last_name",
   "gender",
-  "class_id",
-  "sectionId",
+  "class_name",
+  "section_name",
+  "academic_year",
   "school_code",
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// class_name/section_name/academic_year are plain text now (e.g. "10", "A",
+// "2025-2026") — the backend's resolveAcademicContext looks these up against
+// real Class/Section/AcademicYear records server-side. There's nothing for
+// the frontend to shape-validate here; an unresolvable value is reported by
+// the backend per-row (see `invalid` in the import response) rather than
+// caught client-side.
 
 export interface ParsedStudentExcel {
   sheetName: string;
@@ -65,7 +73,6 @@ export async function parseStudentExcelFile(file: File): Promise<ParsedStudentEx
     if (data.mother_email && !EMAIL_RE.test(data.mother_email)) {
       errors.push("mother_email is not a valid email");
     }
-
     // Duplicate-within-file check only — never checked against the database here.
     const key = data.admission_number
       ? `adm:${data.admission_number.toLowerCase()}`
@@ -79,40 +86,16 @@ export async function parseStudentExcelFile(file: File): Promise<ParsedStudentEx
   return { sheetName, missingColumns, rows };
 }
 
-// The exact two example rows from the backend-provided
-// student_bulk_upload_sample(2).xlsx — kept identical so the generated
-// template matches the source-of-truth format precisely.
-const TEMPLATE_SAMPLE_ROWS: StudentImportRow[] = [
-  {
-    first_name: "Rahul", last_name: "Sharma", gender: "male", date_of_birth: "2012-05-14",
-    blood_group: "B+", address: "12 MG Road, Pune", class_id: "1", sectionId: "1", academicYearId: "1",
-    roll_number: "101", admission_number: "ADM2024001", school_code: "SCH001",
-    father_name: "Suresh Sharma", mother_name: "Anita Sharma",
-    father_email: "suresh.sharma@example.com", mother_email: "anita.sharma@example.com",
-    father_phone: "9876543210", mother_phone: "9876543211",
-    father_occupation: "Engineer", mother_occupation: "Teacher",
-  },
-  {
-    first_name: "Priya", last_name: "Verma", gender: "female", date_of_birth: "2012-08-22",
-    blood_group: "O+", address: "45 Park Street, Pune", class_id: "1", sectionId: "1", academicYearId: "1",
-    roll_number: "102", admission_number: "ADM2024002", school_code: "SCH001",
-    father_name: "Rajesh Verma", mother_name: "Sunita Verma",
-    father_email: "rajesh.verma@example.com", mother_email: "sunita.verma@example.com",
-    father_phone: "9876543212", mother_phone: "9876543213",
-    father_occupation: "Doctor", mother_occupation: "Nurse",
-  },
-];
-
 export function downloadStudentImportTemplate(): void {
-  const sheet = XLSX.utils.json_to_sheet(TEMPLATE_SAMPLE_ROWS, { header: [...STUDENT_IMPORT_COLUMNS] });
+  const sheet = XLSX.utils.json_to_sheet([], { header: [...STUDENT_IMPORT_COLUMNS] });
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "Students");
   XLSX.writeFile(workbook, "student_bulk_upload_template.xlsx");
 }
 
-// Renders only real backend-reported failures — never fabricated data.
+// Renders only real backend-reported failures/skips — never fabricated data.
 export function downloadImportErrorReport(result: StudentImportResponse): void {
-  const failedRows = result.rows.filter((r) => r.status === "Failed");
+  const failedRows = result.rows.filter((r) => r.status === "Failed" || r.status === "Skipped");
   const sheet = XLSX.utils.json_to_sheet(
     failedRows.map((r) => ({ Row: r.row, Student: r.student, Status: r.status, Reason: r.message ?? "" })),
     { header: ["Row", "Student", "Status", "Reason"] }

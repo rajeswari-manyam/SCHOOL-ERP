@@ -1,4 +1,5 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FeeRow, TransportSlab, TransportStudent, Transaction } from "../types/fees.types";
 import { getAllPendingFees, getAllRecordFeePayments } from "../../../../services/fee.api";
 import type { AllPendingFeesEntry, StudentFeeSummaryDetail, RecordFeePaymentRecord } from "../../../../services/fee.api";
@@ -167,35 +168,61 @@ function pendingEntryToFeeRows(entry: AllPendingFeesEntry): FeeRow[] {
   });
 }
 
-export const useFeeData = () => {
-  const [fees, setFees]                 = useState<FeeRow[]>([]);
-  const [feesLoading, setFeesLoading]   = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+// Query keys centralized here so refreshFees/refreshTransactions below can
+// invalidate precisely — same pattern as useledger.ts.
+const feeDataKeys = {
+  pending: ["fees", "pending", "all"] as const,
+  transactions: ["fees", "transactions", "all"] as const,
+};
 
+/**
+ * @param activeTab   Which Fee Management tab is currently open ("Pending
+ *                     Fees" / "All Transactions" / "Fee Structure" /
+ *                     "Transport Fees"). The two queries below are each only
+ *                     needed by one tab, so they're gated behind `enabled` —
+ *                     landing on Fee Structure or Transport Fees no longer
+ *                     fires either request, and revisiting a tab within the
+ *                     global 5-minute staleTime serves cached data instead
+ *                     of refetching.
+ */
+export const useFeeData = (activeTab: string) => {
+  const queryClient = useQueryClient();
+
+  const pendingFeesQuery = useQuery({
+    queryKey: feeDataKeys.pending,
+    queryFn: async (): Promise<FeeRow[]> => {
+      const res = await getAllPendingFees();
+      return res.status ? (res.data ?? []).flatMap(pendingEntryToFeeRows) : [];
+    },
+    enabled: activeTab === "Pending Fees",
+  });
+
+  const transactionsQuery = useQuery({
+    queryKey: feeDataKeys.transactions,
+    queryFn: async (): Promise<Transaction[]> => {
+      const res = await getAllRecordFeePayments();
+      return (res.data ?? []).map(recordToTransaction);
+    },
+    enabled: activeTab === "All Transactions",
+  });
+
+  // Callers (PendingFeesTable's onConcessionApplied, handleDeleteRecord) are
+  // only reachable while their tab is mounted, so the matching query is
+  // always `enabled` when these fire — invalidate triggers an immediate
+  // refetch instead of the old manual re-fetch-and-setState.
   const refreshTransactions = useCallback(() => {
-    getAllRecordFeePayments()
-      .then((res) => { setTransactions((res.data ?? []).map(recordToTransaction)); })
-      .catch(() => {});
-  }, []);
+    queryClient.invalidateQueries({ queryKey: feeDataKeys.transactions });
+  }, [queryClient]);
 
   const refreshFees = useCallback(() => {
-    setFeesLoading(true);
-    getAllPendingFees()
-      .then((res) => { if (res.status) setFees((res.data ?? []).flatMap(pendingEntryToFeeRows)); })
-      .catch(() => {})
-      .finally(() => setFeesLoading(false));
-  }, []);
+    queryClient.invalidateQueries({ queryKey: feeDataKeys.pending });
+  }, [queryClient]);
 
-  useEffect(() => {
-    setFeesLoading(true);
-    const p1 = getAllPendingFees()
-      .then((res) => { if (res.status) setFees((res.data ?? []).flatMap(pendingEntryToFeeRows)); })
-      .catch(() => {});
-    const p2 = getAllRecordFeePayments()
-      .then((res) => { setTransactions((res.data ?? []).map(recordToTransaction)); })
-      .catch(() => {});
-    Promise.all([p1, p2]).finally(() => setFeesLoading(false));
-  }, []);
-
-  return { fees, feesLoading, transactions, refreshTransactions, refreshFees };
+  return {
+    fees: pendingFeesQuery.data ?? [],
+    feesLoading: pendingFeesQuery.isFetching,
+    transactions: transactionsQuery.data ?? [],
+    refreshTransactions,
+    refreshFees,
+  };
 };

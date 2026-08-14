@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { FeeDefaulter } from "../types";
 
 interface FeesDueSummaryProps {
@@ -7,6 +8,8 @@ interface FeesDueSummaryProps {
   paidPercent: number;
   defaulters?: FeeDefaulter[];
   onViewAll?: () => void;
+  /** Show shimmer in place of the card while the fee APIs resolve. */
+  isLoading?: boolean;
 }
 
 export function FeesDueSummary({
@@ -15,9 +18,26 @@ export function FeesDueSummary({
   paidPercent,
   defaulters = [],
   onViewAll,
+  isLoading = false,
 }: FeesDueSummaryProps) {
   const hasData = totalOutstanding > 0 || defaulters.length > 0;
   const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
+  // Independent section loading: this card shows its own skeleton until the
+  // fee endpoints resolve — it never blocks the rest of the dashboard.
+  if (isLoading) {
+    return (
+      <div
+        aria-label="Loading fee summary"
+        className="flex h-full w-full min-h-[200px] flex-col gap-3 rounded-2xl bg-white border border-gray-100 shadow-sm p-3 sm:p-4"
+      >
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <Skeleton className="h-8 w-full rounded-lg" />
+      </div>
+    );
+  }
 
 
   // If we have real API data, compute paid/pending from fee_collection + total_pending_fees

@@ -42,6 +42,11 @@ export interface PendingFee {
   /** The fee-head mapping this row is for — required to apply a concession.
    *  Absent for transport-fee and already-concession rows. */
   feeStructureId?: string;
+  /** Which of feeStructureId/transportfeeId/feeConcessionId identifies this row —
+   *  a payment link needs exactly one of them, matching the manual-payment rule. */
+  feeType?: "feehead" | "transport" | "concession";
+  transportfeeId?: string;
+  feeConcessionId?: string;
   /** Original (pre-discount) fee amount, for the concession preview. */
   originalAmount?: number;
   dueDate: string;

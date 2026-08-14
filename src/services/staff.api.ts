@@ -514,12 +514,19 @@ export const fetchStaff = async (academicYearId?: string | null): Promise<StaffM
  * state for document uploads instead of pretending to succeed.
  */
 export const importStaffFromDocument = async (
-  _file: File
+  file: File
 ): Promise<void> => {
-  throw new Error(
-    "Importing staff from a PDF or Word document isn't connected to a backend yet — Excel/CSV imports work today. " +
-    "This will start working once a document-import API is wired up here."
-  );
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    await api.post("/tenant/staff/import-document", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  } catch (err) {
+    console.error("importStaffFromDocument failed", { url: "/tenant/staff/import-document", response: err });
+    throw new Error(getErrorMessage(err, "Failed to import staff from document"));
+  }
 };
 
 export const createStaff = async (

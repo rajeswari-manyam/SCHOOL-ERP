@@ -160,44 +160,59 @@ export const useHomework = () => {
     });
   }, [authUser?.id]);
 
-  // ── Step 2: fetch homework + submissions ──────────────────────────────────
+  // ── Step 2: fetch data for the active tab only ────────────────────────────
+  // Build the "submitted" lookup set from the student's own submissions
+  // (shared by the "week" and "all" tabs, since both render HomeworkCard
+  // with a submitted state).
+  const buildSubmittedSet = (subs: any[]): Set<string> => {
+    const submittedSet = new Set<string>();
+    for (const sub of subs) {
+      if (sub.status === "submitted") {
+        submittedSet.add(sub.homework_id);
+        localStorage.setItem(`hw_sub_${sub.homework_id}`, sub.id);
+      }
+    }
+    return submittedSet;
+  };
+
   const fetchData = useCallback(async () => {
     if (!classId || !authUser?.id) return;
     setLoading(true);
     setError(null);
     try {
-      const [hwRes, weekRes, matRes, subRes] = await Promise.all([
-        getHomeworkByClass({ class_id: classId, section_id: sectionId }),
-        getHomeworkThisWeek({ class_id: classId, section_id: sectionId }),
-        getStudyMaterialsByFilter({ class_id: classId, section_id: sectionId }),
-        getSubmissionsByStudentId(String(authUser.id)),
-      ]);
-
-      const mapped = (hwRes.data ?? []).map(mapApiHomework);
-      const mappedWeek = (weekRes.data ?? []).map(mapApiHomework);
-
-      // Build submitted set from student's own submissions
-      const submittedSet = new Set<string>();
-      for (const sub of subRes.data ?? []) {
-        if (sub.status === "submitted") {
-          submittedSet.add(sub.homework_id);
-          localStorage.setItem(`hw_sub_${sub.homework_id}`, sub.id);
-        }
+      if (activeTab === "week") {
+        // "This Week" tab: week homework + submissions only
+        const [weekRes, subRes] = await Promise.all([
+          getHomeworkThisWeek({ class_id: classId, section_id: sectionId }),
+          getSubmissionsByStudentId(String(authUser.id)),
+        ]);
+        const mappedWeek = (weekRes.data ?? []).map(mapApiHomework);
+        const submittedSet = buildSubmittedSet(subRes.data ?? []);
+        setWeekHomework(
+          mappedWeek.map((hw) => ({ ...hw, submitted: submittedSet.has(hw.id) }))
+        );
+      } else if (activeTab === "all") {
+        // "All Homework" tab: full class homework + submissions only
+        const [hwRes, subRes] = await Promise.all([
+          getHomeworkByClass({ class_id: classId, section_id: sectionId }),
+          getSubmissionsByStudentId(String(authUser.id)),
+        ]);
+        const mapped = (hwRes.data ?? []).map(mapApiHomework);
+        const submittedSet = buildSubmittedSet(subRes.data ?? []);
+        setHomework(
+          mapped.map((hw) => ({ ...hw, submitted: submittedSet.has(hw.id) }))
+        );
+      } else {
+        // "Study Materials" tab: materials only, no submissions needed
+        const matRes = await getStudyMaterialsByFilter({ class_id: classId, section_id: sectionId });
+        setMaterials((matRes.data ?? []).map(mapApiMaterial));
       }
-
-      setHomework(
-        mapped.map((hw) => ({ ...hw, submitted: submittedSet.has(hw.id) }))
-      );
-      setWeekHomework(
-        mappedWeek.map((hw) => ({ ...hw, submitted: submittedSet.has(hw.id) }))
-      );
-      setMaterials((matRes.data ?? []).map(mapApiMaterial));
     } catch (err: any) {
       setError(err?.message ?? "Failed to load data.");
     } finally {
       setLoading(false);
     }
-  }, [classId, sectionId, authUser?.id]);
+  }, [classId, sectionId, authUser?.id, activeTab]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

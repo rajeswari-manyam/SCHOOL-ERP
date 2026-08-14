@@ -1,17 +1,30 @@
 // src/features/student/dashboard/pages/DashboardPage.tsx
 
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDashboard } from "../hooks/useDashboard";
+import {
+  useStudentProfile,
+  useStudentAttendance,
+  useStudentHomework,
+  useStudentSchedule,
+  useStudentExams,
+} from "../hooks/useDashboard";
 import { DashboardStatCard, DashboardStatGrid } from "../components/DashboardStatCard";
 import { ScheduleTable } from "../components/ScheduleTable";
 import { HomeworkList } from "../components/Homeworklist";
 import { AttendanceCalendar } from "../components/Attendancecalendar";
-import { RecentResults } from "../components/Recentresults";
 import { LatestAnnouncements } from "../components/Latestannouncements";
 import type { StatItem } from "../types/dashboard.types";
 import {
+  Skeleton,
+  SkeletonStatCard,
+  SkeletonTableCard,
+  SkeletonListCard,
+  SectionError,
+} from "@/components/common/skeletons";
+import {
   CalendarDays, Percent, BookOpen, FileText,
-  GraduationCap, Loader2,
+  GraduationCap,
 } from "lucide-react";
 import { MdLocationCity } from "react-icons/md";
 import { TbListNumbers } from "react-icons/tb";
@@ -47,47 +60,23 @@ const getVariant = (
   }
 };
 
-// ─── Loading ───────────────────────────────────────────────────────────────────
-const LoadingSkeleton = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="flex flex-col items-center gap-3 text-slate-400">
-      <Loader2 size={32} className="animate-spin" />
-      <p className="text-sm font-medium">Loading your dashboard…</p>
-    </div>
-  </div>
-);
-
-// ─── Error ─────────────────────────────────────────────────────────────────────
-const ErrorState = ({ message }: { message: string }) => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="text-center space-y-2 text-red-500">
-      <p className="text-base font-semibold">Failed to load dashboard</p>
-      <p className="text-sm text-slate-500">{message}</p>
-    </div>
-  </div>
-);
-
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 export const Dashboard = () => {
-  const {
-    loading,
-    error,
-    studentName,
-    rollNumber,
-    studentClass,
-    studentSection,
-    studentSchoolCode,
-    stats,
-    schedule,
-    homework,
-    attendance,
-    attendanceToday,
-    attendanceMonthLabel,
-    recentResult,
-    announcements,
-  } = useDashboard();
-
   const navigate = useNavigate();
+
+  const profileQuery = useStudentProfile();
+  const profile = profileQuery.data;
+
+  // Dependent queries stay pending until profile resolves class/section IDs,
+  // so each section shows its own skeleton and resolves independently.
+  const studentId = profile?.studentId ?? "";
+  const classId = profile?.classId ?? "";
+  const sectionId = profile?.sectionId ?? "";
+
+  const attendanceQuery = useStudentAttendance(studentId);
+  const homeworkQuery = useStudentHomework(classId, sectionId);
+  const scheduleQuery = useStudentSchedule(classId, sectionId);
+  const examsQuery = useStudentExams(classId, sectionId);
 
   const cardRoutes: Record<string, string> = {
     attendance: "/student/attendance",
@@ -96,8 +85,54 @@ export const Dashboard = () => {
     exam: "/student/exams",
   };
 
-  if (loading) return <LoadingSkeleton />;
-  if (error) return <ErrorState message={error} />;
+  // ── Next exam (from cached exam timetable) ─────────────────────────────
+  const nextExam = useMemo(() => {
+    const exams = examsQuery.data ?? [];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const next = exams.find((e) => e.examDate >= todayStr);
+    if (!next) return { value: "—", extra: "Upcoming" };
+    const dateStr = new Date(next.examDate).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    });
+    return { value: next.subject, extra: dateStr };
+  }, [examsQuery.data]);
+
+  const profileFailed = profileQuery.isError;
+
+  // ── Precomputed stat values (narrowed safely before JSX) ────────────────
+  const attendanceData = attendanceQuery.data;
+  const homeworkCount = homeworkQuery.data?.length ?? 0;
+  const monthValue =
+    attendanceData && attendanceData.monthlyPct != null
+      ? `${attendanceData.monthlyPct}%`
+      : "—";
+
+  // ── Per-slot stat card: skeleton while its query is pending ─────────────
+  const renderStat = (
+    iconType: StatItem["iconType"],
+    opts: { isLoading: boolean; label: string; value: string; sub: string; badge?: StatItem["badge"] }
+  ) => {
+    if (opts.isLoading) {
+      return <SkeletonStatCard key={opts.label} />;
+    }
+    return (
+      <DashboardStatCard
+        key={opts.label}
+        label={opts.label}
+        value={opts.value}
+        sub={opts.sub}
+        badge={opts.badge}
+        icon={getIcon(iconType)}
+        variant={getVariant(iconType)}
+        active={iconType === "homework"}
+        onClick={() => {
+          const route = cardRoutes[iconType];
+          if (route) navigate(route);
+        }}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -106,15 +141,21 @@ export const Dashboard = () => {
         {/* ── GREETING ── */}
         <div className="px-1 sm:px-2 py-1">
           <h1 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
-            Good morning, {studentName}!
+            Good morning,{" "}
+            {profile ? (
+              profile.studentName || "Student"
+            ) : (
+              <Skeleton className="inline-block h-5 w-32 align-middle" />
+            )}
+            !
           </h1>
 
           <div className="text-xs sm:text-sm flex flex-wrap items-center gap-2 mt-1 text-slate-500">
             <span className="flex items-center gap-1">
               <GraduationCap size={14} className="text-slate-400" />
-              Class {studentClass}
-              {studentSection && (
-                <span className="text-slate-400">– {studentSection}</span>
+              Class {profile?.studentClass || "—"}
+              {profile?.studentSection && (
+                <span className="text-slate-400">– {profile.studentSection}</span>
               )}
             </span>
 
@@ -122,15 +163,15 @@ export const Dashboard = () => {
 
             <span className="flex items-center gap-1">
               <MdLocationCity size={14} className="text-slate-400" />
-              {studentSchoolCode}
+              {profile?.studentSchoolCode || ""}
             </span>
 
-            {rollNumber && (
+            {profile?.rollNumber && (
               <>
                 <span className="text-slate-300 hidden sm:inline">•</span>
                 <span className="flex items-center gap-1">
                   <TbListNumbers size={14} className="text-slate-400" />
-                  Roll No: {rollNumber}
+                  Roll No: {profile.rollNumber}
                 </span>
               </>
             )}
@@ -138,24 +179,42 @@ export const Dashboard = () => {
         </div>
 
         {/* ── STATS — below greeting ── */}
-        {stats.length > 0 && (
+        {profileFailed ? (
+          <SectionError
+            message="Couldn't load your dashboard data"
+            onRetry={() => profileQuery.refetch()}
+          />
+        ) : (
           <DashboardStatGrid>
-            {stats.map((item: StatItem, i: number) => (
-              <DashboardStatCard
-                key={i}
-                label={item.title}
-                value={item.value}
-                sub={item.extra}
-                badge={item.badge}
-                icon={getIcon(item.iconType)}
-                variant={getVariant(item.iconType)}
-                active={item.iconType === "homework"}
-                onClick={() => {
-                  const route = cardRoutes[item.iconType ?? ""];
-                  if (route) navigate(route);
-                }}
-              />
-            ))}
+            {renderStat("attendance", {
+              isLoading: attendanceQuery.isPending,
+              label: "TODAY'S STATUS",
+              value: attendanceQuery.data?.todayStatus ?? "—",
+              sub: attendanceQuery.data?.todayExtra ?? "Attendance status",
+              badge: { text: "Live", variant: "green" },
+            })}
+            {renderStat("percent", {
+              isLoading: attendanceQuery.isPending,
+              label: "ATTENDANCE MONTH",
+              value: monthValue,
+              sub: attendanceData?.monthSummary ?? "0/0 days present",
+            })}
+            {renderStat("homework", {
+              isLoading: homeworkQuery.isPending,
+              label: "HOMEWORK DUE",
+              value: homeworkCount > 0 ? String(homeworkCount) : "—",
+              sub: "Pending tasks",
+              badge: {
+                text: homeworkCount > 0 ? "Due soon" : "All done",
+                variant: homeworkCount > 0 ? "amber" : "green",
+              },
+            })}
+            {renderStat("exam", {
+              isLoading: examsQuery.isPending,
+              label: "NEXT EXAM",
+              value: nextExam.value,
+              sub: nextExam.extra,
+            })}
           </DashboardStatGrid>
         )}
 
@@ -163,24 +222,77 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 sm:gap-5">
 
           <div className="space-y-4 sm:space-y-5">
-            <ScheduleTable data={schedule} />
-            <HomeworkList data={homework} />
+            {profileFailed ? (
+              <SectionError
+                message="Couldn't load today's schedule"
+                onRetry={() => profileQuery.refetch()}
+              />
+            ) : (
+              <section>
+                {scheduleQuery.isPending ? (
+                  <SkeletonTableCard rows={4} minHeight="min-h-[200px]" />
+                ) : scheduleQuery.isError ? (
+                  <SectionError
+                    message="Failed to load today's schedule"
+                    onRetry={() => scheduleQuery.refetch()}
+                  />
+                ) : (
+                  <ScheduleTable data={scheduleQuery.data ?? []} />
+                )}
+              </section>
+            )}
+
+            {profileFailed ? (
+              <SectionError
+                message="Couldn't load your homework"
+                onRetry={() => profileQuery.refetch()}
+              />
+            ) : (
+              <section>
+                {homeworkQuery.isPending ? (
+                  <SkeletonListCard rows={3} />
+                ) : homeworkQuery.isError ? (
+                  <SectionError
+                    message="Failed to load homework"
+                    onRetry={() => homeworkQuery.refetch()}
+                  />
+                ) : (
+                  <HomeworkList data={homeworkQuery.data ?? []} />
+                )}
+              </section>
+            )}
           </div>
 
           <div className="space-y-4 sm:space-y-5">
-            <AttendanceCalendar
-              data={attendance}
-              today={attendanceToday}
-              monthLabel={attendanceMonthLabel}
-            />
-            {recentResult ? (
-              <RecentResults data={recentResult} />
+            {profileFailed ? (
+              <SectionError
+                message="Couldn't load your attendance"
+                onRetry={() => profileQuery.refetch()}
+              />
             ) : (
-              <div className="bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-400">
-                No recent results available.
-              </div>
+              <section>
+                {attendanceQuery.isPending ? (
+                  <SkeletonTableCard rows={4} minHeight="min-h-[220px]" />
+                ) : attendanceQuery.isError ? (
+                  <SectionError
+                    message="Failed to load attendance"
+                    onRetry={() => attendanceQuery.refetch()}
+                  />
+                ) : (
+                  <AttendanceCalendar
+                    data={attendanceQuery.data?.calendarDays ?? []}
+                    today={attendanceQuery.data?.todayDate}
+                    monthLabel={attendanceQuery.data?.monthLabel}
+                  />
+                )}
+              </section>
             )}
-            <LatestAnnouncements data={announcements} />
+
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-400">
+              No recent results available.
+            </div>
+
+            <LatestAnnouncements data={[]} />
           </div>
 
         </div>

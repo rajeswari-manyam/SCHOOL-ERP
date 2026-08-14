@@ -111,6 +111,12 @@ export interface RawSchoolApiRecord {
   school_code: string;
   createdAt: string;
   updatedAt: string;
+  // Present on GET /organization/getschooldetails/:id — only ever used to
+  // derive a "configured?" badge (see SchoolDetailModal). Never render the
+  // encrypted secret values themselves in the UI.
+  razorpayKeyId?: string | null;
+  razorpayKeySecretEnc?: string | null;
+  razorpayWebhookSecretEnc?: string | null;
 }
 
 // Raw shape returned by GET /organization/getschooldetails/:id

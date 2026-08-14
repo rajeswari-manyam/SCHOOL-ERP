@@ -47,7 +47,7 @@ export default function AddExpensePage() {
   const month = state?.month ?? now.getMonth() + 1;
   const year  = state?.year  ?? now.getFullYear();
 
-  const { createEntry, updateEntry } = useLedger(month, year);
+  const { createEntry, updateEntry } = useLedger("expenses", month, year);
 
   const goBack = () =>
     navigate("/accountant/ledger", { state: { activeTab: "expenses", month, year } });

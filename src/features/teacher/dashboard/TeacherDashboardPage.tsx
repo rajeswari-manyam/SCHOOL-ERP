@@ -17,16 +17,16 @@ const TeacherDashboardPage = () => {
   const staffId = useAuthStore((state) => state.user?.id ?? "");
   const teacherId = localStorage.getItem("teacherStaffId") || staffId;
   const { data } = useTeacherDashboard();
-  const { data: todayAttendance } = useTodayAttendanceSummary(teacherId);
-  const { data: sections = [] } = useTeacherSections(staffId);
-  const { data: allHomework = [] } = usePendingHomeworkByTeacher(teacherId);
-  const { students: myStudents } = useMyStudents();
+  const { data: todayAttendance, isLoading: isTodayAttendanceLoading } = useTodayAttendanceSummary(teacherId);
+  const { data: sections = [], isLoading: isSectionsLoading } = useTeacherSections(staffId);
+  const { data: allHomework = [], isLoading: isHomeworkLoading } = usePendingHomeworkByTeacher(teacherId);
+  const { students: myStudents, isLoading: isMyStudentsLoading } = useMyStudents();
 
   const academicYearId = sections[0]?.academicYearId ?? "";
-  const { data: leaveResponse } = useTeacherLeaveBalance(staffId, academicYearId);
+  const { data: leaveResponse, isLoading: isLeaveLoading } = useTeacherLeaveBalance(staffId, academicYearId);
 
   const now = new Date();
-  const { data: monthlyAttendance } = useTeacherMonthlyAttendance(staffId, now.getMonth() + 1, now.getFullYear());
+  const { data: monthlyAttendance, isLoading: isMonthlyAttendanceLoading } = useTeacherMonthlyAttendance(staffId, now.getMonth() + 1, now.getFullYear());
 
   const liveAttendancePct = (() => {
     if (!monthlyAttendance) return null;           // not loaded yet → keep fallback
@@ -39,7 +39,7 @@ const TeacherDashboardPage = () => {
   const leaveUsed      = leaveResponse?.totalUsed ?? 0;
   const leaveAllocated = leaveResponse?.totalAllocated ?? 0;
 
-  const { data: upcomingExamsData } = useTeacherUpcomingExams(
+  const { data: upcomingExamsData, isLoading: isExamsLoading } = useTeacherUpcomingExams(
     section?.classId ?? "",
     section?.id ?? ""
   );
@@ -58,6 +58,15 @@ const TeacherDashboardPage = () => {
     leaveAllocated,
   };
   const teacher = data?.teacher;
+
+  // Per-card loading — each stat card shows its own skeleton until its query resolves.
+  const statLoading = {
+    classStrength: isTodayAttendanceLoading || isMyStudentsLoading || isSectionsLoading,
+    homework: isHomeworkLoading,
+    attendance: isMonthlyAttendanceLoading,
+    leave: isLeaveLoading,
+    exam: isExamsLoading,
+  };
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
@@ -117,6 +126,7 @@ const TeacherDashboardPage = () => {
         leaveUsed={stats.leaveUsed}
         leaveAllocated={stats.leaveAllocated}
         nextExam={nextExam}
+        loading={statLoading}
       />
 
       {/* Main grid */}

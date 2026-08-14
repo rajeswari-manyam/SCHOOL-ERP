@@ -57,7 +57,7 @@ const ImportStudentsExcelPage = () => {
           {/* ── Import Result (only ever populated from a real backend response) ── */}
           {importResult ? (
             <div className="space-y-5">
-              <div className="grid grid-cols-3 gap-3">
+              <div className={importResult.skippedCount ? "grid grid-cols-2 sm:grid-cols-4 gap-3" : "grid grid-cols-3 gap-3"}>
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-center">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Records</p>
                   <p className="text-xl font-bold text-gray-900 mt-1">{importResult.totalRecords}</p>
@@ -66,6 +66,12 @@ const ImportStudentsExcelPage = () => {
                   <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Successfully Imported</p>
                   <p className="text-xl font-bold text-emerald-700 mt-1">{importResult.successCount}</p>
                 </div>
+                {!!importResult.skippedCount && (
+                  <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600">Skipped</p>
+                    <p className="text-xl font-bold text-amber-700 mt-1">{importResult.skippedCount}</p>
+                  </div>
+                )}
                 <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-red-500">Failed</p>
                   <p className="text-xl font-bold text-red-600 mt-1">{importResult.failedCount}</p>
@@ -80,11 +86,12 @@ const ImportStudentsExcelPage = () => {
                         <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">Row</th>
                         <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">Student</th>
                         <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">Status</th>
+                        <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-500">Reason</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {importResult.rows.map((r) => (
-                        <tr key={r.row} className={r.status === "Failed" ? "bg-red-50/40" : ""}>
+                        <tr key={r.row} className={r.status === "Failed" ? "bg-red-50/40" : r.status === "Skipped" ? "bg-amber-50/40" : ""}>
                           <td className="px-4 py-2 text-gray-500">{r.row}</td>
                           <td className="px-4 py-2 text-gray-800 font-medium">{r.student}</td>
                           <td className="px-4 py-2">
@@ -92,12 +99,17 @@ const ImportStudentsExcelPage = () => {
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Imported
                               </span>
+                            ) : r.status === "Skipped" ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                                <AlertTriangle className="w-3.5 h-3.5" /> Skipped
+                              </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-500" title={r.message}>
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-500">
                                 <XCircle className="w-3.5 h-3.5" /> Failed
                               </span>
                             )}
                           </td>
+                          <td className="px-4 py-2 text-xs text-gray-500">{r.message || "—"}</td>
                         </tr>
                       ))}
                     </tbody>

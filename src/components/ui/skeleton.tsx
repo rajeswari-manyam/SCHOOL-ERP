@@ -1,28 +1,28 @@
 import * as React from "react";
 import { cn } from "../../utils/cn";
 
-export interface SliderProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  value?: number;
-  onValueChange?: (value: number) => void;
+/**
+ * Base skeleton primitive. Every composed dashboard skeleton is built on top
+ * of this. It is an inert block (aria-hidden) that pulses and sweeps a subtle
+ * shimmer so the UI never feels frozen while an API is in flight.
+ *
+ * Usage — always give it an explicit width/height so the placeholder reserves
+ * the same space the real content will occupy (prevents layout shift):
+ *
+ *   <Skeleton className="h-4 w-32" />
+ */
+export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function Skeleton({ className, ...props }: SkeletonProps) {
+  return (
+    <div
+      aria-hidden="true"
+      data-skeleton=""
+      className={cn(
+        "skeleton-shimmer animate-pulse rounded-md bg-slate-200/80",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
-
-export const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
-  ({ className, value, onValueChange, ...props }, ref) => {
-    return (
-      <input
-        ref={ref}
-        type="range"
-        value={value}
-        onChange={(e) => onValueChange?.(Number(e.target.value))}
-        className={cn(
-          "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer",
-          "accent-primary",
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
-);
-
-Slider.displayName = "Slider";

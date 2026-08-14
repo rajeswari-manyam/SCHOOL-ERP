@@ -97,16 +97,33 @@ export default function SchoolDetailModal({ schoolId, onClose, onEdit }: SchoolD
                 <InfoRow label="Pincode" value={school.pincode} />
                 <InfoRow label="Established Year" value={school.establishedYear} />
                 <InfoRow label="Total School Strength" value={school.totalSchoolstrength} />
-                {school.principalphoto && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Principal Photo</p>
-                    <img src={school.principalphoto} alt="Principal" className="w-12 h-12 rounded-xl object-cover border border-slate-200" />
-                  </div>
-                )}
                 <div className="col-span-1 sm:col-span-2">
                   <InfoRow label="Address" value={school.address} />
                 </div>
               </div>
+
+              {(school.logo || school.image || school.principalphoto) && (
+                <div className="flex flex-wrap gap-5">
+                  {school.logo && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">School Logo</p>
+                      <img src={school.logo} alt="School logo" className="w-12 h-12 rounded-xl object-cover border border-slate-200" />
+                    </div>
+                  )}
+                  {school.image && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">School Photo</p>
+                      <img src={school.image} alt="School" className="w-12 h-12 rounded-xl object-cover border border-slate-200" />
+                    </div>
+                  )}
+                  {school.principalphoto && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">Principal Photo</p>
+                      <img src={school.principalphoto} alt="Principal" className="w-12 h-12 rounded-xl object-cover border border-slate-200" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {school.subscription && (
                 <div>
@@ -153,6 +170,17 @@ export default function SchoolDetailModal({ schoolId, onClose, onEdit }: SchoolD
                   </div>
                 </div>
               )}
+
+              <div>
+                <p className="text-xs font-bold text-slate-600 mb-2">Record Info</p>
+                <div className="bg-slate-50 rounded-xl p-4 grid grid-cols-2 gap-y-3 gap-x-4">
+                  <InfoRow label="Registered On" value={school.createdAt ? new Date(school.createdAt).toLocaleDateString() : null} />
+                  <InfoRow label="Last Updated" value={school.updatedAt ? new Date(school.updatedAt).toLocaleDateString() : null} />
+                  {/* Never render the encrypted secret values themselves — only whether the gateway has been set up. */}
+                  <InfoRow label="Payment Gateway" value={school.razorpayKeyId ? "Configured" : "Not configured"} />
+                  <InfoRow label="Tenant Database" value={school.db_name} />
+                </div>
+              </div>
             </>
           )}
         </div>

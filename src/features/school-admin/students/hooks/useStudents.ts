@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
 import { studentsApi, buildClassSectionMaps, resolveStudentNames } from "@/services/student.api";
@@ -164,44 +165,71 @@ export const useStudents = () => {
   };
 };
 
-export const useStudentProfile = (id: string) => {
-  const [student, setStudent] = useState<Student | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [feeSummary, setFeeSummary] = useState<StudentFeeSummaryResponse["data"] | null>(null);
-  const [feePayments, setFeePayments] = useState<PaymentsByStudentData | null>(null);
+// Query keys centralized here so `retry()` below can invalidate precisely,
+// and so the fee-history-only payments query (gated on `activeTab`) shares
+// the same per-student namespace as the base student/fee-summary queries.
+const studentProfileKeys = {
+  all: (id: string) => ["student-profile", id] as const,
+  detail: (id: string) => ["student-profile", id, "detail"] as const,
+  feeSummary: (id: string) => ["student-profile", id, "fee-summary"] as const,
+  feePayments: (id: string) => ["student-profile", id, "fee-payments"] as const,
+};
+
+/**
+ * @param activeTab   Which tab of the Student Profile page is open. Optional
+ *                     because this hook may be used from places without a
+ *                     tab concept — when omitted, the fee-history-only
+ *                     `feePayments` fetch simply stays disabled. `student`
+ *                     and `feeSummary` are needed by multiple tabs (header,
+ *                     Overview's outstanding-fee card, Fee History), so they
+ *                     stay ungated like the base queries in useLedger.
+ */
+export const useStudentProfile = (id: string, activeTab?: string) => {
+  const queryClient = useQueryClient();
+  const enabledBase = !!id;
+
+  const studentQuery = useQuery({
+    queryKey: studentProfileKeys.detail(id),
+    queryFn: async (): Promise<Student | null> => {
+      const s = await withTimeout(studentsApi.getById(id), LOAD_TIMEOUT_MS, `getStudentById(${id})`);
+      return s ?? null;
+    },
+    enabled: enabledBase,
+  });
+
+  const feeSummaryQuery = useQuery({
+    queryKey: studentProfileKeys.feeSummary(id),
+    queryFn: async (): Promise<StudentFeeSummaryResponse["data"] | null> => {
+      const res = await getPendingFeesByStudentId(id).catch(() => null);
+      return res?.data ?? null;
+    },
+    enabled: enabledBase,
+  });
+
+  const feePaymentsQuery = useQuery({
+    queryKey: studentProfileKeys.feePayments(id),
+    queryFn: async (): Promise<PaymentsByStudentData | null> => {
+      const res = await getPaymentsByStudentId(id).catch(() => null);
+      return res?.data ?? null;
+    },
+    enabled: enabledBase && activeTab === "fee-history",
+  });
 
   const retry = useCallback(() => {
-    const timer = window.setTimeout(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [s, pendingRes, paymentsRes] = await Promise.all([
-          withTimeout(studentsApi.getById(id), LOAD_TIMEOUT_MS, `getStudentById(${id})`),
-          getPendingFeesByStudentId(id).catch(() => null),
-          getPaymentsByStudentId(id).catch(() => null),
-        ]);
-        setStudent(s ?? null);
-        setFeeSummary(pendingRes?.data ?? null);
-        setFeePayments(paymentsRes?.data ?? null);
-        setLoading(false);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to load student";
-        setError(message);
-        setLoading(false);
-      }
-    }, 0);
-    return timer;
-  }, [id]);
+    void queryClient.invalidateQueries({ queryKey: studentProfileKeys.all(id) });
+  }, [id, queryClient]);
 
-  useEffect(() => {
-    const timer = retry();
-    return () => window.clearTimeout(timer);
-  }, [retry]);
+  const loading = studentQuery.isLoading || feeSummaryQuery.isLoading;
+  const error = studentQuery.isError
+    ? (studentQuery.error instanceof Error ? studentQuery.error.message : "Failed to load student")
+    : null;
 
   return {
-    student, loading, error, retry,
-    feeSummary,
-    feePayments,
+    student: studentQuery.data ?? null,
+    loading,
+    error,
+    retry,
+    feeSummary: feeSummaryQuery.data ?? null,
+    feePayments: feePaymentsQuery.data ?? null,
   };
 };

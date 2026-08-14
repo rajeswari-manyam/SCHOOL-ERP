@@ -134,91 +134,95 @@ const FeeCollectionPage = () => {
       {/* ── Tab panels ───────────────────────────────────────────────────── */}
 
       {/* 1️⃣ Pending Fees */}
-      <div
-        role="tabpanel"
-        id="tabpanel-pending"
-        aria-labelledby="tab-pending"
-        hidden={activeTab !== "pending"}
-        className="space-y-4"
-      >
-        <PendingFeesFilterBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          classFilter={classFilter}
-          onClassChange={setClassFilter}
-          sectionFilter={sectionFilter}
-          onSectionChange={setSectionFilter}
-          classOptions={classOptions}
-          sectionOptions={sectionOptions}
-        />
+      {activeTab === "pending" && (
+        <div
+          role="tabpanel"
+          id="tabpanel-pending"
+          aria-labelledby="tab-pending"
+          className="space-y-4"
+        >
+          <PendingFeesFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            classFilter={classFilter}
+            onClassChange={setClassFilter}
+            sectionFilter={sectionFilter}
+            onSectionChange={setSectionFilter}
+            classOptions={classOptions}
+            sectionOptions={sectionOptions}
+          />
 
-        <PendingFeesTable
-          fees={filteredFees}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onMarkPaid={openRecordPayment}
-          onSendReminder={() => {}}
-          totalRecords={filteredFees.length}
-          onConcessionApplied={refreshPendingFees}
-        />
+          <PendingFeesTable
+            fees={filteredFees}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            onMarkPaid={openRecordPayment}
+            onSendReminder={() => {}}
+            totalRecords={filteredFees.length}
+            onConcessionApplied={refreshPendingFees}
+          />
 
-        <CommunicationCenter
-          onSendReminderToAll={() => sendReminders()}
-          onSendReminderToDueToday={() => {}}
-          onExportDefaultersPDF={() => {}}
-          onExportCSV={() => {}}
-        />
-      </div>
+          <CommunicationCenter
+            onSendReminderToAll={() => sendReminders()}
+            onSendReminderToDueToday={() => {}}
+            onExportDefaultersPDF={() => {}}
+            onExportCSV={() => {}}
+          />
+        </div>
+      )}
 
       {/* 2️⃣ Transactions */}
-      <div
-        role="tabpanel"
-        id="tabpanel-transactions"
-        aria-labelledby="tab-transactions"
-        hidden={activeTab !== "transactions"}
-      >
-        <AllTransactionsTab
-          transactions={filteredTransactions}
-          periodSummary={periodSummary}
-          txSearch={txSearch}
-          onTxSearchChange={setTxSearch}
-          txClassFilter={txClassFilter}
-          onTxClassChange={setTxClassFilter}
-          txSectionFilter={txSectionFilter}
-          onTxSectionChange={setTxSectionFilter}
-          classOptions={classOptions}
-          txSectionOptions={txSectionOptions}
-          txDateRange={txDateRange}
-        />
-      </div>
+      {activeTab === "transactions" && (
+        <div
+          role="tabpanel"
+          id="tabpanel-transactions"
+          aria-labelledby="tab-transactions"
+        >
+          <AllTransactionsTab
+            transactions={filteredTransactions}
+            periodSummary={periodSummary}
+            txSearch={txSearch}
+            onTxSearchChange={setTxSearch}
+            txClassFilter={txClassFilter}
+            onTxClassChange={setTxClassFilter}
+            txSectionFilter={txSectionFilter}
+            onTxSectionChange={setTxSectionFilter}
+            classOptions={classOptions}
+            txSectionOptions={txSectionOptions}
+            txDateRange={txDateRange}
+          />
+        </div>
+      )}
 
       {/* 3️⃣ Fee Structure */}
-      <div
-        role="tabpanel"
-        id="tabpanel-structure"
-        aria-labelledby="tab-structure"
-        hidden={activeTab !== "structure"}
-      >
-        <FeeStructureTab
-          feeHeads={feeHeads}
-          transportSlabs={transportSlabs}
-          classFeeStructure={classFeeStructure}
-          concessions={concessions}
-          selectedClass={selectedClass}
-          onClassChange={setSelectedClass}
-        />
-      </div>
+      {activeTab === "structure" && (
+        <div
+          role="tabpanel"
+          id="tabpanel-structure"
+          aria-labelledby="tab-structure"
+        >
+          <FeeStructureTab
+            feeHeads={feeHeads}
+            transportSlabs={transportSlabs}
+            classFeeStructure={classFeeStructure}
+            concessions={concessions}
+            selectedClass={selectedClass}
+            onClassChange={setSelectedClass}
+          />
+        </div>
+      )}
 
       {/* 4️⃣ Staff Salary */}
-      <div
-        role="tabpanel"
-        id="tabpanel-staffsalary"
-        aria-labelledby="tab-staffsalary"
-        hidden={activeTab !== "staffsalary"}
-      >
-        <StaffSalaryTab />
-      </div>
+      {activeTab === "staffsalary" && (
+        <div
+          role="tabpanel"
+          id="tabpanel-staffsalary"
+          aria-labelledby="tab-staffsalary"
+        >
+          <StaffSalaryTab />
+        </div>
+      )}
 
       {/* ── Modals ───────────────────────────────────────────────────────── */}
       {showRecordPayment && (

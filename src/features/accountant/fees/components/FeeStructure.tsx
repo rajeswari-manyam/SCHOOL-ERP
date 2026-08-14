@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Plus, Pencil, Trash2, X, Loader2, BookOpen,
@@ -171,10 +171,32 @@ export const FeeStructure = ({ showModal, setShowModal }: FeeStructureProps) => 
     }).catch(() => {});
   }, []);
 
+  // Lazy, per-sub-tab fetch: each dataset is fetched once, the first time its
+  // own sub-tab becomes active — landing on "Concessions" (which needs
+  // neither) or "Fee Structures" no longer fires the "Fee Heads" fetch it
+  // doesn't need, and vice versa. `refreshFeeHeads`/`refreshFeeStructures`
+  // stay plain callbacks (not react-query) on purpose: they're also invoked
+  // directly by the delete handlers and the Add Fee Head modal's onSuccess
+  // below, and those manual refresh-after-mutation calls must keep working
+  // unconditionally, regardless of which sub-tab happens to be active when
+  // they fire — gating them centrally behind `activeSubTab` would risk
+  // suppressing those refreshes.
+  const hasFetchedFeeHeadsRef = useRef(false);
+  const hasFetchedFeeStructuresRef = useRef(false);
+
   useEffect(() => {
-    refreshFeeHeads();
-    refreshFeeStructures();
-  }, [refreshFeeHeads, refreshFeeStructures]);
+    if (activeSubTab === "Fee Heads" && !hasFetchedFeeHeadsRef.current) {
+      hasFetchedFeeHeadsRef.current = true;
+      refreshFeeHeads();
+    }
+  }, [activeSubTab, refreshFeeHeads]);
+
+  useEffect(() => {
+    if (activeSubTab === "Fee Structures" && !hasFetchedFeeStructuresRef.current) {
+      hasFetchedFeeStructuresRef.current = true;
+      refreshFeeStructures();
+    }
+  }, [activeSubTab, refreshFeeStructures]);
 
   useEffect(() => {
     if (showModal) setActiveSubTab("Fee Heads");

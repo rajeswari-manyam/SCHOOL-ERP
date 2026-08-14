@@ -383,7 +383,7 @@ const MyAttendancePage = () => {
 
   const { data: todayData, isLoading: todayLoading } = useTodayAttendanceSummary(activeTeacherId);
   const { data: rangeSummaryData, isLoading: rangeLoading } = useTeacherAttendanceSummaryRange(
-    activeTeacherId, historyFromDate, historyToDate
+    activeTeacherId, historyFromDate, historyToDate, { enabled: activeTab === "class" }
   );
 
   const today = todayData ?? {

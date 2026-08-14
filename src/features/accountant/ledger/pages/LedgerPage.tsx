@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { IncomeExpenseCards } from "../components/IncomeExpenseCard";
 import { LedgerTable } from "../components/LedgerTable";
 import { BalanceSheet } from "../components/BalanceSheet";
-import { useLedger } from "../hooks/useledger";
+import { useLedger, type LedgerTab } from "../hooks/useledger";
 
 import type { LedgerEntry } from "../types/Ledger.types";
 
@@ -22,7 +22,7 @@ export default function LedgerPage() {
   const location = useLocation();
   const navState = location.state as { activeTab?: string; month?: number; year?: number } | null;
 
-  const [activeTab,   setActiveTab]   = useState(navState?.activeTab ?? "income");
+  const [activeTab,   setActiveTab]   = useState<LedgerTab>((navState?.activeTab as LedgerTab) ?? "income");
   const [currentDate, setCurrentDate] = useState(() =>
     navState?.month && navState?.year ? new Date(navState.year, navState.month - 1, 1) : new Date()
   );
@@ -40,7 +40,7 @@ export default function LedgerPage() {
     payrollExpense,
     operatingExpenses,
     deleteEntry,
-  } = useLedger(currentDate.getMonth() + 1, currentDate.getFullYear());
+  } = useLedger(activeTab, currentDate.getMonth() + 1, currentDate.getFullYear());
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -113,7 +113,7 @@ export default function LedgerPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} />
+      <Tabs items={TAB_ITEMS} value={activeTab} onChange={(v) => setActiveTab(v as LedgerTab)} />
 
       {/* Tab Panels */}
       <div className="mt-4 md:mt-6">

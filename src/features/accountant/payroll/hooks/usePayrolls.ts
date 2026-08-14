@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { usePayrollStore } from "../store/usePayrollStore";
 import {
@@ -11,6 +12,19 @@ import { useUIStore } from "@/store/uiStore";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import type { SalaryConfig, SalaryFormData, StaffPayroll, PayrollSummary, PayslipResult } from "../types/payroll.types";
 
+export type PayrollTab = "structure" | "monthly" | "history";
+
+// Query keys centralized here so mutations below can invalidate precisely —
+// mirrors the pattern in src/features/accountant/ledger/hooks/useledger.ts.
+// `monthly` and `history`/`historyTrend` are prefixes: invalidateQueries matches
+// them fuzzily, so invalidating ["payroll","monthly"] clears every month/year
+// variant without us having to track each one individually.
+const payrollKeys = {
+  salaryConfig: ["payroll", "salary-config"] as const,
+  monthly: ["payroll", "monthly"] as const,
+  history: ["payroll", "history"] as const,
+  historyTrend: (academicYearId: string) => ["payroll", "history-trend", academicYearId] as const,
+};
 
 export const usePayroll = () => {
   const {
@@ -60,15 +74,20 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export const useSalaryConfig = () => {
-  const [salaryData, setSalaryData]     = useState<SalaryConfig[]>([]);
-  const [isLoading, setIsLoading]       = useState(true);
+/**
+ * @param activeTab  Which Payroll tab is currently open. The fetch only runs
+ *                    while the Salary Structure tab is visible; switching
+ *                    tabs (or revisiting within the global 5-minute staleTime,
+ *                    see src/config/queryClient.ts) never re-fires it.
+ */
+export const useSalaryConfig = (activeTab: PayrollTab = "structure") => {
+  const queryClient = useQueryClient();
   const [editingStaff, setEditingStaff] = useState<SalaryConfig | null>(null);
   const [isEditing, setIsEditing]       = useState(false);
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  const query = useQuery({
+    queryKey: payrollKeys.salaryConfig,
+    queryFn: async (): Promise<SalaryConfig[]> => {
       const [payrollRes, staffRes] = await Promise.all([
         getAllPayroll(),
         getAllStaff(),
@@ -78,7 +97,7 @@ export const useSalaryConfig = () => {
         (staffRes.data ?? []).map((s) => [s.id, s])
       );
 
-      const configs: SalaryConfig[] = (payrollRes.data ?? []).map((p) => {
+      return (payrollRes.data ?? []).map((p) => {
         const staff   = staffMap.get(p.staff_id);
         const basic   = staff?.salary ?? 0;
         const hra     = p.hra                ?? 0;
@@ -109,16 +128,21 @@ export const useSalaryConfig = () => {
           effectiveFrom:   p.effective_from ?? "",
         };
       });
+    },
+    enabled: activeTab === "structure",
+  });
+  if (query.isError) toast.error(getErrorMessage(query.error, "Failed to load salary data"));
 
-      setSalaryData(configs);
-    } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to load salary data"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const salaryData = query.data ?? [];
+  const isLoading  = query.isLoading;
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // Editing a payroll config's amounts also affects the Monthly Payroll tab
+  // (it reads the same getAllPayroll() rows as "payrollConfigs"), so both
+  // query buckets are invalidated together — not just this hook's own tab.
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: payrollKeys.salaryConfig });
+    queryClient.invalidateQueries({ queryKey: payrollKeys.monthly });
+  };
 
   const openEditModal = (staff: SalaryConfig | null) => {
     setEditingStaff(staff);
@@ -142,7 +166,7 @@ export const useSalaryConfig = () => {
         effective_from:      data.effectiveFrom,
       });
       toast.success("Salary updated");
-      loadData();
+      invalidate();
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to update salary"));
     }
@@ -152,7 +176,7 @@ export const useSalaryConfig = () => {
     try {
       await deletePayrollById(id);
       toast.success("Payroll record deleted");
-      loadData();
+      invalidate();
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to delete payroll record"));
     }
@@ -168,7 +192,7 @@ export const useSalaryConfig = () => {
     closeEditModal,
     updateSalary,
     deletePayroll,
-    refresh: loadData,
+    refresh: () => queryClient.invalidateQueries({ queryKey: payrollKeys.salaryConfig }),
   };
 };
 
@@ -178,23 +202,21 @@ const MONTH_NAMES = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-export const usePayrollHistory = () => {
+/**
+ * @param activeTab  Which Payroll tab is currently open. Both queries below
+ *                    only run while the Payroll History tab is visible.
+ */
+export const usePayrollHistory = (activeTab: PayrollTab = "history") => {
   const academicYearId = useUIStore((s) => s.academicYearId) ?? "";
 
-  const [history,    setHistory]    = useState<import("../types/payroll.types").PayrollHistory[]>([]);
-  const [summary,    setSummary]    = useState({ totalGross: 0, totalDeductions: 0, totalNetPaid: 0 });
-  const [trendData,  setTrendData]  = useState<import("../types/payroll.types").TrendPoint[]>([]);
-  const [staffCount, setStaffCount] = useState(0);
-  const [isLoading,  setIsLoading]  = useState(true);
+  // Phase 1 — critical data (history rows + staff count).
+  const historyQuery = useQuery({
+    queryKey: payrollKeys.history,
+    queryFn: async () => {
+      const [res, sRes] = await Promise.all([getPayrollHistory(), getAllStaff()]);
 
-  useEffect(() => {
-    setIsLoading(true);
-
-    // Phase 1 — critical data (history + staff count)
-    Promise.all([getPayrollHistory(), getAllStaff()])
-      .then(([res, sRes]) => {
-        if (res.status) {
-          setHistory(res.data.map((r) => ({
+      const history = res.status
+        ? res.data.map((r) => ({
             month:           `${MONTH_NAMES[r.month]} ${r.year}`,
             year:            r.year,
             staffCount:      r.staff_count,
@@ -204,37 +226,61 @@ export const usePayrollHistory = () => {
             paymentDate:     r.payment_date ?? "—",
             mode:            r.payment_mode,
             status:          r.payment_status,
-          })));
-          setSummary({
+          }))
+        : [];
+
+      const summary = res.status
+        ? {
             totalGross:      res.summary.total_gross_salary,
             totalDeductions: res.summary.total_deductions,
             totalNetPaid:    res.summary.total_net_paid,
-          });
-        }
-        setStaffCount(sRes.count ?? (sRes.data ?? []).length);
-      })
-      .catch((err) => toast.error(getErrorMessage(err, "Failed to load payroll history")))
-      .finally(() => setIsLoading(false));
+          }
+        : { totalGross: 0, totalDeductions: 0, totalNetPaid: 0 };
 
-    // Phase 2 — trend chart in background (non-blocking)
-    // 10 consecutive months ending at the current month
-    const now = new Date();
-    const months = Array.from({ length: 10 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - 9 + i, 1);
-      return { month: d.getMonth() + 1, label: MONTH_NAMES[d.getMonth() + 1].toUpperCase() };
-    });
-    if (academicYearId) {
-      Promise.all(
+      const staffCount = sRes.count ?? (sRes.data ?? []).length;
+
+      return { history, summary, staffCount };
+    },
+    enabled: activeTab === "history",
+  });
+  if (historyQuery.isError) toast.error(getErrorMessage(historyQuery.error, "Failed to load payroll history"));
+
+  // Phase 2 — trend chart (background, independent query). Still 10 parallel
+  // getMonthlyPaidPayroll() calls via Promise.all (unchanged batching from the
+  // original effect), but now gated on the History tab being active AND an
+  // academic year being selected, and cached per academicYearId so revisiting
+  // the tab within the 5-minute staleTime does not refire the 10 calls.
+  const trendQuery = useQuery({
+    queryKey: payrollKeys.historyTrend(academicYearId),
+    queryFn: async () => {
+      const now = new Date();
+      const months = Array.from({ length: 10 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - 9 + i, 1);
+        return { month: d.getMonth() + 1, label: MONTH_NAMES[d.getMonth() + 1].toUpperCase() };
+      });
+
+      return Promise.all(
         months.map((m) =>
           getMonthlyPaidPayroll(m.month, academicYearId)
             .then((r) => ({ label: m.label, amount: r.status ? r.data.total_paid : 0 }))
             .catch(() => ({ label: m.label, amount: 0 }))
         )
-      ).then(setTrendData);
-    } else {
-      setTrendData(months.map((m) => ({ label: m.label, amount: 0 })));
-    }
-  }, [academicYearId]);
+      );
+    },
+    enabled: activeTab === "history" && !!academicYearId,
+  });
+
+  const fallbackTrend = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 10 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 9 + i, 1);
+      return { label: MONTH_NAMES[d.getMonth() + 1].toUpperCase(), amount: 0 };
+    });
+  }, []);
+
+  const history   = historyQuery.data?.history ?? [];
+  const isLoading = historyQuery.isLoading;
+  const trendData = trendQuery.data ?? (academicYearId ? [] : fallbackTrend);
 
   const nonZeroMonths = trendData.filter((t) => t.amount > 0);
   const avgMonthlyPayroll = nonZeroMonths.length > 0
@@ -245,9 +291,9 @@ export const usePayrollHistory = () => {
     history,
     isLoading,
     trendData,
-    totalPayrollFY:    summary.totalNetPaid,
+    totalPayrollFY:    historyQuery.data?.summary.totalNetPaid ?? 0,
     avgMonthlyPayroll,
-    staffCount,
+    staffCount:        historyQuery.data?.staffCount ?? 0,
   };
 };
 
@@ -256,33 +302,42 @@ function toInitials(name: string) {
   return name.split(" ").map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase();
 }
 
-export const useMonthlyPayrollData = (month: number, year: number) => {
+/**
+ * @param activeTab  Which Payroll tab is currently open. Defaults to
+ *                    "monthly" so standalone callers (e.g. PaySalaryPage,
+ *                    which only needs `generatePayslip` and isn't one of the
+ *                    3 PayrollPage tabs) keep fetching eagerly as before.
+ *                    The underlying fetch doesn't depend on month/year (it
+ *                    loads all payslips/configs/staff and filters client-side
+ *                    below), so the query key intentionally omits them —
+ *                    navigating months never needs to refire the request.
+ */
+export const useMonthlyPayrollData = (month: number, year: number, activeTab: PayrollTab = "monthly") => {
   const academicYearId = useUIStore((s) => s.academicYearId) ?? "";
+  const queryClient = useQueryClient();
 
-  const [payslipsList,    setPayslipsList]    = useState<Awaited<ReturnType<typeof getAllPayslips>>["data"]>([]);
-  const [payrollConfigs,  setPayrollConfigs]  = useState<Awaited<ReturnType<typeof getAllPayroll>>["data"]>([]);
-  const [staffList,       setStaffList]       = useState<Awaited<ReturnType<typeof getAllStaff>>["data"]>([]);
-  const [isLoading,       setIsLoading]       = useState(true);
-
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  const query = useQuery({
+    queryKey: payrollKeys.monthly,
+    queryFn: async () => {
       const [payslipRes, payrollRes, staffRes] = await Promise.all([
         getAllPayslips(),
         getAllPayroll(),
         getAllStaff(),
       ]);
-      setPayslipsList(payslipRes.data ?? []);
-      setPayrollConfigs(payrollRes.data ?? []);
-      setStaffList(staffRes.data ?? []);
-    } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to load payroll data"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      return {
+        payslipsList:   payslipRes.data ?? [],
+        payrollConfigs: payrollRes.data ?? [],
+        staffList:      staffRes.data ?? [],
+      };
+    },
+    enabled: activeTab === "monthly",
+  });
+  if (query.isError) toast.error(getErrorMessage(query.error, "Failed to load payroll data"));
 
-  useEffect(() => { loadData(); }, [loadData]);
+  const payslipsList   = query.data?.payslipsList ?? [];
+  const payrollConfigs = query.data?.payrollConfigs ?? [];
+  const staffList      = query.data?.staffList ?? [];
+  const isLoading      = query.isLoading;
 
   const staffData = useMemo<StaffPayroll[]>(() => {
     const staffMap   = new Map(staffList.map((s) => [s.id, s]));
@@ -371,6 +426,8 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
 
   const isProcessed = staffData.some((s) => s.status !== "Draft");
 
+  const invalidateMonthly = () => queryClient.invalidateQueries({ queryKey: payrollKeys.monthly });
+
   const generatePayslip = async (
     staff: StaffPayroll,
     bonus: number,
@@ -391,7 +448,7 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
       });
       if (res.status) {
         toast.success("Payslip generated successfully");
-        loadData();
+        invalidateMonthly();
         result = {
           presentDays:     res.data.present_days,
           absentDays:      res.data.absent_days,
@@ -417,11 +474,14 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
       } else if (staff.payrollId) {
         await deletePayrollById(staff.payrollId);
         toast.success("Payroll record deleted");
+        // A payroll config row was removed — Salary Structure tab shares
+        // that same getAllPayroll() data, so it needs invalidating too.
+        queryClient.invalidateQueries({ queryKey: payrollKeys.salaryConfig });
       } else {
         toast.error("Nothing to delete");
         return;
       }
-      loadData();
+      invalidateMonthly();
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to delete"));
     }
@@ -436,6 +496,6 @@ export const useMonthlyPayrollData = (month: number, year: number) => {
     processedBy:   null as string | null,
     generatePayslip,
     deletePayslip,
-    refresh: loadData,
+    refresh: invalidateMonthly,
   };
 };

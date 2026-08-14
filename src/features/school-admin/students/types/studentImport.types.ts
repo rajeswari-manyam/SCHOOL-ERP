@@ -1,7 +1,9 @@
-// Source of truth: the backend-provided student_bulk_upload_sample(2).xlsx —
-// sheet "Students", these exact 20 columns in this exact order. Do not rename
-// or reorder — sectionId / academicYearId / class_id must stay camelCase /
-// snake_case exactly as shown here, matching CreateStudentPayload.
+// Source of truth: the backend's addStudents controller (resolveAcademicContext)
+// accepts plain-text class_name / section_name / academic_year on BOTH the
+// JSON path and the Excel-file path, resolving them to real IDs server-side.
+// The frontend uses these text columns instead of raw class_id/sectionId/
+// academicYearId so users can type readable values like "10", "A",
+// "2025-2026" instead of hunting down UUIDs.
 export const STUDENT_IMPORT_COLUMNS = [
   "first_name",
   "last_name",
@@ -9,9 +11,9 @@ export const STUDENT_IMPORT_COLUMNS = [
   "date_of_birth",
   "blood_group",
   "address",
-  "class_id",
-  "sectionId",
-  "academicYearId",
+  "class_name",
+  "section_name",
+  "academic_year",
   "roll_number",
   "admission_number",
   "school_code",
@@ -41,7 +43,7 @@ export interface StudentImportPreviewRow {
 export interface StudentImportRowResult {
   row: number;
   student: string;
-  status: "Imported" | "Failed";
+  status: "Imported" | "Failed" | "Skipped";
   message?: string;
 }
 
@@ -50,5 +52,33 @@ export interface StudentImportResponse {
   totalRecords: number;
   successCount: number;
   failedCount: number;
+  /** Rows the backend counted as skipped (e.g. duplicates) rather than a hard validation failure. */
+  skippedCount?: number;
   rows: StudentImportRowResult[];
+}
+
+/**
+ * Raw shape of POST /tenant/students/bulk's response, confirmed via Postman
+ * (2026-08-13) — single request, `file` field, whole sheet parsed server-side:
+ *   { status, message, inserted, skipped, invalid: [...], data: [...] }
+ * `data` holds the fully-created student records (confirmed shape below).
+ * `invalid`'s exact per-entry shape is unconfirmed — no failing-row example
+ * has been seen yet — so it's typed loosely and read defensively in
+ * useStudentImport rather than assumed.
+ */
+export interface BulkImportCreatedStudent {
+  id: string;
+  first_name: string;
+  last_name: string;
+  admission_number: string;
+  [key: string]: unknown;
+}
+
+export interface BulkImportApiResponse {
+  status: boolean;
+  message?: string;
+  inserted: number;
+  skipped: number;
+  invalid: unknown[];
+  data: BulkImportCreatedStudent[];
 }
